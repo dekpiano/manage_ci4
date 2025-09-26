@@ -50,6 +50,8 @@ $routes->get('Admin/Acade/Registration/Repeat/Detail/(:segment)/(:segment)/(:seg
 $routes->get('Admin/Acade/Registration/Repeat/Add', [ConAdminRegisRepeat::class, 'AdminRegisRepeatAdd']);
 $routes->get('Admin/Acade/Registration/ExamSchedule', [ConAdminExamSchedule::class, 'AdminExamScheduleMain']);
 $routes->get('Admin/Acade/Registration/ExamSchedule/add', [ConAdminExamSchedule::class, 'add']);
+$routes->post('admin/academic/ConAdminExamSchedule/insert_exam_schedule', [ConAdminExamSchedule::class, 'insert_exam_schedule']);
+$routes->post('Admin/Acade/ConAdminExamSchedule/delete_exam_schedule/(:segment)', [ConAdminExamSchedule::class, 'delete_exam_schedule/$1']);
 $routes->get('Admin/Acade/Registration/ClassRoom', [ConAdminClassRoom::class, 'AdminClassMain']);
 $routes->get('Admin/Acade/Registration/ClassRoom/(:num)', [ConAdminClassRoom::class, 'AdminClassMain/$1']);
 $routes->get('admin/academic/ConAdminClassRoom/AddClassRoom', [ConAdminClassRoom::class, 'AddClassRoom']);
@@ -91,6 +93,8 @@ $routes->get('Admin/Acade/Evaluate/ReportScoreRoomMain/(:segment)/(:segment)/(:s
 
 
 
+$routes->match(['get', 'post'], 'Admin/Academic/ConAdminStudents/AdminStudentsNormalShow/(:segment)', [ConAdminStudents::class, 'AdminStudentsNormalShow/$1']);
+
 $routes->post('Admin/Academic/ConAdminEnroll/AdminEnrollSelect', [ConAdminEnroll::class, 'AdminEnrollSelect']);
 $routes->post('admin/academic/ConAdminEnroll/AdminEnrollUpdate', [ConAdminEnroll::class, 'AdminEnrollUpdate']); // Added route
 $routes->post('admin/academic/ConAdminEnroll/AdminEnrollShow', [ConAdminEnroll::class, 'AdminEnrollShow']); // Added route for AJAX call
@@ -104,6 +108,8 @@ $routes->post('admin/academic/ConAdminEnroll/AdminEnrollChangeTeacher', [ConAdmi
 $routes->get('Admin/Academic/ConAdminEnroll/AdminEnrollSubject', [ConAdminEnroll::class, 'AdminEnrollSubject']);
 $routes->post('Admin/Academic/ConAdminEnroll/AdminEnrollSubject', [ConAdminEnroll::class, 'AdminEnrollSubject']);
 
+
+$routes->match(['get', 'post'], 'admin/academic/ConAdminStudents/getDashboardData', [ConAdminStudents::class, 'getDashboardData']);
 
 $routes->get('Admin/Acade/DevelopStudents/Clubs/Main', [ConAdminDevelopStudents::class, 'ClubsMain']);
 $routes->get('Admin/Acade/DevelopStudents/Clubs/All', [ConAdminDevelopStudents::class, 'ClubsAll']);

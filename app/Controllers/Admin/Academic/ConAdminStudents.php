@@ -14,7 +14,7 @@ class ConAdminStudents extends BaseController
 {
     protected $modAdminStudents;
     protected $DBpersonnel;
-    protected $classroom;
+    protected $db;
 
     public function __construct()
     {
@@ -73,14 +73,15 @@ class ConAdminStudents extends BaseController
 
      public function AdminStudentsMain($Key = null){ 
     $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();
-        $data['CountAllStu'] = $this->db->table('tb_students')->select('COUNT(StudentBehavior) AS stuall')
-        ->where('StudentStatus','1/ปกติ')
+        $data['CountAllStu'] = $this->db->table('tb_students')->select('COUNT(StudentID) AS stuall')
+        ->where('StudentStatus !=','5/จบการศึกษา')
+        ->where('StudentBehavior !=','จำหน่าย')
         ->get()->getRow();
-        $data['CountNormalStu'] = $this->db->table('tb_students')->select('COUNT(StudentBehavior) AS stunormal')
+        $data['CountNormalStu'] = $this->db->table('tb_students')->select('COUNT(StudentID) AS stunormal')
         ->where('StudentStatus','1/ปกติ')
         ->where('StudentBehavior !=','ขาดเรียนนาน')
         ->get()->getRow();
-        $data['CountAbsentStu'] = $this->db->table('tb_students')->select('COUNT(StudentBehavior) AS stuabsent')
+        $data['CountAbsentStu'] = $this->db->table('tb_students')->select('COUNT(StudentID) AS stuabsent')
         ->where('StudentBehavior','ขาดเรียนนาน')
         ->where('StudentStatus','1/ปกติ')
         ->get()->getRow();
@@ -102,8 +103,8 @@ class ConAdminStudents extends BaseController
        
         $data['title'] = "จัดการข้อมูลนักเรียน";
         $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
-        echo view('admin/layout/main', $data);
-        echo view('admin/Academic/AdminStudents/AdminStudentsMain');
+        
+        echo view('admin/Academic/AdminStudents/AdminStudentsMain', $data);
         
 
     }
@@ -120,65 +121,130 @@ class ConAdminStudents extends BaseController
             // echo '<pre>'; print_r($data['stu']);  exit(); 
             $data['title'] = "จัดการข้อมูลนักเรียนปกติ";
             $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
-            echo view('admin/layout/main', $data);
+            
             echo view('admin/Academic/AdminStudents/AdminStudentsNormal',$data);
             
 
     }
 
-    public function AdminStudentsNormalShow($Key){
-        if(urldecode($Key) == "Normal"){
-            $Keyword = "StudentStatus = '1/ปกติ'";
-        }else{
-            $Keyword = "StudentStatus != '1/ปกติ'";
-        }
-       
-        $builder = $this->db->table('tb_students');
-        $builder->select('StudentID,
-                        StudentNumber,
-                        StudentClass,
-                        StudentCode,
-                        StudentPrefix,
-                        StudentFirstName,
-                        StudentLastName,
-                        StudentIDNumber,
-                        StudentStatus,
-                        StudentBehavior,
-                        StudentStudyLine');
-        $builder->where($Keyword); 
+    public function AdminStudentsNormalShow($Key = null){
+        try {
+            $Keyword = "";
+            $Key = urldecode($Key);
 
-        $classFilter = $this->request->getPost('classFilter');
-        if(!empty($classFilter)){
-            $builder->where('StudentClass', $classFilter);
-        }
+            if($Key == "normal"){
+                $Keyword = "StudentStatus = '1/ปกติ' AND StudentBehavior != 'ขาดเรียนนาน'";
+            } elseif($Key == 'absent_long'){
+                $Keyword = "StudentBehavior = 'ขาดเรียนนาน' AND StudentStatus = '1/ปกติ'";
+            } elseif($Key == 'dismissed'){
+                $Keyword = "StudentBehavior = 'จำหน่าย'";
+            } elseif($Key == 'studying'){
+                // นักเรียนทั้งหมดที่กำลังศึกษาอยู่ (ไม่จบการศึกษาและไม่จำหน่าย)
+                $Keyword = "StudentStatus != '5/จบการศึกษา' AND StudentBehavior != 'จำหน่าย'";
+            } else {
+                // Default to studying students if Key is not recognized or empty
+                $Keyword = "StudentStatus != '5/จบการศึกษา' AND StudentBehavior != 'จำหน่าย'";
+            }
+           
+            $builder = $this->db->table('tb_students');
+            $builder->select('StudentID,
+                            StudentNumber,
+                            StudentClass,
+                            StudentCode,
+                            StudentPrefix,
+                            StudentFirstName,
+                            StudentLastName,
+                            CONCAT(StudentPrefix, StudentFirstName, " ", StudentLastName) AS Fullname,
+                            StudentStatus,
+                            StudentBehavior,
+                            StudentStudyLine');
+            $builder->where($Keyword); 
 
-        $school_year = $this->request->getPost('school_year');
-        if(!empty($school_year)){
-            $builder->where('StudentSchoolYear', $school_year);
-        }
+            // DataTables parameters
+            $draw = $this->request->getPost('draw');
+            $start = $this->request->getPost('start');
+            $length = $this->request->getPost('length');
+            
+            $searchValue = '';
+            if (isset($this->request->getPost('search')['value'])) {
+                $searchValue = $this->request->getPost('search')['value'];
+            }
 
-        $stu = $builder->get()->getResult();   
+            $orderColumn = 0; // Default column index
+            $orderDir = 'asc'; // Default order direction
+            if (isset($this->request->getPost('order')[0])) {
+                $orderColumn = $this->request->getPost('order')[0]['column'];
+                $orderDir = $this->request->getPost('order')[0]['dir'];
+            }
+            $columns = $this->request->getPost('columns');
 
-        $data = [];
-        foreach($stu as $record){
-            $data[] = array( 
-                "StudentCode" => $record->StudentCode,
-                "StudentID" => $record->StudentID,
-                "Fullname" => $record->StudentPrefix.$record->StudentFirstName.' '.$record->StudentLastName,
-                "StudentClass" => $record->StudentClass,
-                "StudentNumber" => $record->StudentNumber,
-                "StudentStudyLine" => $record->StudentStudyLine,
-                "StudentStatus" => $record->StudentStatus,
-                "StudentBehavior" => $record->StudentBehavior
+            // Total records (before filtering)
+            $totalRecords = $builder->countAllResults(false); // false to not reset the query
+
+            // Apply search filter
+            if (!empty($searchValue)) {
+                $builder->groupStart()
+                        ->orLike('StudentCode', $searchValue)
+                        ->orLike('StudentFirstName', $searchValue)
+                        ->orLike('StudentLastName', $searchValue)
+                        ->orLike('StudentClass', $searchValue)
+                        ->groupEnd();
+            }
+
+            // Records after filtering
+            $filteredRecords = $builder->countAllResults(false); // false to not reset the query
+
+            // Apply order
+            if (isset($columns[$orderColumn]['data'])) {
+                $orderData = $columns[$orderColumn]['data'];
+                if ($orderData === 'StudentNumber') {
+                    $builder->orderBy('CAST(StudentNumber AS UNSIGNED)', $orderDir);
+                } elseif ($orderData === 'StudentClass') {
+                    // For StudentClass, sort by the numeric part after 'ม.'
+                    $builder->orderBy('CAST(SUBSTRING(StudentClass, LOCATE('.', StudentClass) + 1) AS UNSIGNED)', $orderDir);
+                } else {
+                    $builder->orderBy($orderData, $orderDir);
+                }
+            }
+
+            // Apply limit and offset
+            $builder->limit($length, $start);
+
+            $stu = $builder->get()->getResult();   
+
+            $data = [];
+            foreach($stu as $record){
+                $data[] = array( 
+                    "StudentCode" => $record->StudentCode,
+                    "StudentID" => $record->StudentID,
+                    "Fullname" => $record->StudentPrefix.$record->StudentFirstName.' '.$record->StudentLastName,
+                    "StudentClass" => $record->StudentClass,
+                    "StudentNumber" => $record->StudentNumber,
+                    "StudentStudyLine" => $record->StudentStudyLine,
+                    "StudentStatus" => $record->StudentStatus,
+                    "StudentBehavior" => $record->StudentBehavior
+                );
+
+            }
+            $output = array(
+                "draw" => intval($draw),
+                "recordsTotal" => intval($totalRecords),
+                "recordsFiltered" => intval($filteredRecords),
+                "data" =>  $data,           
             );
 
+
+            return $this->response->setJSON($output);
+        } catch (\Exception $e) {
+            log_message('error', 'Error in AdminStudentsNormalShow: ' . $e->getMessage());
+            return $this->response->setStatusCode(500)->setJSON([
+                'draw' => $this->request->getPost('draw') ?? 0,
+                'recordsTotal' => 0,
+                'recordsFiltered' => 0,
+                'data' => [],
+                'error' => 'An internal server error occurred: ' . $e->getMessage()
+            ]);
         }
-        $output = array(
-            "data" =>  $data,           
-        );
-
-
-        return $this->response->setJSON($output);
 
     }
 
@@ -328,33 +394,14 @@ class ConAdminStudents extends BaseController
         // 2. ดึงข้อมูลนักเรียนตามระดับชั้น (แยกชาย/หญิง)
         $students_by_class_from_db = $this->modAdminStudents->get_students_by_class();
         
-        //print_r($students_by_class_from_db); exit();
-        // สร้างโครงข้อมูล 6 ระดับชั้น โดยให้มีค่าเริ่มต้นเป็น 0
-        $class_counts = [
-            '1' => ['male' => 0, 'female' => 0],
-            '2' => ['male' => 0, 'female' => 0],
-            '3' => ['male' => 0, 'female' => 0],
-            '4' => ['male' => 0, 'female' => 0],
-            '5' => ['male' => 0, 'female' => 0],
-            '6' => ['male' => 0, 'female' => 0]
-        ];
-
-        // นำข้อมูลจากฐานข้อมูลมาอัปเดตในโครงที่เตรียมไว้
-        foreach($students_by_class_from_db as $class) {
-            if (array_key_exists($class->class_level, $class_counts)) {
-                $class_counts[$class->class_level]['male'] = (int)$class->male_count;
-                $class_counts[$class->class_level]['female'] = (int)$class->female_count;
-            }
-        }
-
         // เตรียมข้อมูลสำหรับส่งให้ Chart.js
         $class_labels = [];
         $male_data = [];
         $female_data = [];
-        foreach ($class_counts as $level => $counts) {
-            $class_labels[] = 'ม.' . $level;
-            $male_data[] = $counts['male'];
-            $female_data[] = $counts['female'];
+        foreach ($students_by_class_from_db as $class) {
+            $class_labels[] = 'ม.' . $class->class_level;
+            $male_data[] = (int)$class->male_count;
+            $female_data[] = (int)$class->female_count;
         }
 
         // 3. ดึงข้อมูลนักเรียนล่าสุด
@@ -363,8 +410,8 @@ class ConAdminStudents extends BaseController
         // จัดรูปแบบข้อมูลสำหรับส่งกลับเป็น JSON
         $data = [
             'gender_count' => [
-                'male' => $gender_count->male_students ?? '0',
-                'female' => $gender_count->female_students ?? '0'
+                'male' => $gender_count->male ?? '0',
+                'female' => $gender_count->female ?? '0'
             ],
             'students_by_class' => [
                 'labels' => $class_labels,
@@ -391,8 +438,8 @@ class ConAdminStudents extends BaseController
         $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getRow();
         $data['title'] = "จัดการข้อมูลนักเรียน LEC";
         $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
-        echo view('admin/layout/main', $data);
-        echo view('admin/Academic/AdminStudents/AdminStudentsDataLEC');
+       
+        echo view('admin/Academic/AdminStudents/AdminStudentsDataLEC', $data);
         
 
     }

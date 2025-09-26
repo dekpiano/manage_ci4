@@ -42,8 +42,8 @@ class ModAdminStudents extends Model
     public function get_gender_count()
     {
         return $this->db->table('tb_students')
-                        ->select('SUM(CASE WHEN StudentPrefix = "เด็กชาย" OR StudentPrefix = "นาย" THEN 1 ELSE 0 END) as male_students')
-                        ->select('SUM(CASE WHEN StudentPrefix = "เด็กหญิง" OR StudentPrefix = "นางสาว" THEN 1 ELSE 0 END) as female_students')
+                        ->select('SUM(CASE WHEN StudentPrefix = "เด็กชาย" OR StudentPrefix = "นาย" THEN 1 ELSE 0 END) as male')
+                        ->select('SUM(CASE WHEN StudentPrefix = "เด็กหญิง" OR StudentPrefix = "นางสาว" THEN 1 ELSE 0 END) as female')
                         ->where('StudentStatus', '1/ปกติ')
                         ->get()->getRow();
     }
@@ -63,7 +63,7 @@ class ModAdminStudents extends Model
     public function get_recent_students($limit)
     {
         return $this->db->table('tb_students')
-                        ->select('StudentID, StudentPrefix, StudentFirstName, StudentLastName, StudentClass')
+                        ->select('StudentID, StudentCode, StudentPrefix, StudentFirstName, StudentLastName, StudentClass, StudentStatus,CONCAT(StudentPrefix, StudentFirstName, " ", StudentLastName) AS Fullname')
                         ->where('StudentStatus', '1/ปกติ')
                         ->orderBy('StudentID', 'DESC') // Assuming StudentID indicates creation order
                         ->limit($limit)

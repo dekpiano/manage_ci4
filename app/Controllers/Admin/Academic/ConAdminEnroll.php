@@ -57,8 +57,32 @@ class ConAdminEnroll extends BaseController
         $data['GroupYear'] = $this->db->table('tb_subjects')
                                     ->select('SubjectYear')
                                     ->groupBy('SubjectYear')
-                                    ->orderBy('SubjectYear', 'ASC')
                                     ->get()->getResult();
+
+        // Sort the GroupYear array in PHP
+        usort($data['GroupYear'], function($a, $b) {
+            $subjectYearA = $a->SubjectYear ?? '';
+            $subjectYearB = $b->SubjectYear ?? '';
+
+            // Handle empty SubjectYear values
+            if (empty($subjectYearA) && empty($subjectYearB)) return 0;
+            if (empty($subjectYearA)) return 1; // Empty comes last
+            if (empty($subjectYearB)) return -1; // Empty comes last
+
+            $partsA = explode('/', $subjectYearA);
+            $partsB = explode('/', $subjectYearB);
+
+            $yearA = (count($partsA) > 1) ? (int)$partsA[1] : (int)$partsA[0];
+            $termA = (count($partsA) > 1) ? (int)$partsA[0] : 0; // Assume term 0 or 1 if only year is present
+
+            $yearB = (count($partsB) > 1) ? (int)$partsB[1] : (int)$partsB[0];
+            $termB = (count($partsB) > 1) ? (int)$partsB[0] : 0; // Assume term 0 or 1 if only year is present
+
+            if ($yearA == $yearB) {
+                return $termA <=> $termB; // Sort by term if years are equal
+            }
+            return $yearA <=> $yearB; // Sort by year
+        });
 
         echo view('admin/Academic/AdminEnroll/AdminEnrollMain', $data);
         
@@ -219,6 +243,7 @@ class ConAdminEnroll extends BaseController
             return $this->response->setJSON(['status' => 'error', 'message' => 'ไม่พบวิชา']);
         }
 
+        $insertedCount = 0;
         foreach ($this->request->getPost('to') as $key => $value) {
             $a = [
                 'StudentID'    => $value,
@@ -227,7 +252,15 @@ class ConAdminEnroll extends BaseController
                 'RegisterClass' => $chk_Subject->SubjectClass,
                 'TeacherID'    => $this->request->getPost('teacherregis'),
             ];
-            echo $this->db->table('tb_register')->insert($a);
+            if ($this->db->table('tb_register')->insert($a)) {
+                $insertedCount++;
+            }
+        }
+
+        if ($insertedCount > 0) {
+            return $this->response->setJSON(['status' => 'success', 'message' => 'เพิ่มข้อมูลสำเร็จ', 'inserted_count' => $insertedCount]);
+        } else {
+            return $this->response->setJSON(['status' => 'info', 'message' => 'ไม่มีข้อมูลถูกเพิ่ม']);
         }
     }
 
@@ -327,6 +360,7 @@ class ConAdminEnroll extends BaseController
             return $this->response->setJSON(['status' => 'error', 'message' => 'ไม่พบวิชาที่จะลบ']);
         }
 
+        $deletedCount = 0;
         foreach ($this->request->getPost('to') as $key => $value) {
             $a = [
                 'StudentID'    => $value,
@@ -336,48 +370,62 @@ class ConAdminEnroll extends BaseController
                 'TeacherID'    => $this->request->getPost('teacherregis'),
             ];
             $this->db->table('tb_register')->where($a)->delete();
-            echo $this->db->affectedRows(); // Assuming affectedRows() is what was intended by echo
+            $deletedCount += $this->db->affectedRows();
+        }
+
+        if ($deletedCount > 0) {
+            return $this->response->setJSON(['status' => 'success', 'message' => 'ลบข้อมูลสำเร็จ', 'deleted_count' => $deletedCount]);
+        } else {
+            return $this->response->setJSON(['status' => 'info', 'message' => 'ไม่มีข้อมูลถูกลบ']);
         }
     }
 
     public function AdminEnrollSubject()
     {
-        $CheckYear = $this->db->table('tb_schoolyear')->get()->getResult();
         $data = [];
         $keyYear = $this->request->getPost('keyYear');
 
-        $Register = $this->db->table("tb_register")
-                                ->select("skjacth_academic.tb_register.SubjectID,
-                                        skjacth_academic.tb_subjects.SubjectCode,
-                                        skjacth_academic.tb_subjects.SubjectName,
-                                        skjacth_academic.tb_subjects.FirstGroup,
-                                        skjacth_academic.tb_register.RegisterClass,
-                                        skjacth_academic.tb_register.TeacherID,
-                                        skjacth_academic.tb_subjects.SubjectID,
-                                        skjacth_academic.tb_subjects.SubjectYear,
-                                        skjacth_personnel.tb_personnel.pers_firstname,
-                                        skjacth_personnel.tb_personnel.pers_prefix,
-                                        skjacth_personnel.tb_personnel.pers_lastname")
-                                ->join('tb_subjects', 'tb_subjects.SubjectID = tb_register.SubjectID')
-                                ->join($this->DBPers->database . '.tb_personnel', $this->DBPers->database . '.tb_personnel.pers_id = skjacth_academic.tb_register.TeacherID') // Use the class property for DBPers
-                                ->where('tb_subjects.SubjectYear', $keyYear)
-                                ->where('tb_register.RegisterYear', $keyYear)
-                                ->groupBy('tb_register.SubjectID')
-                                ->groupBy('tb_register.RegisterClass')
-                                ->groupBy('tb_register.TeacherID')
-                                ->get()->getResult();
+        // if (empty($keyYear)) {
+        //     return $this->response->setJSON(['data' => []]); // Return empty data if keyYear is not provided
+        // }
 
-        foreach ($Register as $record) {
-            $data[] = [
-                "SubjectYear"  => $record->SubjectYear,
-                "SubjectCode"  => $record->SubjectCode,
-                "SubjectName"  => $record->SubjectName,
-                "FirstGroup"   => $record->FirstGroup,
-                "SubjectClass" => $record->RegisterClass,
-                "SubjectID"    => $record->SubjectID,
-                "TeacherName"  => $record->pers_prefix . $record->pers_firstname . ' ' . $record->pers_lastname,
-                "TeacherID"    => $record->TeacherID,
-            ];
+        try {
+            $Register = $this->db->table("tb_register")
+                                    ->select("skjacth_academic.tb_register.SubjectID,
+                                            skjacth_academic.tb_subjects.SubjectCode,
+                                            skjacth_academic.tb_subjects.SubjectName,
+                                            skjacth_academic.tb_subjects.FirstGroup,
+                                            skjacth_academic.tb_register.RegisterClass,
+                                            skjacth_academic.tb_register.TeacherID,
+                                            skjacth_academic.tb_subjects.SubjectYear,
+                                            skjacth_personnel.tb_personnel.pers_firstname,
+                                            skjacth_personnel.tb_personnel.pers_prefix,
+                                            skjacth_personnel.tb_personnel.pers_lastname")
+                                    ->join('tb_subjects', 'tb_subjects.SubjectID = tb_register.SubjectID')
+                                    ->join('skjacth_personnel.tb_personnel', "skjacth_personnel.tb_personnel.pers_id = skjacth_academic.tb_register.TeacherID")
+                                    ->where('tb_subjects.SubjectYear', $keyYear)
+                                    ->where('tb_register.RegisterYear', $keyYear)
+                                    ->groupBy('tb_register.SubjectID')
+                                    ->groupBy('tb_register.RegisterClass')
+                                    ->groupBy('tb_register.TeacherID')
+                                    ->get()->getResult();
+
+            foreach ($Register as $record) {
+                $data[] = [
+                    "SubjectYear"  => $record->SubjectYear,
+                    "SubjectCode"  => $record->SubjectCode,
+                    "SubjectName"  => $record->SubjectName,
+                    "FirstGroup"   => $record->FirstGroup,
+                    "SubjectClass" => $record->RegisterClass,
+                    "SubjectID"    => $record->SubjectID,
+                    "TeacherName"  => $record->pers_prefix . $record->pers_firstname . ' ' . $record->pers_lastname,
+                    "TeacherID"    => $record->TeacherID,
+                ];
+            }
+        } catch (\Exception $e) {
+            // Log the error for debugging purposes
+            log_message('error', 'Error in AdminEnrollSubject: ' . $e->getMessage());
+            return $this->response->setStatusCode(500)->setJSON(['status' => 'error', 'message' => 'An internal server error occurred.']);
         }
 
         $output = [

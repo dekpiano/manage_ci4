@@ -75,60 +75,73 @@ class ConAdminExamSchedule extends BaseController
     
     public function insert_exam_schedule()
     {
-        $validationRule = [
-            'exam_filename' => [
-                'label' => 'Exam File',
-                'rules' => 'uploaded[exam_filename]' // Validate upload
-                            . '|mime_in[exam_filename,application/pdf]',
-                'errors' => [
-                    'uploaded' => 'กรุณาเลือกไฟล์ PDF',
-                    'mime_in'  => 'ไฟล์ที่อัปโหลดต้องเป็น PDF เท่านั้น',
-                ],
-            ],
+        ob_start(); // Start output buffering
+        // Validation rules for the data received from the form
+        $rules = [
+            'exam_type'     => 'required',
+            'exam_term'     => 'required',
+            'exam_year'     => 'required',
+            'exam_filename' => 'required',
         ];
 
-        if (! $this->validate($validationRule)) {
-            return $this->response->setJSON(['error' => $this->validator->getErrors()]);
+        if (! $this->validate($rules)) {
+            ob_clean(); // Clean buffer
+            // If validation fails, return errors in the expected JSON format
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => implode('<br>', $this->validator->getErrors())
+            ]);
         }
 
-        $file = $this->request->getFile('exam_filename');
-        
-        if (! $file->isValid()) {
-            return $this->response->setJSON(['error' => $file->getErrorString() . '(' . $file->getError() . ')']);
+        // Generate new exam_id
+        $latest_exam = $this->db->table('tb_exam_schedule')
+                                ->orderBy('exam_id', 'DESC')
+                                ->limit(1)
+                                ->get()->getRow();
+
+        $new_exam_id = 'exam_001'; // Default value
+        if (!empty($latest_exam)) {
+            $num_part = explode("_", $latest_exam->exam_id)[1] ?? 0;
+            $new_exam_id = 'exam_' . sprintf("%03d", $num_part + 1);
         }
 
-        $newName = $file->getRandomName();
-        $uploadPath = 'uploads/academic/exam_schedule/';
-        $file->move(ROOTPATH . 'public/' . $uploadPath, $newName);
+        // Prepare data for insertion
+        $remoteFileName = $this->request->getPost('exam_filename');
 
         $dat_insert = [
-                'exam_id'       => $this->request->getPost('exam_id'),
+                'exam_id'       => $new_exam_id, // Add the newly generated ID
                 'exam_type'     => $this->request->getPost('exam_type'),
                 'exam_term'     => $this->request->getPost('exam_term'),
                 'exam_year'     => $this->request->getPost('exam_year'),
-                'exam_filename' => $newName,
+                'exam_filename' => $remoteFileName, // Use the filename from the remote server
                 'exam_create'   => date('Y-m-d H:i:s'),
                 'exam_user'     => session()->get('login_id'),
             ];
-        if($this->modAdminExamSchedule->exam_schedule_insert($dat_insert)){
-            return $this->response->setJSON(['success' => 1]);
-        } else {
-            return $this->response->setJSON(['error' => 'ไม่สามารถบันทึกข้อมูลได้']);
-        }
+
+        // Insert data into the database
+        $result = $this->modAdminExamSchedule->exam_schedule_insert($dat_insert);
+                    ob_clean(); // Clean buffer
+            // Error response
+            return $this->response->setJSON([
+                'success' => true,
+                'message' => $result 
+            ]);
+        
     }
 
-    public function delete_exam_schedule($data,$img)
-    {   
-        if (!empty($img) && file_exists(FCPATH."uploads/academic/exam_schedule/".$img)) {
-            unlink(FCPATH."uploads/academic/exam_schedule/".$img);
+    public function delete_exam_schedule($id)
+    {
+        // The remote file is deleted by the client-side script before calling this.
+        // This function now only needs to delete the database record.
+
+        if (empty($id)) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Missing ID.'])->setStatusCode(400);
         }
-        
-        if($this->modAdminExamSchedule->exam_schedule_delete($data)){
-            session()->setFlashdata(['alert'=> 'success','messge' => 'ลบข้อมูลสำเร็จ']);
-            return redirect()->to(base_url('Admin/ExamSchedule'));
+
+        if($this->modAdminExamSchedule->exam_schedule_delete($id)){
+            return $this->response->setJSON(['success' => true]);
         } else {
-            session()->setFlashdata(['alert'=> 'error','messge' => 'ไม่สามารถลบข้อมูลได้']);
-            return redirect()->to(base_url('Admin/ExamSchedule'));
+            return $this->response->setJSON(['success' => false, 'message' => 'Could not delete the record from the database.']);
         }
     }
 }
