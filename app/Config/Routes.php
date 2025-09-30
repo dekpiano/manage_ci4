@@ -62,6 +62,9 @@ $routes->get('Admin/Acade/Registration/Students/Data', [ConAdminStudents::class,
 $routes->get('Admin/Acade/Registration/Students/(:segment)', [ConAdminStudents::class, 'AdminStudentsNormal']);
 $routes->post('Admin/Acade/Registration/StudentsUpdate', [ConAdminStudents::class, 'AdminStudentsUpdate']);
 
+$routes->get('Admin/Academic/ConAdminStudents/get_student_details/(:num)', [ConAdminStudents::class, 'get_student_details/$1']);
+$routes->post('Admin/Academic/ConAdminStudents/update_student_details', [ConAdminStudents::class, 'update_student_details']);
+
 $routes->get('Admin/Acade/Registration/ExtraSubject', [ConAdminExtraSubject::class, 'index']);
 $routes->get('Admin/Acade/Registration/SettingSystem', [ConAdminExtraSubject::class, 'SystemMainExtraSubject']);
 $routes->get('Admin/Acade/Registration/RoomOnline', [ConAdminRoomOnline::class, 'RoomOnlineMain']);

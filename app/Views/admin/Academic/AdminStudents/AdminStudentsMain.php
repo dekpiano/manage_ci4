@@ -85,19 +85,7 @@
 
         <!-- ส่วนที่ 1: สรุปข้อมูลภาพรวม (Key Metrics) -->
         <div class="row g-4 mb-4">
-            <div class="col-6 col-lg-3">
-                <div class="card card-stat shadow-sm h-100 all-student-card">
-                    <div class="card-body p-3 p-lg-4">
-                        <div class="icon-holder mb-2">
-                            <i class="bi bi-people-fill"></i>
-                        </div>
-                        <h4 class="stats-type mb-1">นักเรียนทั้งหมด</h4>
-                        <div class="stats-figure"><?=$CountAllStu->stuall?></div>
-                        <div class="stats-meta">คน</div>
-                    </div>
-                    <a class="card-link-mask" href="<?=base_url('Admin/Acade/Registration/Students/studying')?>"></a>
-                </div>
-            </div>
+            
             <div class="col-6 col-lg-3">
                 <div class="card card-stat shadow-sm h-100 normal-student-card">
                     <div class="card-body p-3 p-lg-4">
@@ -135,6 +123,19 @@
                         <div class="stats-meta text-warning">คน</div>
                     </div>
                     <a class="card-link-mask" href="<?=base_url('Admin/Acade/Registration/Students/dismissed')?>"></a>
+                </div>
+            </div>
+            <div class="col-6 col-lg-3">
+                <div class="card card-stat shadow-sm h-100 all-student-card">
+                    <div class="card-body p-3 p-lg-4">
+                        <div class="icon-holder mb-2">
+                            <i class="bi bi-people-fill"></i>
+                        </div>
+                        <h4 class="stats-type mb-1">นักเรียนทั้งหมด</h4>
+                        <div class="stats-figure"><?=$CountAllStu->stuall?></div>
+                        <div class="stats-meta">คน</div>
+                    </div>
+                    <a class="card-link-mask" href="<?=base_url('Admin/Acade/Registration/Students/studying')?>"></a>
                 </div>
             </div>
         </div>

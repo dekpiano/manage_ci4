@@ -80,7 +80,30 @@ class ModAdminStudents extends Model
     // This method handles updates for tb_students, other table updates will be in the controller
     public function update_student_data($student_id, $data_main)
     {
-        return $this->where('StudentID', $student_id)->update($data_main);
+        // Get the current record from the database
+        $current_data = $this->find($student_id);
+
+        if (empty($current_data)) {
+            // Student not found, return false to indicate failure
+            return false;
+        }
+
+        // Compare incoming data with current data to find actual changes
+        $changes = [];
+        foreach ($data_main as $key => $value) {
+            // Only include fields that are allowed and have actually changed
+            if (in_array($key, $this->allowedFields) && isset($current_data->$key) && $current_data->$key !== $value) {
+                $changes[$key] = $value;
+            }
+        }
+
+        if (empty($changes)) {
+            // No actual changes detected, so no need to update. Consider it a success.
+            return true;
+        }
+
+        // Only update the fields that have actually changed
+        return $this->where('StudentID', $student_id)->update($changes);
     }
 
 }

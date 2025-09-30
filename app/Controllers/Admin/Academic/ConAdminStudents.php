@@ -157,8 +157,15 @@ class ConAdminStudents extends BaseController
                             CONCAT(StudentPrefix, StudentFirstName, " ", StudentLastName) AS Fullname,
                             StudentStatus,
                             StudentBehavior,
-                            StudentStudyLine');
+                            StudentStudyLine,
+                            StudentSex');
             $builder->where($Keyword); 
+
+            // Filter by class
+            $classFilter = $this->request->getPost('classFilter');
+            if (!empty($classFilter)) {
+                $builder->where('StudentClass', $classFilter);
+            }
 
             // DataTables parameters
             $draw = $this->request->getPost('draw');
@@ -222,7 +229,8 @@ class ConAdminStudents extends BaseController
                     "StudentNumber" => $record->StudentNumber,
                     "StudentStudyLine" => $record->StudentStudyLine,
                     "StudentStatus" => $record->StudentStatus,
-                    "StudentBehavior" => $record->StudentBehavior
+                    "StudentBehavior" => $record->StudentBehavior,
+                    "StudentSex" => $record->StudentSex
                 );
 
             }
@@ -448,29 +456,49 @@ class ConAdminStudents extends BaseController
 
     public function get_student_details($student_id)
     {
-        $this->response->setHeader('Content-Type', 'application/json');
-        // The `classroom` library is not defined in CI4, assuming it's a custom helper or will be migrated separately
-        // For now, returning empty arrays. If it's crucial, a CI4 equivalent needs to be created.
-        // $this->load->library('classroom');
+        // Rewritten to use a direct JOIN as per user request.
+        // This query joins the academic and personnel student tables using an INNER JOIN.
+        // Note: This assumes the default DB user has permissions on the 'skjacth_personnel' database.
+        $student_data = $this->db->table('tb_students AS academic')
+            ->join('skjacth_personnel.tb_students AS personnel', "REPLACE(personnel.stu_iden, '-', '') = academic.StudentIDNumber",'left')
+            ->where('academic.StudentID', $student_id)
+            ->get()
+            ->getRow();
 
-        $student_data = $this->modAdminStudents->get_student_by_id($student_id);
-        $class_list = $this->classroom->ListRoom(); // Use the initialized classroom library
-        $study_line_list = $this->classroom->studentStudyLineOptions(); // Use the initialized classroom library
+            //echo '<pre>';print_r($student_data);exit();
+
+        // If the INNER JOIN returns no result, it means no matching record was found in the personnel table.
+        // In this case, we fall back to fetching only the main academic data.
+        if (empty($student_data)) {
+            $student_data = $this->modAdminStudents->get_student_by_id($student_id);
+            // If still no data, then the student doesn't exist at all.
+            if (empty($student_data)) {
+                return '<div class="alert alert-danger">ไม่พบข้อมูลนักเรียน</div>';
+            }
+            // Set a flag to indicate that the linked personnel data was not found.
+            $data['personnel_data_found'] = false;
+        } else {
+            $data['personnel_data_found'] = true;
+        }
+
+        $data['student'] = $student_data;
+        $data['class_list'] = $this->classroom->ListRoom();
+        $data['study_line_list'] = $this->classroom->studentStudyLineOptions();
         
-        if ($student_data && !empty($student_data->StudentDateBirth)) {
-            // Convert Buddhist year to Gregorian year for input type="date"
-            $Ex = explode('/', $student_data->StudentDateBirth);
-            $gregorian_year = (int)$Ex[2] - 543;
-            $student_data->StudentDateBirth = sprintf("%04d-%02d-%02d", $gregorian_year,$Ex[1],$Ex[0]);
+        // Date conversion logic
+        if (!empty($data['student']->StudentDateBirth)) {
+            // Check if the date is in Buddhist format 'DD/MM/YYYY'
+            $Ex = explode('/', $data['student']->StudentDateBirth);
+            if (count($Ex) === 3 && is_numeric($Ex[2]) && (int)$Ex[2] > 1000) {
+                $gregorian_year = (int)$Ex[2] - 543;
+                $data['student']->StudentDateBirth = sprintf("%04d-%02d-%02d", $gregorian_year, $Ex[1], $Ex[0]);
+            } elseif (strpos($data['student']->StudentDateBirth, '-') === false) {
+                // If it's not in the expected Buddhist format and not already YYYY-MM-DD, clear it to avoid errors.
+                 $data['student']->StudentDateBirth = '';
+            }
         }
         
-        $response_data = [
-            'student_data' => $student_data,
-            'class_list'   => $class_list,
-            'study_line_list' => $study_line_list
-        ];
-
-        return $this->response->setJSON($response_data);
+        return view('admin/Academic/AdminStudents/_student_details_form', $data);
     }
 
     public function update_student_details()
@@ -490,7 +518,12 @@ class ConAdminStudents extends BaseController
         if (!empty($student_date_birth_gregorian)) {
             list($gregorian_year, $month, $day) = explode('-', $student_date_birth_gregorian);
             $buddhist_year = (int)$gregorian_year + 543;
-            $student_date_birth_buddhist = sprintf('%04d/%02d/%02d', $day, $month, $buddhist_year); // Corrected format to match original CI3 data 'DD/MM/YYYY' for Buddhist year
+            $student_date_birth_buddhist = sprintf('%02d-%02d-%04d', $day, $month, $buddhist_year); // Corrected format to match original CI3 data 'DD/MM/YYYY' for Buddhist year
+        }
+        if (!empty($student_date_birth_gregorian)) {
+            list($gregorian_year, $month, $day) = explode('-', $student_date_birth_gregorian);
+            $buddhist_year = (int)$gregorian_year + 543;
+            $student_date_birth_buddhist_main = sprintf('%02d/%02d/%04d', $day, $month, $buddhist_year); // Corrected format to match original CI3 data 'DD/MM/YYYY' for Buddhist year
         }
 
         // Data for default tb_students
@@ -500,11 +533,13 @@ class ConAdminStudents extends BaseController
             'StudentLastName' => $this->request->getPost('StudentLastName'),
             'StudentClass' => $this->request->getPost('StudentClass'),
             'StudentNumber' => $this->request->getPost('StudentNumber'),
+            'StudentCode' => $this->request->getPost('StudentCode'),
+            'StudentSex' => $this->request->getPost('StudentSex'),
             'StudentStudyLine' => $this->request->getPost('StudentStudyLine'),
             'StudentStatus' => $this->request->getPost('StudentStatus'),
             'StudentBehavior' => $this->request->getPost('StudentBehavior'),
             'StudentIDNumber' => $this->request->getPost('StudentIDNumber'),
-            'StudentDateBirth' => $student_date_birth_buddhist // Use converted Buddhist year
+            'StudentDateBirth' => $student_date_birth_buddhist_main // Use converted Buddhist year
         ];
 
         // Data for personnel.tb_students
@@ -565,13 +600,36 @@ class ConAdminStudents extends BaseController
             'stu_career_interest' => $this->request->getPost('stu_career_interest')
         ];
 
+        // Sync common data to personnel table based on user request
+        // Assuming column names like 'stu_firstname', 'stu_lastname', etc. exist in personnel.tb_students
+        $common_data_for_personnel = [
+            'stu_prefix'    => $this->request->getPost('StudentPrefix'),
+            'stu_fristName' => $this->request->getPost('StudentFirstName'),
+            'stu_lastName'  => $this->request->getPost('StudentLastName'),
+            'stu_birthDay' => $student_date_birth_buddhist,
+            'stu_iden'      => $this->request->getPost('StudentIDNumber')
+        ];
+        $data_personnel = array_merge($data_personnel, $common_data_for_personnel);
+
+       
         // Remove null values to avoid overwriting existing data with empty strings
         $data_main = array_filter($data_main, function($value) { return $value !== null && $value !== ''; });
         $data_personnel = array_filter($data_personnel, function($value) { return $value !== null && $value !== ''; });
+       
+        // Clean the student ID number to remove dashes for matching with 'stu_iden' in the personnel database
+        $student_id_number_cleaned = str_replace('-', '', $student_id_number);
 
-        $success = $this->modAdminStudents->update_student_data($student_id, $data_main);
+        //    // --- DEBUGGING POST DATA ---
+        // echo '<pre>';
+        // print_r($student_id_number_cleaned);
+        // echo '</pre>';
+        // exit;
+        // // --- END DEBUGGING ---
+
+
         // Assuming personnel table has stu_iden as primary key or unique identifier for update
-        $success_personnel = $this->DBpersonnel->table('tb_students')->where('stu_iden', $student_id_number)->update($data_personnel);
+        $success = $this->modAdminStudents->update_student_data($student_id, $data_main);
+        $success_personnel = $this->DBpersonnel->table('tb_students')->where('REPLACE(stu_iden, "-", "")', $student_id_number_cleaned)->update($data_personnel);
 
         if ($success || $success_personnel) {
             return $this->response->setJSON(['status' => 'success', 'message' => 'บันทึกข้อมูลนักเรียนเรียบร้อยแล้ว']);
