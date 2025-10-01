@@ -4,6 +4,7 @@ namespace App\Controllers\Admin\Academic;
 
 use App\Controllers\BaseController;
 use App\Models\Admin\ModAdminSaveScore;
+use App\Libraries\Classroom;
 use Google\Client;
 use Google\Service\Sheets;
 
@@ -21,6 +22,7 @@ class ConAdminReportResult extends BaseController
         $this->DBSkj = \Config\Database::connect('skj');
         $this->DBadmission = \Config\Database::connect('admission');
         $this->db = \Config\Database::connect(); // Initialize the default database connection
+        $this->classroom = new Classroom();
 
         helper(['url', 'form']);
 
@@ -86,15 +88,12 @@ class ConAdminReportResult extends BaseController
                             ->get()->getResult();
         $data['title'] = "รายงานผลการเรียนรายบุคคล";
 
-        echo view('admin/layout/main',$data);
-        echo view('admin/Academic/AdminReportResults/AdminReportPersonMain');
         
-        
+        echo view('admin/Academic/AdminReportResults/AdminReportPersonMain',$data);
     }
 
     public function AdminReportTeacherSaveScoreMain($Term,$year){   
-        $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getRow();
-        $data['Teacher'] = $this->DBpersonnel->table('tb_personnel')
+    $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();        $data['Teacher'] = $this->DBpersonnel->table('tb_personnel')
         ->select('skjacth_personnel.tb_personnel.pers_prefix,
                   skjacth_personnel.tb_personnel.pers_firstname,
                   skjacth_personnel.tb_personnel.pers_lastname,
@@ -113,14 +112,14 @@ class ConAdminReportResult extends BaseController
         $data['Year'] = $year;       
         $data['title'] = "รายงานผลการบันทึกคะแนนครูผู้สอน";
 
-        echo view('admin/layout/main',$data);
-        echo view('admin/Academic/AdminReportResults/AdminReportTeacherSaveScoreMain');
+        
+        echo view('admin/Academic/AdminReportResults/AdminReportTeacherSaveScoreMain',$data);
         
         
     }
 
     public function AdminReportTeacherSaveScoreCheck($Term,$year,$TeacID){  
-        $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getRow();
+        $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();
         $data['Teacher'] = $this->DBpersonnel->table('tb_personnel')
         ->select('pers_prefix,pers_firstname,pers_lastname')
         ->where('pers_id',$TeacID)
@@ -165,14 +164,14 @@ class ConAdminReportResult extends BaseController
         $data['Term'] = $Term;
         $data['Year'] = $year;
         
-        echo view('admin/layout/main',$data);
-        echo view('admin/Academic/AdminReportResults/AdminReportTeacherSaveScoreCheck');
+        
+        echo view('admin/Academic/AdminReportResults/AdminReportTeacherSaveScoreCheck',$data);
         
 
     }
 
     public function AdminReportRoomMain(){   
-        $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getRow();
+        $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();
         $data['admin'] = $this->DBpersonnel->table('tb_personnel')->select('pers_id,pers_img')->where('pers_id',session()->get('login_id'))->get()->getRow();
         $data['CheckYear'] = $this->db->table('tb_register')->select('RegisterYear')->groupBy('RegisterYear')->get()->getResult();
         $keyroom = $this->request->getPost("keyroom");
@@ -259,8 +258,8 @@ class ConAdminReportResult extends BaseController
         $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
         $data['title'] = "รายงานผลการเรียนรายห้องเรียน";
 
-        echo view('admin/layout/main',$data);
-        echo view('admin/Academic/AdminReportResults/AdminReportRoomMain');
+        
+        echo view('admin/Academic/AdminReportResults/AdminReportRoomMain',$data);
         
         
     }
@@ -268,7 +267,7 @@ class ConAdminReportResult extends BaseController
     public function AdminStudentsScore($IdStudent){      
         $data['title'] = "ผลการเรียนนักเรียนรายบุคคล";
         $data['ExtraSetting'] = $this->db->table('tb_extra_setting')->get()->getRow();
-        $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getRow();
+        $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();
         $data['scoreYear'] = $this->db->table('tb_register')
                                     ->select('tb_register.RegisterClass,
                                             tb_register.RegisterYear,
@@ -303,7 +302,7 @@ class ConAdminReportResult extends BaseController
         $data['stu'] =  $this->db->table('tb_students')
                             ->select('StudentClass, StudentCode, StudentPrefix, StudentFirstName, StudentLastName')
                             ->where('StudentID',$IdStudent)->get()->getRow();
-        $data['CheckOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getRow();
+        $data['CheckOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();
         
         // The getClient method should return a valid Google_Service_Sheets object
         $service = $this->getClient();
@@ -333,15 +332,15 @@ class ConAdminReportResult extends BaseController
        }
        $data['checkRuksun']  = $checkRuksun;
        $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
-        echo view('admin/layout/main',$data);
-        echo view('admin/Academic/AdminReportResults/AdminReportStudentsResult');
+        
+        echo view('admin/Academic/AdminReportResults/AdminReportStudentsResult',$data);
         
               
     }
 
     public function AdminReportSummaryTeacher(){
         $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
-        $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getRow();
+        $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();
         $data['title'] = "รายงานสรุปผลสัมฤทธิ์ทางการเรียน";
         $data['CheckYear'] = $this->db->table('tb_register')->select('RegisterYear')->groupBy('RegisterYear')->get()->getResult();
         $data['lern'] = $this->DBSkj->table('tb_learning')->get()->getResult();
@@ -390,15 +389,15 @@ class ConAdminReportResult extends BaseController
                             ->orderBy('TeacherID,SubjectID,StudentClass')
                             ->get()->getResult();        
 
-        echo view('admin/layout/main',$data);
-        echo view('admin/Academic/AdminReportResults/AdminReportAcademicSummary');
+        
+        echo view('admin/Academic/AdminReportResults/AdminReportAcademicSummary',$data);
         
 
     }
 
     public function AdminReportAcademicSummaryRoyalRoseStandard(){
         $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
-        $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getRow();
+        $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();
         $data['title'] = "รายงานสรุปผลสัมฤทธิ์ทางการเรียนตามมาตรฐานกุหลาบหลวง";
         $data['CheckYear'] = $this->db->table('tb_register')->select('RegisterYear')->groupBy('RegisterYear')->get()->getResult();
         $data['lern'] = $this->DBSkj->table('tb_learning')->get()->getResult();
@@ -431,85 +430,84 @@ class ConAdminReportResult extends BaseController
                             ->groupBy('tb_subjects.FirstGroup,tb_subjects.SubjectCode')
                             ->get()->getResult();        
 
-        echo view('admin/layout/main',$data);
-        echo view('admin/Academic/AdminReportResults/AdminReportAcademicSummaryRoyalRoseStandard');
+        
+        echo view('admin/Academic/AdminReportResults/AdminReportAcademicSummaryRoyalRoseStandard',$data);
         
 
     }
 
     
 
-    public function ReportScoreRoomMain($Term,$year,$Class,$Room){
-        $data['title'] = "รายงานผลการบันทึกคะแนน (รายห้องเรียน)"; 
-        $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getRow();
-        // The `classroom` library is not defined in CI4, assuming it's a custom helper or will be migrated separately
-        // For now, removing the call to it. If it's crucial, a CI4 equivalent needs to be created.
-        // $data['Room'] = $this->classroom->ListRoom(); 
+    public function ReportScoreRoomMain($Term, $year, $Class, $Room)
+    {
+        $data['title'] = "รายงานผลการบันทึกคะแนน (รายห้องเรียน)";
+        $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();
+        $data['Room'] = $this->classroom->ListRoom();
         $data['CheckYear'] = $this->db->table('tb_register')->select('RegisterYear')->groupBy('RegisterYear')->get()->getResult();
-
-        $data['stu'] = $this->db->table('tb_students')
-        ->select('tb_students.StudentID,tb_students.StudentNumber,tb_students.StudentClass,tb_students.StudentCode,tb_students.StudentPrefix,tb_students.StudentFirstName,tb_students.StudentLastName,tb_register.Score100,tb_register.SubjectID')
-        ->join('tb_register','tb_students.StudentID = tb_register.StudentID')
-        ->where('tb_register.RegisterYear',$Term.'/'.$year) 
-        ->where('tb_students.StudentStatus','1/ปกติ')
-        ->where('tb_students.StudentClass','ม.'.$Class.'/'.$Room)        
-        ->groupBy('StudentCode') 
-        ->orderBy('tb_students.StudentNumber','ASC')
-        ->get()->getResult();
-
-        $data['RegisSubject'] = $this->db->table('tb_register')
-        ->select('tb_register.SubjectID,
-        tb_subjects.SubjectName,
-        tb_subjects.SubjectCode')
-        ->join('tb_students','tb_students.StudentID = tb_register.StudentID')
-        ->join('tb_subjects','tb_subjects.SubjectID = tb_register.SubjectID')
-        ->where('tb_register.RegisterYear',$Term.'/'.$year)  
-        ->where('tb_students.StudentClass','ม.'.$Class.'/'.$Room)  
-        ->orderBy('tb_register.SubjectID','ASC')
-        ->groupBy('tb_register.SubjectID') 
-        ->get()->getResult();
-        
-                  
-        $CheckSub = [];
-        foreach ($data['stu'] as $key => $value) {
-            
-            $CheckSub[$key][] = $value->StudentID;
-            $CheckSub[$key][] = $value->StudentNumber;
-            $CheckSub[$key][] = $value->StudentPrefix.$value->StudentFirstName.' '.$value->StudentLastName;
-            $CheckSub[$key][] = $value->StudentCode;
-
-
-            $check_sub = array();
-            $da = $this->CheckData($Term,$year,$Class,$Room,$value->StudentID);
-                foreach ($da as $key22 => $v_da) {
-                    $check_sub[] = $v_da->SubjectID;
-                }
-               // echo '<pre>'; print_r($check_sub);
-
-             foreach ($data['RegisSubject'] as $key1 => $v_Check) {
-               // echo array_search($v_Check->SubjectCode, $check_sub);
-                if(in_array($v_Check->SubjectID, $check_sub)){
-                    $dat = $this->CheckValue($Term,$year,$Class,$Room,$value->StudentID,$v_Check->SubjectID);
-                   
-                    $CheckSub[$key][] = $v_Check->SubjectID.'/'.(!empty($dat[0]->Score100) ? $dat[0]->Score100 : '' );
-                }else{
-                    $CheckSub[$key][] = $v_Check->SubjectID.'/';
-                }
-               
-            }
-           
-        }
-
-        $data['CheckSub'] = $CheckSub;
-       //echo '<pre>'; print_r($data['CheckSub']);  exit();
-        
         $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
         $data['Term'] = $Term;
         $data['Year'] = $year;
-        
-        echo view('admin/layout/main',$data);
-        echo view('admin/Academic/AdminReportResults/AdminReportScoreRoomMain');
-        
+        $data['Class'] = $Class;
+        $data['RoomValue'] = $Room;
+
+        // Check if parameters are valid, if not, show initial page
+        if ($Term === 'All' || $year === 'All' || $Class === 'All' || $Room === 'All') {
+            $data['stu'] = [];
+            $data['RegisSubject'] = [];
+            $data['scoresMap'] = [];
+            echo view('admin/Academic/AdminReportResults/AdminReportScoreRoomMain', $data);
+            return;
+        }
+
+        $currentYear = $Term . '/' . $year;
+        $currentClass = 'ม.' . $Class . '/' . $Room;
+
+        // 1. Get all students for the room
+        $students = $this->db->table('tb_students')
+            ->select('StudentID, StudentNumber, StudentCode, StudentPrefix, StudentFirstName, StudentLastName')
+            ->where('StudentStatus', '1/ปกติ')
+            ->where('StudentClass', $currentClass)
+            ->orderBy('StudentNumber', 'ASC')
+            ->get()
+            ->getResult();
+        $data['stu'] = $students;
+
+        if (empty($students)) {
+            $data['RegisSubject'] = [];
+            $data['scoresMap'] = [];
+            echo view('admin/Academic/AdminReportResults/AdminReportScoreRoomMain', $data);
+            return;
+        }
+
+        // 2. Get all subjects for the room
+        $data['RegisSubject'] = $this->db->table('tb_register')
+            ->select('tb_register.SubjectID, tb_subjects.SubjectName, tb_subjects.SubjectCode')
+            ->join('tb_subjects', 'tb_subjects.SubjectID = tb_register.SubjectID')
+            ->where('tb_register.RegisterYear', $currentYear)
+            ->where('tb_register.RegisterClass','ม.'.$Class)
+            ->groupBy('tb_register.SubjectID')
+            ->orderBy('tb_register.SubjectID', 'ASC')
+            ->get()
+            ->getResult();
+
+        // 3. Get all scores for all students in one query
+        $studentIDs = array_column($students, 'StudentID');
+        $allScores = $this->db->table('tb_register')
+            ->select('StudentID, SubjectID, Score100')
+            ->where('RegisterYear', $currentYear)
+            ->where('RegisterClass', 'ม.'.$Class)
+            ->whereIn('StudentID', $studentIDs)
+            ->get()
+            ->getResult();
+
+        // 4. Process scores into a map for easy lookup in the view
+        $scoresMap = [];
+        foreach ($allScores as $score) {
+            $scoresMap[$score->StudentID][$score->SubjectID] = $score->Score100;
+        }
+        $data['scoresMap'] = $scoresMap;
+
+        echo view('admin/Academic/AdminReportResults/AdminReportScoreRoomMain', $data);
     }
 
     public function CheckData($Term,$year,$Class,$Room,$IDstu){
@@ -548,12 +546,12 @@ class ConAdminReportResult extends BaseController
     public function AdminReportEnrollMain(){
         $data['title'] = "รายงานการรับสมัครนักเรียน"; 
         $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
-        $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getRow();
+        $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();
         $data['SelYear'] = $this->DBadmission->table('tb_recruitstudent')->select('recruit_year')->groupBy('recruit_year')->get()->getResult();
         $data['CheckYearadmission'] = $this->DBadmission->table('tb_openyear')->select('openyear_year')->get()->getRow();
 
-        echo view('admin/layout/main',$data);
-        echo view('admin/Academic/AdminReportResults/AdminReportEnrollMain');
+        
+        echo view('admin/Academic/AdminReportResults/AdminReportEnrollMain',$data);
         
     }
 
@@ -602,7 +600,7 @@ class ConAdminReportResult extends BaseController
     public function AdminReportEnrollDetailStudent($IDStu){
         $data['title'] = "ข้อมูลนักเรียนรายบุคคล"; 
         $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
-        $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getRow();
+        $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();
 
         $CkeckIDEN = $this->DBadmission->table('tb_recruitstudent')->select('recruit_idCard,recruit_regLevel,recruit_img')->where('recruit_id',$IDStu)->get()->getRow();
         $data['recruit_regLevel'] =  !empty($CkeckIDEN) ? $CkeckIDEN->recruit_regLevel : null;
@@ -610,8 +608,8 @@ class ConAdminReportResult extends BaseController
         $data['DataStudent'] = !empty($CkeckIDEN->recruit_idCard) ? $this->DBpersonnel->table('tb_students')->where('stu_iden',$CkeckIDEN->recruit_idCard)->get()->getRow() : null;
 
         //echo '<pre>'; print_r($data['DataStudent']); exit();
-        echo view('admin/layout/main',$data);
-        echo view('admin/Academic/AdminReportResults/AdminReportEnrollDetailStudent');
+        
+        echo view('admin/Academic/AdminReportResults/AdminReportEnrollDetailStudent',$data);
         
     }
 }

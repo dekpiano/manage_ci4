@@ -94,7 +94,7 @@ class ConAdminSaveScore extends BaseController
     }
 
     public function AdminSaveScoreGrade($term,$yaer,$subject){
-        $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getRow();
+        $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();
         $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
         $data['title'] = "กรอกคะแนนผลการเรียน";	
        
@@ -148,7 +148,7 @@ class ConAdminSaveScore extends BaseController
     }
 
     public function insert_score_0W(){ 
-        $checkOnOff = $this->db->table('tb_register_onoff')->select('*')->get()->getRow();
+        $checkOnOff = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();
         $TimeNum = $this->request->getPost('TimeNum');
        
         foreach ($this->request->getPost('StudentID') as $num => $value) {
@@ -176,7 +176,7 @@ class ConAdminSaveScore extends BaseController
             if(!empty($checkScore100) && (!empty($checkScore100->Score100) && $checkScore100->Score100 === $currentScore100)){
                 $data = array('Score100' => $currentScore100,'Grade'  => $Grade,'StudyTime' => (!empty($study_time[$num]) ? $study_time[$num] : 0));
             }else{
-                $data = array('Score100' => $currentScore100,'Grade'  => $Grade,'StudyTime' => (!empty($study_time[$num]) ? $study_time[$num] : 0),'Grade_Type'=> !empty($checkOnOff->onoff_detail) ? $checkOnOff->onoff_detail : '','Grade_UpdateTime'=>date('Y-m-d H:i:s'));
+                $data = array('Score100' => $currentScore100,'Grade'  => $Grade,'StudyTime' => (!empty($study_time[$num]) ? $study_time[$num] : 0),'Grade_Type'=> !empty($checkOnOff[5]->onoff_detail) ? $checkOnOff[5]->onoff_detail : '','Grade_UpdateTime'=>date('Y-m-d H:i:s'));
             }
             
           echo $this->db->table('tb_register')->update($data,$key);

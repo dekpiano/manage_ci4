@@ -31,9 +31,9 @@ thead {
 }
 </style>
 <div class="app-content pt-3 p-md-3 p-lg-4">
-    <div class="container-fluid d-flex justify-content-between">
+    <div class=" d-flex justify-content-between">
         <div class="col-auto justify-content-start">
-            <h1 class="app-page-title"><?= isset($title) ? esc($title) : '' ?></h1>
+            <h2 class="app-page-title"><?= isset($title) ? esc($title) : '' ?></h2>
         </div>
         <div class="col-auto justify-content-md-end">
             <div class="page-utilities">
@@ -60,7 +60,8 @@ thead {
 
                     <div class="col-auto">
                         <form action="<?= site_url('Admin/Acade/Evaluate/ReportScoreRoomMain/1/2565') ?>"
-                            method="post" class="d-flex align-items-center">
+                            method="post" class="d-flex align-items-center"
+                            data-base-url="<?= site_url('Admin/Acade/Evaluate/ReportScoreRoomMain') ?>">
                             <!-- <label for="">ระดับชั้น</label> -->
                             <select class="form-select w-auto ms-2" name="SelectRoomReportScore"
                                 id="SelectRoomReportScore">
@@ -83,8 +84,8 @@ thead {
     <!--//container-->
     </section>
     <section class="we-offer-area">
-        <?php if(isset($CheckSub) && $CheckSub): ?>
-        <div class="container-fluid">
+        <?php if(isset($stu) && !empty($stu)): ?>
+        <div class="">
 
             <div class="card">
                 <div class="card-body">
@@ -115,38 +116,32 @@ thead {
                                 </tr>
                             </thead>
                             <tbody>
-                                <?php                                    
-                                    foreach ($CheckSub as $key => $v_stu) :
-                                        //echo '<pre>'; print_r($v_stu);
-                                    ?>
-
+                                <?php foreach ($stu as $student) : ?>
                                     <tr>
-
-                                        <td class="text-center "> <?= array_key_exists(1, $v_stu) ? esc($v_stu[1]) : '' ?></td>
-                                        <td class="text-center "><?= array_key_exists(3, $v_stu) ? esc($v_stu[3]) : '' ?></td>
-                                        <td class="text-nowrap "><?= array_key_exists(2, $v_stu) ? esc($v_stu[2]) : '' ?></td>
-                                        <?php $i = 4;
-                                        
-                                        foreach ($RegisSubject as $key1 => $v_RegisSubject): 
-                                            $sub = explode("/", array_key_exists($i, $v_stu) ? $v_stu[$i] : '');
-                                            //echo '<pre>'; print_r($sub);
-                                            if((isset($v_RegisSubject->SubjectCode) && isset($sub[0]) && $v_RegisSubject->SubjectCode == $sub[0]) || (isset($sub[1]) && $sub[1] != "")):
-                                                $score = explode("|", isset($sub[1]) ? $sub[1] : '');
-                                        ?>
-                                        <td class="text-center"><?php echo array_key_exists(0, $score) ? esc($score[0]) : '';  ?></td>
-                                        <td class="text-center"><?php echo array_key_exists(1, $score) ? esc($score[1]) : '';  ?></td>
-                                        <td class="text-center"><?php echo array_key_exists(2, $score) ? esc($score[2]) : '';  ?></td>
-                                        <td class="text-center"><?php echo array_key_exists(3, $score) ? esc($score[3]) : '';  ?></td>
-                                        <?php else : ?>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <?php endif; ?>
-                                        <?php $i++; endforeach; ?>
+                                        <td class="text-center "><?= esc($student->StudentNumber) ?></td>
+                                        <td class="text-center "><?= esc($student->StudentCode) ?></td>
+                                        <td class="text-nowrap "><?= esc($student->StudentPrefix . $student->StudentFirstName . ' ' . $student->StudentLastName) ?></td>
+                                        <?php foreach ($RegisSubject as $subject) : ?>
+                                            <?php
+                                            // Check if a score exists for this student and subject, and if the score string is not empty.
+                                            if (isset($scoresMap[$student->StudentID][$subject->SubjectID]) && $scoresMap[$student->StudentID][$subject->SubjectID] !== '') {
+                                                $scoreString = $scoresMap[$student->StudentID][$subject->SubjectID];
+                                                $scores = explode("|", $scoreString);
+                                            ?>
+                                                <td class="text-center"><?= esc($scores[0] ?? '') ?></td>
+                                                <td class="text-center"><?= esc($scores[1] ?? '') ?></td>
+                                                <td class="text-center"><?= esc($scores[2] ?? '') ?></td>
+                                                <td class="text-center"><?= esc($scores[3] ?? '') ?></td>
+                                            <?php } else { ?>
+                                                <td></td>
+                                                <td></td>
+                                                <td></td>
+                                                <td></td>
+                                            <?php } ?>
+                                        <?php endforeach; ?>
                                     </tr>
-                                    <?php endforeach; ?>
-                                </tbody>
+                                <?php endforeach; ?>
+                            </tbody>
                             </table>
 
                         </div>
@@ -171,7 +166,32 @@ thead {
         <?php endif;?>
 
 </div>
-</section>
+<?= $this->endSection() ?>
 
-</div>
+<?= $this->section('script') ?>
+<script>
+    $(document).on("change", "#KeyCheckYear, #SelectRoomReportScore", function () {
+        let selectedYear = $('#KeyCheckYear').val();
+        let selectedRoom = $('#SelectRoomReportScore').val();
+
+        if (!selectedYear) {
+            if ($(this).is('#SelectRoomReportScore')) {
+                alert('กรุณาเลือกปีการศึกษาก่อน');
+            }
+            return;
+        }
+
+        if (!selectedRoom) {
+            selectedRoom = 'All/All';
+        }
+        
+        const baseUrl = $('#SelectRoomReportScore').closest('form').data('base-url');
+        if (baseUrl) {
+            $('.loader').show();
+            window.location.href = baseUrl + '/' + selectedYear + '/' + selectedRoom;
+        } else {
+            console.error('Base URL not found on form data attribute.');
+        }
+    });
+</script>
 <?= $this->endSection() ?>

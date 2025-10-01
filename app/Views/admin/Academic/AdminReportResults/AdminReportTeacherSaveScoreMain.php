@@ -15,7 +15,7 @@
             <div class="page-utilities">
                 <div class="row g-2  ">
                     <div class="col-auto">
-                        <form action="#" method="post" class="d-flex align-items-center">
+                        <form action="#" method="post" class="d-flex align-items-center" data-base-url="<?= site_url('Admin/Acade/Evaluate/ReportTeacherSaveScore') ?>">
                             <label for="">เลือกปีการศึกษา</label>
                             <select class="form-select w-auto ms-2" name="CheckYearSaveScore" id="CheckYearSaveScore">
                                 <?php foreach ($CheckYearSaveScore as $key => $value) : ?>
@@ -88,6 +88,18 @@ $('.ShowStudent').DataTable({
         [4, "asc"],
         [1, "asc"]
     ]
+});
+
+$(document).on("change", "#CheckYearSaveScore", function () {
+    let selectedYear = $(this).val();
+    const baseUrl = $(this).closest('form').data('base-url');
+    
+    if (baseUrl && selectedYear) {
+        $('.loader').show();
+        window.location.href = baseUrl + '/' + selectedYear;
+    } else {
+        console.error('Base URL or selected year not found.');
+    }
 });
 </script>
 <?= $this->endSection() ?>

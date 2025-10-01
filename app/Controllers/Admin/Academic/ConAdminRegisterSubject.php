@@ -173,7 +173,6 @@ class ConAdminRegisterSubject extends BaseController
         //$this->update_data_with_foreach(); exit();
        
         $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
-        $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getRow();
         $data['title'] = "วิชาเรียน";	
         $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();
         echo view('admin/layout/main', $data);

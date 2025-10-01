@@ -169,7 +169,7 @@ class ConAdminExtraSubject extends BaseController
      public function ExtraReport() {
         $data['title'] = "รายงาน";
         $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
-        $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getRow();
+        $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();
         $ExtraSetting = $this->db->table('tb_extra_setting')->get()->getRow();
         $data['OnoffSystem'] = $this->db->table('tb_extra_setting')->get()->getRow();
         

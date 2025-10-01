@@ -166,3 +166,19 @@ usort($CheckYear, function($a, $b) {
 </div>
 <!--//app-content-->
 <?= $this->endSection() ?>
+
+<?= $this->section('script') ?>
+<script>
+$("#ReportSummaryRoyalRoseStandard tbody tr").each(function () {
+    let rowTotal = 0;
+    $(this).find(".sum-cell").each(function () {
+        let value = parseInt($(this).text(), 10);
+        if (!isNaN(value)) {
+            rowTotal += value;
+        }
+    });
+
+    $(this).find(".row-total").text(rowTotal); // ใส่ผลรวมไว้ที่คอลัมน์แรก
+});
+</script>
+<?= $this->endSection() ?>

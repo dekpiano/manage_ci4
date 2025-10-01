@@ -443,7 +443,7 @@ class ConAdminStudents extends BaseController
     }
 
     public function AdminStudentsData(){
-        $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getRow();
+        $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();
         $data['title'] = "จัดการข้อมูลนักเรียน LEC";
         $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
        

@@ -5,21 +5,53 @@
 .border-left-primary {
     border-left: .25rem solid #5BC3D5 !important;
 }
+.border-left-success {
+    border-left: .25rem solid #198754 !important;
+}
+.border-left-danger {
+    border-left: .25rem solid #dc3545 !important;
+}
 </style>
 <?php
 $onoff_status = isset($checkOnOff[6]) && isset($checkOnOff[6]->onoff_status) ? $checkOnOff[6]->onoff_status : 'off';
 $onoff_detail = isset($checkOnOff[6]) && isset($checkOnOff[6]->onoff_detail) ? $checkOnOff[6]->onoff_detail : '';
+$onoff_year = isset($checkOnOff[6]) && isset($checkOnOff[6]->onoff_year) ? $checkOnOff[6]->onoff_year : '-';
 ?>
 <div class="content pt-3 p-md-3 p-lg-4">
     <div class="container-xl">
-        <h2 class="heading mb-3"><?= esc($title);?></h2>
+        <div class="row justify-content-between align-items-center mb-3">
+            <div class="col-auto">
+                <h2 class="heading mb-0"><?= esc($title);?></h2>
+            </div>
+            <div class="col-auto">
+                <div class="card border-left-<?= $onoff_status == 'on' ? 'success' : 'danger' ?> shadow-sm">
+                    <div class="card-body py-2 px-3">
+                        <div class="row g-0 align-items-center">
+                            <div class="col-auto pe-2">
+                                <?php if ($onoff_status == 'on'): ?>
+                                <i class="bi bi-check-circle-fill text-success" style="font-size: 1.5rem;"></i>
+                                <?php else: ?>
+                                <i class="bi bi-x-circle-fill text-danger" style="font-size: 1.5rem;"></i>
+                                <?php endif; ?>
+                            </div>
+                            <div class="col">
+                                <div class="fw-bold text-<?= $onoff_status == 'on' ? 'success' : 'danger' ?> text-uppercase" style="font-size: .7rem;">
+                                    สถานะ</div>
+                                <div class="fw-bold" style="font-size: .9rem;">
+                                    <?= $onoff_status == 'on' ? 'เปิด' : 'ปิด' ?> (<?= esc($onoff_detail) ?>) | ปี: <?= esc($onoff_year) ?>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
         <nav aria-label="breadcrumb" class="mb-4">
             <ol class="breadcrumb">
                 <li class="breadcrumb-item"><a href="<?=base_url('Admin/Home');?>">หน้าหลัก</a></li>
                 <li class="breadcrumb-item active" aria-current="page"><?= esc($title);?></li>
             </ol>
         </nav>
-
         <div class="card mb-4">
             <div class="card-header">
                 <h5 class="card-title mb-0">ตั้งค่าระบบ เรียนซ้ำ</h5>
@@ -29,7 +61,7 @@ $onoff_detail = isset($checkOnOff[6]) && isset($checkOnOff[6]->onoff_detail) ? $
                     <div class="col-md-4">
                         <label for="CheckOnoffRepeat" class="form-label">สถานะ:</label>
                         <select name="CheckOnoffRepeat" id="CheckOnoffRepeat"
-                            class="form-select form-select border <?= $onoff_status == "on" ? "border-success text-success" : "border-danger text-danger" ?>">
+                            class="form-select form-select border ">
                             <option <?= $onoff_status == "on" ? "selected" : ""?> value="on"> เปิดบันทึกคะแนนเรียนซ้ำ
                             </option>
                             <option <?= $onoff_status == "off" ? "selected" : ""?> value="off">ปิดบันทึกคะแนนเรียนซ้ำ
@@ -174,6 +206,7 @@ $(document).ready(function() {
                             timer: 1500
                         });
                         console.log('Settings updated:', response);
+                        window.location.reload();
                         // Optionally, redirect or refresh the table data after saving settings
                         // window.location.href = '<?= site_url('Admin/Acade/Evaluate/AcademicRepeat/') ?>' + year + '/' + status + '/' + time;
                     },

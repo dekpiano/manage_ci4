@@ -175,3 +175,44 @@ th {
 
 </div>
 <?= $this->endSection() ?>
+
+<?= $this->section('script') ?>
+<script>
+$('#tblGradeSumRoom').DataTable({
+    "order": [
+        [0, "asc"]
+    ],
+    dom: 'Bfrtip',
+    buttons: [
+        'copy', 'excel', 'pdf', 'print'
+    ]
+});
+
+$('#tblGradeSumRoom tbody tr').each(function () {
+
+    var totalGrade = 0;
+    var totalUnit = 0;
+    var averageGrade = 0;
+    var value = 0;
+
+    $(this).find('.showGrade').each(function () {
+        var valueUnit = parseFloat($(this).attr('data_unit'));
+        var valueGrade = parseFloat($(this).text());
+
+        if (!isNaN(valueGrade)) {
+            if (!isNaN(valueUnit)) {
+                totalUnit += valueUnit;
+            }
+
+
+            value += valueUnit * valueGrade;
+
+        }
+        averageGrade = value / totalUnit;
+
+    });
+    //console.log(averageGrade);
+    $(this).find('.totalGrade').html(parseFloat(String(averageGrade).substring(0, 4)).toFixed(2));
+});
+</script>
+<?= $this->endSection() ?>
