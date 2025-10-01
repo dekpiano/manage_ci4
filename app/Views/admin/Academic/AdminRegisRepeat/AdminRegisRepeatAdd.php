@@ -2,319 +2,272 @@
 
 <?= $this->section('content') ?>
 <style>
-.border-left-primary {
-    border-left: .25rem solid #5BC3D5 !important;
+.table-danger,
+.table-danger>th,
+.table-danger>td {
+    background-color: #f8d7da !important;
 }
 
-.toolbar {
-    float: left;
-}
-
-.dataTables_length {
-    float: left;
+.table-info,
+.table-info>th,
+.table-info>td {
+    background-color: #cff4fc !important;
 }
 </style>
-<div class="app-content pt-3 p-md-3 p-lg-4">
+
+<div class="content pt-3 p-md-3 p-lg-4">
     <div class="container-xl">
 
-            <div class="row g-3 mb-4 align-items-center justify-content-between">
-                <div class="col-auto">
-                    <h1 class="app-page-title mb-0">จัดการข้อมูล<?= isset($title) ? esc($title) : '' ?>
-                        <?= (isset($DataRepeat[0]->SubjectCode) ? esc($DataRepeat[0]->SubjectCode) : '').' '.(isset($DataRepeat[0]->SubjectName) ? esc($DataRepeat[0]->SubjectName) : '') ?></h1>
+        <div class="row g-3 mb-4 align-items-center justify-content-between">
+            <div class="col-auto">
+                <h1 class="page-title mb-0">จัดการข้อมูลลงทะเบียนเรียนซ้ำ</h1>
+                <?php if(isset($DataRepeat) && $DataRepeat) :?>
+                <div class="text-muted">
+                    <?= (isset($DataRepeat[0]->SubjectCode) ? 'รหัสวิชา: ' . esc($DataRepeat[0]->SubjectCode) : '') . ' ' . (isset($DataRepeat[0]->SubjectName) ? 'ชื่อวิชา: ' . esc($DataRepeat[0]->SubjectName) : '') ?>
+                    <?php
+                        $subjectTeacherName = '';
+                        // Assuming DataRepeatTeacher[0]->RepeatTeacher holds the pers_id of the regular teacher for this subject.
+                        // If this is not the correct source, the controller needs to provide a specific variable for this.
+                        if (isset($DataRepeat[0]->SubjectID) && isset($DataRepeatTeacher[0]->RepeatTeacher)) {
+                            $defaultTeacherId = $DataRepeatTeacher[0]->RepeatTeacher;
+                            foreach ($Teacher as $v_Teache) {
+                                if (isset($v_Teache->pers_id) && $v_Teache->pers_id == $defaultTeacherId) {
+                                    $subjectTeacherName = (isset($v_Teache->pers_prefix) ? esc($v_Teache->pers_prefix) : '') .
+                                                          (isset($v_Teache->pers_firstname) ? esc($v_Teache->pers_firstname) : '') . ' ' .
+                                                          (isset($v_Teache->pers_lastname) ? esc($v_Teache->pers_lastname) : '');
+                                    break;
+                                }
+                            }
+                        }
+                        if (!empty($subjectTeacherName)) {
+                            echo ' (ครูผู้สอน: ' . $subjectTeacherName . ')';
+                        }
+                    ?>
                 </div>
+                <?php endif; ?>
             </div>
-            <hr>
-            <?php if(isset($DataRepeat) && $DataRepeat) :?>
-            <section class="we-offer-area">
-                <div class="app-card app-card-orders-table pt-2">
-                    <div class="app-card-body">
-                        <div class="table-responsive  p-3">
-                            <form id="FormRegisRepeatUpdate1" method="post">
-                                <!-- <div class="row justify-content-center mb-4">
-                                    <div class="col-md-6 d-flex align-items-center">
-                                        <div class="w-25">ครูสอน</div>
-                                        <div>
-                                            <select name="RepeatTeacher" id="RepeatTeacher" class="form-select">
-                                                <option value="">เลือกครูสอน...</option>
-                                                <?php foreach ($Teacher as $key => $v_Teache):?>
-                                                <option
-                                                    <?=@$DataRepeatTeacher[0]->RepeatTeacher==$v_Teache->pers_id? "selected" : ""?>
-                                                    value="<?=$v_Teache->pers_id?>">
-                                                    <?=$v_Teache->pers_prefix.$v_Teache->pers_firstname.' '.$v_Teache->pers_lastname?>
-                                                </option>
-                                                <?php endforeach;?>
-                                            </select>
-                                            <br>
-                                            <small>เลือกครูผู้สอนใหม่กรณีที่ไม่ใช่ครูคนเก่า</small>
-                                        </div>
-
-                                    </div>
-                                </div> -->
-                                <hr>
-
-                                <input type="text" name="YearRepeat" value="<?= isset($DataRepeat[0]->RegisterYear) ? esc($DataRepeat[0]->RegisterYear) : '' ?>"
-                                    style="display:none;">
-                                <input type="text" name="SubjectRepeat" value="<?= isset($DataRepeat[0]->SubjectID) ? esc($DataRepeat[0]->SubjectID) : '' ?>"
-                                    style="display:none;">
-                                <table class="table app-table-hover mb-0 text-left" id="">
-                                    <thead>
-                                        <tr class="text-center">
-                                            <th>เลือกที่เรียนซ้ำ</th>
-                                            <th>เรียนปี</th>
-                                            <th>ห้อง</th>
-                                            <th>เลขที่</th>
-                                            <th>รหัสประจำตัว</th>
-                                            <th>ชื่อนักเรียน</th>
-                                            <th>คะแนน</th>
-                                            <th>ผลการเรียน</th>
-                                            <th>สถานะเรียนซ้ำ</th>
-                                            <th>สถานะ นร</th>
-                                            <th>ครูที่สอนเรียนซ้ำ</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php foreach ($DataRepeat as $key => $v_DataRepeat) : ?>
-                                        <tr
-                                            class="<?= (isset($v_DataRepeat->Grade) && ($v_DataRepeat->Grade == "มส" ||  $v_DataRepeat->Grade <= 0)) ? "table-danger" : ""?>">
-                                            <td class="text-center">
-                                                <input type="checkbox" name="SelRepeat[]" id="SelRepeat"
-                                                    data-bs-target=".myModal" value="<?= isset($v_DataRepeat->StudentID) ? esc($v_DataRepeat->StudentID) : '' ?>"
-                                                    class="form-check-input SelRepeat"
-                                                    <?= (isset($v_DataRepeat->Grade_Type) && isset($v_DataRepeat->RepeatStatus) && $v_DataRepeat->Grade_Type != "" && $v_DataRepeat->RepeatStatus == "ไม่ผ่าน") ? "checked" : ""?>>
-                                            </td>
-                                            <td class="text-center"><?= isset($v_DataRepeat->RegisterYear) ? esc($v_DataRepeat->RegisterYear) : '' ?></td>
-                                            <td class="text-center"><?= isset($v_DataRepeat->StudentClass) ? esc($v_DataRepeat->StudentClass) : '' ?></td>
-                                            <td class="text-center"><?= isset($v_DataRepeat->StudentNumber) ? esc($v_DataRepeat->StudentNumber) : '' ?></td>
-                                            <td class="text-center"><?= isset($v_DataRepeat->StudentCode) ? esc($v_DataRepeat->StudentCode) : '' ?></td>
-                                            <td class="text-left">
-                                                <?= (isset($v_DataRepeat->StudentPrefix) ? esc($v_DataRepeat->StudentPrefix) : '').(isset($v_DataRepeat->StudentFirstName) ? esc($v_DataRepeat->StudentFirstName) : '').' '.(isset($v_DataRepeat->StudentLastName) ? esc($v_DataRepeat->StudentLastName) : '') ?>
-                                            </td>
-                                            <td class="text-center">
-                                                <?= isset($v_DataRepeat->Grade) ? esc($v_DataRepeat->Grade) : '' ?></td>
-                                            <td class="text-center">
-                                                <?= (isset($v_DataRepeat->Grade_Type) && $v_DataRepeat->Grade_Type == "") ? "เรียนปกติ" : (isset($v_DataRepeat->Grade_Type) ? esc($v_DataRepeat->Grade_Type) : '').' ('.(isset($v_DataRepeat->RepeatYear) ? esc($v_DataRepeat->RepeatYear) : '').')'?>
-                                            </td>
-                                            <td class="text-center"><?= isset($v_DataRepeat->RepeatStatus) ? esc($v_DataRepeat->RepeatStatus) : '';?>
-                                                <?= (isset($v_DataRepeat->RepeatStatus) && $v_DataRepeat->RepeatStatus == "ผ่าน") ? '('.(isset($v_DataRepeat->RepeatYear) ? esc($v_DataRepeat->RepeatYear) : '').')' : ""?>
-                                            </td>
-                                            <td class="text-center"><?= isset($v_DataRepeat->StudentBehavior) ? esc($v_DataRepeat->StudentBehavior) : '' ;?></td>
-                                            <td><?= isset($v_DataRepeat->RepeatTeacherName) ? esc($v_DataRepeat->RepeatTeacherName) : '' ?></td>
-                                        </tr>
-                                        <?php endforeach; ?>
-                                    </tbody>
-
-                                </table>
-                                <!-- <div class="mt-3 text-center">
-                                    <button class="btn app-btn-primary">บันทึก</button>
-                                </div> -->
-                            </form>
-
-                        </div>
-                        <!--//table-responsive-->
-                    </div>
-                    <!--//app-card-body-->
-                </div>
-
-
-            </section>
-            <?php else :  ?>
-            <div class="app-card shadow-sm mb-4 border-left-decoration">
-                <div class="inner">
-                    <div class="app-card-body p-4">
-                        <div class="row gx-5 gy-3">
-                            <div class="col-12 col-lg-9">
-
-                                <div>
-                                    <h3>ยังไม่มีข้อมูลการลงทะเบียนเรียน</h3>
-                                </div>
-                            </div>
-                            <!--//col-->
-                            <div class="col-12 col-lg-3">
-                                <a class="btn app-btn-primary"
-                                    href="<?= site_url('Admin/Acade/Registration/Repeat') ?>">ย้อนกลับ</a>
-                            </div>
-                            <!--//col-->
-                        </div>
-                        <!--//row-->
-
-                    </div>
-                    <!--//app-card-body-->
-
-                </div>
-                <!--//inner-->
+            <div class="col-auto">
+                <a class="btn btn-secondary" href="<?= site_url('Admin/Acade/Registration/Repeat') ?>">
+                    <i class="bi-arrow-left"></i> ย้อนกลับ
+                </a>
             </div>
-
-            <?php endif; ?>
-
-            <!--//row-->
         </div>
 
-
-
-    </div>
-    <!--//main-wrapper-->
-
-    <!-- โมเดล -->
-    <div class="modal fade myModal" id="myModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="exampleModalLabel">เลือกครูสอน</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <form id="FormRegisRepeatUpdate" method="post">
-                    <div class="modal-body">
-                        <select name="RepeatTeacher" id="RepeatTeacher" class="form-select">
-                            <option value="">เลือกครูสอน...</option>
-                            <?php foreach ($Teacher as $key => $v_Teache):?>
-                            <option <?= (isset($DataRepeatTeacher[0]->RepeatTeacher) && isset($v_Teache->pers_id) && $DataRepeatTeacher[0]->RepeatTeacher == $v_Teache->pers_id) ? "selected" : ""?>
-                                value="<?= isset($v_Teache->pers_id) ? esc($v_Teache->pers_id) : '' ?>">
-                                <?= (isset($v_Teache->pers_prefix) ? esc($v_Teache->pers_prefix) : '').(isset($v_Teache->pers_firstname) ? esc($v_Teache->pers_firstname) : '').' '.(isset($v_Teache->pers_lastname) ? esc($v_Teache->pers_lastname) : '') ?>
-                            </option>
-                            <?php endforeach;?>
+        <?php if(isset($DataRepeat) && $DataRepeat) :?>
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="statusFilter" class="form-label">สถานะ:</label>
+                        <select id="statusFilter" class="form-select">
+                            <option value="ทั้งหมด">ทั้งหมด</option>
+                            <option value="ต้องเรียนซ้ำ" selected>ต้องเรียนซ้ำ</option>
+                            <option value="ลงทะเบียนเรียนซ้ำ">ลงทะเบียนเรียนซ้ำ</option>
+                            <option value="ผ่านการเรียนซ้ำ">ผ่านการเรียนซ้ำ</option>
+                            <option value="เรียนปกติ">เรียนปกติ</option>
                         </select>
                     </div>
-                    <div class="modal-footer">
-                        <input type="text" name="StuID" id="StuID" value="" style="display:none;">
-                        <input type="text" id="YearRepeat" name="YearRepeat" value="<?= isset($DataRepeat[0]->RegisterYear) ? esc($DataRepeat[0]->RegisterYear) : '' ?>"
-                            style="display:none;">
-                        <input type="text" id="SubjectRepeat" name="SubjectRepeat"
-                            value="<?= isset($DataRepeat[0]->SubjectID) ? esc($DataRepeat[0]->SubjectID) : '' ?>" style="display:none;">
-                        
-                        <button type="submit" class="btn btn-primary" id="btnSaveRepeat">บันทึก</button>
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ปิด</button>
+                    <div class="col-md-6">
+                        <label for="classFilter" class="form-label">ห้องเรียน:</label>
+                        <select id="classFilter" class="form-select">
+                            <option value="ทั้งหมด">ทั้งหมด</option>
+                            <?php
+                        $uniqueClasses = [];
+                        foreach ($DataRepeat as $v_DataRepeat) {
+                            if (isset($v_DataRepeat->StudentClass)) {
+                                $uniqueClasses[$v_DataRepeat->StudentClass] = $v_DataRepeat->StudentClass;
+                            }
+                        }
+                        sort($uniqueClasses); // Sort classes numerically/alphabetically
+                        foreach ($uniqueClasses as $class) {
+                            echo '<option value="' . esc($class) . '">' . esc($class) . '</option>';
+                        }
+                    ?>
+                        </select>
                     </div>
-                </form>
+                </div>
             </div>
         </div>
+
+
+
+        <div class="card shadow-sm">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="bi-person-lines-fill"></i> รายชื่อนักเรียน
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0 text-left" id="students-table">
+                        <thead>
+                            <tr class="text-center">
+                                <th style="width: 40px;">เลือกที่เรียนซ้ำ</th>
+                                <th>ห้อง</th>
+                                <th>เลขที่</th>
+                                <th>รหัสประจำตัว</th>
+                                <th>ชื่อนักเรียน</th>
+                                <th>ผลการเรียนเดิม</th>
+                                <th>สถานะ</th>
+                                <th>ครูผู้สอน</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($DataRepeat as $key => $v_DataRepeat) : ?>
+                            <?php
+                                $isRegisteredForRepeat = (isset($v_DataRepeat->RepeatStatus) && $v_DataRepeat->RepeatStatus == "ไม่ผ่าน");
+                                $hasPassedRepeat = (isset($v_DataRepeat->RepeatStatus) && $v_DataRepeat->RepeatStatus == "ผ่าน");
+                                $needsRepeat = (isset($v_DataRepeat->Grade) && ($v_DataRepeat->Grade == "มส" ||  $v_DataRepeat->Grade <= 0));
+
+                                $rowClass = '';
+                                $statusText = 'เรียนปกติ';
+                                $statusClass = 'badge bg-secondary';
+
+                                if ($hasPassedRepeat) {
+                                    $rowClass = 'table-success';
+                                    $statusText = 'ผ่านการเรียนซ้ำ'; // Simplified for data-status
+                                    $statusClass = 'badge bg-success';
+                                } elseif ($isRegisteredForRepeat) {
+                                    $rowClass = 'table-info';
+                                    $statusText = 'ลงทะเบียนเรียนซ้ำ'; // Simplified for data-status
+                                    $statusClass = 'badge bg-info';
+                                } elseif ($needsRepeat) {
+                                    $rowClass = 'table-danger';
+                                    $statusText = 'ต้องเรียนซ้ำ'; // Simplified for data-status
+                                    $statusClass = 'badge bg-danger';
+                                }
+                            ?>
+                            <tr class="<?= $rowClass ?>" data-status="<?= $statusText ?>"
+                                data-class="<?= isset($v_DataRepeat->StudentClass) ? esc($v_DataRepeat->StudentClass) : '' ?>">
+                                <td class="text-center">
+                                    <input type="checkbox" name="SelRepeat[]" data-bs-target=".myModal"
+                                        value="<?= isset($v_DataRepeat->StudentID) ? esc($v_DataRepeat->StudentID) : '' ?>"
+                                        class="form-check-input SelRepeat"
+                                        <?= $isRegisteredForRepeat ? "checked" : "" ?>>
+                                </td>
+                                <td class="text-center">
+                                    <?= isset($v_DataRepeat->StudentClass) ? esc($v_DataRepeat->StudentClass) : '' ?>
+                                </td>
+                                <td class="text-center">
+                                    <?= isset($v_DataRepeat->StudentNumber) ? esc($v_DataRepeat->StudentNumber) : '' ?>
+                                </td>
+                                <td class="text-center">
+                                    <?= isset($v_DataRepeat->StudentCode) ? esc($v_DataRepeat->StudentCode) : '' ?></td>
+                                <td>
+                                    <?= (isset($v_DataRepeat->StudentPrefix) ? esc($v_DataRepeat->StudentPrefix) : '').(isset($v_DataRepeat->StudentFirstName) ? esc($v_DataRepeat->StudentFirstName) : '').' '.(isset($v_DataRepeat->StudentLastName) ? esc($v_DataRepeat->StudentLastName) : '') ?>
+                                </td>
+                                <td class="text-center">
+                                    <?= isset($v_DataRepeat->Grade) ? esc($v_DataRepeat->Grade) : '' ?></td>
+                                <td class="text-center"><span class="<?= $statusClass ?>"><?= $statusText ?></span></td>
+                                <td><?= isset($v_DataRepeat->RepeatTeacherName) ? esc($v_DataRepeat->RepeatTeacherName) : '' ?>
+                                </td>
+                            </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <?php else :  ?>
+        <div class="card shadow-sm text-center border-left-decoration">
+            <div class="card-body p-5">
+                <div class="icon-stack icon-stack-lg bg-primary-soft text-primary mb-4">
+                    <i class="bi-info-circle"></i>
+                </div>
+                <h3>ยังไม่มีข้อมูลการลงทะเบียนเรียน</h3>
+                <p class="text-muted">ไม่พบข้อมูลนักเรียนที่ต้องลงทะเบียนเรียนซ้ำในรายวิชานี้</p>
+                <a class="btn btn-primary" href="<?= site_url('Admin/Acade/Registration/Repeat') ?>">ย้อนกลับ</a>
+            </div>
+        </div>
+        <?php endif; ?>
     </div>
+</div>
+
+<!-- โมเดล -->
+<div class="modal fade myModal" id="myModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">เลือกครูสอน</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="FormRegisRepeatUpdate" method="post">
+                <div class="modal-body">
+                    <select name="RepeatTeacher" id="RepeatTeacher" class="form-select">
+                        <option value="">เลือกครูสอน...</option>
+                        <?php
+                        // Assuming $defaultSubjectTeacherId is provided by the controller
+                        // and holds the pers_id of the teacher who regularly teaches this subject.
+                        // If not, DataRepeatTeacher[0]->RepeatTeacher is used as a fallback/last assigned teacher.
+                        $defaultTeacherToSelect = isset($DataRepeat[0]->TeacherID) ? $DataRepeat[0]->TeacherID : null;
+                        // If a more specific 'regular teacher' ID is passed from the controller, use it here.
+                        // Example: $defaultTeacherToSelect = isset($defaultSubjectTeacherId) ? $defaultSubjectTeacherId : $defaultTeacherToSelect;
+
+                        foreach ($Teacher as $key => $v_Teache):
+                            $isSelected = '';
+                            if (isset($v_Teache->pers_id) && $defaultTeacherToSelect !== null && $defaultTeacherToSelect == $v_Teache->pers_id) {
+                                $isSelected = 'selected';
+                            }
+                        ?>
+                        <option <?= $isSelected ?>
+                            value="<?= isset($v_Teache->pers_id) ? esc($v_Teache->pers_id) : '' ?>">
+                            <?= (isset($v_Teache->pers_prefix) ? esc($v_Teache->pers_prefix) : '').(isset($v_Teache->pers_firstname) ? esc($v_Teache->pers_firstname) : '').' '.(isset($v_Teache->pers_lastname) ? esc($v_Teache->pers_lastname) : '') ?>
+                        </option>
+                        <?php endforeach;?>
+                    </select>
+                </div>
+                <div class="modal-footer">
+                    <input type="text" name="StuID" id="StuID" value="" style="display:none;">
+                    <input type="text" id="YearRepeat" name="YearRepeat"
+                        value="<?= isset($DataRepeat[0]->RegisterYear) ? esc($DataRepeat[0]->RegisterYear) : '' ?>"
+                        style="display:none;">
+                    <input type="text" id="SubjectRepeat" name="SubjectRepeat"
+                        value="<?= isset($DataRepeat[0]->SubjectID) ? esc($DataRepeat[0]->SubjectID) : '' ?>"
+                        style="display:none;">
+
+                    <button type="submit" class="btn btn-primary" id="btnSaveRepeat">บันทึก</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ปิด</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 <?= $this->endSection() ?>
 
 <?= $this->section('script') ?>
 <script>
-// $('#SelectYearRegister').select2({
-//     width: 300
-// });
+var lastCheckedCheckbox = null; // ตัวแปรเก็บ checkbox ล่าสุดที่ถูกติ๊ก
+// เมื่อ checkbox ถูกคลิก
+$(document).on("change", '.SelRepeat', function() {
+    var targetModal = $(this).data('bs-target'); // ได้ค่าจาก data-bs-target (เช่น .myModal)
 
-// $('#teacherregis').select2({
-//     width: 300
-// });
-// $('#subjectregis').select2({
-//     width: 300
-// });
-// $('#Room').select2({
-//     width: 300
-// });
-// $('#RoomEdit').select2({
-//     width: 300
-// });
+    if ($(this).is(':checked')) {
+        $('#StuID').val($(this).val()); // ได้ค่าจาก data-bs-target (เช่น .myModal)
 
-// $('#RepeatTeacher').select2({
+        $(targetModal).modal('show'); // ใช้ jQuery เปิดโมเดล
+        lastCheckedCheckbox = $(this); // เก็บ checkbox ที่ถูกติ๊ก
+    } else {
+        // ถ้า checkbox ไม่ถูกเลือกให้ปิดโมเดล
+        lastCheckedCheckbox = $(this);
+        Swal.fire({
+            title: 'คำถาม?',
+            text: "คุณต้องการถอนเรียนออกจากเรียนซ้ำหรือไม่?",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'ยืนยัน',
+            cancelButtonText: 'ยกเลิก',
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) {
 
-// });
-
-$(document).on("change", "#SelectYearRegister", function() {
-    window.location.href = '../' + $(this).val();
-});
-
-
-$(document).on("change", "#Room", function() {
-    filterByStudyLine($(this).val(),'All');
-});
-
-$(document).on("click", 'input[name="btnradio"]', function() {
-    var selectedStudyLine = $(this).next('label').text(); // ดึงค่าจาก label ที่อยู่ถัดจาก input
-     // ทำให้ปุ่ม checked
-    $('input[name="btnradio"]').prop('checked', false); // ยกเลิก checked ทุกปุ่ม
-    $(this).prop('checked', true); // ตั้ง checked ให้ปุ่มที่เลือก
-    $('label.btn').removeClass('active'); // ลบคลาส active จากทุกปุ่ม
-    $(this).next('label').addClass('active'); // เพิ่มคลาส active ให้ปุ่มที่เลือก
-    
-    filterByStudyLine($('#Room').val(),selectedStudyLine);
-});
-
-function filterByStudyLine(KeyRoom,KeyStudyLines) {
-    $('#multiselect option').remove();
-
-    $.post("<?= site_url('admin/academic/ConAdminRegisRepeat/AdminRegisRepeatSelect') ?>", { KeyRoom: KeyRoom, KeyStudyLines:KeyStudyLines }, function(data, status) {
-        console.log(data);
-        var SplitStudyLines = data[0].StudyLines.split("|");
-
-        var html = `
-        <div class="btn-group" role="group" aria-label="Basic radio toggle button group">
-            <input type="radio" class="btn-check" name="btnradio" id="btnradio99" autocomplete="off" checked>
-            <label class="btn btn-outline-primary" style="border: 1px solid;" for="btnradio99">All</label>
-        `;
-                $.each(SplitStudyLines, function(index, value){
-        html +=  `
-            <input type="radio" class="btn-check" name="btnradio" id="btnradio${index}" autocomplete="off" ${value === KeyStudyLines ?"checked":""}>
-            <label class="btn btn-outline-primary" style="border: 1px solid;" for="btnradio${index}">${value}</label>
-        `;
-                });
-        html +=  `</div>`;
-
-        $('#StudyLines').html(html);
-        
-        $.each(data, function(index, value) {
-            //console.log(value);
-            // trHTML = '<tr><td></td><td>' + value.StudentCode + '</td><td>' + value.StudentPrefix+value.StudentFirstName+' '+value.StudentLastName + '</td></tr>';
-            // trHTML = '<option value="' + value.StudentID + '">' + value.StudentClass + ' ' + value.StudentNumber.padStart(2, '0') + ' ' + value.StudentPrefix + value.StudentFirstName + ' ' + value.StudentLastName + '</option>';
-            // $('#multiselect').append(trHTML);
-        });
-    }, 'json');
-}
-
-$(document).on("change", "#RoomEdit", function() {
-
-    $('#multiselect option').remove();
-
-    $.post("<?= site_url('admin/academic/ConAdminRegisRepeat/AdminRegisRepeatSelect') ?>", { KeyRoom: $(this).val() }, function(data, status) {
-
-        $.each(data, function(index, value) {
-            //console.log(value);
-            // trHTML = '<tr><td></td><td>' + value.StudentCode + '</td><td>' + value.StudentPrefix+value.StudentFirstName+' '+value.StudentLastName + '</td></tr>';
-            // trHTML = '<option value="' + value.StudentID + '">' + value.StudentClass + ' ' + value.StudentNumber.padStart(2, '0') + ' ' + value.StudentPrefix + value.StudentFirstName + ' ' + value.StudentLastName + '</option>';
-            // $('#multiselect').append(trHTML);
-        });
-
-
-    }, 'json');
-
-});
-
-
-    var lastCheckedCheckbox = null; // ตัวแปรเก็บ checkbox ล่าสุดที่ถูกติ๊ก
-    // เมื่อ checkbox ถูกคลิก
-    $('.SelRepeat').change(function() {
-        var targetModal = $(this).data('bs-target'); // ได้ค่าจาก data-bs-target (เช่น .myModal)
-
-        if ($(this).is(':checked')) {
-            $('#StuID').val($(this).val()); // ได้ค่าจาก data-bs-target (เช่น .myModal)
-           
-            $(targetModal).modal('show'); // ใช้ jQuery เปิดโมเดล
-            lastCheckedCheckbox = $(this); // เก็บ checkbox ที่ถูกติ๊ก
-        } else {
-            // ถ้า checkbox ไม่ถูกเลือกให้ปิดโมเดล
-            lastCheckedCheckbox = $(this);
-            Swal.fire({
-                title: 'คำถาม?',
-                text: "คุณต้องการถอนเรียนออกจากเรียนซ้ำหรือไม่?",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonText: 'ยืนยัน',
-                cancelButtonText: 'ยกเลิก',
-                reverseButtons: true
-              }).then((result) => {
-                if (result.isConfirmed) {
-              
-                  $.ajax({
+                $.ajax({
                     url: '<?= site_url('admin/academic/ConAdminRegisRepeat/AdminRegisRepeatAdd') ?>',
                     type: 'post',
                     data: {
-                        DelStuID:$(this).val(),
+                        DelStuID: $(this).val(),
                         YearRepeat: $('#YearRepeat').val(),
                         SubjectRepeat: $('#SubjectRepeat').val(),
-                        DelStatus:"Del"
+                        DelStatus: "Del"
                     },
                     error: function() {
                         Swal.fire({
@@ -332,7 +285,8 @@ $(document).on("change", "#RoomEdit", function() {
                             Swal.fire({
                                 position: 'top-end',
                                 icon: 'success',
-                                title: response.message + ' (' + response.affected_rows + ' แถว)',
+                                title: response.message + ' (' + response
+                                    .affected_rows + ' แถว)',
                                 showConfirmButton: false,
                                 timer: 3000
                             }).then((result) => {
@@ -340,7 +294,7 @@ $(document).on("change", "#RoomEdit", function() {
                                     location.reload(true);
                                 }
                             });
-            
+
                         } else {
                             Swal.fire({
                                 position: 'top-end',
@@ -350,29 +304,29 @@ $(document).on("change", "#RoomEdit", function() {
                                 timer: 3000
                             })
                         }
-            
+
                     }
                 });
-                
-                }else{
-                    lastCheckedCheckbox.prop('checked', true);
-                    lastCheckedCheckbox = null;
-                }
-              });
 
-            $(targetModal).modal('hide'); // ใช้ jQuery ปิดโมเดล
-        }
-    });
+            } else {
+                lastCheckedCheckbox.prop('checked', true);
+                lastCheckedCheckbox = null;
+            }
+        });
 
-     // เมื่อโมเดลถูกปิด (ทั้งจากปุ่มปิดหรือคลิกภายนอก)
-     $('.myModal').on('hidden.bs.modal', function() {
-        // รีเซ็ต checkbox ที่เกี่ยวข้องกับโมเดลนั้นๆ ที่ถูกเลือกเท่านั้น
-        if (lastCheckedCheckbox) {
-            lastCheckedCheckbox.prop('checked', false); // รีเซ็ต checkbox ที่ถูกติ๊ก
-            lastCheckedCheckbox = null; // รีเซ็ตตัวแปรเพื่อไม่ให้เก็บค่าไว้
-        }
-        
-    });
+        $(targetModal).modal('hide'); // ใช้ jQuery ปิดโมเดล
+    }
+});
+
+// เมื่อโมเดลถูกปิด (ทั้งจากปุ่มปิดหรือคลิกภายนอก)
+$('.myModal').on('hidden.bs.modal', function() {
+    // รีเซ็ต checkbox ที่เกี่ยวข้องกับโมเดลนั้นๆ ที่ถูกเลือกเท่านั้น
+    if (lastCheckedCheckbox) {
+        lastCheckedCheckbox.prop('checked', false); // รีเซ็ต checkbox ที่ถูกติ๊ก
+        lastCheckedCheckbox = null; // รีเซ็ตตัวแปรเพื่อไม่ให้เก็บค่าไว้
+    }
+
+});
 
 
 
@@ -395,7 +349,7 @@ $(document).on("submit", "#FormRegisRepeatUpdate", function(e) {
         success: function(response) {
             console.log(response);
             if (response.status === 'success') {
-                 $('#myModal').modal('hide'); // ใช้ jQuery ปิดโมเดล
+                $('#myModal').modal('hide'); // ใช้ jQuery ปิดโมเดล
                 Swal.fire({
                     position: 'top-end',
                     icon: 'success',
@@ -420,6 +374,34 @@ $(document).on("submit", "#FormRegisRepeatUpdate", function(e) {
 
         }
     });
+});
+
+// Filter logic
+function filterStudents() {
+    const selectedStatus = $('#statusFilter').val();
+    const selectedClass = $('#classFilter').val();
+
+    $('#students-table tbody tr').each(function() {
+        const rowStatus = $(this).data('status');
+        const rowClass = $(this).data('class');
+
+        const statusMatch = (selectedStatus === 'ทั้งหมด' || rowStatus === selectedStatus);
+        const classMatch = (selectedClass === 'ทั้งหมด' || rowClass === selectedClass);
+
+        if (statusMatch && classMatch) {
+            $(this).show();
+        } else {
+            $(this).hide();
+        }
+    });
+}
+
+$(document).ready(function() {
+    // Initial filter on page load
+    filterStudents();
+
+    // Attach change event listeners to filters
+    $('#statusFilter, #classFilter').on('change', filterStudents);
 });
 </script>
 <?= $this->endSection() ?>
