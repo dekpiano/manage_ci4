@@ -14,12 +14,12 @@
     float: left;
 }
 </style>
-<div class="app-content pt-3 p-md-3 p-lg-4">
+<div class="content pt-3 p-md-3 p-lg-4">
     <div class="container-xl">
 
             <div class="row g-3 mb-4 align-items-center justify-content-between">
                 <div class="d-flex justify-content-between">
-                    <h1 class="app-page-title mb-0">จัดการข้อมูล<?= isset($title) ? esc($title) : '' ?></h1>
+                    <h1 class="page-title mb-0">จัดการข้อมูล<?= isset($title) ? esc($title) : '' ?></h1>
                     <div>
                     <h4>ปีการศึกษา <?= isset($SchoolYear->schyear_year) ? esc($SchoolYear->schyear_year) : '' ?></h4> 
                     </div>
@@ -28,8 +28,8 @@
             <hr>
 
             <section class="we-offer-area">
-                <div class="app-card app-card-orders-table pt-2">
-                    <div class="app-card-body">
+                <div class="card card-orders-table pt-2">
+                    <div class="card-body">
                         <input type="text" name="schyear_year" id="schyear_year" value="<?= isset($SchoolYear->schyear_year) ? esc($SchoolYear->schyear_year) : '' ?>" style="display:none;">
                         <div class="mt-2 d-flex align-items-center justify-content-center">
                             <label for="">เลือกปีลงทะเบียนเรียนซ้ำ </label>
@@ -41,7 +41,7 @@
                         </div>
 
                         <div class="table-responsive  p-3">
-                            <table class="table app-table-hover mb-0 text-left" id="tbRegisRepeatSubject">
+                            <table class="table table-hover mb-0 text-left" id="tbRegisRepeatSubject">
                                 <thead>
                                     <tr>
                                         <th class="cell">เรียนปี</th>
@@ -59,7 +59,7 @@
                         </div>
                         <!--//table-responsive-->
                     </div>
-                    <!--//app-card-body-->
+                    <!--//card-body-->
                 </div>
 
 
@@ -144,7 +144,7 @@ function TB_RegisRepeatSubject(Year) {
             {
                 data: 'SubjectID',
                 render: function(data, type, row) {
-                    return '<a class="btn-sm app-btn-primary" href="<?= site_url('Repeat/Detail/') ?>' + (row.SubjectYear ? row.SubjectYear : '') + '/' + (row.SubjectCode ? row.SubjectCode : '') + '/' + (row.TeacherID ? row.TeacherID : '') +'">ลงทะเบียนเรียนซ้ำ</a>';
+                    return '<a class="btn-sm app-btn-primary" href="<?= site_url('Admin/Acade/Registration/Repeat/Detail/') ?>' + (row.SubjectYear ? row.SubjectYear : '') + '/' + (row.SubjectID ? row.SubjectID : '') + '/' + (row.TeacherID ? row.TeacherID : '') +'">ลงทะเบียนเรียนซ้ำ</a>';
                 }
             },
             {

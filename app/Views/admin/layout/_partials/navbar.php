@@ -42,8 +42,8 @@
                                                     </div>
                                                 </div>
                                                 <div class="flex-grow-1">
-                                                    <h6 class="mb-0">John Doe</h6>
-                                                    <small class="text-body-secondary">Admin</small>
+                                                    <h6 class="mb-0"><?= session()->get('fullname') ?></h6>
+                                                    <small class="text-body-secondary"><?= session()->get('admin_rloes_status') ?></small>
                                                 </div>
                                             </div>
                                         </a>
@@ -59,6 +59,11 @@
                                         </a>
                                     </li>
 
+                                    <li>
+                                        <a class="dropdown-item" href="<?= base_url('LogoutTeacher') ?>">
+                                            <i class="icon-base bx bx-power-off icon-md me-3"></i><span>Log Out</span>
+                                        </a>
+                                    </li>
                                 </ul>
                             </li>
                             <!--/ User -->

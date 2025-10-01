@@ -195,8 +195,7 @@ class Control_login extends BaseController
 				if($this->Model_login->record_count_teacher1($username, $password) == 1)
 				{
 
-					$result = $this->Model_login->fetch_teacher_login1($username, $password);
-					session()->set(array('login_id' => $result->pers_id,'pers_learning' => $result->pers_learning,'fullname'=> $result->pers_prefix.$result->pers_firstname.' '.$result->pers_lastname,'status'=> $result->academic_status,'img' => $result->pers_img,'groupleade'=>$result->pers_groupleade,'CheckrloesAcademic' => $result->academic_nanetype,'CheckrloesGeneral' => $result->general_nanetype));
+					session()->set(array('login_id' => $result->pers_id,'pers_learning' => $result->pers_learning,'fullname'=> $result->pers_prefix.$result->pers_firstname.' '.$result->pers_lastname,'status'=> $result->academic_status,'img' => $result->pers_img,'groupleade'=>$result->pers_groupleade,'CheckrloesAcademic' => (string)$result->academic_nanetype,'CheckrloesGeneral' => (string)$result->general_nanetype));
 
 					set_cookie('username_cookie',$username,'3600'); 
 					set_cookie('password_cookie',$password,'3600');
@@ -241,7 +240,7 @@ class Control_login extends BaseController
 		session()->remove('user_data');
 		session()->destroy();
 
-		return redirect()->to('welcome');
+		return redirect()->to('/');
     }
 
 	    public function LoginMenager_callback(){
@@ -280,7 +279,7 @@ class Control_login extends BaseController
 					   $this->Model_login->Update_user_data($user_data, $data['email']);
 	
 					   $result = $this->Model_login->fetch_teacher_login($data['email']);
-					   session()->set(array('login_id' => $result->pers_id,'pers_learning' => $result->pers_learning,'fullname'=> $result->pers_prefix.$result->pers_firstname.' '.$result->pers_lastname,'status'=> $result->academic_status,'img' => $result->pers_img,'groupleade'=>$result->pers_groupleade,'CheckrloesAcademic' => $result->academic_nanetype,'CheckrloesGeneral' => $result->general_nanetype));
+					   session()->set(array('login_id' => $result->pers_id,'pers_learning' => $result->pers_learning,'fullname'=> $result->pers_prefix.$result->pers_firstname.' '.$result->pers_lastname,'status'=> $result->academic_status,'img' => $result->pers_img,'groupleade'=>$result->pers_groupleade,'CheckrloesAcademic' => (string)$result->academic_nanetype,'CheckrloesGeneral' => (string)$result->general_nanetype));
 					   
 					}else{
 						session()->remove('access_token');

@@ -96,6 +96,10 @@ $routes->get('Admin/Acade/Evaluate/ReportScoreRoomMain/(:segment)/(:segment)/(:s
 
 
 
+$routes->post('admin/academic/ConAdminRegisRepeat/AdminRegisRepeatAdd', [ConAdminRegisRepeat::class, 'AdminRegisRepeatAdd']);
+
+$routes->post('admin/academic/ConAdminRegisRepeat/AdminRegisRepeatShow', [ConAdminRegisRepeat::class, 'AdminRegisRepeatShow']);
+
 $routes->match(['get', 'post'], 'Admin/Academic/ConAdminStudents/AdminStudentsNormalShow/(:segment)', [ConAdminStudents::class, 'AdminStudentsNormalShow/$1']);
 
 $routes->post('Admin/Academic/ConAdminEnroll/AdminEnrollSelect', [ConAdminEnroll::class, 'AdminEnrollSelect']);

@@ -41,15 +41,15 @@ class ConAdminRegisRepeat extends BaseController
 
         //echo "<pre>"; print_r($data['GroupYear']); exit();
 
-        echo view('admin/layout/main', $data);
-        echo view('admin/Academic/AdminRegisRepeat/AdminRegisRepeatMain.php');
+        
+        return view('admin/Academic/AdminRegisRepeat/AdminRegisRepeatMain', $data);
         
     }
 
     public function AdminRegisRepeatDetail($Term,$Year,$IDSubject,$TechID){
         $data['admin'] = $this->DBPers->table('tb_personnel')->select('pers_id,pers_img')->where('pers_id',session()->get('login_id'))->get()->getRow();
         $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
-        $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getRow();
+        $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();
         $data['title'] = "ลงทะเบียนเรียนซ้ำนักเรียนรายวิชา";
 
         $data['Teacher'] = $this->DBPers->table('tb_personnel')
@@ -87,7 +87,7 @@ class ConAdminRegisRepeat extends BaseController
         ->join($this->DBPers->database . '.tb_personnel AS repeat_teacher', 'repeat_teacher.pers_id = tb_register.RepeatTeacher','LEFT')
         ->where('tb_register.RegisterYear',$Term.'/'.$Year)
         ->where('tb_subjects.SubjectYear',$Term.'/'.$Year)
-        ->where('tb_subjects.SubjectCode',urldecode($IDSubject))
+        ->where('tb_subjects.SubjectID',urldecode($IDSubject))
         ->where('tb_register.TeacherID',$TechID)
         ->orderBy('StudentClass','ASC')
         ->orderBy('StudentNumber','ASC')
@@ -99,7 +99,7 @@ class ConAdminRegisRepeat extends BaseController
         ->join('tb_students', 'tb_students.StudentID = tb_register.StudentID')
         ->where('tb_register.RegisterYear',$Term.'/'.$Year)
         ->where('tb_subjects.SubjectYear',$Term.'/'.$Year)
-        ->where('tb_subjects.SubjectCode',urldecode($IDSubject))
+        ->where('tb_subjects.SubjectID',urldecode($IDSubject))
         ->where('tb_register.RepeatTeacher !=','')
         ->groupBy("RepeatTeacher")
         ->get()->getResult();
@@ -107,14 +107,14 @@ class ConAdminRegisRepeat extends BaseController
 
        // echo '<pre>'; print_r($data['DataRepeatTeacher']); exit();
 
-        echo view('admin/layout/main', $data);
-        echo view('admin/Academic/AdminRegisRepeat/AdminRegisRepeatAdd.php');
+        
+        return view('admin/Academic/AdminRegisRepeat/AdminRegisRepeatAdd', $data);
     }
 
     public function AdminRegisRepeatEdit($codeSub,$TeachID){
         $data['title'] = "แก้ไขรายชื่อการลงทะเบียนเรียน";
         $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
-        $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getRow();
+        $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();
         $CheckYear = $this->db->table('tb_schoolyear')->get()->getRow(); // Use getRow() for single result
         $data['teacher'] = $this->DBPers->table('tb_personnel')
                                         ->select('pers_id,pers_img,pers_prefix,pers_firstname,pers_lastname')
@@ -142,50 +142,60 @@ class ConAdminRegisRepeat extends BaseController
 
         
       
-        echo view('admin/layout/main', $data);
+        
         echo view('admin/Academic/AdminRegisRepeat/AdminRegisRepeatFormEdit.php');
     }
 
     public function AdminRegisRepeatAdd(){
-       
-        $data['title'] = "เพิ่มรายชื่อการลงทะเบียนเรียน";
-        $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
-        $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getRow();
-        $CheckYear = $this->db->table('tb_schoolyear')->get()->getResult();
 
         $CheckRepeat = $this->db->table('tb_register_onoff')->select('onoff_detail,onoff_year')->where('onoff_name','เรียนซ้ำ')->get()->getRow();
              
         $IdStuRepeat = array();
         $CountUpSucceed =0;
-     
-        // $DataDelete = array('Grade_Type' => "",'RepeatStatus'=>'','RepeatYear'=>"",'RepeatTeacher' => "");                    
-        //     $this->db->table('tb_register')->where('SubjectID',$this->request->getPost('SubjectRepeat'));
-        //     $this->db->table('tb_register')->where('RepeatConfirm',"");
-        //    $CountUpSucceed += $this->db->table('tb_register')->update($DataDelete);
 
          if($this->request->getPost('StuID')){
-
-           // foreach ($this->request->getPost('StuID') as $key => $value) {   
-
                $DataUpdateRepeat = array('Grade_Type' => !empty($CheckRepeat->onoff_detail) ? $CheckRepeat->onoff_detail : '','RepeatStatus'=>'ไม่ผ่าน','RepeatYear'=>!empty($CheckRepeat->onoff_year) ? $CheckRepeat->onoff_year : '','RepeatTeacher' => $this->request->getPost('RepeatTeacher'));
-                     $this->db->table('tb_register')->where('RegisterYear',$this->request->getPost('YearRepeat'));
-                     $this->db->table('tb_register')->where('SubjectID',$this->request->getPost('SubjectRepeat'));
-                     $this->db->table('tb_register')->where('StudentID',$this->request->getPost('StuID'));
-                    $CountUpSucceed += $this->db->table('tb_register')->update($DataUpdateRepeat);
-            //}
+
+               $registerYear = $this->request->getPost('YearRepeat');
+               $subjectID = $this->request->getPost('SubjectRepeat');
+               $studentID = $this->request->getPost('StuID');
+
+               $updated = $this->db->table('tb_register')
+                                    ->where('SubjectID',$subjectID)
+                                    ->where('StudentID',$studentID)
+                                    ->where('RegisterYear',$registerYear)
+                                    ->update($DataUpdateRepeat);
+               
+               if ($updated) {
+                   return $this->response->setJSON(['status' => 'success', 'message' => 'เพิ่มนักเรียนเรียนซ้ำสำเร็จ', 'affected_rows' => $this->db->affectedRows()]);
+               } else {
+                   return $this->response->setJSON(['status' => 'error', 'message' => 'ไม่สามารถเพิ่มนักเรียนเรียนซ้ำได้', 'affected_rows' => 0]);
+               }
         }
 
         if($this->request->getPost('DelStatus') == "Del"){
             $DataDelete = array('Grade_Type' => "",'RepeatStatus'=>'','RepeatYear'=>"",'RepeatTeacher' => "");                    
-            $this->db->table('tb_register')->where('SubjectID',$this->request->getPost('SubjectRepeat'));
-            $this->db->table('tb_register')->where('RepeatConfirm',"");
-            $this->db->table('tb_register')->where('StudentID',$this->request->getPost('DelStuID'));
-            $this->db->table('tb_register')->where('RegisterYear',$this->request->getPost('YearRepeat'));
-           $CountUpSucceed += $this->db->table('tb_register')->update($DataDelete);
+            $subjectID = $this->request->getPost('SubjectRepeat');
+            $studentID = $this->request->getPost('DelStuID');
+            $registerYear = $this->request->getPost('YearRepeat');
+
+            log_message('debug', 'AdminRegisRepeatAdd: Delete parameters - RegisterYear: ' . $registerYear . ', SubjectID: ' . $subjectID . ', StudentID: ' . $studentID . ', DataDelete: ' . print_r($DataDelete, true));
+
+             $updated =  $this->db->table('tb_register')
+             ->where('SubjectID',$subjectID)
+             ->where('RepeatConfirm',"")
+             ->where('StudentID',$studentID)
+             ->where('RegisterYear',$registerYear)
+             ->update($DataDelete);
+            
+            if ($updated) {
+                return $this->response->setJSON(['status' => 'success', 'message' => 'ถอนข้อมูลนักเรียนเรียนซ้ำสำเร็จ', 'affected_rows' => $this->db->affectedRows()]);
+            } else {
+                return $this->response->setJSON(['status' => 'error', 'message' => 'ไม่สามารถอนข้อมูลนักเรียนเรียนซ้ำได้', 'affected_rows' => 0]);
+            }
         }
 
-        
-        echo 1;
+        return $this->response->setJSON(['status' => 'info', 'message' => 'ไม่มีการดำเนินการ']);
     }
 
     public function AdminRegisRepeatDel(){

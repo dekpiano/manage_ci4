@@ -325,13 +325,14 @@ $(document).on("change", "#RoomEdit", function() {
                             timer: 3000
                         })
                     },
-                    success: function(data) {
-                        console.log(data);
-                        if (data) {
+                    success: function(response) {
+                        console.log(response);
+                        if (response.status === 'success') {
+                            $(targetModal).modal('hide'); // ใช้ jQuery ปิดโมเดล
                             Swal.fire({
                                 position: 'top-end',
                                 icon: 'success',
-                                title: 'ถอนการลงทะเบียนเรียนซ้ำ สำเร็จ!',
+                                title: response.message + ' (' + response.affected_rows + ' แถว)',
                                 showConfirmButton: false,
                                 timer: 3000
                             }).then((result) => {
@@ -344,7 +345,7 @@ $(document).on("change", "#RoomEdit", function() {
                             Swal.fire({
                                 position: 'top-end',
                                 icon: 'warning',
-                                title: 'คุณไม่ได้เลือกนักเรียนในการลงทะเบียนเรียนซ้ำ!',
+                                title: response.message,
                                 showConfirmButton: false,
                                 timer: 3000
                             })
@@ -391,13 +392,14 @@ $(document).on("submit", "#FormRegisRepeatUpdate", function(e) {
                 timer: 3000
             })
         },
-        success: function(data) {
-            console.log(data);
-            if (data) {
+        success: function(response) {
+            console.log(response);
+            if (response.status === 'success') {
+                 $('#myModal').modal('hide'); // ใช้ jQuery ปิดโมเดล
                 Swal.fire({
                     position: 'top-end',
                     icon: 'success',
-                    title: 'ลงทะเบียนเรียนซ้ำ สำเร็จ!',
+                    title: response.message + ' (' + response.affected_rows + ' แถว)',
                     showConfirmButton: false,
                     timer: 3000
                 }).then((result) => {
@@ -410,7 +412,7 @@ $(document).on("submit", "#FormRegisRepeatUpdate", function(e) {
                 Swal.fire({
                     position: 'top-end',
                     icon: 'warning',
-                    title: 'คุณไม่ได้เลือกนักเรียนในการลงทะเบียนเรียนซ้ำ!',
+                    title: response.message,
                     showConfirmButton: false,
                     timer: 3000
                 })

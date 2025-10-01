@@ -51,7 +51,7 @@
                     </li>
 
                     <?php 
-                    $CheckrloesAcademic = session()->get('CheckrloesAcademic');
+                    $CheckrloesAcademic = session()->get('CheckrloesAcademic') ?? '';
                     $Exp_Checkrloes = explode('|', $CheckrloesAcademic);
                     ?>
 
@@ -109,7 +109,13 @@
                                 </a>
                             </li>
                             <li class="menu-item <?= ($uri->getTotalSegments() >= 4 && $uri->getSegment(4) == 'AcademicRepeat' ? 'active' : '') ?>">
-                                <a href="<?=base_url('Admin/Acade/Evaluate/AcademicRepeat/').(isset($checkOnOff[6]->onoff_year) ? $checkOnOff[6]->onoff_year : '');?>" class="menu-link">
+                                <a href="<?php
+                                    $onoff_year = isset($checkOnOff[6]->onoff_year) ? $checkOnOff[6]->onoff_year : '';
+                                    $parts = explode('/', $onoff_year);
+                                    $term = $parts[0] ?? '';
+                                    $year = $parts[1] ?? '';
+                                    echo base_url('Admin/Acade/Evaluate/AcademicRepeat/' . $term . '/' . $year);
+                                ?>" class="menu-link">
                                     <div data-i18n="จัดการผลการเรียนซ้ำ (มส)">จัดการผลการเรียนซ้ำ (มส)</div>
                                 </a>
                             </li>
