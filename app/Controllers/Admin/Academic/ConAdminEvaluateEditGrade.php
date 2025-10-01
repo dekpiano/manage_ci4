@@ -18,7 +18,15 @@ class ConAdminEvaluateEditGrade extends BaseController
 
         // CI3 session check equivalent
         if (empty(session()->get('fullname'))) {
-            return redirect()->to(base_url('LoginAdmin'));
+            // Check if it's an AJAX request
+            if ($this->request->isAJAX()) {
+                // For AJAX requests, send a 401 Unauthorized status
+                $this->response->setStatusCode(401)->setJSON(['message' => 'Session expired. Please log in again.'])->send();
+                exit(); // Terminate script execution
+            } else {
+                // For regular page requests, redirect
+                return redirect()->to(base_url('LoginAdmin'));
+            }
         }
 
         $check_status_data = $this->db->table('tb_admin_rloes')->where('admin_rloes_userid', session()->get('login_id'))->get()->getRow();
@@ -85,7 +93,7 @@ class ConAdminEvaluateEditGrade extends BaseController
                                     ->groupBy('SubjectCode')
                                     ->get()->getResult();
 
-        echo view('admin/layout/main', $data);
+        
         echo view('admin/Academic/AdminEvaluateEditGrade/AdminEvaluateEditGradeMain', $data);
         
     }
@@ -151,7 +159,7 @@ class ConAdminEvaluateEditGrade extends BaseController
                                     ->where('onoff_id <=', 5)
                                     ->get()->getResult();
 
-        echo view('admin/layout/main', $data);
+        
         echo view('admin/Academic/AdminEvaluateEditGrade/AdminEvaluateEditGrade', $data);
         
     }

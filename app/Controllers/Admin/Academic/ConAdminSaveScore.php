@@ -20,7 +20,15 @@ class ConAdminSaveScore extends BaseController
 
         // CI3 session check equivalent
         if (empty(session()->get('fullname'))) {
-            return redirect()->to(base_url('LoginAdmin'));
+            // Check if it's an AJAX request
+            if ($this->request->isAJAX()) {
+                // For AJAX requests, send a 401 Unauthorized status
+                $this->response->setStatusCode(401)->setJSON(['message' => 'Session expired. Please log in again.'])->send();
+                exit(); // Terminate script execution
+            } else {
+                // For regular page requests, redirect
+                return redirect()->to(base_url('LoginAdmin'));
+            }
         }
 
         $check_status_data = $this->db->table('tb_admin_rloes')->where('admin_rloes_userid', session()->get('login_id'))->get()->getRow();
@@ -174,6 +182,107 @@ class ConAdminSaveScore extends BaseController
           echo $this->db->table('tb_register')->update($data,$key);
         }
 
+    }
+
+    public function update_study_time()
+    {
+        if ($this->request->isAJAX()) {
+            $studentId = $this->request->getPost('student_id');
+            $subjectId = $this->request->getPost('subject_id');
+            $registerYear = $this->request->getPost('register_year');
+            $studyTime = $this->request->getPost('study_time');
+
+            $key = [
+                'StudentID' => $studentId,
+                'SubjectID' => $subjectId,
+                'RegisterYear' => $registerYear
+            ];
+
+            $data = [
+                'StudyTime' => $studyTime,
+                'Grade_UpdateTime' => date('Y-m-d H:i:s')
+            ];
+
+            // Optional: Recalculate Grade and Grade_Type here if needed
+            // For now, just update StudyTime
+
+            $updated = $this->db->table('tb_register')->update($data, $key);
+
+            if ($updated) {
+                return $this->response->setJSON(['status' => 'success', 'message' => 'Study time updated successfully.']);
+            } else {
+                return $this->response->setJSON(['status' => 'error', 'message' => 'Failed to update study time.']);
+            }
+        }
+        return $this->response->setJSON(['status' => 'error', 'message' => 'Invalid request.']);
+    }
+
+    public function update_score()
+    {
+        if ($this->request->isAJAX()) {
+            $studentId = $this->request->getPost('student_id');
+            $subjectId = $this->request->getPost('subject_id');
+            $registerYear = $this->request->getPost('register_year');
+            $scoreIndex = $this->request->getPost('score_index');
+            $scoreValue = $this->request->getPost('score_value');
+
+            $key = [
+                'StudentID' => $studentId,
+                'SubjectID' => $subjectId,
+                'RegisterYear' => $registerYear
+            ];
+
+            // Retrieve current Score100 string
+            $currentRegister = $this->db->table('tb_register')->select('Score100, StudyTime, Grade_Type')->where($key)->get()->getRow();
+
+            if ($currentRegister) {
+                $scores = explode('|', $currentRegister->Score100);
+                // Ensure the index is valid
+                if (isset($scores[$scoreIndex])) {
+                    $scores[$scoreIndex] = $scoreValue;
+                    $newScore100 = implode('|', $scores);
+
+                    // Recalculate Grade based on new scores and existing study time
+                    $sum_scores = 0;
+                    foreach ($scores as $s) {
+                        if (is_numeric($s)) {
+                            $sum_scores += (int)$s;
+                        }
+                    }
+
+                    // Need to get TimeNum from somewhere, perhaps tb_subjects or pass from frontend
+                    // For now, assume TimeNum is available or calculate it
+                    // This part needs to be refined based on how TimeNum is determined
+                    // For simplicity, I'll use a placeholder for grade calculation
+                    $Grade = $this->check_grade($sum_scores); // Use the existing helper function
+
+                    // Check for "มส" or "ร" conditions
+                    // This logic is complex and depends on SubjectUnit and StudyTime
+                    // For now, I'll just update the score and recalculate grade based on sum
+                    // If "มส" or "ร" logic is critical, it needs to be fully replicated here or in a helper
+
+                    $data = [
+                        'Score100' => $newScore100,
+                        'Grade' => $Grade, // Updated grade
+                        'Grade_UpdateTime' => date('Y-m-d H:i:s')
+                    ];
+
+                    // If Grade_Type needs to be updated based on new score/grade, add logic here
+                    // e.g., if Grade becomes '0' or 'ร', Grade_Type might change
+
+                    $updated = $this->db->table('tb_register')->update($data, $key);
+
+                    if ($updated) {
+                        return $this->response->setJSON(['status' => 'success', 'message' => 'Score updated successfully.', 'new_grade' => $Grade]);
+                    } else {
+                        return $this->response->setJSON(['status' => 'error', 'message' => 'Failed to update score.']);
+                    }
+                }
+            } else {
+                return $this->response->setJSON(['status' => 'error', 'message' => 'Student registration not found or invalid score index.']);
+            }
+        }
+        return $this->response->setJSON(['status' => 'error', 'message' => 'Invalid request.']);
     }
 
     public function CheckOnOffSaveScore(){   

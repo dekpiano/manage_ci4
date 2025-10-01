@@ -116,7 +116,7 @@
                                     $year = $parts[1] ?? '';
                                     echo base_url('Admin/Acade/Evaluate/AcademicRepeat/' . $term . '/' . $year);
                                 ?>" class="menu-link">
-                                    <div data-i18n="จัดการผลการเรียนซ้ำ (มส)">จัดการผลการเรียนซ้ำ (มส)</div>
+                                    <div data-i18n="ตั้งค่าเรียนซ้ำ (มส)">ตั้งค่าเรียนซ้ำ (มส)</div>
                                 </a>
                             </li>
                             <li class="menu-item <?= ($uri->getTotalSegments() >= 4 && $uri->getSegment(4) == 'ReportScoreRoomMain' && $uri->getTotalSegments() >= 3 && $uri->getSegment(3) == 'Evaluate' ? 'active' : '') ?>">

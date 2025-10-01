@@ -61,7 +61,7 @@
 
                                     <li>
                                         <a class="dropdown-item" href="<?= base_url('LogoutTeacher') ?>">
-                                            <i class="icon-base bx bx-power-off icon-md me-3"></i><span>Log Out</span>
+                                            <i class="icon-base bx bx-power-off icon-md me-3"></i><span>ออกจากระบบ</span>
                                         </a>
                                     </li>
                                 </ul>

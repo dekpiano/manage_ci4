@@ -6,33 +6,38 @@
     border-left: .25rem solid #5BC3D5 !important;
 }
 </style>
-<div class="app-content pt-3 p-md-3 p-lg-4">
-    <div class="container-xl d-flex align-items-center justify-content-between">
-        <h1 class="app-page-title">จัดการข้อมูล<?= isset($title) ? esc($title) : '' ?></h1>
-        <div class="d-flex  align-items-center mt-2">
-                <div>
-                    ปีการศึกษา
+<div class="content pt-3 p-md-3 p-lg-4">
+    <div class="container-xl">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+            <h1 class="page-title mb-0">จัดการข้อมูล<?= isset($title) ? esc($title) : '' ?></h1>
+            <div class="d-flex align-items-center">
+                <div class="me-2">
+                    ปีการศึกษา:
                 </div>
-                <div class="ms-3">
+                <div>
                     <select name="onoff_year" id="onoff_year" class="form-select form-select-sm">
                         <?php foreach ($CheckYearRegis as $key => $value) : ?>
                         <?php // NOTE: This logic should be in the controller
                         $currentYear = (service('request')->uri->getSegment(5) ?? '').'/'.(service('request')->uri->getSegment(6) ?? '');
                         ?>
                         <option <?= isset($value->RegisterYear) && $currentYear == $value->RegisterYear ?"selected":"" ?>
-                            value="<?= isset($value->RegisterYear) ? esc($value->RegisterYear) : '' ?>"><?= isset($value->RegisterYear) ? esc($value->RegisterYear) : '' ?></option>  
-                            <?php endforeach; ?>                          
+                            value="<?= isset($value->RegisterYear) ? esc($value->RegisterYear) : '' ?>"><?= isset($value->RegisterYear) ? esc($value->RegisterYear) : '' ?></option>
+                            <?php endforeach; ?>
                     </select>
                 </div>
             </div>
-    </div>
-    <hr class="mb-4">
-
-        <div class="app-card  mt-5">
-            <div class="app-card-body p-3">
+        </div>
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="<?=base_url('Admin/Home');?>">หน้าหลัก</a></li>
+                <li class="breadcrumb-item active" aria-current="page">ประเมินผลการเรียน</li>
+            </ol>
+        </nav>
+        <div class="card mb-4">
+            <div class="card-body p-3">
                 <div class="table-responsive">
-                    <table class="table mb-0 text-left" id="Tb_Repeat">
-                        <thead>
+                    <table class="table table-striped table-hover mb-0 text-left" id="Tb_Repeat">
+                        <thead class="bg-light">
                             <tr>
                                 <th class="cell">ปีการศึกษา</th>
                                 <th class="cell">รายวิชา</th>
@@ -41,6 +46,7 @@
                             </tr>
                         </thead>
                         <tbody>
+                            <?php if (!empty($result)): ?>
                             <?php foreach ($result as $key => $v_result) : ?>
                             <tr>
                                 <td class="cell"><?= isset($v_result->RegisterYear) ? esc($v_result->RegisterYear) : '' ?></td>
@@ -52,18 +58,64 @@
                                 </td>
                                 <td class="cell">
                                     <a href="<?= site_url('Admin/Acade/Evaluate/EditGrade/'.(isset($v_result->RegisterYear) ? esc($v_result->RegisterYear, 'url') : '').'/'.(isset($v_result->SubjectID) ? esc($v_result->SubjectID, 'url') : '')) ?>"
-                                        class="badge bg-warning">แก้ไข</a>
+                                        class="btn btn-sm btn-warning"><i class="bi bi-pencil-square me-1"></i>แก้ไข</a>
                                 </td>
                             </tr>
                             <?php endforeach; ?>
+                            <?php else: ?>
+                            <tr>
+                                <td colspan="4" class="text-center p-4">ไม่มีข้อมูลรายวิชาที่ต้องประเมิน</td>
+                            </tr>
+                            <?php endif; ?>
                         </tbody>
                     </table>
                 </div>
                 <!--//table-responsive-->
             </div>
-            <!--//app-card-body-->
+            <!--//card-body-->
         </div>
 
     </div>
     <!--//main-wrapper-->
+<?= $this->endSection() ?>
+
+<?= $this->section('script') ?>
+<script>
+$(document).ready(function() {
+    // Sort academic year dropdown
+    var $onoffYearSelect = $('#onoff_year');
+    var options = $onoffYearSelect.find('option').get();
+
+    options.sort(function(a, b) {
+        var aVal = a.value.split('/');
+        var bVal = b.value.split('/');
+
+        var aTerm = parseInt(aVal[0]);
+        var aYear = parseInt(aVal[1]);
+        var bTerm = parseInt(bVal[0]);
+        var bYear = parseInt(bVal[1]);
+
+        if (aYear !== bYear) {
+            return aYear - bYear; // Sort by year first
+        }
+        return aTerm - bTerm; // Then by term
+    });
+
+    $onoffYearSelect.empty().append(options); // Clear and re-append sorted options
+
+    $('#Tb_Repeat').DataTable({
+        "responsive": true,
+        "autoWidth": false,
+        "language": {
+            "url": "//cdn.datatables.net/plug-ins/1.13.7/i18n/th.json"
+        }
+    });
+
+    // Handle year filter change
+    $('#onoff_year').on('change', function() {
+        var selectedYear = $(this).val();
+        window.location.href = '<?= site_url('Admin/Acade/Evaluate/EditGrade/') ?>' + selectedYear;
+    });
+});
+</script>
 <?= $this->endSection() ?>

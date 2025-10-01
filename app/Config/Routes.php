@@ -94,6 +94,15 @@ $routes->get('Admin/Acade/Evaluate/ReportTeacherSaveScore/(:segment)/(:segment)'
 $routes->get('Admin/Acade/Evaluate/ReportTeacherSaveScoreCheck/(:segment)/(:segment)/(:segment)', [ConAdminReportResult::class, 'AdminReportTeacherSaveScoreCheck']);
 $routes->get('Admin/Acade/Evaluate/ReportScoreRoomMain/(:segment)/(:segment)/(:segment)/(:segment)', [ConAdminReportResult::class, 'ReportScoreRoomMain']);
 
+// Custom AJAX POST routes for Admin/Acade/Evaluate
+$routes->post('Admin/Acade/Evaluate/ConAdminSaveScore/update_study_time', [ConAdminSaveScore::class, 'update_study_time']);
+$routes->post('Admin/Acade/Evaluate/ConAdminSaveScore/update_score', [ConAdminSaveScore::class, 'update_score']);
+$routes->post('Admin/Acade/Evaluate/update_repeat_settings', [ConAdminAcademicRepeat::class, 'update_repeat_settings']);
+
+// Custom AJAX POST routes for ConAdminAcademicRepeat (for AdminEvaluateLearnRepeatGrade.php)
+$routes->post('Admin/Acade/Evaluate/ConAdminAcademicRepeat/update_study_time', [ConAdminAcademicRepeat::class, 'update_study_time']);
+$routes->post('Admin/Acade/Evaluate/ConAdminAcademicRepeat/update_score', [ConAdminAcademicRepeat::class, 'update_score']);
+
 
 
 $routes->post('admin/academic/ConAdminRegisRepeat/AdminRegisRepeatAdd', [ConAdminRegisRepeat::class, 'AdminRegisRepeatAdd']);

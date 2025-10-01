@@ -6,103 +6,104 @@
     border-left: .25rem solid #5BC3D5 !important;
 }
 </style>
-<div class="app-content pt-3 p-md-3 p-lg-4">
+<div class="content pt-3 p-md-3 p-lg-4">
     <div class="container-xl">
-        <h2 class="heading">จัดการข้อมูล<?=$title;?></h2>
-    </div>
-    <hr>
-    <!--//container-->
-    </section>
-    <section class="we-offer-area mt-5">
-        <div class="container-fluid">
+        <h2 class="heading mb-3">จัดการข้อมูล<?=$title;?></h2>
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="<?=base_url('Admin/Home');?>">หน้าหลัก</a></li>
+                <li class="breadcrumb-item"><a
+                        href="<?=base_url('Admin/Acade/Evaluate/AcademicRepeat');?>">ประเมินผลการเรียนซ้ำ</a></li>
+                <li class="breadcrumb-item active" aria-current="page">แก้ไขคะแนนเรียนซ้ำ</li>
+            </ol>
+        </nav>
 
-            <?php if($check_student): ?>
-            <div class="card">
-                <div class="card-body">
-
-                    <div>
-                        <div class="form-group row justify-content-center mb-3">
-                            <div class="col-md-6 d-flex justify-content-center">
-                                <div>
-                                    ครูผู้สอน :<br>
-                                    รายวิชา :
-                                </div>
-                                <div class="ms-3">
-                                    <?=$Teacher->pers_prefix.$Teacher->pers_firstname.' '.$Teacher->pers_lastname;?><br>
-                                    <?=$check_student[0]->SubjectCode.' '.$check_student[0]->SubjectName?>
-                                </div>
-                            </div>
-                        </div>
+        <?php if($check_student): ?>
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">ข้อมูลรายวิชาและผู้สอน</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-12">
+                        <p class="mb-1"><strong>ครูผู้สอน:</strong>
+                            <?=$Teacher->pers_prefix.$Teacher->pers_firstname.' '.$Teacher->pers_lastname;?></p>
+                        <p class="mb-0"><strong>รายวิชา:</strong>
+                            <?=$check_student[0]->SubjectCode.' '.$check_student[0]->SubjectName?></p>
                     </div>
-                    <div class="table-responsive">
-                        <form class="form_score">
+                </div>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <form class="form_score">
 
-                            <table id="tb_score" class="table table-hover table-bordered">
-                                <thead class="text-center">
-                                    <tr>
-                                        <th colspan="5">ข้อมูลนักเรียน</th>
-                                        <th colspan="7">การประเมินผลการเรียน</th>
-                                    </tr>
-                                    <tr>
-                                        <th>ชั้น</th>
-                                        <th>เลขที่</th>
-                                        <th>เลขประจำตัว</th>
-                                        <th width="200">ชื่อ - นามสกุล</th>
-                                        <?php 
+                <table id="tb_score" class="table table-striped table-hover table-bordered">
+                    <thead class="text-center bg-light">
+                        <tr>
+                            <th colspan="4" class="align-middle">ข้อมูลนักเรียน</th>
+                            <th colspan="8" class="align-middle">การประเมินผลการเรียน</th>
+                        </tr>
+                        <tr>
+                            <th class="align-middle">ชั้น</th>
+                            <th class="align-middle">เลขที่</th>
+                            <th class="align-middle">เลขประจำตัว</th>
+                            <th class="align-middle" width="200">ชื่อ - นามสกุล</th>
+                            <?php 
                                         if(floatval($check_student[0]->SubjectUnit) == 0.5){ $TimeNum = 20; }
                                         elseif(floatval($check_student[0]->SubjectUnit) == 1){$TimeNum = 40;}
                                         elseif(floatval($check_student[0]->SubjectUnit) == 1.5){$TimeNum = 60;}
                                         ?>
-                                        <th width="">เวลาเรียน<br> <small>(<?=intval($TimeNum);?> ชั่วโมง)</small>
-                                        </th>
-                                        <?php 
+                            <th class="align-middle" width="">เวลาเรียน<br> <small>(<?=intval($TimeNum);?>
+                                    ชั่วโมง)</small>
+                            </th>
+                            <?php 
                                     $sum_scoer = 0;
                                     foreach ($set_score as $key => $v_set_score): 
                                         $sum_scoer += $v_set_score->regscore_score;
                                     ?>
-                                        <th class="h6">
-                                            <?=$v_set_score->regscore_namework?><br>
-                                            (<?=$v_set_score->regscore_score?>)
-                                        </th>
-                                        <?php endforeach; ?>
-                                        <th class="h6">คะแนนรวม (<?=$sum_scoer?>)</th>
-                                        <th class="h6">เกรด</th>
-                                        <th class="h6">สถานะนักเรียน</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php 
-                                        foreach ($check_student as $key => $v_check_student) :
-                                          
-                                            if(1==1):  
-                                            
-                                        ?>
-                                    <tr>
-                                        <th class="align-middle text-center"><?=$v_check_student->StudentClass?>
-                                        </th>
-                                        <td class="align-middle text-center fw-bold"><?=$v_check_student->StudentNumber?>
-                                        </td>
-                                        <td class="align-middle text-center fw-bold"><?=$v_check_student->StudentCode?></td>
-                                        <td class="align-middle fw-bold">
-                                            <?=$v_check_student->StudentPrefix?><?=$v_check_student->StudentFirstName?>
-                                            <?=$v_check_student->StudentLastName?> <br>
-                                            <small class="fw-normal"><?=($v_check_student->Grade_Type);?></small> 
-                                            <input type="text" class="form-control sr-only" id="StudentID"
-                                                name="StudentID[]" value="<?=$v_check_student->StudentID?>">
-                                            <input type="text" class="form-control sr-only" id="SubjectID"
-                                                name="SubjectID" value="<?=$check_student[0]->SubjectID?>">
-                                            <input type="text" class="form-control sr-only" id="RegisterYear"
-                                                name="RegisterYear" value="<?=$check_student[0]->RegisterYear?>">
-                                            <input type="text" class="form-control sr-only" id="TimeNum"
-                                                name="TimeNum" value="<?=$TimeNum?>">
-                                        </td>
-                                        <td>
-                                            <input type="text" class="form-control study_time KeyEnter"
-                                                id="study_time" check-time="<?=$TimeNum;?>" name="study_time[]"
-                                                value="<?=$v_check_student->StudyTime == "" ? "" : $v_check_student->StudyTime?>"
-                                                autocomplete="off">
-                                        </td>
-                                        <?php 
+                            <th class="h6 align-middle">
+                                <?=$v_set_score->regscore_namework?><br>
+                                (<?=$v_set_score->regscore_score?>)
+                            </th>
+                            <?php endforeach; ?>
+                            <th class="h6 align-middle">คะแนนรวม (<?=$sum_scoer?>)</th>
+                            <th class="h6 align-middle">เกรด</th>
+                            <th class="h6 align-middle">สถานะนักเรียน</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                                                                <?php 
+                                                                foreach ($check_student as $key => $v_check_student) : 
+                                                                  
+                                                                    // Only display students who are repeating the course
+                                                                    if(strpos($v_check_student->Grade_Type, 'เรียนซ้ำ') !== false):  
+                                                                    
+                                                                ?>                        <tr>
+                            <th class="align-middle text-center"><?=$v_check_student->StudentClass?>
+                            </th>
+                            <td class="align-middle text-center fw-bold"><?=$v_check_student->StudentNumber?>
+                            </td>
+                            <td class="align-middle text-center fw-bold"><?=$v_check_student->StudentCode?></td>
+                            <td class="align-middle fw-bold">
+                                <?=$v_check_student->StudentPrefix?><?=$v_check_student->StudentFirstName?>
+                                <?=$v_check_student->StudentLastName?> <br>
+                                <small class="fw-normal"><?=($v_check_student->Grade_Type);?></small>
+                                <input type="text" class="form-control sr-only" id="StudentID" name="StudentID[]"
+                                    value="<?=$v_check_student->StudentID?>" style="display: none;">
+                                <input type="text" class="form-control sr-only" id="SubjectID" name="SubjectID"
+                                    value="<?=$check_student[0]->SubjectID?>" style="display: none;">
+                                <input type="text" class="form-control sr-only" id="RegisterYear" name="RegisterYear"
+                                    value="<?=$check_student[0]->RegisterYear?>" style="display: none;">
+                                <input type="text" class="form-control sr-only" id="TimeNum" name="TimeNum"
+                                    value="<?=$TimeNum?>" style="display: none;">
+                            </td>
+                            <td>
+                                <input type="text" class="form-control study_time KeyEnter" id="study_time"
+                                    check-time="<?=$TimeNum;?>" name="study_time[]"
+                                    value="<?=$v_check_student->StudyTime == "" ? "" : $v_check_student->StudyTime?>"
+                                    autocomplete="off">
+                            </td>
+                            <?php 
                                         foreach ($set_score as $key => $v_set_score): 
                                         $s = explode("|",$v_check_student->Score100);
                                         if($onoff_savescore[0]->onoff_name == $v_set_score->regscore_namework){
@@ -116,24 +117,22 @@
                                         }
                                         
                                         ?>
-                                        <td>
-                                            <input type="text" class="form-control check_score KeyEnter"
-                                                check-score-key="<?=$v_set_score->regscore_score?>"
-                                                id="<?=$v_check_student->StudentID?>"
-                                                name="<?=$v_check_student->StudentID?>[]"
-                                                value="<?=$v_check_student->Score100 == "" ? "0" : $s[$key]?>"
-                                                <?=$checkOnOff[6]->onoff_status == "off" ? "readonly" : ""?>
-                                                autocomplete="off">
-                                        </td>
-                                        <?php endforeach; ?>
-                                        <td class="align-middle">
-                                            <div class="subtot text-center font-weight-bold"></div>
-                                        </td>
-                                        <td class="align-middle">
-                                            <div class="grade text-center font-weight-bold"></div>
-                                        </td>
-                                        <td class="align-middle text-center">
-                                            <?php 
+                            <td>
+                                <input type="text" class="form-control check_score KeyEnter"
+                                    check-score-key="<?=$v_set_score->regscore_score?>"
+                                    id="<?=$v_check_student->StudentID?>" name="<?=$v_check_student->StudentID?>[]"
+                                    value="<?=$v_check_student->Score100 == "" ? "0" : $s[$key]?>"
+                                    <?=$checkOnOff[6]->onoff_status == "off" ? "readonly" : ""?> autocomplete="off">
+                            </td>
+                            <?php endforeach; ?>
+                            <td class="align-middle">
+                                <div class="subtot text-center font-weight-bold"></div>
+                            </td>
+                            <td class="align-middle">
+                                <div class="grade text-center font-weight-bold"></div>
+                            </td>
+                            <td class="align-middle text-center">
+                                <?php 
                                             if($v_check_student->StudentBehavior == "ปกติ"){ 
                                                 echo 
                                                 '<span class="text-success">'.$v_check_student->StudentBehavior.'</span>';
@@ -142,51 +141,53 @@
                                                 '<span class="text-danger">'.$v_check_student->StudentBehavior.'</span>';
                                             }
                                             ?>
-                                        </td>
-                                    </tr>
-                                    <?php 
+                            </td>
+                        </tr>
+                        <?php 
                                         endif;
                                     endforeach; 
                                     ?>
-                                </tbody>
-                            </table>
-                            <div class="text-center">
-                                <button type="submit" class="btn btn-primary "><i class="bi bi-pencil-square"></i>
-                                    บันทึกคะแนน</button>
-                                <a href="" class="btn btn-warning float-end"><i class="bi bi-printer"></i>
-                                    พิมพ์รายงาน</a>
-                            </div>
-                        </form>
-
-                    </div>
-
+                    </tbody>
+                </table>
+                <div class="d-flex justify-content-between mt-3">
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-pencil-square me-2"></i>
+                        บันทึกคะแนน</button>
+                    <a href="" class="btn btn-warning"><i class="bi bi-printer me-2"></i>
+                        พิมพ์รายงาน</a>
                 </div>
-            </div>
-            <?php else: ?>
-            <div class="app-card alert alert-dismissible shadow-sm mb-4 border-left-decoration" role="alert">
-                <div class="inner">
-                    <div class="app-card-body text-center">
-                        <h3 class=""> ไม่มีนักเรียน เรียนซ้ำ ในรายวิชานี้!</h3>
-                        <a class="btn app-btn-primary"
-                            href="#" onclick="javascript:history.go(-1)">กลับหน้าหลัก</a>
-                    </div>
-                </div>
-            </div>
-
-            <?php endif; ?>
-
-
-
-
+            </form>
 
         </div>
-    </section>
 
+    </div>
 </div>
+<?php else: ?>
+<div class="card shadow-sm mb-4">
+    <div class="card-body text-center p-5">
+        <h3 class="text-muted mb-4">ไม่มีนักเรียนเรียนซ้ำในรายวิชานี้!</h3>
+        <a class="btn btn-primary mt-3" href="#" onclick="javascript:history.go(-1)">กลับหน้าหลัก</a>
+    </div>
+</div>
+
+<?php endif; ?>
+
 <?= $this->endSection() ?>
 
 <?= $this->section('script') ?>
 <script>
+$(document).ready(function() {
+    $('#tb_score').DataTable({
+        "responsive": true,
+        "autoWidth": false,
+        "paging": false, // Disable pagination for this table as it's an input form
+        "searching": false, // Disable searching
+        "info": false, // Disable "Showing X of Y entries"
+        "language": {
+            "url": "https://cdn.datatables.net/plug-ins/1.13.7/i18n/Thai.json"
+        }
+    });
+});
+
 $(document).on('keyup', '.check_score', function() {
     var num = parseInt($(this).val());
     var key = parseInt($(this).attr('check-score-key'));
@@ -320,33 +321,89 @@ function calculateTotal(index) {
     calculateRowSum();
 }
 
-$(document).on('submit', '.form_score', function(e) {
-    e.preventDefault();
+// Event listener for study_time changes
+$(document).on('change', '.study_time', function() {
+    var $row = $(this).closest('tr');
+    var studentId = $row.find('input[name="StudentID[]"]').val();
+    var subjectId = $('input[name="SubjectID"]').val(); // SubjectID is outside the loop, so it's a single input
+    var registerYear = $('input[name="RegisterYear"]')
+        .val(); // RegisterYear is outside the loop, so it's a single input
+    var studyTime = $(this).val();
 
+    // Perform AJAX call to save study time
     $.ajax({
-        url: '../../../../../../admin/academic/ConAdminAcademicRepeat/insert_score',
-        type: "post",
-        data: $(this).serialize(), //this is formData
-        success: function(data) {
-            console.log(data);
-            if (data > 0) {
-                Swal.fire({
-                    position: 'top-end',
-                    icon: 'success',
-                    title: 'บันทึกคะแนนสำเร็จ',
-                    showConfirmButton: false,
-                    timer: 2000
-                }).then((result) => {
-                    if (result.dismiss === Swal.DismissReason.timer) {
-
-                    }
-                })
-            } else {
-                // window.location.reload();
-            }
+        url: '<?= site_url('Admin/Acade/Evaluate/ConAdminAcademicRepeat/update_study_time') ?>', // Placeholder URL
+        type: 'POST',
+        data: {
+            student_id: studentId,
+            subject_id: subjectId,
+            register_year: registerYear,
+            study_time: studyTime
         },
-        error: function(jqXHR, textStatus, errorThrown) {
-            console.log(jqXHR.responseText);
+        success: function(response) {
+            Swal.fire({
+                position: 'top-end',
+                icon: 'success',
+                title: 'บันทึกเวลาเรียนสำเร็จ',
+                showConfirmButton: false,
+                timer: 1500
+            });
+            console.log('Study time updated:', response);
+        },
+        error: function(xhr, status, error) {
+            Swal.fire({
+                position: 'top-end',
+                icon: 'error',
+                title: 'เกิดข้อผิดพลาดในการบันทึกเวลาเรียน',
+                showConfirmButton: false,
+                timer: 1500
+            });
+            console.error('Error updating study time:', error);
+        }
+    });
+});
+
+// Event listener for check_score changes
+$(document).on('change', '.check_score', function() {
+    var $row = $(this).closest('tr');
+    var studentId = $row.find('input[name="StudentID[]"]').val();
+    var subjectId = $('input[name="SubjectID"]').val(); // SubjectID is outside the loop, so it's a single input
+    var registerYear = $('input[name="RegisterYear"]')
+        .val(); // RegisterYear is outside the loop, so it's a single input
+    var scoreValue = $(this).val();
+    var scoreIndex = $(this).closest('td').index() -
+        5; // Assuming score columns start from the 6th column (index 5)
+
+    // Perform AJAX call to save score
+    $.ajax({
+        url: '<?= site_url('Admin/Acade/Evaluate/ConAdminAcademicRepeat/update_score') ?>', // Placeholder URL
+        type: 'POST',
+        data: {
+            student_id: studentId,
+            subject_id: subjectId,
+            register_year: registerYear,
+            score_index: scoreIndex, // To identify which score in the array
+            score_value: scoreValue
+        },
+        success: function(response) {
+            Swal.fire({
+                position: 'top-end',
+                icon: 'success',
+                title: 'บันทึกคะแนนสำเร็จ',
+                showConfirmButton: false,
+                timer: 1500
+            });
+            console.log('Score updated:', response);
+        },
+        error: function(xhr, status, error) {
+            Swal.fire({
+                position: 'top-end',
+                icon: 'error',
+                title: 'เกิดข้อผิดพลาดในการบันทึกคะแนน',
+                showConfirmButton: false,
+                timer: 1500
+            });
+            console.error('Error updating score:', error);
         }
     });
 });

@@ -19,7 +19,7 @@ class ConAdminRegisRepeat extends BaseController
         helper(['url', 'form']);
 
         // CI3 session check equivalent
-        if (empty(session()->get('fullname'))) {
+        if ((session()->get('fullname'))) {
             return redirect()->to(base_url('LoginAdmin'));
         }
 
@@ -105,9 +105,7 @@ class ConAdminRegisRepeat extends BaseController
         ->get()->getResult();
         
 
-       // echo '<pre>'; print_r($data['DataRepeatTeacher']); exit();
-
-        
+       //echo '<pre>'; print_r((session()->get('fullname'))); exit();
         return view('admin/Academic/AdminRegisRepeat/AdminRegisRepeatAdd', $data);
     }
 

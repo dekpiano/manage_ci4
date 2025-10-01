@@ -140,6 +140,29 @@
     <script type="text/javascript" src="https://earthchie.github.io/jquery.Thailand.js/jquery.Thailand.js/dist/jquery.Thailand.min.js"></script>
 
 
+<script>
+    console.error(<?php echo empty(session()->get('fullname')); ?>);
+    
+$(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
+    if (jqXHR.status === 401) { // Check for 401 Unauthorized status
+        Swal.fire({
+            icon: 'warning',
+            title: 'เซสชันหมดอายุ',
+            text: 'กรุณาเข้าสู่ระบบใหม่อีกครั้ง',
+            showConfirmButton: false,
+            timer: 2000
+        }).then(() => {
+            window.location.href = '<?= base_url('LoginAdmin') ?>';
+        });
+    }
+    // The previous check for responseText.includes('<title>Login Admin</title>') is now redundant
+    // because the backend will send a 401 status for AJAX requests.
+    // However, if there are other scenarios where the backend might still redirect to login
+    // without a 401 (e.g., non-AJAX requests that are then handled by AJAX),
+    // you might keep it as a fallback, but it's generally better to standardize on 401.
+});
+</script>
+
     <?= $this->renderSection('script') ?>
 
     <?= $this->renderSection('modals') ?>
