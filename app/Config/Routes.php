@@ -88,16 +88,8 @@ $routes->get('Admin/Acade/Evaluate/SaveScoreGrade/(:segment)/(:segment)/(:segmen
 $routes->get('Admin/Acade/Evaluate/ReportPerson', [ConAdminReportResult::class, 'AdminReportPersonMain']);
 $routes->get('Admin/Acade/Evaluate/ReportPerson/(:segment)', [ConAdminReportResult::class, 'AdminStudentsScore']);
 $routes->get('Admin/Acade/Evaluate/ReportRoom', [ConAdminReportResult::class, 'AdminReportRoomMain']);
-$routes->get('Admin/Acade/Evaluate/ReportSummaryTeacher', [ConAdminReportResult::class, 'AdminReportSummaryTeacher']);
-$routes->get('Admin/Acade/Evaluate/ReportAcademicSummaryRoyalRoseStandard', [ConAdminReportResult::class, 'AdminReportAcademicSummaryRoyalRoseStandard']);
-$routes->get('Admin/Acade/Evaluate/ReportTeacherSaveScore/(:segment)/(:segment)', [ConAdminReportResult::class, 'AdminReportTeacherSaveScoreMain']);
-$routes->get('Admin/Acade/Evaluate/ReportTeacherSaveScoreCheck/(:segment)/(:segment)/(:segment)', [ConAdminReportResult::class, 'AdminReportTeacherSaveScoreCheck']);
-$routes->get('Admin/Acade/Evaluate/ReportScoreRoomMain/(:segment)/(:segment)/(:segment)/(:segment)', [ConAdminReportResult::class, 'ReportScoreRoomMain']);
-
-// Custom AJAX POST routes for Admin/Acade/Evaluate
-$routes->post('Admin/Acade/Evaluate/ConAdminSaveScore/update_study_time', [ConAdminSaveScore::class, 'update_study_time']);
-$routes->post('Admin/Acade/Evaluate/ConAdminSaveScore/update_score', [ConAdminSaveScore::class, 'update_score']);
-$routes->post('Admin/Acade/Evaluate/update_repeat_settings', [ConAdminAcademicRepeat::class, 'update_repeat_settings']);
+$routes->post('Admin/Acade/Evaluate/ReportRoom', [ConAdminReportResult::class, 'AdminReportRoomMain']);
+$routes->post('Admin/Acade/Evaluate/exportRoomReportToExcel', [ConAdminReportResult::class, 'exportRoomReportToExcel']);
 
 // Custom AJAX POST routes for ConAdminAcademicRepeat (for AdminEvaluateLearnRepeatGrade.php)
 $routes->post('Admin/Acade/Evaluate/ConAdminAcademicRepeat/update_study_time', [ConAdminAcademicRepeat::class, 'update_study_time']);
@@ -140,6 +132,9 @@ $routes->get('Admin/Acade/Executive/ReportTeacherSaveScoreCheck/(:segment)/(:seg
 $routes->get('Admin/Acade/Executive/ReportScoreRoomMain/(:segment)/(:segment)/(:segment)/(:segment)', [ConAdminReportResult::class, 'ReportScoreRoomMain']);
 $routes->get('Admin/Acade/Executive/ReportEnroll/Main', [ConAdminReportResult::class, 'AdminReportEnrollMain']);
 $routes->get('Admin/Acade/Executive/ReportEnroll/ID/(:segment)', [ConAdminReportResult::class, 'AdminReportEnrollDetailStudent']);
+$routes->post('Admin/Acade/Executive/exportRoomReportToExcel', [ConAdminReportResult::class, 'exportRoomReportToExcel']);
+$routes->get('Admin/Acade/Evaluate/ReportAcademicSummaryRoyalRoseStandard', [ConAdminReportResult::class, 'AdminReportAcademicSummaryRoyalRoseStandard']);
+$routes->get('Admin/Acade/Evaluate/ReportAcademicSummary', [ConAdminReportResult::class, 'AdminReportAcademicSummary']);
 
 // Login
 $routes->get('Logout', [Control_login::class, 'logout']);

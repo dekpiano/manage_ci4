@@ -6,23 +6,30 @@
     border-left: .25rem solid #5BC3D5 !important;
 }
 </style>
-<div class="app-content pt-3 p-md-3 p-lg-4">
-    <div class="container-xl d-flex justify-content-between">
+<div class="">
+    <div class="d-flex justify-content-between">
         <div class="col-auto justify-content-start">
-            <h1 class="app-page-title"><?=$title;?></h1>
+            <a href="javascript:history.back()" class="btn btn-secondary"><i class="bx bx-arrow-back me-2"></i> ย้อนกลับ</a>
+            <h3 class="app-page-title d-inline-block ms-2"><?=$title;?></h3>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="#" onclick="history.back(); return false;">หน้าหลัก</a></li>
+                    <li class="breadcrumb-item active" aria-current="page"><?=$title;?></li>
+                </ol>
+            </nav>
         </div>
 
     </div>
     <!--//container-->
     </section>
     <section class="we-offer-area">
-        <div class="container-fluid">
+        <div class="">
 
             <?php foreach ($checkSubject as $key => $v_checkSubject) : ?>
 
             <div class="card mb-3">
                 <div class="card-body">
-                    <table class="table app-table-hover table-bordered mb-0 text-left" id="">
+                    <table class="table table-hover table-bordered mb-0 text-left" id="">
                         <thead>
                             <tr class="text-center">
                                 <th class="cell" colspan="5"><h5><?=$v_checkSubject->SubjectCode?> วิชา <?=$v_checkSubject->SubjectName?></h5> </th>

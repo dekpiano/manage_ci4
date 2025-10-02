@@ -7,9 +7,9 @@
 }
 </style>
 <div class="app-content pt-3 p-md-3 p-lg-4">
-    <div class="container-xl d-flex justify-content-between">
+    <div class="d-flex justify-content-between">
         <div class="col-auto justify-content-start">
-            <h1 class="app-page-title"><?= isset($title) ? esc($title) : '' ?></h1>
+            <h3 class="app-page-title"><?= isset($title) ? esc($title) : '' ?></h3>
         </div>
         <div class="col-auto justify-content-md-end">
             <div class="page-utilities">
@@ -33,7 +33,7 @@
     <!--//container-->
     </section>
     <section class="we-offer-area">
-        <div class="container-fluid">
+        <div class="">
 
                 <div class="card">
                     <div class="card-body">

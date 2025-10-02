@@ -30,10 +30,10 @@ thead {
     background: #fff;
 }
 </style>
-<div class="app-content pt-3 p-md-3 p-lg-4">
+<div class="">
     <div class=" d-flex justify-content-between">
         <div class="col-auto justify-content-start">
-            <h2 class="app-page-title"><?= isset($title) ? esc($title) : '' ?></h2>
+            <h2 class="page-title"><?= isset($title) ? esc($title) : '' ?></h2>
         </div>
         <div class="col-auto justify-content-md-end">
             <div class="page-utilities">
@@ -45,37 +45,41 @@ thead {
                 ?>
                 <input type="text" id="term" value="<?= esc($term) ?>" style="display:none;">
                 <input type="text" id="year" value="<?= esc($year) ?>" style="display:none;">
-                <div class="row g-2 ">
-                    <div class="col-auto me-2">
-                        <select class="form-select w-auto" name="KeyCheckYear" id="KeyCheckYear">
-                            <option selected="" value="">ปีการศึกษา...</option>
-                            <?php foreach ($CheckYear as $key => $v_CheckYear) : ?>
-                            <option
-                                <?= isset($v_CheckYear->RegisterYear) && $term.'/'.$year == $v_CheckYear->RegisterYear ? 'selected' : ''?>
-                                value="<?= isset($v_CheckYear->RegisterYear) ? esc($v_CheckYear->RegisterYear) : '' ?>">
-                                <?= isset($v_CheckYear->RegisterYear) ? esc($v_CheckYear->RegisterYear) : '' ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-
-                    <div class="col-auto">
-                        <form action="<?= site_url('Admin/Acade/Evaluate/ReportScoreRoomMain/1/2565') ?>"
-                            method="post" class="d-flex align-items-center"
-                            data-base-url="<?= site_url('Admin/Acade/Evaluate/ReportScoreRoomMain') ?>">
-                            <!-- <label for="">ระดับชั้น</label> -->
-                            <select class="form-select w-auto ms-2" name="SelectRoomReportScore"
-                                id="SelectRoomReportScore">
-                                <option value="">เลือกห้องเรียน</option>
-                                <?php foreach ($Room as $key => $v_Room) : ?>
+                <div class="card p-2">
+           
+                    <div class="row g-2 ">
+                        <div class="col-auto me-2">
+                            <select class="form-select w-auto" name="KeyCheckYear" id="KeyCheckYear">
+                                <option selected="" value="">ปีการศึกษา...</option>
+                                <?php foreach ($CheckYear as $key => $v_CheckYear) : ?>
                                 <option
-                                    <?= $room_segment1.'/'.$room_segment2 == $v_Room ? "selected" : ""?>
-                                    value="<?= esc($v_Room) ?>">ม.<?= esc($v_Room) ?></option>
+                                    <?= isset($v_CheckYear->RegisterYear) && $term.'/'.$year == $v_CheckYear->RegisterYear ? 'selected' : ''?>
+                                    value="<?= isset($v_CheckYear->RegisterYear) ? esc($v_CheckYear->RegisterYear) : '' ?>">
+                                    <?= isset($v_CheckYear->RegisterYear) ? esc($v_CheckYear->RegisterYear) : '' ?>
+                                </option>
                                 <?php endforeach; ?>
                             </select>
-                            <!-- <button class="btn app-btn-primary clickLoder ms-3" type="submit">ค้นหา</button> -->
-                        </form>
+                        </div>
+
+                        <div class="col-auto">
+                            <form action="<?= site_url('Admin/Acade/Evaluate/ReportScoreRoomMain/1/2565') ?>"
+                                method="post" class="d-flex align-items-center"
+                                data-base-url="<?= site_url('Admin/Acade/Evaluate/ReportScoreRoomMain') ?>">
+                                <!-- <label for="">ระดับชั้น</label> -->
+                                <select class="form-select w-auto ms-2" name="SelectRoomReportScore"
+                                    id="SelectRoomReportScore">
+                                    <option value="">เลือกห้องเรียน</option>
+                                    <?php foreach ($Room as $key => $v_Room) : ?>
+                                    <option <?= $room_segment1.'/'.$room_segment2 == $v_Room ? "selected" : ""?>
+                                        value="<?= esc($v_Room) ?>">ม.<?= esc($v_Room) ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                                <!-- <button class="btn btn-primary clickLoder ms-3" type="submit">ค้นหา</button> -->
+                            </form>
+                        </div>
                     </div>
                 </div>
+
                 <!--//row-->
             </div>
             <!--//table-utilities-->
@@ -117,81 +121,83 @@ thead {
                             </thead>
                             <tbody>
                                 <?php foreach ($stu as $student) : ?>
-                                    <tr>
-                                        <td class="text-center "><?= esc($student->StudentNumber) ?></td>
-                                        <td class="text-center "><?= esc($student->StudentCode) ?></td>
-                                        <td class="text-nowrap "><?= esc($student->StudentPrefix . $student->StudentFirstName . ' ' . $student->StudentLastName) ?></td>
-                                        <?php foreach ($RegisSubject as $subject) : ?>
-                                            <?php
+                                <tr>
+                                    <td class="text-center "><?= esc($student->StudentNumber) ?></td>
+                                    <td class="text-center "><?= esc($student->StudentCode) ?></td>
+                                    <td class="text-nowrap ">
+                                        <?= esc($student->StudentPrefix . $student->StudentFirstName . ' ' . $student->StudentLastName) ?>
+                                    </td>
+                                    <?php foreach ($RegisSubject as $subject) : ?>
+                                    <?php
                                             // Check if a score exists for this student and subject, and if the score string is not empty.
                                             if (isset($scoresMap[$student->StudentID][$subject->SubjectID]) && $scoresMap[$student->StudentID][$subject->SubjectID] !== '') {
                                                 $scoreString = $scoresMap[$student->StudentID][$subject->SubjectID];
                                                 $scores = explode("|", $scoreString);
                                             ?>
-                                                <td class="text-center"><?= esc($scores[0] ?? '') ?></td>
-                                                <td class="text-center"><?= esc($scores[1] ?? '') ?></td>
-                                                <td class="text-center"><?= esc($scores[2] ?? '') ?></td>
-                                                <td class="text-center"><?= esc($scores[3] ?? '') ?></td>
-                                            <?php } else { ?>
-                                                <td></td>
-                                                <td></td>
-                                                <td></td>
-                                                <td></td>
-                                            <?php } ?>
-                                        <?php endforeach; ?>
-                                    </tr>
+                                    <td class="text-center"><?= esc($scores[0] ?? '') ?></td>
+                                    <td class="text-center"><?= esc($scores[1] ?? '') ?></td>
+                                    <td class="text-center"><?= esc($scores[2] ?? '') ?></td>
+                                    <td class="text-center"><?= esc($scores[3] ?? '') ?></td>
+                                    <?php } else { ?>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td></td>
+                                    <?php } ?>
+                                    <?php endforeach; ?>
+                                </tr>
                                 <?php endforeach; ?>
                             </tbody>
-                            </table>
+                        </table>
 
-                        </div>
                     </div>
                 </div>
             </div>
         </div>
-        <?php else: ?>
-        <div class="app-card alert alert-dismissible shadow-sm mb-4 border-left-decoration" role="alert">
-            <div class="inner">
-                <div class="app-card-body p-3 p-lg-4">
-                    <div class="row">
-                        <div class="col-md-12 text-center align-self-center">
-                            <h2 class="heading">กรุณาเลือกปีการศึกษาและห้องเรียนก่อน !</h2>
-                            <div class="intro">ระบบรายงานผลการบันทึกคะแนน (รายห้องเรียน)</div>
-                        </div>
-                    </div>
-
+</div>
+<?php else: ?>
+<div class="card alert alert-dismissible shadow-sm mb-4 border-left-decoration" role="alert">
+    <div class="inner">
+        <div class="card-body p-3 p-lg-4">
+            <div class="row">
+                <div class="col-md-12 text-center align-self-center">
+                    <h2 class="heading">กรุณาเลือกปีการศึกษาและห้องเรียนก่อน !</h2>
+                    <div class="intro">ระบบรายงานผลการบันทึกคะแนน (รายห้องเรียน)</div>
                 </div>
             </div>
+
         </div>
-        <?php endif;?>
+    </div>
+</div>
+<?php endif;?>
 
 </div>
 <?= $this->endSection() ?>
 
 <?= $this->section('script') ?>
 <script>
-    $(document).on("change", "#KeyCheckYear, #SelectRoomReportScore", function () {
-        let selectedYear = $('#KeyCheckYear').val();
-        let selectedRoom = $('#SelectRoomReportScore').val();
+$(document).on("change", "#KeyCheckYear, #SelectRoomReportScore", function() {
+    let selectedYear = $('#KeyCheckYear').val();
+    let selectedRoom = $('#SelectRoomReportScore').val();
 
-        if (!selectedYear) {
-            if ($(this).is('#SelectRoomReportScore')) {
-                alert('กรุณาเลือกปีการศึกษาก่อน');
-            }
-            return;
+    if (!selectedYear) {
+        if ($(this).is('#SelectRoomReportScore')) {
+            alert('กรุณาเลือกปีการศึกษาก่อน');
         }
+        return;
+    }
 
-        if (!selectedRoom) {
-            selectedRoom = 'All/All';
-        }
-        
-        const baseUrl = $('#SelectRoomReportScore').closest('form').data('base-url');
-        if (baseUrl) {
-            $('.loader').show();
-            window.location.href = baseUrl + '/' + selectedYear + '/' + selectedRoom;
-        } else {
-            console.error('Base URL not found on form data attribute.');
-        }
-    });
+    if (!selectedRoom) {
+        selectedRoom = 'All/All';
+    }
+
+    const baseUrl = $('#SelectRoomReportScore').closest('form').data('base-url');
+    if (baseUrl) {
+        $('.loader').show();
+        window.location.href = baseUrl + '/' + selectedYear + '/' + selectedRoom;
+    } else {
+        console.error('Base URL not found on form data attribute.');
+    }
+});
 </script>
 <?= $this->endSection() ?>

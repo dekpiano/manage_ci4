@@ -6,8 +6,8 @@
     border-left: .25rem solid #5BC3D5 !important;
 }
 </style>
-<div class="content pt-3 p-md-3 p-lg-4">
-    <div class="container-xl">
+<div class="">
+    <div class="">
         <h2 class="heading mb-4">จัดการข้อมูล<?=$title;?></h2>
         <nav aria-label="breadcrumb" class="mb-3">
             <ol class="breadcrumb">

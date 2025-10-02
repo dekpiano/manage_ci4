@@ -6,11 +6,12 @@
     border-left: .25rem solid #5BC3D5 !important;
 }
 </style>
-<div class="content pt-3 p-md-3 p-lg-4">
-    <div class="container-xl">
+<div class="">
+    <div class="">
         <div class="d-flex align-items-center justify-content-between mb-3">
-            <h1 class="page-title mb-0">จัดการข้อมูล<?= isset($title) ? esc($title) : '' ?></h1>
-            <div class="d-flex align-items-center">
+            <h3 class="page-title mb-0">จัดการข้อมูล<?= isset($title) ? esc($title) : '' ?></h3>
+            <div class=" card p-2">
+                 <div class="d-flex align-items-center">
                 <div class="me-2">
                     ปีการศึกษา:
                 </div>
@@ -26,6 +27,8 @@
                     </select>
                 </div>
             </div>
+            </div>
+           
         </div>
         <nav aria-label="breadcrumb" class="mb-4">
             <ol class="breadcrumb">

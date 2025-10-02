@@ -5,8 +5,7 @@ namespace App\Controllers\Admin\Academic;
 use App\Controllers\BaseController;
 use App\Models\Admin\ModAdminSaveScore;
 use App\Libraries\Classroom;
-use Google\Client;
-use Google\Service\Sheets;
+
 
 class ConAdminReportResult extends BaseController
 {
@@ -39,44 +38,7 @@ class ConAdminReportResult extends BaseController
         }
     }
 
-    function getClient()
-    {
-        // Since we cannot rely on the exact file structure, we assume the vendor autoloader is available
-        // and the path to service_key.json is accessible.
-        // If this path is incorrect in the CI4 environment, it will need manual adjustment.
-        $path = WRITEPATH . 'vendor/autoload.php';
-        if (file_exists($path)) {
-            require_once $path;
-        } else {
-            // Fallback for different environments or if path is dynamic
-            // Attempt to load from Composer's autoloader directly if available
-            if (file_exists(APPPATH . '../vendor/autoload.php')) {
-                require_once APPPATH . '../vendor/autoload.php';
-            }
-        }
 
-        // configure the Google Client
-        $client = new Client();
-        $client->setApplicationName('Google Sheets API');
-        $client->setScopes([Sheets::SPREADSHEETS]);
-        $client->setAccessType('offline');
-        // credentials.json is the key file we downloaded while setting up our Google Sheets API
-        $serviceKeyPath = WRITEPATH . 'service_key.json'; // Assuming service_key.json is in the project root
-        if (file_exists($serviceKeyPath)) {
-            $client->setAuthConfig($serviceKeyPath);
-        } else {
-            // Handle case where service_key.json is not found
-            // Log an error or throw an exception
-            log_message('error', 'service_key.json not found at ' . $serviceKeyPath);
-            // You might want to return null or throw an exception here.
-            return null;
-        }
-
-        // configure the Sheets Service
-        $service = new Sheets($client);
-         
-        return $service;
-    }
 
     public function AdminReportPersonMain(){   
         $data['admin'] = $this->DBpersonnel->table('tb_personnel')->select('pers_id,pers_img')->where('pers_id',session()->get('login_id'))->get()->getRow();
@@ -218,33 +180,64 @@ class ConAdminReportResult extends BaseController
                             ->get()->getResult();
 
                             $CheckSub = [];
-                            foreach ($data['stu'] as $key => $value) {
-                                
-                                $CheckSub[$key][] = $value->StudentID;
-                                $CheckSub[$key][] = $value->StudentNumber;
-                                $CheckSub[$key][] = $value->StudentPrefix.$value->StudentFirstName.' '.$value->StudentLastName;
-                                $CheckSub[$key][] = $value->StudentCode;
-                    
-                    
-                                $check_sub = array();
-                                $da = $this->CheckData($Term,$year,$Class,$Room,$value->StudentID);
-                                    foreach ($da as $key22 => $v_da) {
-                                        $check_sub[] = $v_da->SubjectID;
-                                    }
-                                   // echo '<pre>'; print_r($check_sub);
-                    
-                                 foreach ($data['subject'] as $key1 => $v_Check) {
-                                   // echo array_search($v_Check->SubjectCode, $check_sub);
-                                    if(in_array($v_Check->SubjectID, $check_sub)){
-                                        $dat = $this->CheckValue($Term,$year,$Class,$Room,$value->StudentID,$v_Check->SubjectID);
-                                       
-                                        $CheckSub[$key][] = $v_Check->SubjectID.'/'.(!empty($dat[0]->Grade) ? $dat[0]->Grade : '' );
-                                    }else{
-                                        $CheckSub[$key][] = $v_Check->SubjectID.'/';
-                                    }
-                                   
+
+                            // 1. Get all student IDs for the main query
+                            $studentIDs = array_column($data['stu'], 'StudentID');
+
+                            // 2. Fetch all relevant register data in one go
+                            $allGradesData = [];
+                            if (!empty($studentIDs) && !empty($data['subject'])) {
+                                $allGradesResult = $this->db->table('tb_register')
+                                    ->select('tb_register.StudentID, tb_register.SubjectID, tb_register.Grade, tb_subjects.SubjectUnit')
+                                    ->join('tb_subjects', 'tb_subjects.SubjectID = tb_register.SubjectID')
+                                    ->where('tb_register.RegisterYear', $KeyCheckYear)
+                                    ->whereIn('tb_register.StudentID', $studentIDs)
+                                    ->get()
+                                    ->getResult();
+
+                                // Create a lookup map for grades and units
+                                foreach ($allGradesResult as $gradeRow) {
+                                    $allGradesData[$gradeRow->StudentID][$gradeRow->SubjectID] = [
+                                        'grade' => $gradeRow->Grade,
+                                        'unit' => $gradeRow->SubjectUnit
+                                    ];
                                 }
-                               
+                            }
+
+                            // 3. Process students and subjects using the lookup map
+                            foreach ($data['stu'] as $key => $value) {
+                                $studentTotalUnit = 0;
+                                $studentTotalGradeValue = 0;
+
+                                $studentRow = [];
+                                $studentRow[] = $value->StudentID;
+                                $studentRow[] = $value->StudentNumber;
+                                $studentRow[] = $value->StudentPrefix.$value->StudentFirstName.' '.$value->StudentLastName;
+                                $studentRow[] = $value->StudentCode;
+                    
+                                foreach ($data['subject'] as $key1 => $v_Check) {
+                                    $currentSubjectUnit = floatval($v_Check->SubjectUnit);
+                                    $grade = '';
+
+                                    if (isset($allGradesData[$value->StudentID][$v_Check->SubjectID])) {
+                                        $gradeData = $allGradesData[$value->StudentID][$v_Check->SubjectID];
+                                        $grade = $gradeData['grade'];
+                                        // Note: SubjectUnit is already in $v_Check, but we can also get it from $gradeData['unit'] if needed
+                                    }
+                                    
+                                    $studentRow[] = $v_Check->SubjectID.'/'.$grade;
+
+                                    // Accumulate for GPA calculation
+                                    if (is_numeric($grade) && $grade >= 0) {
+                                        $studentTotalUnit += $currentSubjectUnit;
+                                        $studentTotalGradeValue += ($currentSubjectUnit * floatval($grade));
+                                    }
+                                }
+                                
+                                // Calculate GPA for the current student
+                                $studentGPA = ($studentTotalUnit != 0) ? round($studentTotalGradeValue / $studentTotalUnit, 2) : 0.00;
+                                $studentRow[] = $studentGPA; // Add GPA to the student's data array
+                                $CheckSub[] = $studentRow;
                             }
                     
                             $data['CheckSub'] = $CheckSub;
@@ -257,11 +250,135 @@ class ConAdminReportResult extends BaseController
         
         $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
         $data['title'] = "รายงานผลการเรียนรายห้องเรียน";
+        $data['Room'] = $this->classroom->ListRoom(); // Added this line
 
         
         echo view('admin/Academic/AdminReportResults/AdminReportRoomMain',$data);
         
         
+    }
+
+    public function exportRoomReportToExcel()
+    {
+        ob_start(); // Explicitly start output buffering
+
+         $path = dirname(dirname(dirname(dirname(dirname(dirname(dirname(__FILE__)))))));
+		require $path . '/librarie_skj/spreadsheet/vendor/autoload.php';
+        //require_once APPPATH . '../vendor/autoload.php';
+        
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+
+        // Replicate data fetching logic from AdminReportRoomMain
+        $keyroom = $this->request->getPost("keyroom");
+        $SubRoom1 = explode('.',$keyroom);
+        $SubRoom2 = explode('/',!empty($SubRoom1[1]) ? $SubRoom1[1] : '' );        
+        $KeyCheckYear = $this->request->getPost("KeyCheckYear");
+        $SubKeyCheckYear = explode('/',$KeyCheckYear);
+        $Term = !empty($SubKeyCheckYear[0]) ? $SubKeyCheckYear[0] : null;
+        $year = !empty($SubKeyCheckYear[1]) ? $SubKeyCheckYear[1] : null;
+        $Class = !empty($SubRoom2[0]) ? $SubRoom2[0] : null;
+        $Room = !empty($SubRoom2[1]) ? $SubRoom2[1] : null;
+
+        if (empty($keyroom) || empty($KeyCheckYear)) {
+            return redirect()->back()->with('error', 'กรุณาเลือกปีการศึกษาและห้องเรียนก่อน');
+        }
+
+        $data['stu'] = $this->db->table('tb_students')
+                                ->select("StudentID, StudentNumber, StudentClass, StudentCode, StudentPrefix, StudentFirstName, StudentLastName")
+                                ->where('StudentStatus','1/ปกติ')
+                                ->where('StudentClass',$keyroom)     
+                                ->orderBy('tb_students.StudentNumber','ASC')
+                                ->get()->getResult();
+
+        $data['subject'] = $this->db->table('tb_register')
+                        ->select("tb_register.SubjectID, tb_subjects.SubjectName, tb_subjects.SubjectCode, tb_subjects.SubjectUnit")
+                        ->join('tb_students','tb_students.StudentID = tb_register.StudentID')
+                        ->join('tb_subjects','tb_subjects.SubjectID = tb_register.SubjectID')
+                        ->where('RegisterYear',$KeyCheckYear)
+                        ->where('StudentStatus','1/ปกติ')
+                        ->where('StudentClass',$keyroom)                                
+                        ->where('tb_subjects.SubjectCode !=','I30301')
+                        ->where('tb_subjects.SubjectCode !=','I20201')
+                        ->groupBy('tb_register.SubjectID')  
+                        ->orderBy('SubjectType',"ASC")  
+                        ->orderBy('FirstGroup',"ASC")   
+                        ->orderBy('SubjectCode',"ASC")                 
+                        ->orderBy('SecondGroup',"ASC")
+                        ->get()->getResult();
+
+        $CheckSub = [];
+        $studentIDs = array_column($data['stu'], 'StudentID');
+
+        $allGradesData = [];
+        if (!empty($studentIDs) && !empty($data['subject'])) {
+            $allGradesResult = $this->db->table('tb_register')
+                ->select('tb_register.StudentID, tb_register.SubjectID, tb_register.Grade, tb_subjects.SubjectUnit')
+                ->join('tb_subjects', 'tb_subjects.SubjectID = tb_register.SubjectID')
+                ->where('tb_register.RegisterYear', $KeyCheckYear)
+                ->whereIn('tb_register.StudentID', $studentIDs)
+                ->get()
+                ->getResult();
+
+            foreach ($allGradesResult as $gradeRow) {
+                $allGradesData[$gradeRow->StudentID][$gradeRow->SubjectID] = [
+                    'grade' => $gradeRow->Grade,
+                    'unit' => $gradeRow->SubjectUnit
+                ];
+            }
+        }
+
+        foreach ($data['stu'] as $key => $value) {
+            $studentTotalUnit = 0;
+            $studentTotalGradeValue = 0;
+
+            $studentRow = [];
+            $studentRow[] = $value->StudentNumber; 
+            $studentRow[] = $value->StudentPrefix.$value->StudentFirstName.' '.$value->StudentLastName; 
+            
+            foreach ($data['subject'] as $key1 => $v_Check) {
+                $currentSubjectUnit = floatval($v_Check->SubjectUnit);
+                $grade = '';
+
+                if (isset($allGradesData[$value->StudentID][$v_Check->SubjectID])) {
+                    $gradeData = $allGradesData[$value->StudentID][$v_Check->SubjectID];
+                    $grade = $gradeData['grade'];
+                }
+                
+                $studentRow[] = $grade; 
+
+                if (is_numeric($grade) && $grade >= 0) {
+                    $studentTotalUnit += $currentSubjectUnit;
+                    $studentTotalGradeValue += ($currentSubjectUnit * floatval($grade));
+                }
+            }
+            
+            $studentGPA = ($studentTotalUnit != 0) ? round($studentTotalGradeValue / $studentTotalUnit, 2) : 0.00;
+            $studentRow[] = $studentGPA; 
+            $CheckSub[] = $studentRow;
+        }
+
+        // Set headers
+        $filename = 'รายงานผลการเรียนรายห้องเรียน_' . $keyroom . '_' . $KeyCheckYear . '.xlsx';
+        ob_clean(); // Clean any previous output that might corrupt the Excel file
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment;filename="' . $filename . '"');
+        header('Cache-Control: max-age=0');
+
+        // Add headers to Excel sheet
+        $headers = ['ลำดับที่', 'ชื่อ - นามสกุล'];
+        foreach ($data['subject'] as $v_subject) {
+            $headers[] = (isset($v_subject->SubjectCode) ? $v_subject->SubjectCode : '') . ' ' . (isset($v_subject->SubjectName) ? $v_subject->SubjectName : '');
+        }
+        $headers[] = 'GPA เกรดเฉลี่ย';
+        $sheet->fromArray($headers, NULL, 'A1');
+
+        // Add data rows to Excel sheet
+        $sheet->fromArray($CheckSub, NULL, 'A2');
+
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+        $writer->save('php://output');
+        exit();
     }
 
     public function AdminStudentsScore($IdStudent){      
@@ -304,32 +421,32 @@ class ConAdminReportResult extends BaseController
                             ->where('StudentID',$IdStudent)->get()->getRow();
         $data['CheckOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();
         
-        // The getClient method should return a valid Google_Service_Sheets object
-        $service = $this->getClient();
-        $spreadsheetId = '1eMgeASo3Vqxh8O0pERAJ0WO_9MLVx4wkuiJEFjquAfQ'; // Assuming this is correct
+        // Google Sheets API integration removed as requested.
+        // $service = $this->getClient();
+        // $spreadsheetId = '1eMgeASo3Vqxh8O0pERAJ0WO_9MLVx4wkuiJEFjquAfQ';
         
-        $range_checkChunum = 'ชุมนุม!A3:F1000';  // TODO: Update placeholder value.
-        $response_checkChunum = $service ? $service->spreadsheets_values->get($spreadsheetId, $range_checkChunum) : null;
-        $numRows_checkChunum = ($response_checkChunum && !empty($response_checkChunum->getValues())) ? count($response_checkChunum->getValues()) : 0;
+        // $range_checkChunum = 'ชุมนุม!A3:F1000';
+        // $response_checkChunum = $service ? $service->spreadsheets_values->get($spreadsheetId, $range_checkChunum) : null;
+        // $numRows_checkChunum = ($response_checkChunum && !empty($response_checkChunum->getValues())) ? count($response_checkChunum->getValues()) : 0;
        
-        $range_ruksun = 'ลูกเสือ!A3:F1000';  // TODO: Update placeholder value.
-        $response_ruksun = $service ? $service->spreadsheets_values->get($spreadsheetId, $range_ruksun) : null;
-        $numRows_ruksun = ($response_ruksun && !empty($response_ruksun->getValues())) ? count($response_ruksun->getValues()) : 0;
+        // $range_ruksun = 'ลูกเสือ!A3:F1000';
+        // $response_ruksun = $service ? $service->spreadsheets_values->get($spreadsheetId, $range_ruksun) : null;
+        // $numRows_ruksun = ($response_ruksun && !empty($response_ruksun->getValues())) ? count($response_ruksun->getValues()) : 0;
       
        $checkChunum = [];
-       if ($response_checkChunum && !empty($response_checkChunum->values)) {
-           foreach ($response_checkChunum->values as $key => $value) {
-            $checkChunum[] = !empty($value[1]) ? $value[1] : null;
-           }   
-       }
+    //    if ($response_checkChunum && !empty($response_checkChunum->values)) {
+    //        foreach ($response_checkChunum->values as $key => $value) {
+    //         $checkChunum[] = !empty($value[1]) ? $value[1] : null;
+    //        }   
+    //    }
        $data['checkChunum']  = $checkChunum;
      
        $checkRuksun = [];
-       if ($response_ruksun && !empty($response_ruksun->values)) {
-           foreach ($response_ruksun->values as $key => $value) {
-            $checkRuksun[] = !empty($value[1]) ? $value[1] : null;
-           }   
-       }
+    //    if ($response_ruksun && !empty($response_ruksun->values)) {
+    //        foreach ($response_ruksun->values as $key => $value) {
+    //         $checkRuksun[] = !empty($value[1]) ? $value[1] : null;
+    //        }   
+    //    }
        $data['checkRuksun']  = $checkRuksun;
        $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
         
@@ -390,16 +507,67 @@ class ConAdminReportResult extends BaseController
                             ->get()->getResult();        
 
         
-        echo view('admin/Academic/AdminReportResults/AdminReportAcademicSummary',$data);
+                echo view('admin/Academic/AdminReportResults/AdminReportAcademicSummary',$data);
         
+        
+            }
+        
+            public function AdminReportAcademicSummary(){
+                $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
+                $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();
+                $data['title'] = "รายงานสรุปผลสัมฤทธิ์ทางการเรียน"; // Placeholder title
+                $data['CheckYear'] = $this->db->table('tb_register')->select('RegisterYear')->groupBy('RegisterYear')->get()->getResult();
+                $data['lern'] = $this->DBSkj->table('tb_learning')->get()->getResult();
 
-    }
+                $data['Keylern'] = $this->request->getGet('SelLern');
+                $data['KeyYear'] = urldecode($this->request->getGet('KeyYear'));
 
-    public function AdminReportAcademicSummaryRoyalRoseStandard(){
-        $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
-        $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();
-        $data['title'] = "รายงานสรุปผลสัมฤทธิ์ทางการเรียนตามมาตรฐานกุหลาบหลวง";
-        $data['CheckYear'] = $this->db->table('tb_register')->select('RegisterYear')->groupBy('RegisterYear')->get()->getResult();
+                $data['Showdata'] = $this->db->table('skjacth_academic.tb_register')
+                                    ->select('
+                                        COUNT(CASE WHEN tb_register.Grade = 4 then 1 else null end) AS G4_0,
+                                        COUNT(CASE WHEN tb_register.Grade = 3.5 then 1 else null end) AS G3_5,
+                                        COUNT(CASE WHEN tb_register.Grade = 3 then 1 else null end) AS G3_0,
+                                        COUNT(CASE WHEN tb_register.Grade = 2.5 then 1 else null end) AS G2_5,
+                                        COUNT(CASE WHEN tb_register.Grade = 2 then 1 else null end) AS G2_0,
+                                        COUNT(CASE WHEN tb_register.Grade = 1.5 then 1 else null end) AS G1_5,
+                                        COUNT(CASE WHEN tb_register.Grade = 1 then 1 else null end) AS G1_0,
+                                        COUNT(CASE WHEN tb_register.Grade = "0" then 1 else null end) AS G0,
+                                        COUNT(CASE WHEN tb_register.Grade = "ร" then 1 else null end) AS G_W,
+                                        COUNT(CASE WHEN tb_register.Grade = "มส" then 1 else null end) AS G_MS,
+                                        COUNT(skjacth_academic.tb_students.StudentClass) AS SumStu,
+                                        skjacth_academic.tb_students.StudentClass,
+                                        skjacth_academic.tb_students.StudentBehavior,
+                                        skjacth_academic.tb_register.RegisterYear,
+                                        skjacth_academic.tb_register.TeacherID,
+                                        skjacth_academic.tb_register.Grade,
+                                        skjacth_academic.tb_register.SubjectID,
+                                        skjacth_personnel.tb_personnel.pers_prefix,
+                                        skjacth_personnel.tb_personnel.pers_firstname,
+                                        skjacth_personnel.tb_personnel.pers_lastname,
+                                        skjacth_personnel.tb_personnel.pers_learning,
+                                        skjacth_academic.tb_subjects.SubjectName,
+                                        skjacth_academic.tb_subjects.SubjectCode,
+                                        skjacth_academic.tb_subjects.SubjectType,
+                                        skjacth_academic.tb_subjects.SubjectUnit,
+                                        skjacth_academic.tb_subjects.SubjectYear                                                   
+                                        ')
+                                    ->join('skjacth_academic.tb_students','skjacth_academic.tb_students.StudentID = skjacth_academic.tb_register.StudentID')
+                                    ->join('skjacth_personnel.tb_personnel','skjacth_personnel.tb_personnel.pers_id = skjacth_academic.tb_register.TeacherID')
+                                    ->join('skjacth_academic.tb_subjects','skjacth_academic.tb_subjects.SubjectID = skjacth_academic.tb_register.SubjectID')
+                                    ->where('tb_register.RegisterYear',$data['KeyYear'])
+                                    ->where('tb_subjects.SubjectYear',$data['KeyYear'])
+                                    ->where('tb_personnel.pers_learning',$data['Keylern'])
+                                    ->where('StudentBehavior','ปกติ')
+                                    ->groupBy('tb_students.StudentClass,tb_register.SubjectID')
+                                    ->orderBy('TeacherID,SubjectID,StudentClass')
+                                    ->get()->getResult();
+                echo view('admin/Academic/AdminReportResults/AdminReportAcademicSummary', $data);
+            }
+        
+            public function AdminReportAcademicSummaryRoyalRoseStandard(){
+                $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
+                $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();
+                $data['title'] = "รายงานสรุปผลสัมฤทธิ์ทางการเรียนตามมาตรฐานกุหลาบหลวง";        $data['CheckYear'] = $this->db->table('tb_register')->select('RegisterYear')->groupBy('RegisterYear')->get()->getResult();
         $data['lern'] = $this->DBSkj->table('tb_learning')->get()->getResult();
 
         $data['KeyLevel'] = $this->request->getGet('SelLevel');

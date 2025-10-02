@@ -1,6 +1,27 @@
 <?= $this->extend('admin/layout/main') ?>
 
 <?= $this->section('content') ?>
+<style>
+    .card-header-custom {
+        background-color: #4CAF50; /* A more subdued green */
+        color: white;
+        font-weight: bold;
+        text-align: center;
+    }
+    .table-footer-summary {
+        background-color: #e9ecef; /* Light gray for summary row */
+        font-weight: bold;
+    }
+    .table th, .table td {
+        vertical-align: middle;
+    }
+    .table-striped tbody tr:nth-of-type(odd) {
+        background-color: rgba(0, 0, 0, 0.03);
+    }
+    .text-right-align {
+        text-align: right;
+    }
+</style>
 <?php 
         $AllUnit = 0; $AllGrade = 0; 
         foreach ($scoreYear as $key_year => $v_scoreYear) {
@@ -24,13 +45,21 @@
             
         }            
         ?>
-<div class="app-content pt-3 p-md-3 p-lg-4">
 
-    <div class="app-content pt-3 p-md-3 p-lg-4">
-        <div class="container-xl">
-            <h1 class="app-page-title">จัดการข้อมูล<?=$title;?> ของ
+
+    <div class="">
+        <div class="">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="<?= site_url('admin') ?>">หน้าหลัก</a></li>
+                    <li class="breadcrumb-item"><a href="<?= site_url('Admin/Acade') ?>">งานวิชาการ</a></li>
+                    <li class="breadcrumb-item"><a href="<?= site_url('Admin/Acade/Evaluate') ?>">รายงานผล</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">ผลการเรียนนักเรียนรายบุคคล</li>
+                </ol>
+            </nav>
+            <h3 class="page-title">จัดการข้อมูล<?=$title;?> ของ
                 <?=$stu->StudentPrefix.$stu->StudentFirstName.' '.$stu->StudentLastName?> ชั้น
-                <?=$stu->StudentClass?></h1>
+                <?=$stu->StudentClass?></h3>
             <hr class="mb-4">
         </div>
 
@@ -43,7 +72,7 @@
             ?>
                 <div class="col-md-12">
                     <div class="card mb-5">
-                        <div class="card-header text-center text-white" style="background-color: #5FCB71;">
+                        <div class="card-header card-header-custom">
                             ภาคเรียนที่
                             <?=$v_scoreYear->RegisterYear?>
                         </div>
@@ -52,14 +81,14 @@
                                 <div class="col-md-8">
                                     <div class="card mb-5">
                                         <div class="table-responsive">
-                                            <table class="table table-hover table-bordered">
+                                            <table class="table table-hover table-bordered table-striped">
                                                 <thead class="bg-light">
                                                     <tr class="text-center table-success">
                                                         <th scope="col">รหัสวิชา</th>
                                                         <th scope="col">ชื่อวิชา</th>
                                                         <th scope="col">ประเภท</th>
-                                                        <th scope="col">หน่วยกิต</th>
-                                                        <th scope="col">เกรด</th>
+                                                        <th scope="col" class="text-right-align">หน่วยกิต</th>
+                                                        <th scope="col" class="text-center">เกรด</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -74,7 +103,7 @@
                                                         <th scope="row"><?=$score->SubjectCode;?></th>
                                                         <td><?=$score->SubjectName;?></td>
                                                         <td class="text-center"><?=$type[1]?></td>
-                                                        <td class="text-center">
+                                                        <td class="text-right-align">
                                                             <?=number_format(floatval($score->SubjectUnit),1);?>
                                                         </td>
 
@@ -100,12 +129,12 @@
                                     }
                                      endif; 
                                      endforeach;?>
-                                                   <tr class="text-center tfoot">
+                                                   <tr class="text-center table-footer-summary">
                                                     <th ></th>
                                                     <th >วิชาทั้งหมด <?=$CountSubjectAll;?> วิชา</th>
-                                                    <th colspan=2>หน่วยกิตทั้งหมด <?=$SumUnit;?></th>
-                                                    <th>
-                                                        <?=substr($SumGrade/$SumUnit,0,4);?>
+                                                    <th colspan=2 class="text-right-align">หน่วยกิตทั้งหมด <?=$SumUnit;?></th>
+                                                    <th class="text-center">
+                                                        <?= ($SumUnit != 0) ? substr($SumGrade/$SumUnit,0,4) : 'N/A' ;?>
                                                     </th>
                                                 </tr>
                                                 </tbody>
@@ -166,21 +195,7 @@
                                             </tbody>
                                         </table>
 
-                                        <table class="table">
-                                            <thead class="text-center table-success">
-                                                <tr>
-                                                    <th colspan="3">ผลการประเมิน</th>
-                                                </tr>
-                                                <tr>
-                                                    <th scope="col">คุณลักษณะอันพึงประสงค์</th>
-                                                    <th scope="col">อ่าน คิดวิเคราะห์ เขียน</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                            </tbody>
-                                        </table>
 
-                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -195,6 +210,6 @@
 
     </div>
     <!--//container-fluid-->
-</div>
-<!--//app-content-->
+
+<!--//content-->
 <?= $this->endSection() ?>

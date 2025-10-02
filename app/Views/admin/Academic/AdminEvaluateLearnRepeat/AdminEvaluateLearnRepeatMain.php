@@ -17,8 +17,8 @@ $onoff_status = isset($checkOnOff[6]) && isset($checkOnOff[6]->onoff_status) ? $
 $onoff_detail = isset($checkOnOff[6]) && isset($checkOnOff[6]->onoff_detail) ? $checkOnOff[6]->onoff_detail : '';
 $onoff_year = isset($checkOnOff[6]) && isset($checkOnOff[6]->onoff_year) ? $checkOnOff[6]->onoff_year : '-';
 ?>
-<div class="content pt-3 p-md-3 p-lg-4">
-    <div class="container-xl">
+<div class="">
+    <div class="">
         <div class="row justify-content-between align-items-center mb-3">
             <div class="col-auto">
                 <h2 class="heading mb-0"><?= esc($title);?></h2>

@@ -121,42 +121,42 @@
                             </li>
                             <li class="menu-item <?= ($uri->getTotalSegments() >= 4 && $uri->getSegment(4) == 'ReportScoreRoomMain' && $uri->getTotalSegments() >= 3 && $uri->getSegment(3) == 'Evaluate' ? 'active' : '') ?>">
                                 <a href="<?=base_url('Admin/Acade/Evaluate/ReportScoreRoomMain/').$SchoolYear->schyear_year.'/All/All';?>" class="menu-link">
-                                    <div data-i18n="รายงานผลการบันทึกคะแนน (รายห้องเรียน)">รายงานผลการบันทึกคะแนน (รายห้องเรียน)</div>
+                                    <div data-i18n="รายงานผลการบันทึกคะแนน (รายห้องเรียน)" style="white-space: normal;">รายงานผลการบันทึกคะแนน (รายห้องเรียน)</div>
                                 </a>
                             </li>
                             <li class="menu-item <?= (($uri->getTotalSegments() >= 4 && $uri->getSegment(4) == 'ReportTeacherSaveScore' && $uri->getTotalSegments() >= 3 && $uri->getSegment(3) == 'Evaluate') || ($uri->getTotalSegments() >= 4 && $uri->getSegment(4) == 'ReportTeacherSaveScoreCheck') ? 'active' : '') ?>">
                                 <a href="<?=base_url('Admin/Acade/Evaluate/ReportTeacherSaveScore/').$SchoolYear->schyear_year;?>" class="menu-link">
-                                    <div data-i18n="รายงานผลการบันทึกคะแนน (ครูผู้สอน)">รายงานผลการบันทึกคะแนน (ครูผู้สอน)</div>
+                                    <div data-i18n="รายงานผลการบันทึกคะแนน (ครูผู้สอน)" style="white-space: normal;">รายงานผลการบันทึกคะแนน (ครูผู้สอน)</div>
                                 </a>
                             </li>
                             <li class="menu-item <?= ($uri->getTotalSegments() >= 4 && $uri->getSegment(4) == 'ReportPerson' && $uri->getTotalSegments() >= 3 && $uri->getSegment(3) == 'Evaluate' ? 'active' : '') ?>">
                                 <a href="<?=base_url('Admin/Acade/Evaluate/ReportPerson');?>" class="menu-link">
-                                    <div data-i18n="รายงานผลการเรียนรายบุคคล">รายงานผลการเรียนรายบุคคล</div>
+                                    <div data-i18n="รายงานผลการเรียนรายบุคคล" style="white-space: normal;">รายงานผลการเรียนรายบุคคล</div>
                                 </a>
                             </li>
                             <li class="menu-item <?= ($uri->getTotalSegments() >= 4 && $uri->getSegment(4) == 'ReportRoom' ? 'active' : '') ?>">
                                 <a href="<?=base_url('Admin/Acade/Evaluate/ReportRoom');?>" class="menu-link">
-                                    <div data-i18n="รายงานผลการเรียนรายห้องเรียน">รายงานผลการเรียนรายห้องเรียน</div>
+                                    <div data-i18n="รายงานผลการเรียนรายห้องเรียน" style="white-space: normal;">รายงานผลการเรียนรายห้องเรียน</div>
                                 </a>
                             </li>
-                            <li class="menu-item <?= ($uri->getTotalSegments() >= 4 && $uri->getSegment(4) == 'ReportSummaryTeacher' && $uri->getTotalSegments() >= 3 && $uri->getSegment(3) == 'Evaluate' ? 'active' : '') ?>">
-                                <a href="<?=base_url('Admin/Acade/Evaluate/ReportSummaryTeacher?SelLern=0');?>" class="menu-link">
-                                    <div data-i18n="รายงานสรุปผลสัมฤทธิ์ทางการเรียน">รายงานสรุปผลสัมฤทธิ์ทางการเรียน</div>
+                            <li class="menu-item <?= ($uri->getTotalSegments() >= 4 && $uri->getSegment(4) == 'ReportAcademicSummary' && $uri->getTotalSegments() >= 3 && $uri->getSegment(3) == 'Evaluate' ? 'active' : '') ?>">
+                                <a href="<?=base_url('Admin/Acade/Evaluate/ReportAcademicSummary?SelLern=0');?>" class="menu-link">
+                                    <div data-i18n="รายงานสรุปผลสัมฤทธิ์ทางการเรียน" style="white-space: normal;">รายงานสรุปผลสัมฤทธิ์ทางการเรียน</div>
                                 </a>
                             </li>
                             <li class="menu-item <?= ($uri->getTotalSegments() >= 4 && $uri->getSegment(4) == 'ReportAcademicSummaryRoyalRoseStandard' && $uri->getTotalSegments() >= 3 && $uri->getSegment(3) == 'Evaluate' ? 'active' : '') ?>">
                                 <a href="<?=base_url('Admin/Acade/Evaluate/ReportAcademicSummaryRoyalRoseStandard?SelLern=0');?>" class="menu-link">
-                                    <div data-i18n="รายการผลสัมฤทธิ์ทางการเรียนตามมาตรฐานกุหลาบหลวง">รายการผลสัมฤทธิ์ทางการเรียนตามมาตรฐานกุหลาบหลวง</div>
+                                    <div data-i18n="รายการผลสัมฤทธิ์ทางการเรียนตามมาตรฐานกุหลาบหลวง" style="white-space: normal;">รายการผลสัมฤทธิ์ทางการเรียนตามมาตรฐานกุหลาบหลวง</div>
                                 </a>
                             </li>
                             <li class="menu-item <?= ($uri->getTotalSegments() >= 4 && $uri->getSegment(4) == 'AcademicResult' ? 'active' : '') ?>">
                                 <a href="<?=base_url('Admin/Acade/Evaluate/AcademicResult');?>" class="menu-link">
-                                    <div data-i18n="ตั้งค่าแสดงผลการเรียนนักเรียน">ตั้งค่าแสดงผลการเรียนนักเรียน</div>
+                                    <div data-i18n="ตั้งค่าแสดงผลการเรียนนักเรียน" style="white-space: normal;">ตั้งค่าแสดงผลการเรียนนักเรียน</div>
                                 </a>
                             </li>
                             <li class="menu-item <?= ($uri->getTotalSegments() >= 4 && $uri->getSegment(4) == 'SaveScore' ? 'active' : '') ?>">
                                 <a href="<?=base_url('Admin/Acade/Evaluate/SaveScore');?>" class="menu-link">
-                                    <div data-i18n="ตั้งค่าบันทึกผลการเรียน">ตั้งค่าบันทึกผลการเรียน</div>
+                                    <div data-i18n="ตั้งค่าบันทึกผลการเรียน" style="white-space: normal;">ตั้งค่าบันทึกผลการเรียน</div>
                                 </a>
                             </li>
                         </ul>

@@ -41,7 +41,6 @@ th.rotated-text>div>span {
 
 table {
     border-collapse: collapse;
-    width: 100%;
 }
 
 th,
@@ -54,47 +53,57 @@ th {
     background: #ABDD93;
 }
 </style>
-<div class="app-content pt-3 p-md-3 p-lg-4">
+<div class="">
     <div class="row g-3 mb-4 align-items-center justify-content-between">
         <div class="col-auto">
-            <h1 class="app-page-title mb-0"><?= isset($title) ? esc($title) : '' ?> <?= isset($totip) ? esc($totip) : '';?></h1>
+            <h3 class="page-title mb-0"><?= isset($title) ? esc($title) : '' ?> <?= isset($totip) ? esc($totip) : '';?>
+            </h3>
         </div>
         <div class="col-auto">
             <div class="page-utilities">
                 <div class="row g-2 justify-content-start justify-content-md-end align-items-center">
 
-                    <div class="col-auto">
-                        <?php if((service('request')->uri->getSegment(3) ?? '') === "Executive") :?>
-                        <form action="<?= site_url('Admin/Acade/Executive/ReportRoom');?>" method="post">
-                            <?php else:
+                    <div class="card p-2">
+                        <div class="col-auto">
+                            <?php if((service('request')->uri->getSegment(3) ?? '') === "Executive") :?>
+                            <form action="<?= site_url('Admin/Acade/Executive/ReportRoom');?>" method="post">
+                                <?php else:
                             ?><form action="<?= site_url('Admin/Acade/Evaluate/ReportRoom');?>" method="post">
-                                <?php endif; ?>
-                                <div class="d-flex">
-                                    <div class="col-auto me-2">
-                                        <select class="form-select w-auto" name="KeyCheckYear" id="KeyCheckYear">
-                                            <option selected="" value="">ปีการศึกษา...</option>
-                                            <?php foreach ($CheckYear as $key => $v_CheckYear) : ?>
-                                            <option <?= isset($KeyCheckYear) && isset($v_CheckYear->RegisterYear) && $KeyCheckYear == $v_CheckYear->RegisterYear ? 'selected' : ''?>
-                                                value="<?= isset($v_CheckYear->RegisterYear) ? esc($v_CheckYear->RegisterYear) : '' ?>">
-                                                <?= isset($v_CheckYear->RegisterYear) ? esc($v_CheckYear->RegisterYear) : '' ?></option>
-                                            <?php endforeach; ?>
-                                        </select>
-                                    </div>
-                                    <div class="col-auto">
-                                        <select class="form-select w-auto" name="keyroom" id="keyroom">
-                                            <option selected="" value="">ห้อง...</option>
-                                            <?php foreach ($this->classroom->ListRoom() as $key => $v_ListRoom) : ?>
-                                            <option <?= isset($keyroom) && $keyroom == "ม.".$v_ListRoom ? "selected" : ""?>
-                                                value="ม.<?= esc($v_ListRoom) ?>"><?= esc($v_ListRoom) ?></option>
-                                            <?php endforeach; ?>
-                                        </select>
-                                    </div>
-                                </div>
-                    </div>
+                                    <?php endif; ?>
+                                    <div class="d-flex">
+                                        <div class="col-auto me-2">
+                                            <select class="form-select w-auto" name="KeyCheckYear" id="KeyCheckYear">
+                                                <option selected="" value="">ปีการศึกษา...</option>
+                                                <?php foreach ($CheckYear as $key => $v_CheckYear) : ?>
+                                                <option
+                                                    <?= isset($KeyCheckYear) && isset($v_CheckYear->RegisterYear) && $KeyCheckYear == $v_CheckYear->RegisterYear ? 'selected' : ''?>
+                                                    value="<?= isset($v_CheckYear->RegisterYear) ? esc($v_CheckYear->RegisterYear) : '' ?>">
+                                                    <?= isset($v_CheckYear->RegisterYear) ? esc($v_CheckYear->RegisterYear) : '' ?>
+                                                </option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                        </div>
+                                        <div class="col-auto me-2">
+                                            <select class="form-select w-auto" name="keyroom" id="keyroom">
+                                                <option selected="" value="">ห้อง...</option>
+                                                <?php foreach ($Room as $key => $v_ListRoom) : ?>
+                                                <option
+                                                    <?= isset($keyroom) && $keyroom == "ม.".$v_ListRoom ? "selected" : ""?>
+                                                    value="ม.<?= esc($v_ListRoom) ?>"><?= esc($v_ListRoom) ?></option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                        </div>
                     <div class="col-auto">
-                        <button class="btn app-btn-primary clickLoder" type="submit">ค้นหา</button>
+                        <button class="btn btn-primary clickLoder" type="submit"><i class="bx bx-search me-2"></i>ค้นหา</button>
                     </div>
+
                     </form>
+
+                        </div>
+
+                    </div>
+
+                    
                 </div>
                 <!--//row-->
             </div>
@@ -105,7 +114,7 @@ th {
     <!--//container-->
     </section>
     <section class="we-offer-area">
-        <div class="container-fluid">
+        <div class="">
 
             <?php if(!isset($Nodata) || $Nodata == 0): ?>
             <div class="card">
@@ -114,16 +123,20 @@ th {
                 </div>
             </div>
             <?php else: ?>
-            <div class="card" style="width: 1600px;">
+            <div class="card">
                 <div class="card-body">
-                    <div class="table-responsive fixTableHead">
+                    <div class="fixTableHead">
                         <table class="table table-bordered" id="tblGradeSumRoom">
                             <thead>
                                 <tr class="text-center table-success">
                                     <th class="cell align-middle" style="width:20px">ลำดับที่</th>
                                     <th class="cell align-middle" style="width:230px">ชื่อ - นามสกุล</th>
+                                    <?php if (empty($subject)): ?>
+                                    <th class="cell align-middle" colspan="20">
+                                        ไม่พบรายวิชาสำหรับปีการศึกษาและห้องเรียนที่เลือก</th>
+                                    <?php else: ?>
                                     <?php foreach ($subject as $key => $v_subject):
-                                    ?>
+                                        ?>
                                     <th class="rotated-text">
                                         <div>
                                             <span>
@@ -133,6 +146,7 @@ th {
                                     </th>
                                     <?php endforeach; ?>
                                     <th class="cell align-middle">GPA เกรดเฉลี่ย</th>
+                                    <?php endif; ?>
                                 </tr>
                             </thead>
                             <tbody>
@@ -141,78 +155,63 @@ th {
                                 // NOTE: This logic should be in the controller
                                 foreach ($CheckSub as $key => $v_stu) : 
                                 ?>
-                                    <tr>
-                                        <td class="text-center "> <?= isset($v_stu[1]) ? esc($v_stu[1]) : '' ?></td>
-                                        <td class="text-nowrap "><?=
+                                <tr>
+                                    <td class="text-center "> <?= isset($v_stu[1]) ? esc($v_stu[1]) : '' ?></td>
+                                    <td class="text-nowrap "><?=
                                         isset($v_stu[2]) ? esc($v_stu[2]) : '' ?></td>
-                                        <?php $i = 4;
+                                    <?php $i = 4;
                                         
                                         foreach ($subject as $key1 => $v_RegisSubject): 
                                             $sub = explode("/", isset($v_stu[$i]) ? $v_stu[$i] : '');
                                         ?>
-                                        <td class="text-center">
-                                            <div class="showGrade" data_unit="<?= isset($v_RegisSubject->SubjectUnit) ? esc($v_RegisSubject->SubjectUnit) : '' ?>">
-                                                <?php echo isset($sub[1]) ? esc($sub[1]) : '';  ?>
-                                            </div>
-                                        </td>
-                                        <?php $i++; endforeach; ?>
-                                        <td class="cell totalGrade text-center">
-
-                                        </td> 
-                                    </tr>
-                                    <?php endforeach; ?>
-                                </tbody>
-                            </table>
-                        </div>
+                                    <td class="text-center">
+                                        <div class="showGrade"
+                                            data_unit="<?= isset($v_RegisSubject->SubjectUnit) ? esc($v_RegisSubject->SubjectUnit) : '' ?>">
+                                            <?php echo isset($sub[1]) ? esc($sub[1]) : '';  ?>
+                                        </div>
+                                    </td>
+                                    <?php $i++; endforeach; ?>
+                                    <td class="cell totalGrade text-center">
+                                        <?= number_format(end($v_stu), 2); ?>
+                                    </td>
+                                </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
+            </div>
             <?php endif; ?>
 
         </div>
 
-    </div>
-    </section>
+</div>
+</section>
 
 </div>
 <?= $this->endSection() ?>
 
 <?= $this->section('script') ?>
 <script>
-$('#tblGradeSumRoom').DataTable({
-    "order": [
-        [0, "asc"]
-    ],
-    dom: 'Bfrtip',
-    buttons: [
-        'copy', 'excel', 'pdf', 'print'
-    ]
-});
-
-$('#tblGradeSumRoom tbody tr').each(function () {
-
-    var totalGrade = 0;
-    var totalUnit = 0;
-    var averageGrade = 0;
-    var value = 0;
-
-    $(this).find('.showGrade').each(function () {
-        var valueUnit = parseFloat($(this).attr('data_unit'));
-        var valueGrade = parseFloat($(this).text());
-
-        if (!isNaN(valueGrade)) {
-            if (!isNaN(valueUnit)) {
-                totalUnit += valueUnit;
-            }
-
-
-            value += valueUnit * valueGrade;
-
-        }
-        averageGrade = value / totalUnit;
-
+$(document).ready(function() {
+    // Only initialize DataTable if the table exists and has data
+    if ($.fn.DataTable.isDataTable('#tblGradeSumRoom')) {
+        $('#tblGradeSumRoom').DataTable().destroy();
+    }
+    
+    $('#tblGradeSumRoom').DataTable({
+        "order": [
+            [0, "asc"]
+        ],
+        dom: 'Bfrtip',
+        buttons: [
+            'copy', 'pdf', 'print'
+        ],
+        lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
+        pageLength: -1,
+        // Ensure buttons are responsive
+        responsive: false
     });
-    //console.log(averageGrade);
-    $(this).find('.totalGrade').html(parseFloat(String(averageGrade).substring(0, 4)).toFixed(2));
 });
 </script>
 <?= $this->endSection() ?>
