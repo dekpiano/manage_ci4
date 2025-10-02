@@ -81,6 +81,9 @@ $routes->get('Admin/Acade/Setting/AdminRoles', [ConAdminSettingAdminRoles::class
 $routes->get('Admin/Acade/Evaluate/AcademicRepeat/(:segment)/(:segment)', [ConAdminAcademicRepeat::class, 'AdminAcademicRepeatMain']);
 $routes->get('Admin/Acade/Evaluate/AcademicRepeat/(:segment)/(:segment)/(:segment)', [ConAdminAcademicRepeat::class, 'AdminAcademicRepeatGrade']);
 $routes->get('Admin/Acade/Evaluate/AcademicResult', [ConAdminAcademinResult::class, 'AdminAcademinResultMain']);
+    $routes->post('admin/academic/ConAdminAcademinResult/OnOffLevel', [ConAdminAcademinResult::class, 'OnOffLevel']);
+    $routes->post('admin/academic/ConAdminAcademinResult/CheckOnOffDoGrade', [ConAdminAcademinResult::class, 'CheckOnOffDoGrade']);
+    $routes->post('admin/academic/ConAdminAcademinResult/CheckOnOffOpenYear', [ConAdminAcademinResult::class, 'CheckOnOffOpenYear']);
 $routes->get('Admin/Acade/Evaluate/EditGrade/(:segment)/(:segment)', [ConAdminEvaluateEditGrade::class, 'AdminEvaluateEditGradeMain']);
 $routes->get('Admin/Acade/Evaluate/EditGrade/(:segment)/(:segment)/(:segment)', [ConAdminEvaluateEditGrade::class, 'AdminEvaluateEditGradeUpdate']);
 $routes->get('Admin/Acade/Evaluate/SaveScore', [ConAdminSaveScore::class, 'AdminSaveScoreMain']);

@@ -118,8 +118,8 @@
     transition: 0.3s ease all;
 }
 </style>
-<div class="app-content pt-3 p-md-3 p-lg-4">
-    <div class="app-page-title">
+<div class="content pt-3 p-md-3 p-lg-4">
+    <div class="page-title">
         <h2 class="heading">จัดการข้อมูล<?= isset($title) ? esc($title) : '' ?></h2>
     </div>
     <!--//container-->
@@ -133,8 +133,8 @@
                     <div class="section-intro">เปิด - ปิดการแสดงผลการเรียนของนักเรียน</div>
                 </div>
                 <div class="col-12 col-md-8">
-                    <div class="app-card app-card-settings shadow-sm p-3">
-                        <div class="app-card-body d-flex">
+                    <div class="card card-settings shadow-sm p-3">
+                        <div class="card-body d-flex">
                             <div class="col-auto align-self-center">
                                 <div class="button r" id="button-1">
                                     <input class="checkbox" type="checkbox" id="checkOnOffDoGrade"
@@ -163,10 +163,10 @@
                             </div>
                         </div>
 
-                        <!--//app-card-body-->
+                        <!--//card-body-->
 
                     </div>
-                    <!--//app-card-->
+                    <!--//card-->
                 </div>
             </div>
 
@@ -176,10 +176,10 @@
                     <div class="section-intro">สามารถเลือกระดับชั้นในการแสดงผลการเรียนได้ (ในกรณีอยากที่จะเปิดผลการเรียนให้ดูเฉพาะชั้นเรียน)</div>
                 </div>
                 <div class="col-12 col-md-8">
-                    <div class="app-card app-card-settings shadow-sm p-3">
+                    <div class="card card-settings shadow-sm p-3">
                         <?php $checkValueLevel = isset($checkOnOff[0]->onoff_Level) ? explode("|", $checkOnOff[0]->onoff_Level) : []; ?>
                         <?php for($i = 1; $i <=6; $i++): ?>
-                        <div class="app-card-body d-flex mt-1">
+                        <div class="card-body d-flex mt-1 pt-2 pb-2 border-bottom">
                             <div class="col-auto align-self-center">
                                 <div class="button r" id="button-1">
                                     <input class="checkbox checkOnOffLevel" type="checkbox" id="checkOnOffLevel"
@@ -195,10 +195,10 @@
                         </div>
                         <?php endfor; ?>
 
-                        <!--//app-card-body-->
+                        <!--//card-body-->
 
                     </div>
-                    <!--//app-card-->
+                    <!--//card-->
                 </div>
             </div>
 

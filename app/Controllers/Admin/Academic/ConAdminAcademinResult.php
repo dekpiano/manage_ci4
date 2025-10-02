@@ -56,7 +56,7 @@ class ConAdminAcademinResult extends BaseController
             return $yearA <=> $yearB; // เรียงตามปี
         });
 
-        echo view('admin/layout/main', $data);
+        
         echo view('admin/Academic/AdminAcademicResult/AdminAcademicResultMain', $data);
         
     }
@@ -95,7 +95,7 @@ class ConAdminAcademinResult extends BaseController
         $data['class_schedule'] = $num1;
         $data['action'] = 'insert_class_schedule';
 
-        echo view('admin/layout/main', $data);
+        
         echo view('admin/Academic/AdminClassSchedule/AdminClassScheduleForm', $data);
         
     }

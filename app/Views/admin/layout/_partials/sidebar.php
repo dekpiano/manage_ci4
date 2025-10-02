@@ -108,17 +108,6 @@
                                     <div data-i18n="จัดการผลการเรียน (0 ร)">จัดการผลการเรียน (0 ร)</div>
                                 </a>
                             </li>
-                            <li class="menu-item <?= ($uri->getTotalSegments() >= 4 && $uri->getSegment(4) == 'AcademicRepeat' ? 'active' : '') ?>">
-                                <a href="<?php
-                                    $onoff_year = isset($checkOnOff[6]->onoff_year) ? $checkOnOff[6]->onoff_year : '';
-                                    $parts = explode('/', $onoff_year);
-                                    $term = $parts[0] ?? '';
-                                    $year = $parts[1] ?? '';
-                                    echo base_url('Admin/Acade/Evaluate/AcademicRepeat/' . $term . '/' . $year);
-                                ?>" class="menu-link">
-                                    <div data-i18n="ตั้งค่าเรียนซ้ำ (มส)">ตั้งค่าเรียนซ้ำ (มส)</div>
-                                </a>
-                            </li>
                             <li class="menu-item <?= ($uri->getTotalSegments() >= 4 && $uri->getSegment(4) == 'ReportScoreRoomMain' && $uri->getTotalSegments() >= 3 && $uri->getSegment(3) == 'Evaluate' ? 'active' : '') ?>">
                                 <a href="<?=base_url('Admin/Acade/Evaluate/ReportScoreRoomMain/').$SchoolYear->schyear_year.'/All/All';?>" class="menu-link">
                                     <div data-i18n="รายงานผลการบันทึกคะแนน (รายห้องเรียน)" style="white-space: normal;">รายงานผลการบันทึกคะแนน (รายห้องเรียน)</div>
@@ -147,6 +136,18 @@
                             <li class="menu-item <?= ($uri->getTotalSegments() >= 4 && $uri->getSegment(4) == 'ReportAcademicSummaryRoyalRoseStandard' && $uri->getTotalSegments() >= 3 && $uri->getSegment(3) == 'Evaluate' ? 'active' : '') ?>">
                                 <a href="<?=base_url('Admin/Acade/Evaluate/ReportAcademicSummaryRoyalRoseStandard?SelLern=0');?>" class="menu-link">
                                     <div data-i18n="รายการผลสัมฤทธิ์ทางการเรียนตามมาตรฐานกุหลาบหลวง" style="white-space: normal;">รายการผลสัมฤทธิ์ทางการเรียนตามมาตรฐานกุหลาบหลวง</div>
+                                </a>
+                            </li>
+                            <hr>
+                            <li class="menu-item <?= ($uri->getTotalSegments() >= 4 && $uri->getSegment(4) == 'AcademicRepeat' ? 'active' : '') ?>">
+                                <a href="<?php
+                                    $onoff_year = isset($checkOnOff[6]->onoff_year) ? $checkOnOff[6]->onoff_year : '';
+                                    $parts = explode('/', $onoff_year);
+                                    $term = $parts[0] ?? '';
+                                    $year = $parts[1] ?? '';
+                                    echo base_url('Admin/Acade/Evaluate/AcademicRepeat/' . $term . '/' . $year);
+                                ?>" class="menu-link">
+                                    <div data-i18n="ตั้งค่าเรียนซ้ำ (มส)">ตั้งค่าเรียนซ้ำ (มส)</div>
                                 </a>
                             </li>
                             <li class="menu-item <?= ($uri->getTotalSegments() >= 4 && $uri->getSegment(4) == 'AcademicResult' ? 'active' : '') ?>">
