@@ -94,7 +94,7 @@ thead {
             <div class="card">
                 <div class="card-body">
                     <div class="table-responsive" style="overflow-y: scroll;height: 750px;">
-                        <table class="table table-hover table-bordered mb-0 text-left" id="">
+                        <table class="table table-hover table-bordered mb-0 text-left" id="tblScoreRoomMain">
                             <thead>
                                 <tr class="text-center">
                                     <th class="cell">เลขที่</th>
@@ -176,6 +176,27 @@ thead {
 
 <?= $this->section('script') ?>
 <script>
+$(document).ready(function() {
+    // Initialize DataTable for tblScoreRoomMain if it exists
+    if ($.fn.DataTable.isDataTable('#tblScoreRoomMain')) {
+        $('#tblScoreRoomMain').DataTable().destroy();
+    }
+    
+    $('#tblScoreRoomMain').DataTable({
+        "order": [], // No initial order, as columns are dynamic
+        dom: 'Bfrtip',
+        buttons: [
+            { extend: 'copy', className: 'btn btn-secondary me-1' },
+            { extend: 'excelHtml5', className: 'btn btn-success me-1' },
+            { extend: 'pdf', className: 'btn btn-danger me-1' },
+            { extend: 'print', className: 'btn btn-info me-1' }
+        ],
+        lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
+        pageLength: -1,
+        autoWidth: false
+    });
+});
+
 $(document).on("change", "#KeyCheckYear, #SelectRoomReportScore", function() {
     let selectedYear = $('#KeyCheckYear').val();
     let selectedRoom = $('#SelectRoomReportScore').val();

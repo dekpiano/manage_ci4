@@ -203,14 +203,16 @@ $(document).ready(function() {
         "order": [
             [0, "asc"]
         ],
-        dom: 'Bfrtip',
+        dom: '<"row"<"col-md-6"B><"col-md-6"f>>rtip',
         buttons: [
-            'copy', 'pdf', 'print'
+            { extend: 'copy', className: 'btn btn-secondary me-1' },
+            { extend: 'excelHtml5', className: 'btn btn-success me-1' },
+            { extend: 'pdf', className: 'btn btn-danger me-1' },
+            { extend: 'print', className: 'btn btn-info me-1' }
         ],
         lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
         pageLength: -1,
-        // Ensure buttons are responsive
-        responsive: false
+        autoWidth: false // Disable autoWidth for better responsiveness
     });
 });
 </script>

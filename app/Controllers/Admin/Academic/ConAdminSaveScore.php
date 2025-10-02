@@ -68,7 +68,7 @@ class ConAdminSaveScore extends BaseController
         $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
         $data['title'] = "บันทึกผลการเรียน";	
         $data['OnOffSaveScore'] = $this->db->table('tb_register_onoff')->where('onoff_id >=', 2)->where('onoff_id <=', 5)->get()->getResult();
-        $data['OnOffSaveScoreSystem'] = $this->db->table('tb_register_onoff')->where('onoff_id',6)->get()->getRow();
+        $data['OnOffSaveScoreSystem'] = $this->db->table('tb_register_onoff')->where('onoff_id',6)->get()->getResult();
         
         $data['result'] = $this->db->table('skjacth_academic.tb_register')
                             ->select('
@@ -88,8 +88,8 @@ class ConAdminSaveScore extends BaseController
                             ->groupBy('tb_register.subjectID')
                             ->get()->getResult();
         
-        echo view('admin/layout/main', $data);
-        echo view('admin/Academic/AdminSaveScore/AdminSaveScoreMain.php');
+        
+        echo view('admin/Academic/AdminSaveScore/AdminSaveScoreMain.php',$data);
 
     }
 
@@ -141,8 +141,8 @@ class ConAdminSaveScore extends BaseController
         $data['set_score'] = !empty($check_idSubject->SubjectID) ? $this->db->table('tb_register_score')->where('regscore_subjectID',$check_idSubject->SubjectID)->get()->getResult() : [];
         $data['onoff_savescore'] = $this->db->table('tb_register_onoff')->where('onoff_id >=',2)->where('onoff_id <=',5)->get()->getResult();
 
-        echo view('admin/layout/main', $data);
-        echo view('admin/Academic/AdminSaveScore/AdminSaveScoreGrade.php');
+        
+        echo view('admin/Academic/AdminSaveScore/AdminSaveScoreGrade.php',$data);
         
 
     }

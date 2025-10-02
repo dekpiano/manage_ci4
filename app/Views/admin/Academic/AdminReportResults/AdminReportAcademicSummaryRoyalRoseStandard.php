@@ -96,26 +96,6 @@ usort($CheckYear, function($a, $b) {
             background: #ABDD93;
         }
 
-        /* Custom CSS for DataTables Buttons */
-        div.dt-buttons {
-            margin-bottom: 1em; /* เพิ่มระยะห่างด้านล่างปุ่ม */
-        }
-
-        div.dt-buttons .dt-button {
-            background-color: #4CAF50; /* สีพื้นหลัง */
-            color: white; /* สีตัวอักษร */
-            padding: 8px 15px; /* ระยะห่างภายใน */
-            border: none; /* ไม่มีเส้นขอบ */
-            border-radius: 4px; /* ขอบมน */
-            cursor: pointer; /* เปลี่ยนเคอร์เซอร์เมื่อชี้ */
-            margin-right: 5px; /* ระยะห่างระหว่างปุ่ม */
-            font-size: 0.9em; /* ขนาดตัวอักษร */
-            transition: background-color 0.3s ease; /* เพิ่ม transition */
-        }
-
-        div.dt-buttons .dt-button:hover {
-            background-color: #45a049; /* สีพื้นหลังเมื่อโฮเวอร์ */
-        }
         </style>
         <?php if(service('request')->getGet('SelLevel') === '0' || service('request')->getGet('KeyYear') === '0'):?>
         <div class="card alert alert-dismissible shadow-sm mb-4 border-left-decoration" role="alert">
@@ -205,11 +185,10 @@ $(document).ready(function() {
     $('#ReportSummaryRoyalRoseStandard').DataTable({
         dom: '<"top"B>rt<"bottom"ip>',
         buttons: [
-            'copy',
-            'excelHtml5',
-            'csvHtml5',
-            'pdfHtml5',
-            'print'
+            { extend: 'copy', className: 'btn btn-secondary me-1' },
+            { extend: 'excelHtml5', className: 'btn btn-success me-1' },
+            { extend: 'pdf', className: 'btn btn-danger me-1' },
+            { extend: 'print', className: 'btn btn-info me-1' }
         ],
         autoWidth: false,
         lengthMenu: [ [10, 25, 50, -1], [10, 25, 50, "All"] ],
