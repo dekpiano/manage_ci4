@@ -62,7 +62,7 @@
                                         </div>
                                         <div class="col-md-6 mb-3">
                                             <label for="schestu_name" class="form-label">ชื่อห้องเรียน (แผนการเรียน)</label>
-                                            <?php $NameRoom = array('วิทย์-คณิต','วิทย์-เทคโน','ภาษา','การงานอาชีพ','ดนตรี-นาฏศิลป์-ศิลปะ','กีฬา'); ?>
+                                            <?php $NameRoom = array('วิทย์-คณิต','วิทย์-เทคโน','ภาษา','การงานอาชีพ','ดนตรี','นาฏศิลป์','ศิลปะ','ฟุตบอล','ฟุตซอล','บาสเกตบอล','วอลเลย์บอล'); ?>
                                             <select id="schestu_name" class="form-select" name="schestu_name">
                                                 <option value="">เลือกแผนการเรียน</option>
                                                 <?php foreach ($NameRoom as $key => $v_NameRoom) :?>

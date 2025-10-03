@@ -191,19 +191,50 @@ class ConStudents extends BaseController
     return view('user/PageClassSchedule', $data);
     }
 
-    public function SearchClassSchedule(){
-        $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
+    public function SearchClassSchedule()
+    {
+        $year = $this->request->getGet('year');
+        $term = 1; // Default term
 
-        $Ex = explode('/',$data['SchoolYear']->schyear_year);
-        
-        $data['schedule'] = $this->db->table('tb_class_schedule')
-        ->where('schestu_term', $Ex[0])
-        ->where('schestu_year', $Ex[1])
-        ->orderBy('schestu_classname','ASC')
-        ->get()->getResult();
-        header('Content-Type: application/json');
-        return $this->response->setJSON($data['schedule']);
+        if (!empty($year)) {
+            $schedule = $this->db->table('tb_class_schedule')
+                ->where('schestu_term', $term)
+                ->where('schestu_year', $year)
+                ->orderBy('schestu_classname', 'ASC')
+                ->get()
+                ->getResult();
+        } else {
+            // Optional: handle case where no year is provided, maybe default to current year or return empty
+            $schoolYearData = $this->db->table('tb_schoolyear')->get()->getRow();
+            if ($schoolYearData) {
+                $yearParts = explode('/', $schoolYearData->schyear_year);
+                $term = $yearParts[0];
+                $year = $yearParts[1];
 
+                $schedule = $this->db->table('tb_class_schedule')
+                    ->where('schestu_term', $term)
+                    ->where('schestu_year', $year)
+                    ->orderBy('schestu_classname', 'ASC')
+                    ->get()
+                    ->getResult();
+            } else {
+                $schedule = [];
+            }
+        }
+
+        return $this->response->setJSON($schedule);
+    }
+
+    public function getScheduleYears()
+    {
+        $years = $this->db->table('tb_class_schedule')
+            ->select('schestu_year')
+            ->distinct()
+            ->orderBy('schestu_year', 'DESC')
+            ->get()
+            ->getResult();
+
+        return $this->response->setJSON($years);
     }
 
     //-----ห้องเรียนออนไลน์ ------

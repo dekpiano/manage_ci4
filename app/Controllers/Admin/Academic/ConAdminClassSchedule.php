@@ -94,11 +94,11 @@ class ConAdminClassSchedule extends BaseController
                 'label' => 'Image File',
                 'rules' => 'uploaded[schestu_filename]' // Validate upload
                             . '|is_image[schestu_filename]'
-                            . '|mime_in[schestu_filename,image/jpg,image/jpeg,image/gif,image/png,application/pdf]',
+                            . '|mime_in[schestu_filename,image/jpg,image/jpeg,image/gif,image/png]',
                 'errors' => [
-                    'uploaded' => 'กรุณาเลือกไฟล์ภาพหรือ PDF',
+                    'uploaded' => 'กรุณาเลือกไฟล์ภาพ',
                     'is_image' => 'ไฟล์ที่อัปโหลดไม่ใช่ภาพที่ถูกต้อง',
-                    'mime_in'  => 'ไฟล์ที่อัปโหลดต้องเป็น JPG, JPEG, PNG, GIF หรือ PDF',
+                    'mime_in'  => 'ไฟล์ที่อัปโหลดต้องเป็น JPG, JPEG, PNG',
                 ],
             ],
         ];

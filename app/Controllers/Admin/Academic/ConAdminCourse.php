@@ -63,17 +63,28 @@ class ConAdminCourse extends BaseController
                                     ->where('SubjectYear', $data['term'] . '/' . $data['year'])
                                     ->get()->getResult();
 
-        $data['Plan'] = $this->db->table('skjacth_academic.tb_send_plan')
-                                ->select('skjacth_personnel.tb_personnel.pers_id,
-                                        skjacth_personnel.tb_personnel.pers_prefix,
-                                        skjacth_personnel.tb_personnel.pers_firstname,
-                                        skjacth_personnel.tb_personnel.pers_lastname,
-                                        skjacth_personnel.tb_personnel.pers_learning,
-                                        skjacth_academic.tb_send_plan.*')
-                                ->join('skjacth_personnel.tb_personnel', 'skjacth_academic.tb_send_plan.seplan_usersend = skjacth_personnel.tb_personnel.pers_id', 'LEFT')
-                                ->where('seplan_year', $data['year'])
-                                ->where('seplan_term', $data['term'])
-                                ->groupBy('seplan_coursecode,pers_id')->get()->getResult();
+        $builder = $this->db->table('skjacth_academic.tb_send_plan');
+        $builder->select('
+            MAX(skjacth_personnel.tb_personnel.pers_id) as pers_id,
+            MAX(skjacth_personnel.tb_personnel.pers_prefix) as pers_prefix,
+            MAX(skjacth_personnel.tb_personnel.pers_firstname) as pers_firstname,
+            MAX(skjacth_personnel.tb_personnel.pers_lastname) as pers_lastname,
+            skjacth_academic.tb_send_plan.seplan_coursecode,
+            MAX(skjacth_academic.tb_send_plan.seplan_namesubject) as seplan_namesubject,
+            MAX(skjacth_academic.tb_send_plan.seplan_gradelevel) as seplan_gradelevel,
+            MAX(skjacth_academic.tb_send_plan.seplan_typesubject) as seplan_typesubject,
+            MAX(skjacth_academic.tb_send_plan.seplan_year) as seplan_year,
+            MAX(skjacth_academic.tb_send_plan.seplan_term) as seplan_term
+        ');
+        $builder->join('skjacth_personnel.tb_personnel', 'skjacth_academic.tb_send_plan.seplan_usersend = skjacth_personnel.tb_personnel.pers_id', 'LEFT');
+        if (!empty($data['year'])) {
+            $builder->where('seplan_year', $data['year']);
+        }
+        if (!empty($data['term'])) {
+            $builder->where('seplan_term', $data['term']);
+        }
+        $builder->groupBy('skjacth_academic.tb_send_plan.seplan_coursecode, skjacth_academic.tb_send_plan.seplan_usersend');
+        $data['Plan'] = $builder->get()->getResult();
 
         
         echo view('admin/Academic/AdminSendPlan/AdminSendPlanTeacher', $data);
@@ -82,38 +93,42 @@ class ConAdminCourse extends BaseController
 
     public function UpdateSendPlanTeacher()
     {
-        $CheckSubject = $this->db->table('tb_subjects')
-                                ->where('SubjectID', $this->request->getPost('SelectSubject'))
-                                ->get()->getRow(); // Use getRow() for single result
+        try {
+            $CheckSubject = $this->db->table('tb_subjects')
+                                    ->where('SubjectID', $this->request->getPost('SelectSubject'))
+                                    ->get()->getRow();
 
-        if (empty($CheckSubject)) {
-            echo 0; // Subject not found
-            return;
-        }
-
-        $SubYear = explode('/', $CheckSubject->SubjectYear);
-        $Checkplan = $this->db->table('tb_send_plan')
-                            ->where('seplan_coursecode', $CheckSubject->SubjectCode)
-                            ->where('seplan_usersend', $this->request->getPost('SelectTeacher'))
-                            ->where('seplan_year', $SubYear[1])
-                            ->where('seplan_term', $SubYear[0])
-                            ->countAllResults();
-
-        if ($Checkplan <= 0) {
-            $CheckTeacher = $this->DBpersonnel->table('tb_personnel') // Use the class property
-                                        ->select('pers_learning')
-                                        ->where('pers_id', $this->request->getPost('SelectTeacher'))
-                                        ->get()->getRow(); // Use getRow() for single result
-            
-            if (empty($CheckTeacher)) {
-                echo 0; // Teacher not found
-                return;
+            if (empty($CheckSubject)) {
+                return $this->response->setJSON(['status' => 'error', 'message' => 'ไม่พบรายวิชาที่เลือก']);
             }
 
-            $status = $this->request->getPost('seplan_sendcomment');
+            $SubYear = explode('/', $CheckSubject->SubjectYear);
+            $Checkplan = $this->db->table('tb_send_plan')
+                                ->where('seplan_coursecode', $CheckSubject->SubjectCode)
+                                ->where('seplan_usersend', $this->request->getPost('SelectTeacher'))
+                                ->where('seplan_year', $SubYear[1])
+                                ->where('seplan_term', $SubYear[0])
+                                ->countAllResults();
+
+            if ($Checkplan > 0) {
+                return $this->response->setJSON(['status' => 'error', 'message' => 'ข้อมูลครูและรายวิชานี้มีอยู่แล้ว']);
+            }
+
+            $CheckTeacher = $this->DBpersonnel->table('tb_personnel')
+                                        ->select('pers_learning')
+                                        ->where('pers_id', $this->request->getPost('SelectTeacher'))
+                                        ->get()->getRow();
+            
+            if (empty($CheckTeacher)) {
+                return $this->response->setJSON(['status' => 'error', 'message' => 'ไม่พบข้อมูลครูผู้สอน']);
+            }
+
+            $status = $this->request->getPost('seplan_sendcomment') ?? '';
             $textToStore = nl2br(esc($status));
 
             $typePlan = ['บันทึกตรวจใช้แผน', 'แบบตรวจแผนการจัดการเรียนรู้', 'โครงการสอน', 'แผนการสอนหน้าเดียว', 'แผนการสอนเต็ม', 'บันทึกหลังสอน'];
+            
+            $this->db->transStart();
 
             foreach ($typePlan as $v_typePlan) {
                 $SubjectType = explode('/', $CheckSubject->SubjectType);
@@ -123,22 +138,31 @@ class ConAdminCourse extends BaseController
                 $insert = [
                     'seplan_namesubject'  => $CheckSubject->SubjectName,
                     'seplan_coursecode'   => $CheckSubject->SubjectCode,
-                    'seplan_typesubject'  => $SubjectType[1],
-                    'seplan_year'         => $SubjectYear[1],
-                    'seplan_term'         => $SubjectYear[0],
+                    'seplan_typesubject'  => $SubjectType[1] ?? null,
+                    'seplan_year'         => $SubjectYear[1] ?? null,
+                    'seplan_term'         => $SubjectYear[0] ?? null,
                     'seplan_status1'      => "รอตรวจ",
                     'seplan_status2'      => "รอตรวจ",
                     'seplan_sendcomment'  => $textToStore,
-                    'seplan_gradelevel'   => $SubjectClass[1],
+                    'seplan_gradelevel'   => $SubjectClass[1] ?? null,
                     'seplan_typeplan'     => $v_typePlan,
                     'seplan_usersend'     => $this->request->getPost('SelectTeacher'),
                     'seplan_learning'     => $CheckTeacher->pers_learning,
                 ];
-                $result = $this->db->table('tb_send_plan')->insert($insert);
+                $this->db->table('tb_send_plan')->insert($insert);
             }
-            echo 1;
-        } else {
-            echo 0;
+
+            $this->db->transComplete();
+
+            if ($this->db->transStatus() === false) {
+                return $this->response->setJSON(['status' => 'error', 'message' => 'เกิดข้อผิดพลาดในการบันทึกข้อมูล']);
+            } else {
+                return $this->response->setJSON(['status' => 'success', 'message' => 'เพิ่มข้อมูลครูและรายวิชาเรียบร้อยแล้ว']);
+            }
+
+        } catch (\Exception $e) {
+            log_message('error', '[ERROR] {exception}', ['exception' => $e]);
+            return $this->response->setJSON(['status' => 'error', 'message' => 'เกิดข้อผิดพลาดร้ายแรง']);
         }
     }
 
@@ -225,5 +249,95 @@ class ConAdminCourse extends BaseController
         }
 
         echo $result;
+    }
+
+    public function getPlanDetails()
+    {
+        $request = service('request');
+
+        $planCode = $request->getGet('plan_code');
+        $planYear = $request->getGet('plan_year');
+        $planTerm = $request->getGet('plan_term');
+        $planTeacherId = $request->getGet('plan_teacher_id'); // New
+
+        // ดึงข้อมูลจากฐานข้อมูล
+        // ตรวจสอบให้แน่ใจว่า 'tb_send_plan' เป็นชื่อตารางที่ถูกต้อง
+        $builder = $this->db->table('tb_send_plan');
+        $builder->select('seplan_namesubject, seplan_coursecode, seplan_gradelevel, seplan_typesubject, seplan_year, seplan_term, seplan_usersend');
+        $builder->where('seplan_coursecode', $planCode);
+        $builder->where('seplan_year', $planYear);
+        $builder->where('seplan_term', $planTerm);
+        $builder->where('seplan_usersend', $planTeacherId); // New
+        $builder->limit(1);
+        $planDetails = $builder->get()->getRow();
+
+        if ($planDetails) {
+            return $this->response->setJSON([
+                'status' => 'success',
+                'data' => $planDetails
+            ]);
+        } else {
+            return $this->response->setJSON([
+                'status' => 'error',
+                'message' => 'ไม่พบข้อมูลแผนการสอน'
+            ]);
+        }
+    }
+
+    public function getFilteredPlanData()
+    {
+        $request = service('request');
+        $ModAdminCourse = new \App\Models\Admin\Academic\ModAdminCourse(); // Instantiate your Model
+
+        $draw = $request->getPost('draw');
+        $start = $request->getPost('start') ?? 0;
+        $length = $request->getPost('length') ?? 10;
+        
+        $search = $request->getPost('search');
+        $searchValue = is_array($search) ? $search['value'] : '';
+
+        $order = $request->getPost('order');
+        $columns = $request->getPost('columns');
+        $orderColumnIndex = !empty($order) && isset($order[0]['column']) ? $order[0]['column'] : 0;
+        $orderDir = !empty($order) && isset($order[0]['dir']) ? $order[0]['dir'] : 'asc';
+        $orderColumnName = !empty($columns) && isset($columns[$orderColumnIndex]['data']) ? $columns[$orderColumnIndex]['data'] : '';
+
+        $termYear = $request->getPost('term_year');
+        $term = null;
+        $year = null;
+
+        if (empty($termYear) || strpos($termYear, '/') === false) {
+            // If not provided, get default from setup table
+            $checkYear = $this->db->table('tb_send_plan_setup')->get()->getRow();
+            if ($checkYear) {
+                $year = $checkYear->seplanset_year;
+                $term = $checkYear->seplanset_term;
+            } else {
+                // No default is set, so return empty
+                $response = [
+                    'draw' => intval($draw),
+                    'recordsTotal' => 0,
+                    'recordsFiltered' => 0,
+                    'data' => [],
+                ];
+                return $this->response->setJSON($response);
+            }
+        } else {
+            list($term, $year) = explode('/', $termYear);
+        }
+
+        // Fetch data using Model methods
+        $data = $ModAdminCourse->getPlansForDatatables($start, $length, $searchValue, $orderColumnName, $orderDir, $term, $year);
+        $totalRecords = $ModAdminCourse->getTotalPlans();
+        $filteredRecords = $ModAdminCourse->getFilteredPlansCount($searchValue, $term, $year);
+
+        $response = [
+            'draw' => intval($draw),
+            'recordsTotal' => $totalRecords,
+            'recordsFiltered' => $filteredRecords,
+            'data' => $data,
+        ];
+
+        return $this->response->setJSON($response);
     }
 }
