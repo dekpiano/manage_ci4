@@ -175,8 +175,9 @@ class ConAdminRegisterSubject extends BaseController
         $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
         $data['title'] = "วิชาเรียน";	
         $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();
-        echo view('admin/layout/main', $data);
-        echo view('admin/Academic/AdminRegisterSubject/AdminRegisterSubjectMain.php');
+        $data['classroom'] = new \App\Libraries\Classroom();
+        
+        echo view('admin/Academic/AdminRegisterSubject/AdminRegisterSubjectMain.php', $data);
 
     }
 }

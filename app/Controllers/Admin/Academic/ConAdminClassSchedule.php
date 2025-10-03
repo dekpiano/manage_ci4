@@ -53,7 +53,10 @@ class ConAdminClassSchedule extends BaseController
 
         $data['YearAll'] = $this->db->table('tb_class_schedule')
                                     ->select('CONCAT(schestu_term,"/",schestu_year) AS Year')
+                                    ->groupBy('schestu_term')
                                     ->groupBy('schestu_year')
+                                    ->orderBy('schestu_year', 'DESC')
+                                    ->orderBy('schestu_term', 'DESC')
                                     ->get()->getResult();
 
         session()->set('SchoolYear', $data['SchoolYear']->schyear_year);
@@ -77,17 +80,7 @@ class ConAdminClassSchedule extends BaseController
         $data['icon'] = '<i class="far fa-plus-square"></i>';
         $data['color'] = 'primary';
 
-        $class_schedule_data = $this->db->table('tb_class_schedule')
-                                        ->orderBy('schestu_id', 'DESC')
-                                        ->get()->getResult();
-
-        $data['ClassRoom'] = $this->db->table('tb_regclass')
-                                    ->groupBy('Reg_Class')
-                                    ->get()->getResult();
-
-        $num = @explode("_", @$class_schedule_data[0]->schestu_id);
-        $num1 = @sprintf("%03d", (@$num[1] ?? 0) + 1);
-        $data['class_schedule'] = 'schestu_' . $num1;
+        $data['class_schedule'] = 'schestu_' . uniqid();
         $data['action'] = 'insert_class_schedule';
 
         echo view('admin/Academic/AdminClassSchedule/AdminClassScheduleForm', $data);
@@ -111,7 +104,9 @@ class ConAdminClassSchedule extends BaseController
         ];
 
         if (! $this->validate($validationRule)) {
-            return $this->response->setJSON(['error' => $this->validator->getErrors()]);
+            $errors = $this->validator->getErrors();
+            $errorString = implode(' ', array_values($errors));
+            return $this->response->setJSON(['error' => $errorString]);
         }
 
         $img = $this->request->getFile('schestu_filename');
@@ -120,48 +115,148 @@ class ConAdminClassSchedule extends BaseController
             return $this->response->setJSON(['error' => $img->getErrorString() . '(' . $img->getError() . ')']);
         }
 
-        $newName = $img->getRandomName();
-        $uploadPath = 'uploads/academic/class_schedule/';
-        $img->move(ROOTPATH . 'public/' . $uploadPath, $newName);
-
-        // Resize image if it's an image file
+        $schestu_id = $this->request->getPost('schestu_id');
+        $term = $this->request->getPost('schestu_term');
+        $year = $this->request->getPost('schestu_year');
         $fileExtension = $img->getClientExtension();
-        if (in_array(strtolower($fileExtension), ['jpg', 'jpeg', 'png', 'gif'])) {
-            $this->image_lib->withFile(ROOTPATH . 'public/' . $uploadPath . $newName)
-                            ->fit(2048, 1080, 'center')
-                            ->save(ROOTPATH . 'public/' . $uploadPath . $newName);
-        }
 
-        $dat_insert = [
-            'schestu_id'        => $this->request->getPost('schestu_id'),
-            'schestu_name'      => $this->request->getPost('schestu_name'),
-            'schestu_classname' => $this->request->getPost('schestu_classname'),
-            'schestu_filename'  => $newName,
-            'schestu_term'      => $this->request->getPost('schestu_term'),
-            'schestu_year'      => $this->request->getPost('schestu_year'),
-            'schestu_datetime'  => date('Y-m-d H:i:s'),
-            'schestu_user'      => session()->get('login_id'),
-        ];
+        // Construct the new filename to send to the remote server
+        $newOriginalName = 'schestu_' . $schestu_id . '_' . $term . '_' . $year . '.' . $fileExtension;
 
-        if ($this->modAdminClassSchedule->class_schedule_insert($dat_insert)) {
-            return $this->response->setJSON(['success' => 1]);
+        // Pass the $img object and the new original name to the helper
+        $remoteFileName = $this->uploadToRemoteApi($img, $newOriginalName, $term, $year); 
+
+        if (is_string($remoteFileName) && strpos($remoteFileName, 'Error:') === 0) {
+            return $this->response->setJSON(['error' => $remoteFileName]);
+        } elseif ($remoteFileName !== false) {
+            $remotePath = 'academic/ClassSchedule/' . $year . '/' . $term . '/' . $remoteFileName; // Use the filename returned by remote server
+
+            $dat_insert = [
+                'schestu_id'        => $schestu_id,
+                'schestu_name'      => $this->request->getPost('schestu_name'),
+                'schestu_classname' => $this->request->getPost('schestu_classname'),
+                'schestu_filename'  => $remoteFileName, // Save only the filename
+                'schestu_term'      => $term,
+                'schestu_year'      => $year,
+                'schestu_datetime'  => date('Y-m-d H:i:s'),
+                'schestu_user'      => session()->get('login_id'),
+            ];
+
+            if ($this->modAdminClassSchedule->class_schedule_insert($dat_insert)) {
+                return $this->response->setJSON(['success' => 1]);
+            } else {
+                // Log the data being inserted and the database error
+                log_message('error', 'Failed to insert class schedule. Data: ' . print_r($dat_insert, true));
+                $dbError = $this->db->error(); // Get the last database error
+                log_message('error', 'Database Error: Code ' . $dbError['code'] . ' - ' . $dbError['message']);
+
+                return $this->response->setJSON(['error' => 'ไม่สามารถบันทึกข้อมูลลงฐานข้อมูลได้: ' . $dbError['message']]);
+            }
         } else {
-            return $this->response->setJSON(['error' => 'ไม่สามารถบันทึกข้อมูลได้']);
+            return $this->response->setJSON(['error' => 'ไม่สามารถอัปโหลดไฟล์ไปยังเซิร์ฟเวอร์อื่นได้ (ไม่ทราบสาเหตุ)']);
         }
     }
 
-    public function delete_class_schedule($data, $img)
+    public function delete_class_schedule($id, $filename, $year, $term) // Accept year and term
     {
-        // Delete the file
-        $filePath = FCPATH . 'uploads/academic/class_schedule/' . $img;
-        if (file_exists($filePath)) {
-            unlink($filePath);
+        // Reconstruct the full path for the remote server
+        $remotePathForDelete = 'academic/ClassSchedule/' . $year . '/' . $term;
+
+        // Delete the remote file via API
+        $remoteDeleteResult = $this->deleteFromRemoteApi($remotePathForDelete, $filename);
+        if ($remoteDeleteResult !== true) {
+            return $this->response->setJSON(['status' => 'error', 'message' => 'ไม่สามารถลบไฟล์จากเซิร์ฟเวอร์ปลายทางได้: ' . $remoteDeleteResult]);
         }
 
         // Delete the record from the database
-        if ($this->modAdminClassSchedule->class_schedule_delete($data) == 1) {
-            session()->setFlashdata(['alert' => 'success', 'messge' => 'ลบข้อมูลสำเร็จ']);
-            return redirect()->to(base_url('Admin/Acade/Course/ClassSchedule'));
+        if ($this->modAdminClassSchedule->class_schedule_delete($id)) {
+            return $this->response->setJSON(['status' => 'success', 'message' => 'ลบข้อมูลสำเร็จ']);
+        } else {
+            $dbError = $this->db->error();
+            $errorMessage = 'ไม่สามารถลบข้อมูลจากฐานข้อมูลได้. ';
+            if ($dbError['code'] !== 0) {
+                $errorMessage .= 'DB Error: Code ' . $dbError['code'] . ' - ' . $dbError['message'];
+            } else {
+                $errorMessage .= 'ไม่พบข้อผิดพลาดจากฐานข้อมูลเฉพาะ.';
+            }
+            log_message('error', 'Failed to delete class schedule from DB. ID: ' . $id . '. ' . $errorMessage);
+            return $this->response->setJSON(['status' => 'error', 'message' => $errorMessage]);
+        }
+    }
+
+    private function uploadToRemoteApi($img, $newOriginalName, $term, $year) // Accept $img object and new original name
+    {
+        $uploadUrl = getenv('upload.server.url');
+        if (!$uploadUrl) {
+            return 'Error: ไม่พบค่า upload.server.url ในไฟล์ .env';
+        }
+
+        $path = 'academic/ClassSchedule/' . $year . '/' . $term;
+
+        try {
+            $client = \Config\Services::curlrequest();
+
+            $response = $client->request('POST', $uploadUrl, [
+                'multipart' => [
+                    'file' => new \CURLFile($img->getTempName(), $img->getMimeType(), $newOriginalName), // Use CURLFile
+                    'path' => $path
+                ]
+            ]);
+
+            if ($response->getStatusCode() === 200) {
+                $body = json_decode($response->getBody());
+                if ($body && isset($body->status) && $body->status === 'success' && isset($body->filename)) {
+                    return $body->filename; // Return the filename from the remote server
+                }
+                else {
+                    return 'Error: การอัปโหลดไฟล์ไปยังเซิร์ฟเวอร์ปลายทางล้มเหลว: ' . ($body->message ?? 'ไม่ทราบสาเหตุ');
+                }
+            } else {
+                return 'Error: เซิร์ฟเวอร์ปลายทางตอบกลับมาว่า: ' . $response->getStatusCode() . ' - ' . $response->getReason();
+            }
+        } catch (\Exception $e) {
+            return 'Error: เกิดข้อผิดพลาดในการเชื่อมต่อ: ' . $e->getMessage();
+        }
+    }
+
+    private function deleteFromRemoteApi($path, $fileName)
+    {
+        $deleteUrl = getenv('upload.server.delete.url');
+        if (!$deleteUrl) {
+            return 'Error: ไม่พบค่า upload.server.delete.url ในไฟล์ .env';
+        }
+
+        $client = \Config\Services::curlrequest();
+
+        log_message('error', 'Attempting remote delete for path: ' . $path . ', filename: ' . $fileName); // Add this line
+
+        try {
+            $response = $client->setJSON([
+                'path' => $path,
+                'files' => [$fileName]
+            ])->request('POST', $deleteUrl);
+
+            if ($response->getStatusCode() === 200) {
+                $body = json_decode($response->getBody());
+                if ($body && isset($body->status) && $body->status === 'success') {
+                    if (!empty($body->deleted)) { // Check if any files were actually deleted
+                        log_message('info', 'Remote delete successful for ' . $fileName . '. Response: ' . $response->getBody());
+                        return true;
+                    } else {
+                        // delete.php reported success, but no files were deleted.
+                        log_message('error', 'Remote delete reported success but no files were deleted for ' . $fileName . '. Response: ' . $response->getBody());
+                        return 'Error: เซิร์ฟเวอร์ปลายทางรายงานว่าลบสำเร็จ แต่ไม่มีไฟล์ใดถูกลบ (อาจเป็นปัญหาเรื่องสิทธิ์หรือไฟล์ไม่พบ)';
+                    }
+                } else {
+                    log_message('error', 'Remote delete failed for ' . $fileName . '. Response: ' . $response->getBody());
+                    return 'Error: การลบไฟล์จากเซิร์ฟเวอร์ปลายทางล้มเหลว: ' . ($body->message ?? 'ไม่ทราบสาเหตุ');
+                }
+            } else {
+                log_message('error', 'Remote delete failed for ' . $fileName . '. Status: ' . $response->getStatusCode() . ' Body: ' . $response->getBody());
+                return 'Error: เซิร์ฟเวอร์ปลายทางตอบกลับมาว่า: ' . $response->getStatusCode() . ' - ' . $response->getReason();
+            }
+        } catch (\Exception $e) {
+            return 'Error: เกิดข้อผิดพลาดในการเชื่อมต่อเพื่อลบไฟล์: ' . $e->getMessage();
         }
     }
 
@@ -173,6 +268,7 @@ class ConAdminClassSchedule extends BaseController
         $year = $Ex[1];
 
         $query = $this->db->table('tb_class_schedule')
+                        ->select('schestu_id, schestu_name, schestu_classname, schestu_term, schestu_year, schestu_filename, schestu_datetime') // Explicitly select all needed columns
                         ->where('schestu_term', $term)
                         ->where('schestu_year', $year)
                         ->get();

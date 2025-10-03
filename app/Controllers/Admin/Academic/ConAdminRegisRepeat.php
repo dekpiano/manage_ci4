@@ -140,8 +140,8 @@ class ConAdminRegisRepeat extends BaseController
 
         
       
-        
-        echo view('admin/Academic/AdminRegisRepeat/AdminRegisRepeatFormEdit.php');
+        $data['classroom'] = new \App\Libraries\Classroom();
+        echo view('admin/Academic/AdminRegisRepeat/AdminEnrollFormEdit.php', $data);
     }
 
     public function AdminRegisRepeatAdd(){

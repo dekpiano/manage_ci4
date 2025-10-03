@@ -16,15 +16,15 @@
             line-height: 1.5;
         }
 </style>
-<div class="app-content pt-3 p-md-3 p-lg-4">
-    <section class="we-offer-area">
-        <div class="container-fluid">
+<div class="">
+    <section class="">
+        <div class="">
 
-            <div class="container-xl">
+            <div class="">
 
                 <div class="row g-3 mb-4 align-items-center justify-content-between">
                     <div class="col-auto">
-                        <h1 class="app-page-title mb-0">จัดการข้อมูล<?= isset($title) ? esc($title) : '' ?></h1>
+                        <h3 class="page-title mb-0">จัดการข้อมูล<?= isset($title) ? esc($title) : '' ?></h3>
                     </div>
                     <div class="col-auto">
                         <div class="page-utilities">
@@ -55,11 +55,11 @@
 
                 <div class="row">
                     <div class="col-md-12">
-                        <div class="app-card app-card-settings shadow-sm p-3">
-                            <div class="app-card-header mb-3">
+                        <div class="card card-settings shadow-sm p-3">
+                            <div class="card-header mb-3">
                                 <div class="row justify-content-between align-items-center">
                                     <div class="col-auto">
-                                        <h4 class="app-card-title">เพิ่มข้อมูลรายวิชา</h4>
+                                        <h4 class="card-title">เพิ่มข้อมูลรายวิชา</h4>
                                     </div>
                                     <!--//col-->
                                     <!-- <div class="col-auto">
@@ -72,7 +72,7 @@
                                 </div>
                                 <!--//row-->
                             </div>
-                            <div class="app-card-body">
+                            <div class="card-body">
                                 <form class="settings-form row" id="form-subject">
                                     <div class="mb-3 col-6 col-lg-6">
                                         <label for="setting-input-1" class="form-label">ปีการศึกษา</label>
@@ -94,7 +94,7 @@
                                         <select class="form-select" required="" name="SubjectClass"
                                             id="SubjectClass">
                                             <option value="">เลือกระดับชั้น</option>
-                                            <?php $sara = $this->classroom->LevelClass();
+                                            <?php $sara = $classroom->LevelClass();
                                                 foreach ($sara as $key => $v_sara):?>
                                             <option value="<?= esc($v_sara) ?>"><?= esc($v_sara) ?></option>
                                             <?php endforeach; ?>
@@ -151,7 +151,7 @@
                                         <label for="setting-input-1" class="form-label">สาระหลัก</label>
                                         <select class="form-select " required="" name="FirstGroup" id="FirstGroup">
                                             <option value="">เลือกสาระหลัก</option>
-                                            <?php $sara = $this->classroom->GroupSaraMain();
+                                            <?php $sara = $classroom->GroupSaraMain();
                                                 foreach ($sara as $key => $v_sara):?>
                                             <option value="<?= esc($v_sara) ?>"><?= esc($v_sara) ?></option>
                                             <?php endforeach; ?>
@@ -161,16 +161,16 @@
                                         <label for="setting-input-1" class="form-label">สาระย่อย</label>
                                         <select class="form-select" required="" name="SecondGroup" id="SecondGroup">
                                             <option value="">เลือกสาระย่อย</option>
-                                            <?php $sara = $this->classroom->GroupSaraSecond();
+                                            <?php $sara = $classroom->GroupSaraSecond();
                                                 foreach ($sara as $key => $v_sara):?>
                                             <option value="<?= esc($v_sara) ?>"><?= esc($v_sara) ?></option>
                                             <?php endforeach; ?>
                                         </select>
                                     </div>
-                                    <button type="submit" class="btn app-btn-primary">บันทึก</button>
+                                    <button type="submit" class="btn btn-primary">บันทึก</button>
                                 </form>
                             </div>
-                            <!--//app-card-body-->
+                            <!--//card-body-->
 
                         </div>
                     </div>
@@ -191,10 +191,10 @@
 
                     </div>
                     <div class="col-md-12">
-                        <div class="app-card app-card-orders-table shadow-sm mb-5">
-                            <div class="app-card-body">
+                        <div class="card card-orders-table shadow-sm mb-5">
+                            <div class="card-body">
                                 <div class="table-responsive p-3">
-                                    <table class="table app-table-hover mb-0 text-left" id="tbSubject">
+                                    <table class="table table-hover mb-0 text-left" id="tbSubject">
                                         <thead>
                                             <tr>
                                                 <th class="cell">ปีการศึกษา</th>
@@ -211,9 +211,9 @@
                                 </div>
 
                             </div>
-                            <!--//app-card-body-->
+                            <!--//card-body-->
                         </div>
-                        <!--//app-card-->
+                        <!--//card-->
 
                     </div>
                 </div>
@@ -276,7 +276,7 @@
                         </label>
                         <select class="form-select" required="" name="Up_SubjectClass" id="Up_SubjectClass">
                             <option value="">เลือกระดับชั้น</option>
-                            <?php $sara = $this->classroom->LevelClass();
+                            <?php $sara = $classroom->LevelClass();
                                                 foreach ($sara as $key => $v_sara):?>
                             <option value="<?= esc($v_sara) ?>"><?= esc($v_sara) ?></option>
                             <?php endforeach; ?>
@@ -319,7 +319,7 @@
                         <label for="setting-input-1" class="form-label">สาระหลัก</label>
                         <select class="form-select " required="" name="Up_FirstGroup" id="Up_FirstGroup">
                             <option value="">เลือกสาระหลัก</option>
-                            <?php $sara = $this->classroom->GroupSaraMain();
+                            <?php $sara = $classroom->GroupSaraMain();
                                                 foreach ($sara as $key => $v_sara):?>
                             <option value="<?= esc($v_sara) ?>"><?= esc($v_sara) ?></option>
                             <?php endforeach; ?>
@@ -329,7 +329,7 @@
                         <label for="setting-input-1" class="form-label">สาระย่อย</label>
                         <select class="form-select" required="" name="Up_SecondGroup" id="Up_SecondGroup">
                             <option value="">เลือกสาระย่อย</option>
-                            <?php $sara = $this->classroom->GroupSaraSecond();
+                            <?php $sara = $classroom->GroupSaraSecond();
                                                 foreach ($sara as $key => $v_sara):?>
                             <option value="<?= esc($v_sara) ?>"><?= esc($v_sara) ?></option>
                             <?php endforeach; ?>
@@ -363,6 +363,7 @@ function TB_Subject(Year) {
         "order": [
             [1, "asc"]
         ],
+        'responsive': true,
         'processing': true,
         "ajax": {
             url: "<?= site_url('admin/academic/ConAdminRegisterSubject/AdminRegisterSubjectSelect') ?>",

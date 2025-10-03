@@ -51,6 +51,9 @@ $routes->get('Admin/Acade/Registration/Repeat/Add', [ConAdminRegisRepeat::class,
 $routes->get('Admin/Acade/Registration/ExamSchedule', [ConAdminExamSchedule::class, 'AdminExamScheduleMain']);
 $routes->get('Admin/Acade/Registration/ExamSchedule/add', [ConAdminExamSchedule::class, 'add']);
 $routes->post('admin/academic/ConAdminExamSchedule/insert_exam_schedule', [ConAdminExamSchedule::class, 'insert_exam_schedule']);
+$routes->post('admin/academic/ConAdminClassSchedule/insert_class_schedule', [ConAdminClassSchedule::class, 'insert_class_schedule']);
+$routes->post('admin/academic/ConAdminClassSchedule/delete_class_schedule/(:segment)/(:segment)/(:segment)/(:segment)', [ConAdminClassSchedule::class, 'delete_class_schedule/$1/$2/$3/$4']);
+$routes->post('admin/academic/ConAdminClassSchedule/getDataByYear', [ConAdminClassSchedule::class, 'getDataByYear']);
 $routes->post('Admin/Acade/ConAdminExamSchedule/delete_exam_schedule/(:segment)', [ConAdminExamSchedule::class, 'delete_exam_schedule/$1']);
 $routes->get('Admin/Acade/Registration/ClassRoom', [ConAdminClassRoom::class, 'AdminClassMain']);
 $routes->get('Admin/Acade/Registration/ClassRoom/(:num)', [ConAdminClassRoom::class, 'AdminClassMain/$1']);
@@ -72,6 +75,12 @@ $routes->get('Admin/Acade/Registration/RoomOnline', [ConAdminRoomOnline::class, 
 $routes->get('Admin/Acade/Course/ClassSchedule', [ConAdminClassSchedule::class, 'AdminClassScheduleMain']);
 $routes->get('Admin/Acade/Course/ClassSchedule/add', [ConAdminClassSchedule::class, 'add']);
 $routes->get('Admin/Acade/Course/RegisterSubject', [ConAdminRegisterSubject::class, 'AdminRegisterSubjectMain']);
+$routes->post('admin/academic/ConAdminRegisterSubject/AdminRegisterSubjectSelect', [ConAdminRegisterSubject::class, 'AdminRegisterSubjectSelect']);
+$routes->post('admin/academic/ConAdminRegisterSubject/AdminRegisterSubjectEdit', [ConAdminRegisterSubject::class, 'AdminRegisterSubjectEdit']);
+$routes->post('admin/academic/ConAdminRegisterSubject/AdminRegisterSubjectUpdate', [ConAdminRegisterSubject::class, 'AdminRegisterSubjectUpdate']);
+$routes->post('admin/academic/ConAdminRegisterSubject/AdminRegisterSubjectInsert', [ConAdminRegisterSubject::class, 'AdminRegisterSubjectInsert']);
+$routes->delete('admin/academic/ConAdminRegisterSubject/AdminRegisterSubjectDelete/(:num)', [ConAdminRegisterSubject::class, 'AdminRegisterSubjectDelete/$1']);
+$routes->get('admin/academic/ConAdminRegisterSubject/AdminRegisterSubjectEdit', [ConAdminRegisterSubject::class, 'AdminRegisterSubjectEdit']);
 $routes->get('Admin/Acade/Course/SendPlan', [ConAdminCourse::class, 'SendPlanMain']);
 
 $routes->get('Admin/Acade/Report', [ConAdminExtraSubject::class, 'ExtraReport']);

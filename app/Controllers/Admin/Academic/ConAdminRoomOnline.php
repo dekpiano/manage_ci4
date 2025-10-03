@@ -47,8 +47,9 @@ class ConAdminRoomOnline extends BaseController
         ->where('pers_position !=','posi_010')        
         ->orderBy('pers_learning')
         ->get()->getResult();
+        $data['classroom'] = new \App\Libraries\Classroom();
         echo view('admin/layout/main', $data);
-        echo view('admin/Academic/AdminRoomOnline/AdminRoomOnlineMain.php');     
+        echo view('admin/Academic/AdminRoomOnline/AdminRoomOnlineMain.php', $data);     
     }
 
     function AddRoomOnline(){ 

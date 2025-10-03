@@ -66,6 +66,7 @@ class ConAdminClassRoom extends BaseController
                                         ->orderBy('pers_learning')
                                         ->get()->getResult();
 
+        $data['classroom'] = $this->classroom;
         echo view('admin/Academic/AdminClassRoom/AdminClassRoomMain', $data);
         
     }

@@ -72,7 +72,7 @@ class ConAdminDevelopStudents extends BaseController
                                     ->orderBy('total_members', 'DESC')
                                     ->limit(1)->get()->getRow();
 
-        echo view('admin/layout/main', $data);
+        
         echo view('admin/Academic/AdminDevelopStudents/Clubs/AdminClubsMain', $data);
         
     }
@@ -106,7 +106,7 @@ class ConAdminDevelopStudents extends BaseController
 
         $data['YearAll'] = $this->ClubsViweYearAll();
 
-        echo view('admin/layout/main', $data);
+        
         echo view('admin/Academic/AdminDevelopStudents/Clubs/AdminClubsAll', $data);
         
     }

@@ -6,9 +6,38 @@ use CodeIgniter\Model;
 
 class ModAdminRegisterSubject extends Model
 {
-    protected $table = 'tb_register'; // Assuming this is the primary table for this model's operations
-    protected $primaryKey = 'register_id';
+    protected $table = 'tb_subjects';
+    protected $primaryKey = 'SubjectID';
 
-    protected $allowedFields = []; // Placeholder, fill as needed when migrating ConTeacherCourse
+    protected $allowedFields = [
+        'SubjectCode',
+        'SubjectName',
+        'SubjectUnit',
+        'SubjectHour',
+        'SubjectType',
+        'FirstGroup',
+        'SecondGroup',
+        'SubjectClass',
+        'SubjectYear'
+    ];
 
+    public function ModSubjectEdit($id)
+    {
+        return $this->where('SubjectID', $id)->findAll();
+    }
+
+    public function ModSubjectUpdate($data, $key)
+    {
+        return $this->update($key, $data);
+    }
+
+    public function ModSubjectInsert($data)
+    {
+        return $this->insert($data);
+    }
+
+    public function ModSubjectDelete($id)
+    {
+        return $this->delete($id);
+    }
 }

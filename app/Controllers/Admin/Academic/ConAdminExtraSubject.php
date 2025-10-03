@@ -64,7 +64,7 @@ class ConAdminExtraSubject extends BaseController
         ->orderBy('pers_learning')
         ->get()->getResult();
 
-        echo view('admin/layout/main', $data);
+        
         echo view('admin/Academic/AdminExtraSubject/AdminExtraSubjectMain.php');
         
     }
@@ -111,7 +111,7 @@ class ConAdminExtraSubject extends BaseController
 
         $data['title'] = "ตั้งค่าระบบ";
         $data['OnoffSystem'] = $this->db->table('tb_extra_setting')->get()->getRow();
-        echo view('admin/layout/main', $data);
+        
         echo view('admin/Academic/AdminExtraSubject/AdminExtraSystemMain.php');
 
     }
@@ -197,7 +197,7 @@ class ConAdminExtraSubject extends BaseController
                                                 ->get()->getResult();
         }
 
-        echo view('admin/layout/main', $data);
+        
         echo view('admin/Academic/AdminExtraSubject/AdminExtraReport.php');
      }
 }

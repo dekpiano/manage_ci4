@@ -123,7 +123,7 @@
                                 required multiple>
                                 <option value="">เลือกระดับชั้น</option>
                                 <?php 
-                                    foreach ($this->classroom->ListRoom() as $key => $value) :
+                                    foreach ($classroom->ListRoom() as $key => $value) :
                                 ?>
                                 <option value="<?= esc($value) ?>"><?= esc($value) ?></option>
                                 <?php endforeach; ?>

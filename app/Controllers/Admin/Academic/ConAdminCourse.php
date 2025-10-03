@@ -75,7 +75,7 @@ class ConAdminCourse extends BaseController
                                 ->where('seplan_term', $data['term'])
                                 ->groupBy('seplan_coursecode,pers_id')->get()->getResult();
 
-        echo view('admin/layout/main', $data);
+        
         echo view('admin/Academic/AdminSendPlan/AdminSendPlanTeacher', $data);
         
     }

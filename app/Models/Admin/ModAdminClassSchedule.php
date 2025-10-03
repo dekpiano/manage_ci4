@@ -22,7 +22,30 @@ class ModAdminClassSchedule extends Model
 
     public function class_schedule_insert($data)
     {
-        return $this->insert($data);
+        try {
+            $result = $this->insert($data);
+
+            if ($result !== false) {
+                return true; // Return true for success
+            } else {
+                // If insert returns false, but no exception was thrown,
+                // it means the model itself failed to insert.
+                // We can try to get the last query error if available.
+                $dbError = $this->db->error();
+                $errorMessage = 'Model Insert Failed. ';
+                if ($dbError['code'] !== 0) {
+                    $errorMessage .= 'DB Error: Code ' . $dbError['code'] . ' - ' . $dbError['message'];
+                } else {
+                    $errorMessage .= 'No specific DB error reported. Model errors: ' . print_r($this->errors(), true);
+                }
+                log_message('error', $errorMessage);
+                return false; // Return false for failure
+            }
+        } catch (\Exception $e) {
+            // Catch any exceptions thrown by the database driver during insert
+            log_message('error', 'Database Insert Exception: ' . $e->getMessage());
+            return false;
+        }
     }
 
     public function class_schedule_update($data, $schestu_id)
