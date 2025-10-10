@@ -63,14 +63,16 @@ $routes->post('admin/academic/ConAdminClassRoom/DeleteClassRoom/(:segment)', [Co
 $routes->get('Admin/Acade/Registration/Students', [ConAdminStudents::class, 'AdminStudentsMain']);
 $routes->get('Admin/Acade/Registration/Students/Data', [ConAdminStudents::class, 'AdminStudentsData']);
 $routes->get('Admin/Acade/Registration/Students/(:segment)', [ConAdminStudents::class, 'AdminStudentsNormal']);
-$routes->post('Admin/Acade/Registration/StudentsUpdate', [ConAdminStudents::class, 'AdminStudentsUpdate']);
+$routes->match(['get', 'post'],'Admin/Acade/Registration/StudentsUpdate', [ConAdminStudents::class, 'AdminStudentsUpdate']);
 
 $routes->get('Admin/Academic/ConAdminStudents/get_student_details/(:num)', [ConAdminStudents::class, 'get_student_details/$1']);
 $routes->post('Admin/Academic/ConAdminStudents/update_student_details', [ConAdminStudents::class, 'update_student_details']);
+$routes->post('Admin/Academic/ConAdminStudents/AdminStudentsDelete/(:num)', [ConAdminStudents::class, 'AdminStudentsDelete/$1']);
 
 $routes->get('Admin/Acade/Registration/ExtraSubject', [ConAdminExtraSubject::class, 'index']);
 $routes->get('Admin/Acade/Registration/SettingSystem', [ConAdminExtraSubject::class, 'SystemMainExtraSubject']);
 $routes->get('Admin/Acade/Registration/RoomOnline', [ConAdminRoomOnline::class, 'RoomOnlineMain']);
+$routes->post('admin/room-online/data', [ConAdminRoomOnline::class, 'getRoomOnlineData']);
 
 $routes->get('Admin/Acade/Course/ClassSchedule', [ConAdminClassSchedule::class, 'AdminClassScheduleMain']);
 $routes->get('Admin/Acade/Course/ClassSchedule/add', [ConAdminClassSchedule::class, 'add']);

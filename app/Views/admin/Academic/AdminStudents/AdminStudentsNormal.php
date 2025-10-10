@@ -191,6 +191,16 @@ function updateFloatingLabels() {
 }
 
 $(document).ready(function() {
+    // Display success message from session flashdata
+    <?php if (session()->getFlashdata('msg') === 'YES'): ?>
+        Swal.fire({
+            icon: '<?= session()->getFlashdata('status') ?>',
+            title: '<?= session()->getFlashdata('messge') ?>',
+            showConfirmButton: false,
+            timer: 2000
+        });
+    <?php endif; ?>
+
     const keyStatus = $('#KeyStatus').val();
     console.log('KeyStatus sent to controller:', keyStatus);
     const tbStudent = $('#tbStudent').DataTable({

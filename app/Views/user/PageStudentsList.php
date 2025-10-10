@@ -2,168 +2,165 @@
 
 <?= $this->section('content') ?>
 
-<?php $room = array('1/1'=>'1.1','1/2'=>'1.2','1/3'=>'1.3','1/4'=>'1.4','1/5'=>'1.5','1/6'=>'
-  1.6','2/1'=>'2.1','2/2'=>'2.2','2/3'=>'2.3','2/4'=>'2.4','2/5'=>'2.5','2/6'=>'2.6','3/1'=>'3.1','3/2'=>'3.2','3/3'=>'3.3','3/4'=>'3.4','3/5'=>'3.5','3/6'=>'3.6','4/1'=>'4.1','4/2'=>'4.2','4/3'=>'4.3','4/4'=>'4.4','4/5'=>'4.5','4/6'=>'4.6','5/1'=>'5.1','5/2'=>'5.2','5/3'=>'5.3','5/4
-  '=>'5.4','5/5'=>'5.5','5/6'=>'5.6','6/1'=>'6.1','6/2'=>'6.2','6/3'=>'6.3','6/4'=>'6.4','6/5'=>'6.5','6/6'=>'6.6'); ?>
+<?php
+// Prepare room data with grouping for optgroup
+$roomsByGrade = [];
+for ($i = 1; $i <= 6; $i++) {
+    for ($j = 1; $j <= 6; $j++) {
+        $roomsByGrade["ม.{$i}"][] = "{$i}/{$j}";
+    }
+}
+$currentList = $_GET['studentList'] ?? '';
+?>
 
-<div class="app-wrapper">
-    <div class="app-content pt-3 p-md-3 p-lg-4">
-        <div class="container-xl">
-            <div class="main-wrapper">
-                <section class="cta-section theme-bg-light py-5">
-                    <div class="container text-center  mb-5">
-                        <h2 class="heading">รายชื่อนักเรียน ปีการศึกษา <?=$schoolyear->schyear_year?></h2>
-                        <div class="intro"></div>
-                    </div>
+<div class="">
+    <div class="">
+       <div class="d-flex justify-content-between align-items-center">
+                             <h3 class="page-title mb-0">รายชื่อนักเรียน ปีการศึกษา <?= $schoolyear->schyear_year ?></h3>
+                        </div>
 
-                    <div class="card mb-4">
-                        <h5 class="card-header">ค้นหารายชื่อนักเรียน</h5>
-                        <div class="card-body">
-                            <div class="row justify-content-center">
-                                <div class="col-md-6">
-                                    <form class="d-flex justify-content-center" action="?" method="get">
-                                        <div class="input-group me-2">
-                                            <select name="studentList" id="studentListSelect" class="form-control">
-                                                <option value="">ค้นหานักเรียน</option>
-                                                <?php foreach ($room as $key => $v_room) :?>
-                                                <option <?=$key==@$_GET['studentList']?'selected':''?>
-                                                    value="<?=$key?>">
-                                                    ม.<?=$key?>
+        <div class="card card-settings shadow-sm p-4">
+            <div class="">
+                <form class="settings-form" action="?" method="get">
+                    <div class="row justify-content-center">
+                        <div class="col-md-8 col-lg-6">
+                            <label for="studentListSelect" class="form-label">เลือกห้องเรียน</label>
+                            <div class="input-group">
+                                <select name="studentList" id="studentListSelect" class="form-select">
+                                    <option value="">-- ค้นหาห้องเรียน --</option>
+                                    <?php foreach ($roomsByGrade as $grade => $rooms) : ?>
+                                        <optgroup label="<?= $grade ?>">
+                                            <?php foreach ($rooms as $room) : ?>
+                                                <option <?= $room == $currentList ? 'selected' : '' ?> value="<?= $room ?>">
+                                                    ม.<?= $room ?>
                                                 </option>
-                                                <?php   endforeach; ?>
-                                            </select>
-                                            <button type="submit" class="btn btn-primary"><i class="fa fa-search" aria-hidden="true"></i> ค้นหานักเรียน</button>
-                                        </div>
-                                    </form>
-                                </div>
-                                <!-- The commented out section for "รายชื่อนักเรียน แบบรายวิชา" will remain commented out -->
+                                            <?php endforeach; ?>
+                                        </optgroup>
+                                    <?php endforeach; ?>
+                                </select>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fa fa-search" aria-hidden="true"></i> ค้นหา
+                                </button>
                             </div>
                         </div>
                     </div>
-                    <!--//container-->
+                </form>
+            </div><!--//card-body-->
+        </div><!--//card-->
 
-                </section>
-                <?php if(@$_GET['studentList']): ?>
-                <div class="text-center">
-                    <h4>
-                        รายชื่อนักเรียนชั้นมัธยมศึกษาปีที่ <?=@$_GET['studentList']?> ปีการศึกษา
-                        <?=$schoolyear->schyear_year?>
-                    </h4>
-                </div>
-                <div class="text-center mb-3 ">
-                    <h5>
-                        ครูที่ปรึกษา
-                        <?php foreach ($TeacRoom as $key => $v_TeacRoom) {
-                            echo $v_TeacRoom->pers_prefix.$v_TeacRoom->pers_firstname.' '.$v_TeacRoom->pers_lastname.' ';
-                        } ?>
-                    </h5>
-                    <div class="mt-4 mb-4">
-                    <a target="_blank" href="<?=base_url('StudentsList/Print/'.@$_GET['studentList'].'/All')?>"
-                        class="btn btn-info text-white PrintNameRoom">
-                        <i class="bx bx-printer" aria-hidden="true"></i> พิมพ์ใบรายชื่อ
-                    </a>
-                    </div>
-                   
-                </div>
-                <?php endif; ?>
-
-                                <div class="card">
-                                    <div class="card-header">
-                                        <ul class="nav nav-pills card-header-pills" id="orders-table-tab" role="tablist">
-                                            <?php foreach ($checkLine as $key => $v_checkLine) :
-                                                    ?>
-                                            <li class="nav-item">
-                                                <a class="nav-link SelStudyLine <?=$key == 0 ?"active":""?>" id="tab-<?=$key?>-tab"
-                                                    data-bs-toggle="tab" key_studyline="<?=$v_checkLine->StudentStudyLine;?>"
-                                                    key_room="<?php $SubRoom = explode('.',$v_checkLine->StudentClass); echo $SubRoom[1] ;?>"
-                                                    href="#tab-<?=$key?>" role="tab" aria-controls="tab-<?=$key?>" aria-selected="false"
-                                                    tabindex="-1"><?=$key == 0 ?"รายชื่อทั้งหมด":$v_checkLine->StudentStudyLine?></a>
-                                            </li>
-                                            <?php endforeach; ?>
-                                        </ul>
-                                    </div>
-                                    <div class="tab-content" id="orders-table-tab-content">
-                                        <?php foreach ($checkLine as $key_tab => $v_checkLine) : ?>
-                                        <div class="tab-pane fade <?=$key_tab == 0 ?"active":""?> <?=$key_tab == 0 ?"show":""?>"
-                                            id="tab-<?=$key_tab?>" role="tabpanel" aria-labelledby="tab-<?=$key_tab?>-tab">
-                                            <div class="table-responsive text-nowrap">
-                                                <table class="table table-striped table-hover">
-                                                    <thead>
-                                                        <tr class="text-center">
-                                                            <th class="cell" rowspan="2">ที่</th>
-                                                            <th class="cell" rowspan="2">เลขประจำตัว</th>
-                                                            <th class="cell" rowspan="2">ชื่อ - นามสกุล</th>
-                                                            <th class="cell" rowspan="2">หลักสูตร</th>
-                                                            <th class="cell" rowspan="2">สถานะ</th>
-                                                            <th colspan="20">งาน</th>
-                                                        </tr>
-                                                        <tr class="text-center">
-                                                            <?php for ($i=1; $i <= 20; $i++) : ?>
-                                                            <th class="cell"><?=$i;?></th>
-                                                            <?php endfor; ?>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        <?php foreach ($selStudent as $key => $v_selStudent) : 
-                                                            if($key_tab == 0){ ?>
-                                                        <tr>
-                                                            <td class="cell text-center"><?=$v_selStudent->StudentNumber?></td>
-                                                            <td class="cell text-center"><span
-                                                                    class="truncate"><?=$v_selStudent->StudentCode?></span></td>
-                                                            <td class="cell">
-                                                                <?=$v_selStudent->StudentPrefix.$v_selStudent->StudentFirstName.' '.$v_selStudent->StudentLastName?>
-                                                            </td>
-                                                            <td class="cell text-center"><?=$v_selStudent->StudentStudyLine?></td>
-                                                            <td class="cell text-center"><?=$v_selStudent->StudentBehavior?></td>
-                                                            <?php for ($i=1; $i <= 20; $i++) : ?>
-                                                            <td class="cell"></td>
-                                                            <?php endfor; ?>
-                                                        </tr>
-                                                        <?php }else {                                        
-                                                        if($v_selStudent->StudentStudyLine == $v_checkLine->StudentStudyLine):
-                                                        ?>
-                                                        <tr>
-                                                            <td class="cell text-center"><?=$v_selStudent->StudentNumber?></td>
-                                                            <td class="cell text-center"><span
-                                                                    class="truncate"><?=$v_selStudent->StudentCode?></span></td>
-                                                            <td class="cell">
-                                                                <?=$v_selStudent->StudentPrefix.$v_selStudent->StudentFirstName.' '.$v_selStudent->StudentLastName?>
-                                                            </td>
-                                                            <td class="cell text-center"><?=$v_selStudent->StudentStudyLine?></td>
-                                                            <td class="cell text-center"><?=$v_selStudent->StudentBehavior?></td>
-                                                            <?php for ($i=1; $i <= 20; $i++) : ?>
-                                                            <td class="cell"></td>
-                                                            <?php endfor; ?>
-                                                        </tr>
-                                                        <?php endif; }?>
-                                                        <?php endforeach; ?>
-                
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                        </div>
-                                        <?php endforeach; ?>
-                                    </div>
+        <?php if ($currentList) : ?>
+            <div class="row g-4 mt-4">
+                <div class="col-12">
+                    <div class="card card-orders-table shadow-sm">
+                        <div class="card-header p-3">
+                            <div class="row justify-content-between align-items-center">
+                                <div class="col-auto">
+                                    <h4 class="card-title">
+                                        นักเรียนชั้นมัธยมศึกษาปีที่ <?= $currentList ?>
+                                    </h4>
+                                    <p class="mb-0">
+                                        <strong>ครูที่ปรึกษา:</strong>
+                                        <?php
+                                        $teacherNames = [];
+                                        foreach ($TeacRoom as $v_TeacRoom) {
+                                            $teacherNames[] = htmlspecialchars($v_TeacRoom->pers_prefix . $v_TeacRoom->pers_firstname . ' ' . $v_TeacRoom->pers_lastname);
+                                        }
+                                        echo implode(', ', $teacherNames);
+                                        ?>
+                                    </p>
                                 </div>
+                                <div class="col-auto">
+                                    <a target="_blank" href="<?= base_url('StudentsList/Print/' . $currentList . '/All') ?>" class="btn btn-info text-white PrintNameRoom">
+                                        <i class="bx bx-printer me-1" aria-hidden="true"></i> พิมพ์ใบรายชื่อ
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body p-3">
+                            <div class="row">
+                                <div class="col-12">
+                                    <ul class="nav nav-pills" id="orders-table-tab" role="tablist">
+                                        <?php foreach ($checkLine as $key => $v_checkLine) : ?>
+                                            <li class="nav-item" role="presentation">
+                                                <a class="nav-link SelStudyLine <?= $key == 0 ? "active" : "" ?>" id="tab-<?= $key ?>-tab" data-bs-toggle="tab" href="#tab-<?= $key ?>" role="tab" aria-controls="tab-<?= $key ?>" aria-selected="<?= $key == 0 ? "true" : "false" ?>" key_studyline="<?= $v_checkLine->StudentStudyLine; ?>" key_room="<?php $SubRoom = explode('.', $v_checkLine->StudentClass); echo $SubRoom[1]; ?>">
+                                                    <?= $key == 0 ? "รายชื่อทั้งหมด" : htmlspecialchars($v_checkLine->StudentStudyLine) ?>
+                                                </a>
+                                            </li>
+                                        <?php endforeach; ?>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div><!--//card-body-->
+                        <div class="card-body p-0">
+                            <div class="tab-content" id="orders-table-tab-content">
+                                <?php foreach ($checkLine as $key_tab => $v_checkLine_tab) : ?>
+                                    <div class="tab-pane fade <?= $key_tab == 0 ? "show active" : "" ?>" id="tab-<?= $key_tab ?>" role="tabpanel" aria-labelledby="tab-<?= $key_tab ?>-tab">
+                                        <div class="table-responsive">
+                                            <table class="table table-hover mb-0 text-left">
+                                                <thead>
+                                                    <tr>
+                                                        <th class="cell text-center">ที่</th>
+                                                        <th class="cell text-center">เลขประจำตัว</th>
+                                                        <th class="cell">ชื่อ - นามสกุล</th>
+                                                        <th class="cell text-center">หลักสูตร</th>
+                                                        <th class="cell text-center">สถานะ</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <?php 
+                                                    $studentsInTab = 0;
+                                                    foreach ($selStudent as $v_selStudent) :
+                                                        $isCorrectTab = ($key_tab == 0) || ($v_selStudent->StudentStudyLine == $v_checkLine_tab->StudentStudyLine);
+                                                        if ($isCorrectTab) : 
+                                                            $studentsInTab++;
+                                                    ?>
+                                                            <tr>
+                                                                <td class="cell text-center"><?= htmlspecialchars($v_selStudent->StudentNumber) ?></td>
+                                                                <td class="cell text-center"><?= htmlspecialchars($v_selStudent->StudentCode) ?></td>
+                                                                <td class="cell">
+                                                                    <?= htmlspecialchars($v_selStudent->StudentPrefix . $v_selStudent->StudentFirstName . ' ' . $v_selStudent->StudentLastName) ?>
+                                                                </td>
+                                                                <td class="cell text-center"><?= htmlspecialchars($v_selStudent->StudentStudyLine) ?></td>
+                                                                <td class="cell text-center">
+                                                                    <span class="badge bg-success"><?= htmlspecialchars($v_selStudent->StudentBehavior) ?></span>
+                                                                </td>
+                                                            </tr>
+                                                    <?php 
+                                                        endif;
+                                                    endforeach; 
+                                                    
+                                                    if ($studentsInTab === 0):
+                                                    ?>
+                                                        <tr>
+                                                            <td colspan="5" class="text-center p-4">ไม่พบข้อมูลนักเรียนในกลุ่มนี้</td>
+                                                        </tr>
+                                                    <?php endif; ?>
+                                                </tbody>
+                                            </table>
+                                        </div><!--//table-responsive-->
+                                    </div><!--//tab-pane-->
+                                <?php endforeach; ?>
+                            </div><!--//tab-content-->
+                        </div><!--//card-body-->
+                    </div><!--//card-->
+                </div>
+            </div><!--//row-->
+        <?php elseif (isset($_GET['studentList'])) : ?>
+             <div class="row g-4 mt-4">
+                <div class="col-12">
+                    <div class="card card-stat shadow-sm">
+                        <div class="card-body p-3 p-lg-4">
+                            <div class="text-center">
+                                <h4>ไม่พบข้อมูลนักเรียน</h4>
+                                <p>โปรดตรวจสอบห้องเรียนที่เลือก หรือติดต่อผู้ดูแลระบบ</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
-    </div>
-</div>
-<!--//main-wrapper-->
+        <?php endif; ?>
 
-<script>
-new SlimSelect({
-    select: '#studentListSelect'
-});
-
-$(document).on("click", ".SelStudyLine", function() {
-    if ($(this).attr('key_studyline') == 0) {
-        $('.PrintNameRoom').attr('href', "StudentsList/Print/" + $(this).attr('key_room') + '/All')
-    } else {
-        $('.PrintNameRoom').attr('href', "StudentsList/Print/" + $(this).attr('key_room') + '/' + $(this).attr('key_studyline'))
-    }
-
-});
-</script>
+    </div><!--//content-->
+</div><!--//wrapper-->
 
 <?= $this->endSection() ?>

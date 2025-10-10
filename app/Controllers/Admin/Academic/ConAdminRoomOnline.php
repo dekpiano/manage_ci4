@@ -3,16 +3,13 @@
 namespace App\Controllers\Admin\Academic;
 
 use App\Controllers\BaseController;
-use App\Models\Teacher\ModTeacherTeaching;
 
 class ConAdminRoomOnline extends BaseController
 {
-    protected $modTeacherTeaching;
     protected $DBpersonnel;
 
     public function __construct()
     {
-        $this->modTeacherTeaching = new ModTeacherTeaching();
         $this->DBpersonnel = \Config\Database::connect('personnel');
         $this->db = \Config\Database::connect(); // Initialize the default database connection
 
@@ -36,7 +33,6 @@ class ConAdminRoomOnline extends BaseController
         $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
         $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();
         $data['teacher'] = $this->DBpersonnel->table('tb_personnel')->select('pers_id,pers_img')->where('pers_id',session()->get('login_id'))->get()->getRow();
-        $data['RoomOnline'] =$this->db->table('tb_room_online')->get()->getResult();
         $data['NameTeacher'] = $this->DBpersonnel->table('tb_personnel')
         ->select('pers_id,pers_prefix,pers_firstname,pers_lastname,pers_position,pers_learning')
         ->where('pers_position !=','posi_001')
@@ -48,7 +44,6 @@ class ConAdminRoomOnline extends BaseController
         ->orderBy('pers_learning')
         ->get()->getResult();
         $data['classroom'] = new \App\Libraries\Classroom();
-        echo view('admin/layout/main', $data);
         echo view('admin/Academic/AdminRoomOnline/AdminRoomOnlineMain.php', $data);     
     }
 
@@ -74,7 +69,7 @@ class ConAdminRoomOnline extends BaseController
             'roomon_term' => $this->request->getPost('roomon_term'),
             'roomon_datecreate' => date('Y-m-d H:i:s')
         );
-        echo $result = $this->modTeacherTeaching->RoomOnlineInsert($insert); 
+        echo $result = $this->db->table('tb_room_online')->insert($insert); 
         }else{
             echo 2;
         }
@@ -101,11 +96,75 @@ class ConAdminRoomOnline extends BaseController
             'roomon_term' => $this->request->getPost('roomon_term')
         );
         $id = $this->request->getPost('roomon_id');
-        echo $result = $this->modTeacherTeaching->RoomOnlineUpdate($update, $id); 
+        echo $result = $this->db->table('tb_room_online')->where('roomon_id', $id)->update($update); 
     }
 
     function DeleteRoomOnline(){
         $id = $this->request->getPost('roomid');
-        echo $result = $this->modTeacherTeaching->RoomOnlineDelete($id); 
+        echo $result = $this->db->table('tb_room_online')->where('roomon_id', $id)->delete(); 
+    }
+
+    public function getRoomOnlineData()
+    {
+        $request = $this->request;
+
+        // Base query
+        $builder = $this->db->table('tb_room_online');
+        $builder->select([
+            'tb_room_online.roomon_id',
+            'tb_room_online.roomon_year',
+            'tb_room_online.roomon_term',
+            'tb_room_online.roomon_coursecode',
+            'tb_room_online.roomon_coursename',
+            'tb_room_online.roomon_classlevel',
+            'tb_room_online.roomon_linkroom',
+            'tb_room_online.roomon_liveroom',
+            'CONCAT(personnel.pers_firstname, " ", personnel.pers_lastname) as teacher_name'
+        ]);
+        $builder->join($this->DBpersonnel->database . '.tb_personnel as personnel', 'personnel.pers_id = tb_room_online.roomon_teachid', 'left');
+
+        // Total records
+        $totalRecords = $builder->countAllResults(false); // false to not reset the query
+
+        // Search
+        $searchValue = $request->getPost('search')['value'];
+        if (!empty($searchValue)) {
+            $builder->groupStart();
+            $builder->like('tb_room_online.roomon_coursecode', $searchValue);
+            $builder->orLike('tb_room_online.roomon_coursename', $searchValue);
+            $builder->orLike('CONCAT(personnel.pers_firstname, " ", personnel.pers_lastname)', $searchValue);
+            $builder->orLike('tb_room_online.roomon_classlevel', $searchValue);
+            $builder->groupEnd();
+        }
+
+        // Filtered records
+        $filteredRecords = $builder->countAllResults(false);
+
+        // Order
+        $order = $request->getPost('order');
+        if (!empty($order)) {
+            $columnIdx = $order[0]['column'];
+            $columnName = $request->getPost('columns')[$columnIdx]['data'];
+            $dir = $order[0]['dir'];
+            $builder->orderBy($columnName, $dir);
+        }
+
+        // Limit
+        $length = $request->getPost('length');
+        $start = $request->getPost('start');
+        if ($length != -1) {
+            $builder->limit($length, $start);
+        }
+
+        $data = $builder->get()->getResult();
+
+        $output = [
+            'draw' => intval($request->getPost('draw')),
+            'recordsTotal' => $totalRecords,
+            'recordsFiltered' => $filteredRecords,
+            'data' => $data
+        ];
+
+        return $this->response->setJSON($output);
     }
 }

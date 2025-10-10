@@ -5,6 +5,8 @@ namespace App\Controllers\Admin\Academic;
 use App\Controllers\BaseController;
 use App\Models\Admin\ModAdminStudents;
 use App\Libraries\Classroom; // Add this line
+use Google\Client;
+use Google\Service\Sheets;
 
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -40,33 +42,22 @@ class ConAdminStudents extends BaseController
 
     function getClient()
     {
-        // Since we cannot rely on the exact file structure, we assume the vendor autoloader is available
-        // and the path to service_key.json is accessible.
-        // If this path is incorrect in the CI4 environment, it will need manual adjustment.
-        $path = WRITEPATH . 'vendor/autoload.php';
-        if (file_exists($path)) {
-            require_once $path;
-        } else {
-            // Fallback for different environments or if path is dynamic
-            // Attempt to load from Composer's autoloader directly if available
-            if (file_exists(APPPATH . '../vendor/autoload.php')) {
-                require_once APPPATH . '../vendor/autoload.php';
-            }
-        }
+        $path = dirname(dirname(dirname(dirname(dirname(dirname(dirname(__FILE__)))))));
+		require $path . '/librarie_skj/google_sheet/vendor/autoload.php';
 
         // Our service account access key
         $googleAccountKeyFilePath = WRITEPATH . 'service_key.json'; // Assuming service_key.json is in the project root
         putenv('GOOGLE_APPLICATION_CREDENTIALS=' . $googleAccountKeyFilePath);
 
         // Create new client
-        $client = new \Google\Client();
+        $client = new Client();
         // Set credentials
         $client->useApplicationDefaultCredentials();
 
         // Adding an access area for reading, editing, creating and deleting tables
         $client->addScope('https://www.googleapis.com/auth/spreadsheets');
 
-        $service = new \Google\Service\Sheets($client);
+        $service = new Sheets($client);
 
         return $service;
     }
@@ -256,61 +247,78 @@ class ConAdminStudents extends BaseController
 
     }
 
-    public function AdminStudentsUpdate(){
-        
+    public function AdminStudentsUpdate()
+    {
         $service = $this->getClient();
         $spreadsheetId = '1Je4jmVm3l84xDMAJDqQtdrRB13wWwFl2Fy2b7FvX1Ec'; // Assuming this is correct
-        
         $range = 'stu1!A2:K1000';  // TODO: Update placeholder value.
 
         $response = $service ? $service->spreadsheets_values->get($spreadsheetId, $range) : null;
-        $numRows = ($response && !empty($response->getValues())) ? count($response->getValues()) : 0;
-       
-        $checkStu = [];
-        $re = $this->db->table('tb_students')->select('StudentCode,StudentIDNumber,StudentStatus')        
-        ->get()->getResult();
-        foreach ($re as $key => $v_re) {
-            $checkStu[] = $v_re->StudentCode;
+        $values = $response ? $response->getValues() : [];
+
+        if (empty($values)) {
+            session()->setFlashdata(['status' => 'error', 'messge' => 'ไม่พบข้อมูลใน Google Sheet หรือไม่สามารถโหลดข้อมูลได้', 'msg' => 'NO']);
+            return redirect()->to(base_url('Admin/Acade/Registration/Students/Normal'));
         }
-        
-        //echo '<pre>';print_r($response);exit();
-        for ($i=0; $i < $numRows; $i++) { 
-            if(!empty($response->values[$i][10]) && isset($response->values[$i][10])){
-               $StudyLine = $response->values[$i][10];
-            }else{
-                $StudyLine = '';
+
+        $processedIdentifiers = []; // To track processed StudentCode/StudentIDNumber pairs from the sheet
+
+        foreach ($values as $row) {
+            $studentCode = !empty($row[2]) ? trim($row[2]) : '';
+            $studentIdNumber = !empty($row[7]) ? str_replace('-', '', trim($row[7])) : ''; // Clean the ID number
+
+            // Skip if both primary identifiers are missing
+            if (empty($studentCode) && empty($studentIdNumber)) {
+                continue;
             }
 
-            if (!empty($response->values[$i][2]) && in_array($response->values[$i][2], $checkStu))
-            {
-             $arrayName = array('StudentNumber' => !empty($response->values[$i][0]) ? $response->values[$i][0] : null, 
-                                'StudentClass' => !empty($response->values[$i][1]) ? $response->values[$i][1] : null,
-                                'StudentPrefix' => !empty($response->values[$i][3]) ? $response->values[$i][3] : null, 
-                                'StudentFirstName' => !empty($response->values[$i][4]) ? $response->values[$i][4] : null, 
-                                'StudentLastName' => !empty($response->values[$i][5]) ? $response->values[$i][5] : null,
-                                'StudentStatus' => !empty($response->values[$i][8]) ? $response->values[$i][8] : null,
-                                'StudentBehavior' => !empty($response->values[$i][9]) ? $response->values[$i][9] : null,
-                                'StudentStudyLine' => $StudyLine);
-            $this->modAdminStudents->Students_Update($arrayName,!empty($response->values[$i][2]) ? $response->values[$i][2] : null);
+            // Create a unique key for the combination to check for duplicates within the sheet
+            $identifierKey = $studentCode . '-' . $studentIdNumber;
+            if (in_array($identifierKey, $processedIdentifiers)) {
+                continue; // Skip if this combination has already been processed in this batch
             }
-          else
-            {
-                $arrayName = array('StudentNumber' => !empty($response->values[$i][0]) ? $response->values[$i][0] : null, 
-                'StudentClass' => !empty($response->values[$i][1]) ? $response->values[$i][1] : null,
-                'StudentCode' => !empty($response->values[$i][2]) ? $response->values[$i][2] : null, 
-                'StudentPrefix' => !empty($response->values[$i][3]) ? $response->values[$i][3] : null, 
-                'StudentFirstName' => !empty($response->values[$i][4]) ? $response->values[$i][4] : null, 
-                'StudentLastName' => !empty($response->values[$i][5]) ? $response->values[$i][5] : null,
-                'StudentIDNumber' => !empty($response->values[$i][7]) ? $response->values[$i][7] : null,
-                'StudentDateBirth' => !empty($response->values[$i][6]) ? $response->values[$i][6] : null,
-                'StudentStatus' => !empty($response->values[$i][8]) ? $response->values[$i][8] : null,
-                'StudentBehavior' => !empty($response->values[$i][9]) ? $response->values[$i][9] : null,
-                'StudentStudyLine' => $StudyLine);
-                $this->modAdminStudents->Students_Inaert($arrayName);
+            $processedIdentifiers[] = $identifierKey;
+
+            // Find existing student by StudentCode OR StudentIDNumber
+            $builder = $this->db->table('tb_students');
+            $builder->select('StudentID');
+            $builder->groupStart();
+            if (!empty($studentCode)) {
+                $builder->where('StudentCode', $studentCode);
+            }
+            if (!empty($studentIdNumber)) {
+                $builder->orWhere('StudentIDNumber', $studentIdNumber);
+            }
+            $builder->groupEnd();
+            $existingStudent = $builder->get()->getRow();
+
+            // Prepare data array from sheet row
+            $studyLine = !empty($row[10]) ? $row[10] : '';
+            $studentData = [
+                'StudentNumber'    => !empty($row[0]) ? $row[0] : '',
+                'StudentClass'     => !empty($row[1]) ? $row[1] : '',
+                'StudentCode'      => $studentCode,
+                'StudentPrefix'    => !empty($row[3]) ? $row[3] : '',
+                'StudentFirstName' => !empty($row[4]) ? $row[4] : '',
+                'StudentLastName'  => !empty($row[5]) ? $row[5] : '',
+                'StudentDateBirth' => !empty($row[6]) ? $row[6] : '',
+                'StudentIDNumber'  => !empty($row[7]) ? $row[7] : '', // Use the original, uncleaned version for DB
+                'StudentStatus'    => !empty($row[8]) ? $row[8] : '',
+                'StudentBehavior'  => !empty($row[9]) ? $row[9] : '',
+                'StudentStudyLine' => $studyLine,
+            ];
+
+            if ($existingStudent) {
+                // UPDATE existing record using its primary key
+                $this->modAdminStudents->update($existingStudent->StudentID, $studentData);
+            } else {
+                // INSERT new record
+                $this->modAdminStudents->Students_Insert($studentData);
             }
         }
+
         session()->setFlashdata(['status'=> 'success','messge' => 'อัพเดพข้อมูลสำเร็จ','msg'=>'YES']);
-        return redirect()->to(base_url('Admin/Acade/Registration/Students/Normal'));
+        return redirect()->to(base_url('Admin/Acade/Registration/Students/normal'));
     }
 
     public function AdminStudentsMain1(){   

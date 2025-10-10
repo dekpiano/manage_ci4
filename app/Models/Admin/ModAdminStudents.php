@@ -24,7 +24,7 @@ class ModAdminStudents extends Model
         'StudentSchoolYear',
     ]; // Fields that can be mass-assigned
 
-    public function Students_Inaert($data)
+    public function Students_Insert($data)
     {
         return $this->insert($data);
     }
