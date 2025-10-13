@@ -25,7 +25,7 @@ class ConAdminEvaluateEditGrade extends BaseController
                 exit(); // Terminate script execution
             } else {
                 // For regular page requests, redirect
-                return redirect()->to(base_url('LoginAdmin'));
+                return redirect()->to(base_url('LogoutTeacher'));
             }
         }
 

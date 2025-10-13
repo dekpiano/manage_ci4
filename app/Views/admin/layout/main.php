@@ -146,6 +146,48 @@
 
 
 <script>
+    (function() {
+        const sessionCheckInterval = 60000; // 1 minute in milliseconds
+        const sessionCheckUrl = '<?= site_url("session/check") ?>';
+        const loginUrl = '<?= site_url("LogoutTeacher") ?>';
+
+        const checkSession = () => {
+            fetch(sessionCheckUrl)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.status === 'expired') {
+                        // Stop the interval to prevent multiple alerts
+                        clearInterval(sessionInterval);
+
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'เซสชันหมดอายุ',
+                            text: 'กรุณาเข้าสู่ระบบใหม่อีกครั้ง ระบบจะนำคุณไปหน้าล็อกอิน',
+                            timer: 3000,
+                            timerProgressBar: true,
+                            allowOutsideClick: false,
+                            allowEscapeKey: false,
+                            showConfirmButton: false
+                        }).then(() => {
+                            window.location.href = loginUrl;
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error checking session status:', error);
+                });
+        };
+
+        const sessionInterval = setInterval(checkSession, sessionCheckInterval);
+    })();
+</script>
+
+<script>
     console.error(<?php echo empty(session()->get('fullname')); ?>);
     
 $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
@@ -157,7 +199,7 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
             showConfirmButton: false,
             timer: 2000
         }).then(() => {
-            window.location.href = '<?= base_url('LoginAdmin') ?>';
+            window.location.href = '<?= base_url('LogoutTeacher') ?>';
         });
     }
     // The previous check for responseText.includes('<title>Login Admin</title>') is now redundant

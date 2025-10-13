@@ -160,6 +160,9 @@ $routes->post('Admin/Acade/Executive/exportRoomReportToExcel', [ConAdminReportRe
 $routes->get('Admin/Acade/Evaluate/ReportAcademicSummaryRoyalRoseStandard', [ConAdminReportResult::class, 'AdminReportAcademicSummaryRoyalRoseStandard']);
 $routes->get('Admin/Acade/Evaluate/ReportAcademicSummary', [ConAdminReportResult::class, 'AdminReportAcademicSummary']);
 
+// Session check for auto-logout
+$routes->get('session/check', 'App\\Controllers\\Session::check');
+
 // Login
 $routes->get('Logout', [Control_login::class, 'logout']);
 $routes->get('LogoutTeacher', [Control_login::class, 'logoutGoogle']);

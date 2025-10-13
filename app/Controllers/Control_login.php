@@ -187,6 +187,7 @@ class Control_login extends BaseController
 
     public function LoginAdmin()
     {	
+		return redirect()->to('/'); exit();
 			$username = $this->request->getPost('username');
 			$password = md5(md5($this->request->getPost('password')));
 			
@@ -229,7 +230,7 @@ class Control_login extends BaseController
 		delete_cookie('username_cookie'); 
 		delete_cookie('password_cookie'); 
 		session()->destroy();
-		return redirect()->to('welcome');
+		return redirect()->to('/');
     }
 
 

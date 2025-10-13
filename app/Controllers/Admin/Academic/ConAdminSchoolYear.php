@@ -21,7 +21,7 @@ class ConAdminSchoolYear extends BaseController
 
         // CI3 session check equivalent
         if (empty(session()->get('fullname'))) {
-            return redirect()->to(base_url('LoginAdmin'));
+            return redirect()->to(base_url('LogoutTeacher'));
         }
 
         $check_status_data = $this->db->table('tb_admin_rloes')->where('admin_rloes_userid', session()->get('login_id'))->get()->getRow();
