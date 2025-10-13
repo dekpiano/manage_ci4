@@ -194,6 +194,31 @@ th {
 <?= $this->section('script') ?>
 <script>
 $(document).ready(function() {
+    // Sort the dropdown
+    var select = $('#KeyCheckYear');
+    var options = select.find('option');
+    var selectedValue = select.val();
+    var placeholder = options.filter('[value=""]');
+    options = options.not('[value=""]');
+
+    options.sort(function(a, b) {
+        var aVal = a.value.split('/');
+        var bVal = b.value.split('/');
+        if (aVal.length < 2 || bVal.length < 2) return 0;
+        var aYear = parseInt(aVal[1], 10);
+        var bYear = parseInt(bVal[1], 10);
+        var aTerm = parseInt(aVal[0], 10);
+        var bTerm = parseInt(bVal[0], 10);
+
+        if (aYear !== bYear) {
+            return bYear - aYear; // Sort by year descending
+        }
+        return bTerm - aTerm; // Then by term descending
+    });
+
+    select.empty().append(placeholder).append(options);
+    select.val(selectedValue);
+
     // Only initialize DataTable if the table exists and has data
     if ($.fn.DataTable.isDataTable('#tblGradeSumRoom')) {
         $('#tblGradeSumRoom').DataTable().destroy();

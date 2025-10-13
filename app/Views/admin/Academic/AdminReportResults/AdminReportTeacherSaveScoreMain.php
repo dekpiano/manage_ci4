@@ -83,23 +83,50 @@
 
 <?= $this->section('script') ?>
 <script>
-$('.ShowStudent').DataTable({
-    "order": [
-        [4, "asc"],
-        [1, "asc"]
-    ]
-});
+$(document).ready(function() {
+    // Sort the dropdown
+    var select = $('#CheckYearSaveScore');
+    var options = select.find('option');
+    var selectedValue = select.val();
 
-$(document).on("change", "#CheckYearSaveScore", function () {
-    let selectedYear = $(this).val();
-    const baseUrl = $(this).closest('form').data('base-url');
-    
-    if (baseUrl && selectedYear) {
-        $('.loader').show();
-        window.location.href = baseUrl + '/' + selectedYear;
-    } else {
-        console.error('Base URL or selected year not found.');
-    }
+    options.sort(function(a, b) {
+        var aVal = a.value.split('/');
+        var bVal = b.value.split('/');
+        if (aVal.length < 2 || bVal.length < 2) return 0;
+        var aYear = parseInt(aVal[1], 10);
+        var bYear = parseInt(bVal[1], 10);
+        var aTerm = parseInt(aVal[0], 10);
+        var bTerm = parseInt(bVal[0], 10);
+
+        if (aYear !== bYear) {
+            return bYear - aYear; // Sort by year descending
+        }
+        return bTerm - aTerm; // Then by term descending
+    });
+
+    select.empty().append(options);
+    select.val(selectedValue);
+
+    // Initialize DataTable
+    $('.ShowStudent').DataTable({
+        "order": [
+            [4, "asc"],
+            [1, "asc"]
+        ]
+    });
+
+    // Handle dropdown change
+    $(document).on("change", "#CheckYearSaveScore", function () {
+        let selectedYear = $(this).val();
+        const baseUrl = $(this).closest('form').data('base-url');
+        
+        if (baseUrl && selectedYear) {
+            $('.loader').show();
+            window.location.href = baseUrl + '/' + selectedYear;
+        } else {
+            console.error('Base URL or selected year not found.');
+        }
+    });
 });
 </script>
 <?= $this->endSection() ?>

@@ -10,6 +10,27 @@
     <div class="container-xl">
         <h1 class="app-page-title">จัดการข้อมูล<?= isset($title) ? esc($title) : '' ?></h1>
         <hr class="mb-4">
+        <div class="row g-2 justify-content-start justify-content-md-end align-items-center mb-3">
+             <div class="col-auto">
+                <?php
+                $level = service('request')->uri->getSegment(3) ?? 'Evaluate'; // Default to Evaluate
+                $baseUrl = ($level === 'Executive')
+                    ? site_url('Admin/Acade/Executive/ReportPerson')
+                    : site_url('Admin/Acade/Evaluate/ReportPerson');
+                ?>
+                <form action="#" method="post" class="d-flex align-items-center" data-base-url="<?= $baseUrl ?>">
+                    <label for="CheckYearSaveScore" class="form-label me-2 mb-0">เลือกปีการศึกษา</label>
+                    <select class="form-select w-auto" name="CheckYearSaveScore" id="CheckYearSaveScore">
+                        <option value="">-- เลือกปี --</option>
+                        <?php if(isset($CheckYearSaveScore)): ?>
+                            <?php foreach ($CheckYearSaveScore as $value) : ?>
+                            <option <?= (isset($Term) && isset($Year) && ($Term.'/'.$Year) == $value->RegisterYear) ? "selected" : ""?> value="<?= esc($value->RegisterYear) ?>"><?= esc($value->RegisterYear) ?></option>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </select>
+                </form>
+            </div>
+        </div>
     </div>
     <!--//container-->
     </section>
@@ -70,11 +91,51 @@
 
 <?= $this->section('script') ?>
 <script>
-$('.ShowStudent').DataTable({
-    "order": [
-        [4, "asc"],
-        [1, "asc"]
-    ]
+$(document).ready(function() {
+    // Sort the dropdown
+    var select = $('#CheckYearSaveScore');
+    var options = select.find('option');
+    var selectedValue = select.val();
+    var placeholder = options.filter('[value=""]');
+    options = options.not('[value=""]');
+
+    options.sort(function(a, b) {
+        var aVal = a.value.split('/');
+        var bVal = b.value.split('/');
+        if (aVal.length < 2 || bVal.length < 2) return 0;
+        var aYear = parseInt(aVal[1], 10);
+        var bYear = parseInt(bVal[1], 10);
+        var aTerm = parseInt(aVal[0], 10);
+        var bTerm = parseInt(bVal[0], 10);
+
+        if (aYear !== bYear) {
+            return bYear - aYear; // Sort by year descending
+        }
+        return bTerm - aTerm; // Then by term descending
+    });
+
+    select.empty().append(placeholder).append(options);
+    select.val(selectedValue);
+
+    // Initialize DataTable
+    $('.ShowStudent').DataTable({
+        "order": [
+            [4, "asc"],
+            [1, "asc"]
+        ]
+    });
+
+    // Handle dropdown change
+    $(document).on("change", "#CheckYearSaveScore", function () {
+        let selectedYear = $(this).val();
+        const baseUrl = $(this).closest('form').data('base-url');
+
+        if (baseUrl && selectedYear) {
+            window.location.href = baseUrl + '/' + selectedYear;
+        } else if (baseUrl) {
+            window.location.href = baseUrl;
+        }
+    });
 });
 </script>
 <?= $this->endSection() ?>

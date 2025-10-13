@@ -105,6 +105,7 @@ $routes->get('Admin/Acade/Evaluate/SaveScore', [ConAdminSaveScore::class, 'Admin
 $routes->get('Admin/Acade/Evaluate/SaveScoreGrade/(:segment)/(:segment)/(:segment)', [ConAdminSaveScore::class, 'AdminSaveScoreGrade']);
 $routes->post('admin/academic/ConAdminSaveScore/CheckOnOffSaveScore', [ConAdminSaveScore::class, 'CheckOnOffSaveScore']);
 $routes->get('Admin/Acade/Evaluate/ReportPerson', [ConAdminReportResult::class, 'AdminReportPersonMain']);
+$routes->get('Admin/Acade/Evaluate/ReportPerson/(:num)/(:num)', [ConAdminReportResult::class, 'AdminReportPersonMain']);
 $routes->get('Admin/Acade/Evaluate/ReportPerson/(:segment)', [ConAdminReportResult::class, 'AdminStudentsScore']);
 $routes->get('Admin/Acade/Evaluate/ReportRoom', [ConAdminReportResult::class, 'AdminReportRoomMain']);
 $routes->post('Admin/Acade/Evaluate/ReportRoom', [ConAdminReportResult::class, 'AdminReportRoomMain']);
@@ -143,6 +144,7 @@ $routes->get('Admin/Acade/DevelopStudents/Clubs/All', [ConAdminDevelopStudents::
 
 // ผู้บริหารสถานศึกษา
 $routes->get('Admin/Acade/Executive/ReportPerson', [ConAdminReportResult::class, 'AdminReportPersonMain']);
+$routes->get('Admin/Acade/Executive/ReportPerson/(:num)/(:num)', [ConAdminReportResult::class, 'AdminReportPersonMain']);
 $routes->get('Admin/Acade/Executive/ReportPerson/(:segment)', [ConAdminReportResult::class, 'AdminStudentsScore']);
 $routes->get('Admin/Acade/Executive/ReportRoom', [ConAdminReportResult::class, 'AdminReportRoomMain']);
 $routes->get('Admin/Acade/Executive/ReportSummaryTeacher', [ConAdminReportResult::class, 'AdminReportSummaryTeacher']);

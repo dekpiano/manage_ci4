@@ -40,17 +40,44 @@ class ConAdminReportResult extends BaseController
 
 
 
-    public function AdminReportPersonMain(){   
+    public function AdminReportPersonMain($Term = null, $Year = null){   
         $data['admin'] = $this->DBpersonnel->table('tb_personnel')->select('pers_id,pers_img')->where('pers_id',session()->get('login_id'))->get()->getRow();
-        $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
         $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();
-        $data['stu'] = $this->db->table('tb_students')
-                            ->select("StudentID, StudentNumber, StudentClass, StudentCode, StudentPrefix, StudentFirstName, StudentLastName, StudentStatus")
-                            ->where('StudentStatus','1/ปกติ')
-                            ->get()->getResult();
         $data['title'] = "รายงานผลการเรียนรายบุคคล";
 
-        
+        // FIX: Always fetch SchoolYear for the layout
+        $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
+
+        // Get available years for dropdown
+        $data['CheckYearSaveScore'] = $this->db->table('tb_register')->select('RegisterYear')->groupBy('RegisterYear')->get()->getResult();
+
+        // Determine current year
+        if ($Term === null || $Year === null) {
+            // Use the already fetched SchoolYear object
+            if ($data['SchoolYear'] && property_exists($data['SchoolYear'], 'schyear_year')) {
+                $parts = explode('/', $data['SchoolYear']->schyear_year);
+                $Term = $parts[0] ?? null;
+                $Year = $parts[1] ?? null;
+            }
+        }
+
+        $data['Term'] = $Term;
+        $data['Year'] = $Year;
+        $currentYear = ($Term && $Year) ? $Term . '/' . $Year : null;
+
+        // Get students for the selected year
+        if ($currentYear) {
+            $data['stu'] = $this->db->table('tb_students')
+                                ->select("tb_students.StudentID, tb_students.StudentNumber, tb_students.StudentClass, tb_students.StudentCode, tb_students.StudentPrefix, tb_students.StudentFirstName, tb_students.StudentLastName, tb_students.StudentStatus")
+                                ->distinct()
+                                ->join('tb_register', 'tb_register.StudentID = tb_students.StudentID')
+                                ->where('tb_students.StudentStatus','1/ปกติ')
+                                ->where('tb_register.RegisterYear', $currentYear)
+                                ->get()->getResult();
+        } else {
+            $data['stu'] = []; // No year selected or found, return empty list
+        }
+
         echo view('admin/Academic/AdminReportResults/AdminReportPersonMain',$data);
     }
 
@@ -83,11 +110,10 @@ class ConAdminReportResult extends BaseController
             ->whereIn('skjacth_personnel.tb_personnel.pers_id', $teacherIds)
             ->get()
             ->getResult();
-    } else {
-        $data['Teacher'] = []; // No teachers found, so pass an empty array to the view
-    }
-        $data['CheckYearSaveScore'] = $this->db->table('tb_register')->select('RegisterYear')->groupBy('RegisterYear')->get()->getResult();
-        $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
+            } else {
+                $data['Teacher'] = []; // No teachers found, so pass an empty array to the view
+            }
+            $data['CheckYearSaveScore'] = $this->db->table('tb_register')->select('RegisterYear')->groupBy('RegisterYear')->get()->getResult();        $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
         $data['Term'] = $Term;
         $data['Year'] = $year;       
         $data['title'] = "รายงานผลการบันทึกคะแนนครูผู้สอน";

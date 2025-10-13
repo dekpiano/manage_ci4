@@ -21,6 +21,34 @@
     .text-right-align {
         text-align: right;
     }
+
+    /* Accordion Item Styling */
+    .accordion-item {
+        border: 1px solid #dee2e6;
+        border-radius: .375rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        overflow: hidden; /* Ensures the border-radius is respected by child elements */
+    }
+
+    /* Accordion Header (Button) Styling */
+    .accordion-button {
+        background-color: #f8f9fa;
+        font-weight: 600;
+        color: #212529;
+    }
+
+    /* Styling for the button when it's NOT collapsed (i.e., the accordion item is open) */
+    .accordion-button:not(.collapsed) {
+        background-color: #4CAF50; /* Reusing the theme's green color */
+        color: white;
+        box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.125);
+    }
+
+    /* Customizing the accordion icon color to be visible on both backgrounds */
+    .accordion-button:not(.collapsed)::after {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='white'%3e%3cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3e%3c/svg%3e");
+    }
 </style>
 <?php 
         $AllUnit = 0; $AllGrade = 0; 
@@ -51,10 +79,9 @@
         <div class="">
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="<?= site_url('admin') ?>">หน้าหลัก</a></li>
-                    <li class="breadcrumb-item"><a href="<?= site_url('Admin/Acade') ?>">งานวิชาการ</a></li>
-                    <li class="breadcrumb-item"><a href="<?= site_url('Admin/Acade/Evaluate') ?>">รายงานผล</a></li>
-                    <li class="breadcrumb-item active" aria-current="page">ผลการเรียนนักเรียนรายบุคคล</li>
+                    <li class="breadcrumb-item"><a href="<?= site_url('Admin/Home') ?>">หน้าหลัก</a></li>
+                    <li class="breadcrumb-item"><a href="javascript:history.back()">รายงานผลการเรียนรายบุคคล</a></li>
+                    <li class="breadcrumb-item active" aria-current="page"><?= $stu->StudentPrefix.$stu->StudentFirstName.' '.$stu->StudentLastName ?></li>
                 </ol>
             </nav>
             <h3 class="page-title">จัดการข้อมูล<?=$title;?> ของ
@@ -64,22 +91,22 @@
         </div>
 
         <div class="mb-5">
-            <div class="row">
-                <?php asort($scoreYear);
-            
-            foreach ($scoreYear as $key_year => $v_scoreYear) : 
-            
-            ?>
-                <div class="col-md-12">
-                    <div class="card mb-5">
-                        <div class="card-header card-header-custom">
-                            ภาคเรียนที่
-                            <?=$v_scoreYear->RegisterYear?>
-                        </div>
-                        <div class="card-body">
+            <div class="accordion" id="semesterAccordion">
+                <?php 
+                asort($scoreYear);
+                foreach ($scoreYear as $key_year => $v_scoreYear) : 
+                ?>
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="heading<?= $key_year ?>">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse<?= $key_year ?>" aria-expanded="false" aria-controls="collapse<?= $key_year ?>">
+                            ภาคเรียนที่ <?= $v_scoreYear->RegisterYear ?>
+                        </button>
+                    </h2>
+                    <div id="collapse<?= $key_year ?>" class="accordion-collapse collapse" aria-labelledby="heading<?= $key_year ?>" data-bs-parent="#semesterAccordion">
+                        <div class="accordion-body">
                             <div class="row">
                                 <div class="col-md-8">
-                                    <div class="card mb-5">
+                                    <div class="card mb-3 mb-md-0">
                                         <div class="table-responsive">
                                             <table class="table table-hover table-bordered table-striped">
                                                 <thead class="bg-light">
@@ -143,7 +170,7 @@
                                     </div>
                                 </div>
                                 <div class="col-md-4">
-                                    <div class="card mb-5">
+                                    <div class="card">
 
                                         <table class="table">
                                             <thead class="text-center table-success">
@@ -201,10 +228,8 @@
                         </div>
                     </div>
                 </div>
-
-                <?php  endforeach;?>
+                <?php endforeach; ?>
             </div>
-
         </div>
 
 

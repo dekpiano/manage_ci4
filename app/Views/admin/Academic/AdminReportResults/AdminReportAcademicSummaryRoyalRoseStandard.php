@@ -182,6 +182,32 @@ usort($CheckYear, function($a, $b) {
 <?= $this->section('script') ?>
 <script>
 $(document).ready(function() {
+    // Sort the dropdown
+    var select = $('#KeyYear');
+    var options = select.find('option');
+    var selectedValue = select.val();
+    var placeholder = options.filter('[value="0"]'); // Placeholder has value "0"
+    options = options.not('[value="0"]');
+
+    options.sort(function(a, b) {
+        var aVal = a.value.split('/');
+        var bVal = b.value.split('/');
+        if (aVal.length < 2 || bVal.length < 2) return 0;
+        var aYear = parseInt(aVal[1], 10);
+        var bYear = parseInt(bVal[1], 10);
+        var aTerm = parseInt(aVal[0], 10);
+        var bTerm = parseInt(bVal[0], 10);
+
+        if (aYear !== bYear) {
+            return bYear - aYear; // Sort by year descending
+        }
+        return bTerm - aTerm; // Then by term descending
+    });
+
+    select.empty().append(placeholder).append(options);
+    select.val(selectedValue);
+
+    // Initialize DataTable
     $('#ReportSummaryRoyalRoseStandard').DataTable({
         dom: '<"top"B>rt<"bottom"ip>',
         buttons: [
@@ -197,18 +223,18 @@ $(document).ready(function() {
             url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/th.json' // Thai language pack
         }
     });
-});
 
-$("#ReportSummaryRoyalRoseStandard tbody tr").each(function() {
-    let rowTotal = 0;
-    $(this).find(".sum-cell").each(function() {
-        let value = parseInt($(this).text(), 10);
-        if (!isNaN(value)) {
-            rowTotal += value;
-        }
+    // Calculate row totals
+    $("#ReportSummaryRoyalRoseStandard tbody tr").each(function() {
+        let rowTotal = 0;
+        $(this).find(".sum-cell").each(function() {
+            let value = parseInt($(this).text(), 10);
+            if (!isNaN(value)) {
+                rowTotal += value;
+            }
+        });
+        $(this).find(".row-total").text(rowTotal);
     });
-
-    $(this).find(".row-total").text(rowTotal); // ใส่ผลรวมไว้ที่คอลัมน์แรก
 });
 </script>
 <?= $this->endSection() ?>
