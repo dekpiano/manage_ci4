@@ -35,6 +35,19 @@ class ConAdminHome extends BaseController
         $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
         $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();
 
+
+                // Query for statistics
+        $data['total_students'] = $this->db->table('tb_students')->where('StudentStatus', '1/ปกติ')->countAllResults();
+        $data['total_teachers'] = $this->DBpersonnel->table('tb_personnel')->whereIn('pers_position', ['posi_003', 'posi_004', 'posi_005','posi_006'])->countAllResults();
+        if ($data['SchoolYear']) {
+            $data['total_subjects'] = $this->db->table('tb_subjects')->where('SubjectYear', $data['SchoolYear']->schyear_year)->countAllResults();
+        } else {
+            $data['total_subjects'] = 0;
+        }
+        //$data['total_classrooms'] = $this->db->table('tb_students')->where('StudentBehavior', '1/ปกติ')->distinct()->countAll('StudentClass');
+        $data['total_classrooms'] = 36;
+
+
         echo view('admin/Academic/AdminHome/AdminHome', $data);
         
     }

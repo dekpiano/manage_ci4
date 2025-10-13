@@ -55,19 +55,37 @@ class ConAdminReportResult extends BaseController
     }
 
     public function AdminReportTeacherSaveScoreMain($Term,$year){   
-    $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();        $data['Teacher'] = $this->DBpersonnel->table('tb_personnel')
-        ->select('skjacth_personnel.tb_personnel.pers_prefix,
-                  skjacth_personnel.tb_personnel.pers_firstname,
-                  skjacth_personnel.tb_personnel.pers_lastname,
-                  skjacth_personnel.tb_personnel.pers_id,
-                  skjacth_personnel.tb_personnel.pers_learning,
-                  skjacth_personnel.tb_personnel.pers_position,
-                  skjacth_skj.tb_position.posi_name,
-                  skjacth_skj.tb_learning.lear_namethai,
-                  skjacth_personnel.tb_personnel.pers_status')
-        ->join('skjacth_skj.tb_position','skjacth_skj.tb_position.posi_id = skjacth_personnel.tb_personnel.pers_position')
-        ->join('skjacth_skj.tb_learning','skjacth_skj.tb_learning.lear_id = skjacth_personnel.tb_personnel.pers_learning')
-        ->get()->getResult();
+    $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();        
+
+    // Get teacher IDs that have records in the selected term/year
+    $teacherIdsWithScores = $this->db->table('tb_register')
+        ->select('TeacherID')
+        ->where('RegisterYear', $Term . '/' . $year)
+        ->distinct()
+        ->get()
+        ->getResultArray();
+
+    $teacherIds = array_column($teacherIdsWithScores, 'TeacherID');
+
+    if (!empty($teacherIds)) {
+        $data['Teacher'] = $this->DBpersonnel->table('tb_personnel')
+            ->select('skjacth_personnel.tb_personnel.pers_prefix,
+                      skjacth_personnel.tb_personnel.pers_firstname,
+                      skjacth_personnel.tb_personnel.pers_lastname,
+                      skjacth_personnel.tb_personnel.pers_id,
+                      skjacth_personnel.tb_personnel.pers_learning,
+                      skjacth_personnel.tb_personnel.pers_position,
+                      skjacth_skj.tb_position.posi_name,
+                      skjacth_skj.tb_learning.lear_namethai,
+                      skjacth_personnel.tb_personnel.pers_status')
+            ->join('skjacth_skj.tb_position', 'skjacth_skj.tb_position.posi_id = skjacth_personnel.tb_personnel.pers_position')
+            ->join('skjacth_skj.tb_learning', 'skjacth_skj.tb_learning.lear_id = skjacth_personnel.tb_personnel.pers_learning')
+            ->whereIn('skjacth_personnel.tb_personnel.pers_id', $teacherIds)
+            ->get()
+            ->getResult();
+    } else {
+        $data['Teacher'] = []; // No teachers found, so pass an empty array to the view
+    }
         $data['CheckYearSaveScore'] = $this->db->table('tb_register')->select('RegisterYear')->groupBy('RegisterYear')->get()->getResult();
         $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
         $data['Term'] = $Term;
@@ -116,6 +134,7 @@ class ConAdminReportResult extends BaseController
         ->join('tb_students','tb_students.StudentID = tb_register.StudentID')
         ->where('tb_register.RegisterYear',$Term.'/'.$year)
         ->where('tb_register.TeacherID',$TeacID)
+        ->where('tb_students.StudentBehavior', 'ปกติ')
         ->orderBy('StudentClass','ASC')
         ->orderBy('StudentNumber','ASC')
         ->get()->getResult();
