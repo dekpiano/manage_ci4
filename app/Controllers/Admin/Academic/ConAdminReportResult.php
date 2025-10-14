@@ -612,7 +612,8 @@ class ConAdminReportResult extends BaseController
             public function AdminReportAcademicSummaryRoyalRoseStandard(){
                 $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
                 $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();
-                $data['title'] = "รายงานสรุปผลสัมฤทธิ์ทางการเรียนตามมาตรฐานกุหลาบหลวง";        $data['CheckYear'] = $this->db->table('tb_register')->select('RegisterYear')->groupBy('RegisterYear')->get()->getResult();
+                $data['title'] = "รายงานสรุปผลสัมฤทธิ์ทางการเรียนตามมาตรฐานกุหลาบหลวง";        
+                $data['CheckYear'] = $this->db->table('tb_register')->select('RegisterYear')->groupBy('RegisterYear')->get()->getResult();
         $data['lern'] = $this->DBSkj->table('tb_learning')->get()->getResult();
 
         $data['KeyLevel'] = $this->request->getGet('SelLevel');
@@ -639,7 +640,7 @@ class ConAdminReportResult extends BaseController
                             ->join('tb_students','tb_students.StudentID = tb_register.StudentID')
                             ->where('tb_subjects.SubjectYear',$data['KeyYear'])
                             ->where('tb_register.RegisterYear',$data['KeyYear'])
-                            ->where('tb_register.RegisterClass',$data['KeyLevel'])
+                            ->like('tb_register.RegisterClass',$data['KeyLevel'] . '%')
                             ->groupBy('tb_subjects.FirstGroup,tb_subjects.SubjectCode')
                             ->get()->getResult();        
 
@@ -697,7 +698,7 @@ class ConAdminReportResult extends BaseController
             ->select('tb_register.SubjectID, tb_subjects.SubjectName, tb_subjects.SubjectCode')
             ->join('tb_subjects', 'tb_subjects.SubjectID = tb_register.SubjectID')
             ->where('tb_register.RegisterYear', $currentYear)
-            ->where('tb_register.RegisterClass','ม.'.$Class)
+            ->where('tb_register.RegisterClass',$currentClass)
             ->groupBy('tb_register.SubjectID')
             ->orderBy('tb_register.SubjectID', 'ASC')
             ->get()
@@ -708,7 +709,7 @@ class ConAdminReportResult extends BaseController
         $allScores = $this->db->table('tb_register')
             ->select('StudentID, SubjectID, Score100')
             ->where('RegisterYear', $currentYear)
-            ->where('RegisterClass', 'ม.'.$Class)
+            ->where('RegisterClass', $currentClass)
             ->whereIn('StudentID', $studentIDs)
             ->get()
             ->getResult();

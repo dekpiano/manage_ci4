@@ -84,8 +84,8 @@
       
         </style>
         <?php if(service('request')->getGet('SelLern') === '0'):?>
-        <div class="card alert alert-dismissible shadow-sm mb-4 border-left-decoration" role="alert">
-            <div class="inner">
+        <div class="card" role="alert">
+            
                 <div class="card-body p-3 p-lg-4">
                     <h3 class="text-center"><i class="bi bi-arrow-right-circle-fill"></i> กรุณาเลือกรายการ
                         ทางปุ่มขวาบน</h3>
@@ -93,7 +93,6 @@
                 </div>
                 <!--//card-body-->
 
-            </div>
             <!--//inner-->
         </div>
         <?php else: ?>
