@@ -32,7 +32,7 @@
                                 <div class="ms-3 me-2">
                                     <small>กำลังใช้ปีการศึกษา</small>
                                 </div>
-                                <select name="schyear_year" id="schyear_year" class="form-select form-select-sm me-3" style="width: auto;" onchange="location = this.value;">
+                                <select name="schyear_year" id="schyear_year" class="form-select form-select-sm me-3" style="width: auto;">
                                     <?php $Y = date('Y')+543;
                                                             for ($i=2565; $i <= $Y+2; $i++):
                                                             for ($j=1; $j <= 2; $j++) : ?>

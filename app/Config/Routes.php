@@ -84,10 +84,12 @@ $routes->post('admin/academic/ConAdminRegisterSubject/AdminRegisterSubjectInsert
 $routes->delete('admin/academic/ConAdminRegisterSubject/AdminRegisterSubjectDelete/(:num)', [ConAdminRegisterSubject::class, 'AdminRegisterSubjectDelete/$1']);
 $routes->get('admin/academic/ConAdminRegisterSubject/AdminRegisterSubjectEdit', [ConAdminRegisterSubject::class, 'AdminRegisterSubjectEdit']);
 $routes->get('Admin/Acade/Course/SendPlan', [ConAdminCourse::class, 'SendPlanMain']);
+$routes->get('Admin/Acade/Course/(:segment)/(:segment)', [ConAdminCourse::class, 'UpdateSendPlanYear/$1/$2']);
 $routes->match(['get', 'post'], 'admin/academic/sendplan/get_filtered_plan_data', [ConAdminCourse::class, 'getFilteredPlanData']);
 $routes->get('admin/academic/sendplan/get_plan_details', [ConAdminCourse::class, 'getPlanDetails']);
 $routes->post('admin/academic/sendplan/update_teacher', [ConAdminCourse::class, 'UpdateSettingSendPlanTeacher']);
 $routes->post('admin/academic/sendplan/add_teacher_subject', [ConAdminCourse::class, 'UpdateSendPlanTeacher']);
+$routes->post('Admin/Settings/UpdateSchoolYear', [ConAdminCourse::class, 'updateSchoolYear']);
 
 $routes->get('Admin/Acade/Report', [ConAdminExtraSubject::class, 'ExtraReport']);
 

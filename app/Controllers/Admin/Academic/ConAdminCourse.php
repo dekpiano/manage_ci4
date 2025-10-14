@@ -91,6 +91,18 @@ class ConAdminCourse extends BaseController
         
     }
 
+    public function UpdateSendPlanYear($term, $year)
+    {
+        $data = [
+            'seplanset_term' => $term,
+            'seplanset_year' => $year,
+        ];
+
+        $this->db->table('tb_send_plan_setup')->where('seplanset_ID', 1)->update($data);
+
+        return redirect()->to(base_url('Admin/Acade/Course/SendPlan'));
+    }
+
     public function UpdateSendPlanTeacher()
     {
         try {
@@ -340,4 +352,31 @@ class ConAdminCourse extends BaseController
 
         return $this->response->setJSON($response);
     }
+
+    public function updateSchoolYear()
+    {
+        if ($this->request->getMethod() === 'post') {
+            $newYear = $this->request->getPost('schyear_year');
+
+            // Basic validation
+            if (empty($newYear) || !preg_match('/^[1-2]\/[0-9]{4}$/', $newYear)) {
+                return $this->response->setJSON(['status' => 'error', 'message' => 'Invalid year format.']);
+            }
+
+            $data = [
+                'schyear_year' => $newYear
+            ];
+
+            $updated = $this->db->table('tb_schoolyear')->where('schyear_id', 1)->update($data);
+
+            if ($updated) {
+                return $this->response->setJSON(['status' => 'success']);
+            } else {
+                return $this->response->setJSON(['status' => 'error', 'message' => 'Database update failed.']);
+            }
+        }
+        // Respond with an error if it's not a POST request
+        return $this->response->setStatusCode(405)->setJSON(['status' => 'error', 'message' => 'Method not allowed.']);
+    }
+
 }

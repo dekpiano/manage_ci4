@@ -176,7 +176,9 @@ class ConAdminEnroll extends BaseController
                     ->join('tb_subjects', 'tb_subjects.SubjectID = tb_register.SubjectID')
                     ->join('tb_students', 'tb_students.StudentID = tb_register.StudentID')
                     ->where('tb_register.RegisterYear', $registerYear)
-                    ->where('tb_subjects.SubjectID', $codeSub)
+                    ->where('tb_register.SubjectID', $codeSub)
+                    ->where('tb_register.TeacherID', $TeachID)
+                    ->where('tb_students.StudentStatus', '1/ปกติ')
                     ->get()->getResult();
     $data['classroom'] = new Classroom(); // Instantiate Classroom library
     return view('admin/Academic/AdminEnroll/AdminEnrollFormDelete', $data);
@@ -228,6 +230,7 @@ class ConAdminEnroll extends BaseController
                                     ->where('RegisterYear', $this->request->getPost('yearid'))
                                     ->where('TeacherID', $this->request->getPost('teachid'))
                                     ->where('tb_subjects.SubjectID', $this->request->getPost('subid'))
+                                    ->where('tb_students.StudentStatus', '1/ปกติ')
                                     ->orderBy('StudentClass')
                                     ->orderBy('StudentNumber')
                                     ->get()->getResult();
@@ -243,13 +246,23 @@ class ConAdminEnroll extends BaseController
             return $this->response->setJSON(['status' => 'error', 'message' => 'ไม่พบวิชา']);
         }
 
+        $studentIDs = $this->request->getPost('to');
+        if (empty($studentIDs)) {
+            return $this->response->setJSON(['status' => 'info', 'message' => 'ไม่มีข้อมูลถูกเพิ่ม']);
+        }
+        $studentsData = $this->db->table('tb_students')->select('StudentID, StudentClass')->whereIn('StudentID', $studentIDs)->get()->getResult();
+        $studentClasses = [];
+        foreach ($studentsData as $student) {
+            $studentClasses[$student->StudentID] = $student->StudentClass;
+        }
+
         $insertedCount = 0;
-        foreach ($this->request->getPost('to') as $key => $value) {
+        foreach ($studentIDs as $studentID) {
             $a = [
-                'StudentID'    => $value,
+                'StudentID'    => $studentID,
                 'SubjectID'    => $chk_Subject->SubjectID,
                 'RegisterYear' => $chk_Subject->SubjectYear,
-                'RegisterClass' => $chk_Subject->SubjectClass,
+                'RegisterClass' => $studentClasses[$studentID] ?? null,
                 'TeacherID'    => $this->request->getPost('teacherregis'),
             ];
             if ($this->db->table('tb_register')->insert($a)) {
@@ -285,8 +298,16 @@ class ConAdminEnroll extends BaseController
         if (!$subjectDetails) {
             return $this->response->setJSON(['status' => 'error', 'message' => 'ไม่พบข้อมูลวิชา']);
         }
-        $registerClass = $subjectDetails->SubjectClass;
         $subjectName = $subjectDetails->SubjectName;
+
+        $studentsData = $this->db->table('tb_students')->select('StudentID, StudentClass, StudentPrefix, StudentFirstName, StudentLastName')->whereIn('StudentID', $newStudentIDs)->get()->getResult();
+        $studentInfoMap = [];
+        foreach ($studentsData as $student) {
+            $studentInfoMap[$student->StudentID] = [
+                'class' => $student->StudentClass,
+                'name' => $student->StudentPrefix . $student->StudentFirstName . ' ' . $student->StudentLastName
+            ];
+        }
 
         $insertedStudentNames = [];
         $alreadyRegisteredStudentNames = [];
@@ -301,10 +322,8 @@ class ConAdminEnroll extends BaseController
 
             if ($existing) {
                 // Already registered. Get full name for the message.
-                $studentInfo = $this->db->table('tb_students')->select('StudentPrefix, StudentFirstName, StudentLastName')->where('StudentID', $studentID)->get()->getRow();
-                if ($studentInfo) {
-                    $fullName = $studentInfo->StudentPrefix . $studentInfo->StudentFirstName . ' ' . $studentInfo->StudentLastName;
-                    $alreadyRegisteredStudentNames[] = $fullName;
+                if (isset($studentInfoMap[$studentID])) {
+                    $alreadyRegisteredStudentNames[] = $studentInfoMap[$studentID]['name'];
                 }
             } else {
                 // Not registered, so insert.
@@ -313,14 +332,12 @@ class ConAdminEnroll extends BaseController
                     'SubjectID'     => $subjectID,
                     'RegisterYear'  => $registerYear,
                     'TeacherID'     => $teacherID,
-                    'RegisterClass' => $registerClass,
+                    'RegisterClass' => $studentInfoMap[$studentID]['class'] ?? null,
                 ];
                 $this->db->table('tb_register')->insert($dataToInsert);
                 if ($this->db->affectedRows() > 0) {
-                    $studentInfo = $this->db->table('tb_students')->select('StudentPrefix, StudentFirstName, StudentLastName')->where('StudentID', $studentID)->get()->getRow();
-                    if ($studentInfo) {
-                        $fullName = $studentInfo->StudentPrefix . $studentInfo->StudentFirstName . ' ' . $studentInfo->StudentLastName;
-                        $insertedStudentNames[] = $fullName;
+                    if (isset($studentInfoMap[$studentID])) {
+                        $insertedStudentNames[] = $studentInfoMap[$studentID]['name'];
                     }
                 }
             }
@@ -366,8 +383,7 @@ class ConAdminEnroll extends BaseController
                 'StudentID'    => $value,
                 'SubjectID'    => $chk_Subject->SubjectID,
                 'RegisterYear' => $chk_Subject->SubjectYear,
-                'RegisterClass' => $chk_Subject->SubjectClass,
-                'TeacherID'    => $this->request->getPost('teacherregis'),
+                'TeacherID'    => $this->request->getPost('teacherregis')
             ];
             $this->db->table('tb_register')->where($a)->delete();
             $deletedCount += $this->db->affectedRows();
