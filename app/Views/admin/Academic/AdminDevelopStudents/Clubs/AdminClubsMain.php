@@ -1,180 +1,248 @@
 <?= $this->extend('admin/layout/main') ?>
 
 <?= $this->section('content') ?>
-<div class="app-content pt-3 p-md-3 p-lg-4">
-    <div class="container-xl">
+<?php 
+// Initialize variables with defaults
+$ExYearClub = [date('Y'), '1']; // Default to current year and term 1
+if (isset($CheckOnoffClubParsed) && is_array($CheckOnoffClubParsed)) {
+    $ExYearClub = $CheckOnoffClubParsed;
+}
 
-        <div class="container mt-4">
+// Handle other potential undefined variables
+$Status = isset($StatusOnoffClub) && $StatusOnoffClub == "เปิด" ? "success" : "danger";
+$StatusBg = isset($StatusOnoffClub) && $StatusOnoffClub == "เปิด" ? "bg-success-subtle" : "bg-danger-subtle";
+$Icon = isset($StatusOnoffClub) && $StatusOnoffClub == "เปิด" ? '<i class="bi bi-check-circle"></i>' : '<i class="bi bi-x-circle"></i>';
+$formatted_regisstart = isset($formatted_regisstart) ? $formatted_regisstart : '-';
+$formatted_regisend = isset($formatted_regisend) ? $formatted_regisend : '-';
+?>
+<div class="container-xl mt-4">
             <!-- Dashboard Header -->
-            <div class="d-flex justify-content-between align-items-center">
-                <div class="mb-4">
-                    <h1 class="h3">แดชบอร์ดระบบชุมนุม</h1>
-                    <p class="text-muted">ภาพรวมข้อมูลเกี่ยวกับชุมนุม</p>
-
-                </div>
-
-                <div class="d-flex">
-                <div class="app-utility-item app-user-dropdown dropdown">
-                        <a class="dropdown-toggle" id="user-dropdown-toggle" data-bs-toggle="dropdown" href="#"
-                            role="button" aria-expanded="false"><i class="bi bi-gear-fill icon"></i> ตั้งค่าพื้นฐาน</a>
-                        <ul class="dropdown-menu" aria-labelledby="user-dropdown-toggle" style="">
-                            <li><a class="dropdown-item" href="#" id="MenuSetDateAttendancer">ตั้งค่าเวลาเรียน</a></li>
-                        </ul>
-                    </div>
-
-                    <div class="app-utility-item app-user-dropdown dropdown">
-                        <a class="dropdown-toggle" id="user-dropdown-toggle" data-bs-toggle="dropdown" href="#"
-                            role="button" aria-expanded="false"><i class="bi bi-gear-fill icon"></i> ตั้งค่าระบบ</a>
-                        <ul class="dropdown-menu" aria-labelledby="user-dropdown-toggle" style="">
-                            <li><a class="dropdown-item" href="#" id="MenuSetYear">ตั้งค่าปีการศึกษา</a></li>
-                            <li><a class="dropdown-item" href="#" id="MenuSetDateRegister">ตั้งค่าเปิด-ปิดระบบ</a>
-                            </li>
-
-                        </ul>
-                    </div>
-
-                    <a class="btn app-btn-primary"
-                        href="<?= site_url('Admin/Acade/DevelopStudents/Clubs/All') ?>"><i class="bi bi-menu-button-wide"></i> จัดการชุมนุม</a>
-                </div>
-            </div>
-
-            <?php $Status = isset($StatusOnoffClub) && $StatusOnoffClub == "เปิด"? "success" : "danger";
-            $Icon = isset($StatusOnoffClub) && $StatusOnoffClub == "เปิด"? '<i class="bi bi-check-circle"></i>' : '<i class="bi bi-x-circle"></i>';
-            ?>
-            <div class="">
-                <div class="app-card app-card-chart h-100 shadow-sm mb-3 ">
-                    <div class="app-card-header p-3 bg-<?= esc($Status) ?> text-white">
-                        <?php $ExYearClub = isset($CheckOnoffClub->c_onoff_year) ? explode(' / ',$CheckOnoffClub->c_onoff_year) : ['','']; ?>
-                        กำหนดการลงทะเบียนกิจกรรมชุมนุม ภาคเรียนที่ <?= esc($ExYearClub[1]) ?> ปีการศึกษา
-                        <?= esc($ExYearClub[0]) ?>
-                    </div>
-                    <div class="app-card-body p-3 p-lg-4 d-flex justify-content-between align-items-center">
-                        <div>
-                            <div>เปิดวันที่
-                                <span class="fw-bold">
-                                    <?php echo isset($CheckOnoffClub->c_onoff_regisstart) ? $this->datethai->thai_date_and_time(strtotime($CheckOnoffClub->c_onoff_regisstart)) : '' ?>
-                                </span>
-
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body d-flex justify-content-between align-items-center p-4">
+                            <div>
+                                <h4 class="mb-1">แดชบอร์ดระบบชุมนุม</h4>
+                                <p class="text-muted mb-0">ภาพรวมข้อมูลเกี่ยวกับชุมนุม ปีการศึกษา <?= esc($ExYearClub[0]) ?> ภาคเรียนที่ <?= esc($ExYearClub[1]) ?></p>
                             </div>
-                            <div>ถึงวันที่
-                                <span class="fw-bold">
-                                    <?php echo isset($CheckOnoffClub->c_onoff_regisend) ? $this->datethai->thai_date_and_time(strtotime($CheckOnoffClub->c_onoff_regisend)) : '' ?>
-                                </span>
-                            </div>
-                        </div>
-                        <div>
-                            
-                            <a class=" text-white btn btn-<?= esc($Status) ?>"
-                                href="https://themes.3rdwavemedia.com/bootstrap-templates/admin-dashboard/portal-free-bootstrap-admin-dashboard-template-for-developers/">สถานะ
-                                : <?= $Icon ?> <?= isset($StatusOnoffClub) ? esc($StatusOnoffClub) : '' ?>ลงทะเบียน</a>
-                        </div>
 
-
-                    </div>
-                </div>
-            </div>
-            <!-- Cards Section -->
-            <div class="row">
-                <!-- Card 1: ชุมนุมทั้งหมด -->
-                <div class="col-md-3 mb-4">
-                    <div class="card shadow-sm">
-                        <div class="card-body text-center">
-                            <div class="card-icon bg-primary mb-3">
-                                <i class="fas fa-users"></i>
-                            </div>
-                            <h5 class="card-title">ชุมนุมทั้งหมด</h5>
-                            <h2><?= isset($TotalClubs) ? count($TotalClubs) : 0 ?></h2>
-                            <p class="text-muted">ปีการศึกษา 2567</p>
-                            <p>
-                                <a class="btn btn-primary"
-                                    href="<?= site_url('Admin/Acade/DevelopStudents/Clubs/All') ?>">ดูทั้งหมด</a>
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Card 2: นักเรียนทั้งหมด -->
-                <div class="col-md-3 mb-4">
-                    <div class="card shadow-sm">
-                        <div class="card-body text-center">
-                            <div class="card-icon bg-success mb-3">
-                                <i class="fas fa-user-graduate"></i>
-                            </div>
-                            <h5 class="card-title">นักเรียนลงทะเบียน</h5>
-                            <h2><?= isset($TotalStudent[0]->StudentAll) ? esc($TotalStudent[0]->StudentAll) : 0 ?></h2>
-                            <p class="text-muted">ทั้งหมด</p>
-                            <p><button class="btn btn-success BtnShowStudent" id="BtnShowStudent">ดูทั้งหมด</button>
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Card 3: ครูที่ปรึกษา -->
-                <div class="col-md-3 mb-4">
-                    <div class="card shadow-sm">
-                        <div class="card-body text-center">
-                            <div class="card-icon bg-warning mb-3">
-                                <i class="fas fa-chalkboard-teacher"></i>
-                            </div>
-                            <h5 class="card-title">ครูที่ปรึกษาชุมนุม</h5>
-                            <h2><?= isset($TotalTeacher[0]->total_advisors) ? esc($TotalTeacher[0]->total_advisors) : 0 ?></h2>
-                            <p class="text-muted">ในระบบ</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Card 4: ชุมนุมยอดนิยม -->
-                <div class="col-md-3 mb-4">
-                    <div class="card shadow-sm">
-                        <div class="card-body text-center">
-                            <div class="card-icon bg-danger mb-3">
-                                <i class="fas fa-star"></i>
-                            </div>
-                            <h5 class="card-title">ชุมนุมยอดนิยม</h5>
-                            <h2><?= isset($ClubPopula->club_name) ? esc($ClubPopula->club_name) : '' ?></h2>
-                            <p class="text-muted">'<?= isset($ClubPopula->total_members) ? esc($ClubPopula->total_members) : '' ?> คน'</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                                                <button type="button" class="btn btn-outline-primary btn-sm" id="MenuSetDateAttendancer">
+                                                                    <i class="bx bx-time me-1"></i> ตั้งค่าเวลาเรียน
+                                                                </button>
+                                
+                                                                <div class="dropdown">
+                                                                    <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" id="clubSettingsDropdown" 
+                                                                        data-bs-toggle="dropdown" aria-expanded="false">
+                                                                        <i class="bx bx-cog me-1"></i> ตั้งค่าระบบชุมนุม
+                                                                    </button>
+                                                                    <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="clubSettingsDropdown">
+                                                                        <li><a class="dropdown-item d-flex align-items-center" href="#" id="MenuSetYear">
+                                                                            <i class="bx bx-calendar me-2"></i> ตั้งค่าปีการศึกษา
+                                                                        </a></li>
+                                                                        <li><a class="dropdown-item d-flex align-items-center" href="#" id="MenuSetDateRegister">
+                                                                            <i class="bx bx-calendar-check me-2"></i> ตั้งค่าเปิด-ปิดระบบ
+                                                                        </a></li>
+                                                                    </ul>
+                                                                </div>
+                                
+                                                                <a class="btn btn-primary btn-sm" href="<?= site_url('Admin/Acade/DevelopStudents/Clubs/All') ?>">
+                                                                    <i class="bx bx-list-ul me-1"></i> จัดการชุมนุม
+                                                                </a>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                
+                                            <?php 
+                                            $Status = isset($StatusOnoffClub) && $StatusOnoffClub == "เปิด" ? "success" : "danger";
+                                            $StatusBg = isset($StatusOnoffClub) && $StatusOnoffClub == "เปิด" ? "bg-success-subtle" : "bg-danger-subtle";
+                                            $Icon = isset($StatusOnoffClub) && $StatusOnoffClub == "เปิด" ? '<i class="bx bx-check-circle"></i>' : '<i class="bx bx-x-circle"></i>';
+                                            ?>
+                                            <div class="row mb-4">
+                                                <div class="col-12">
+                                                    <div class="card border-<?= esc($Status) ?> shadow-sm">
+                                                        <div class="card-header border-bottom border-<?= esc($Status) ?> <?= esc($StatusBg) ?> py-3">
+                                                            <div class="d-flex justify-content-between align-items-center">
+                                                                <div class="d-flex align-items-center">
+                                                                    <?= $Icon ?>
+                                                                    <h5 class="mb-0 ms-2">กำหนดการลงทะเบียนชุมนุม</h5>
+                                                                </div>
+                                                                <div class="badge bg-<?= esc($Status) ?> px-3 py-2">
+                                                                    <?= isset($StatusOnoffClub) ? esc($StatusOnoffClub) : '' ?>ลงทะเบียน
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="card-body p-4">
+                                                            <div class="row align-items-center">
+                                                                <div class="col-md-6">
+                                                                    <h6 class="text-muted mb-3">ระยะเวลาลงทะเบียน</h6>
+                                                                    <div class="d-flex gap-3 align-items-center mb-2">
+                                                                        <i class="bx bx-calendar-check fs-4 text-<?= esc($Status) ?>"></i>
+                                                                        <div>
+                                                                            <small class="text-muted d-block">เริ่มลงทะเบียน</small>
+                                                                            <span class="fw-semibold fs-5"><?php echo $formatted_regisstart ?></span>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="d-flex gap-3 align-items-center">
+                                                                        <i class="bx bx-calendar-x fs-4 text-<?= esc($Status) ?>"></i>
+                                                                        <div>
+                                                                            <small class="text-muted d-block">สิ้นสุดการลงทะเบียน</small>
+                                                                            <span class="fw-semibold fs-5"><?php echo $formatted_regisend ?></span>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="col-md-6 text-md-end mt-4 mt-md-0">
+                                                                    <div class="text-muted mb-2">ภาคเรียนที่ <?= esc($ExYearClub[1]) ?></div>
+                                                                    <h4 class="mb-0">ปีการศึกษา <?= esc($ExYearClub[0]) ?></h4>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <!-- Cards Section -->
+                                            <div class="row g-4 mb-4">
+                                                <!-- Card 1: ชุมนุมทั้งหมด -->
+                                                <div class="col-sm-6 col-xl-3">
+                                                    <div class="card">
+                                                        <div class="card-body">
+                                                            <div class="d-flex align-items-start justify-content-between">
+                                                                <div class="content-left">
+                                                                    <span class="fw-semibold d-block mb-1">ชุมนุมทั้งหมด</span>
+                                                                    <div class="d-flex align-items-baseline mt-2">
+                                                                        <h4 class="mb-0 me-2"><?= isset($TotalClubs) && is_array($TotalClubs) ? count($TotalClubs) : 0 ?></h4>
+                                                                        <small class="text-success">ชุมนุม</small>
+                                                                    </div>
+                                                                    <small class="text-muted">ปีการศึกษา <?= esc($ExYearClub[0]) ?>/<?= esc($ExYearClub[1]) ?></small>
+                                                                </div>
+                                                                <span class="badge bg-primary-subtle p-2">
+                                                                    <i class="bx bx-book-bookmark fs-3 text-primary"></i>
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                        <a class="stretched-link" href="<?= site_url('Admin/Acade/DevelopStudents/Clubs/All') ?>"></a>
+                                                    </div>
+                                                </div>
+                                
+                                                <!-- Card 2: นักเรียนลงทะเบียน -->
+                                                <div class="col-sm-6 col-xl-3">
+                                                    <div class="card">
+                                                        <div class="card-body">
+                                                            <div class="d-flex align-items-start justify-content-between">
+                                                                <div class="content-left">
+                                                                    <span class="fw-semibold d-block mb-1">นักเรียนลงทะเบียน</span>
+                                                                    <div class="d-flex align-items-baseline mt-2">
+                                                                        <h4 class="mb-0 me-2"><?= isset($TotalStudent[0]->StudentAll) && !is_null($TotalStudent[0]->StudentAll) ? esc($TotalStudent[0]->StudentAll) : 0 ?></h4>
+                                                                        <small class="text-info">คน</small>
+                                                                    </div>
+                                                                    <small class="text-muted">ลงทะเบียนทั้งหมด</small>
+                                                                </div>
+                                                                <span class="badge bg-info-subtle p-2">
+                                                                    <i class="bx bx-group fs-3 text-info"></i>
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                        <a class="stretched-link BtnShowStudent" id="BtnShowStudent" href="#"></a>
+                                                    </div>
+                                                </div>
+                                
+                                                <!-- Card 3: ครูที่ปรึกษา -->
+                                                <div class="col-sm-6 col-xl-3">
+                                                    <div class="card">
+                                                        <div class="card-body">
+                                                            <div class="d-flex align-items-start justify-content-between">
+                                                                <div class="content-left">
+                                                                    <span class="fw-semibold d-block mb-1">ครูที่ปรึกษาชุมนุม</span>
+                                                                    <div class="d-flex align-items-baseline mt-2">
+                                                                        <h4 class="mb-0 me-2"><?= isset($TotalTeacher[0]->total_advisors) && !is_null($TotalTeacher[0]->total_advisors) ? esc($TotalTeacher[0]->total_advisors) : 0 ?></h4>
+                                                                        <small class="text-warning">คน</small>
+                                                                    </div>
+                                                                    <small class="text-muted">ในระบบ</small>
+                                                                </div>
+                                                                <span class="badge bg-warning-subtle p-2">
+                                                                    <i class="bx bx-user-pin fs-3 text-warning"></i>
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                
+                                                <!-- Card 4: ชุมนุมยอดนิยม -->
+                                                <div class="col-sm-6 col-xl-3">
+                                                    <div class="card">
+                                                        <div class="card-body">
+                                                            <div class="d-flex align-items-start justify-content-between">
+                                                                <div class="content-left">
+                                                                    <span class="fw-semibold d-block mb-1">ชุมนุมยอดนิยม</span>
+                                                                    <div class="d-flex align-items-baseline mt-2">
+                                                                        <h4 class="mb-0 me-2 text-truncate" style="max-width: 150px;">
+                                                                            <?= isset($ClubPopula->club_name) ? esc($ClubPopula->club_name) : 'ไม่มี' ?>
+                                                                        </h4>
+                                                                    </div>
+                                                                    <small class="text-danger"><?= isset($ClubPopula->total_members) ? esc($ClubPopula->total_members) : '0' ?> คน</small>
+                                                                </div>
+                                                                <span class="badge bg-danger-subtle p-2">
+                                                                    <i class="bx bx-star fs-3 text-danger"></i>
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div><!--//row-->
 
 
         </div>
 
-    </div>
-</div>
 <?= $this->endSection() ?>
 
 <?= $this->section('modals') ?>
 <!-- Modal ดูนักเรียนที่ลงทะเบียน -->
 <div class="modal fade" id="ModalShowStudentRegisterToClub" tabindex="-1" aria-labelledby="exampleModalLabel"
     aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="exampleModalLabel">รายชื่อนักเรียนที่ลงทะเบียนชุมนุม</h5>
+                <h5 class="modal-title" id="exampleModalLabel">
+                    <i class="bx bx-user me-2"></i>รายชื่อนักเรียนที่ลงทะเบียนชุมนุม
+                </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <div class="mb-3">
-                    <label for="classFilter" class="form-label">เลือกห้องเรียน</label>
-                    <select id="classFilter" class="">
-                        <option value="">ทั้งหมด</option>
-                        <!-- Options จะถูกสร้างด้วยข้อมูลห้องเรียนจากฐานข้อมูล -->
-                    </select>
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="form-floating form-floating-outline">
+                            <select id="classFilter" class="form-select">
+                                <option value="">แสดงทั้งหมด</option>
+                                <!-- Options จะถูกสร้างด้วยข้อมูลห้องเรียนจากฐานข้อมูล -->
+                            </select>
+                            <label for="classFilter">กรองตามห้องเรียน</label>
+                        </div>
+                    </div>
                 </div>
-                <table id="TbStudentRegisterClub" class="table table-bordered table-hover w-100">
-                    <thead>
-                        <tr>
-                            <th>รหัสนักเรียน</th>
-                            <th>ชื่อนักเรียน</th>
-                            <th>เลขที่</th>
-                            <th>ห้องเรียน</th>
-                            <th>ชุมนุม</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
+
+                <div class="card">
+                    <div class="table-responsive text-nowrap">
+                        <table id="TbStudentRegisterClub" class="table">
+                            <thead>
+                                <tr>
+                                    <th>รหัสนักเรียน</th>
+                                    <th>ชื่อนักเรียน</th>
+                                    <th class="text-center">เลขที่</th>
+                                    <th class="text-center">ห้องเรียน</th>
+                                    <th>ชุมนุม</th>
+                                </tr>
+                            </thead>
+                            <tbody class="table-border-bottom-0"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="bx bx-x me-1"></i>ปิด
+                </button>
             </div>
         </div>
     </div>
@@ -196,7 +264,6 @@ const classFilter = new SlimSelect({
 });
 
 
-// ฟังก์ชันแปลงวันที่จาก "24 พฤศจิกายน 2024" เป็น "2024/11/24"
 function convertThaiDateToISO(dateString) {
     // รายชื่อเดือนภาษาไทย
     const thaiMonths = [
@@ -204,20 +271,23 @@ function convertThaiDateToISO(dateString) {
         "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"
     ];
 
+    console.log("convertThaiDateToISO input:", dateString); // Add this line
     // แยกส่วนวันที่
-    const dateParts = dateString.split(" "); // [ "24", "พฤศจิกายน", "2024" ]
-    const day = dateParts[0]; // วันที่
-    const month = thaiMonths.indexOf(dateParts[1]) + 1; // เดือน (หาค่าดัชนีจากเดือน)
-    const year = dateParts[2]; // ปี ค.ศ.
+    const dateParts = dateString.split(" ");
+    console.log("dateParts:", dateParts); // Add this line
+
+    const day = dateParts[0];
+    const month = thaiMonths.indexOf(dateParts[1]) + 1;
+    const year = dateParts[2];
 
     // ตรวจสอบว่าแปลงสำเร็จหรือไม่
     if (!day || !month || !year) {
-        console.error("รูปแบบวันที่ไม่ถูกต้อง!");
+        console.error("รูปแบบวันที่ไม่ถูกต้อง! (Debug: day=" + day + ", month=" + month + ", year=" + year + ")"); // Modify this line
         return null;
     }
 
     // คืนค่ารูปแบบ "YYYY/MM/DD"
-    return `${year}/${month.toString().padStart(2, '0')}/${day.padStart(2, '0')}`;
+    return `${year}-${month.toString().padStart(2, '0')}-${day.padStart(2, '0')}`;
 }
 
 //ดูข้อมูลนักเรียน
@@ -408,37 +478,13 @@ $(document).on('submit','#FormClubSetDateRegister',function (e) {
         url: '<?= site_url('admin/academic/ConAdminDevelopStudents/ClubSetDateRegister') ?>', // ชี้ไปที่ Controller
         type: 'POST',
         dataType: 'json',
-        data: {
-            c_onoff_regisstart: c_onoff_regisstart,
-            c_onoff_regisend: c_onoff_regisend
-        },
-        success: function (response) {
-            if (response.status === 'success') {
-                       
-                $('#ClubSetDateRegister').modal('hide');
-                $('#FormClubSetDateRegister')[0].reset();
-                $('.modal-backdrop').remove();   
-                Swal.fire({
-                    title: "แจ้งเตือน?",
-                    text: response.message,
-                    icon: "success",
-                  }).then((result) => {
-                    if (result.isConfirmed) {
-                        window.location.reload();
-                    }
-                  });
-
-                
-            } else {
-                Swal.fire({
-                    icon: "error",
-                    title: "แจ้งเตือน!",
-                    text: response.message
-                });
-            }
-        },
-        error: function () {
-            $('#responseMessage').html(`<div class="alert alert-danger">เกิดข้อผิดพลาดในการบันทึกข้อมูล</div>`);
+        error: function (jqXHR, textStatus, errorThrown) {
+            console.error("AJAX Error for ClubSetDateRegister:", textStatus, errorThrown, jqXHR);
+            Swal.fire({
+                icon: "error",
+                title: "แจ้งเตือน!",
+                text: "เกิดข้อผิดพลาดในการบันทึกข้อมูล: " + textStatus
+            });
         }
     });
 });
@@ -456,26 +502,32 @@ $(document).on('click', '#MenuSetDateAttendancer', function () {
             
             if (response.status === 'success') {
                 response.data.forEach(function (week, index) {
+                   // console.log("week.tcs_start_date:", week.tcs_start_date); // Add this line
 
-                    var TimeEnd = new Date(week.tcs_start_date);
+                    var TimeEnd = null; // Initialize to null
+                    if (week.tcs_start_date && week.tcs_start_date !== '0000-00-00 00:00:00') { // Check if date is valid
+                        TimeEnd = new Date(week.tcs_start_date);
+                        if (isNaN(TimeEnd.getTime())) { // Check if new Date() resulted in Invalid Date
+                            TimeEnd = null;
+                        }
+                    }
 
                     flatpickr("#tcs_academic_year"+(index+1), {
-                        altFormat: "d m Y",
                         dateFormat: "d F Y", // กำหนดรูปแบบวันที่เวลา
                         locale: "th", // ตั้งค่าภาษาไทย
                         disableMobile: true ,
                         defaultDate: TimeEnd,
                         onChange: function (selectedDates, dateStr, instance) {
-                            // แสดงวันที่ใน console สำหรับตรวจสอบ
-                            const isoDate = convertThaiDateToISO(dateStr); 
+                           // console.log("flatpickr dateStr:", dateStr); // Keep debugging log
+                            const isoDate = convertThaiDateToISO(dateStr); // Convert to YYYY-MM-DD
                             let id = $(instance.input).data('id');
-                            console.log("Selected Date:", id);
-                            updateClubDateSchedule(id, isoDate);
+                           // console.log("Selected Date ID:", id, "ISO Date:", isoDate); // Debug log
+                            updateClubDateSchedule(id, isoDate); // Call update function
                         }
                     });
                 });
               
-            } 
+            }
         }
     });
     
@@ -530,8 +582,13 @@ function loadWeeksData() {
             }
             $('#TbDateWeeks tbody').html(rows); // แสดงข้อมูลในตาราง
         },
-        error: function () {
-            alert('ไม่สามารถโหลดข้อมูลได้');
+        error: function (jqXHR, textStatus, errorThrown) {
+            console.error("AJAX Error for loadWeeksData:", textStatus, errorThrown, jqXHR);
+            Swal.fire({
+                icon: "error",
+                title: "แจ้งเตือน!",
+                text: "ไม่สามารถโหลดข้อมูลได้: " + textStatus
+            });
         }
     });
 }
@@ -547,6 +604,7 @@ function updateClubDateSchedule(id, newDate) {
         },
         dataType:'json',
         success: function (response) {
+            console.log("updateClubDateSchedule response:", response); // Add this line
             if (response.status === 'success') {
                 
                 Swal.fire({
@@ -557,11 +615,20 @@ function updateClubDateSchedule(id, newDate) {
                     timer: 1500
                   });
             } else {
-                alert('เกิดข้อผิดพลาด: ' + response.message);
+                Swal.fire({
+                    icon: "error",
+                    title: "แจ้งเตือน!",
+                    text: 'เกิดข้อผิดพลาด: ' + (response.message || 'ไม่สามารถอัปเดตวันที่ได้')
+                });
             }
         },
-        error: function () {
-            alert('ไม่สามารถอัปเดตวันที่ได้');
+        error: function (jqXHR, textStatus, errorThrown) {
+            console.error("AJAX Error for ClubUpdateSchedule:", textStatus, errorThrown, jqXHR);
+            Swal.fire({
+                icon: "error",
+                title: "แจ้งเตือน!",
+                text: "ไม่สามารถอัปเดตวันที่ได้: " + textStatus
+            });
         }
     });
 }
@@ -605,8 +672,13 @@ $(document).on('click', '.status-btn', function() {
                 alert('เกิดข้อผิดพลาดในการอัพเดตสถานะ');
             }
         },
-        error: function() {
-            alert('ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์');
+        error: function (jqXHR, textStatus, errorThrown) {
+            console.error("AJAX Error for ClubUpdateStatus:", textStatus, errorThrown, jqXHR);
+            Swal.fire({
+                icon: "error",
+                title: "แจ้งเตือน!",
+                text: "ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้: " + textStatus
+            });
         }
     });
 });

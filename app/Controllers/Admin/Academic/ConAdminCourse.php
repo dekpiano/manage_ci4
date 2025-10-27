@@ -187,7 +187,13 @@ class ConAdminCourse extends BaseController
             'seplanset_year'      => $this->request->getPost('seplanset_year'),
         ];
 
-        echo $this->db->table('tb_send_plan_setup')->where('seplanset_ID', 1)->update($data);
+        $updated =  $this->db->table('tb_send_plan_setup')->where('seplanset_ID', 1)->update($data);
+
+        if ($updated) {
+                return $this->response->setJSON(['status' => 'success', 'message' => 'บันทึกการตั้งค่าเรียบร้อยแล้ว']);
+            } else {
+                return $this->response->setJSON(['status' => 'error', 'message' => 'Database update failed.']);
+            }
     }
 
     public function EditSettingSendPlan()

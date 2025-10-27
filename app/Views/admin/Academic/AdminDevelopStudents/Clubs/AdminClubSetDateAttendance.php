@@ -1,71 +1,105 @@
 <style>
-.form-check-switch-label {
-    display: flex;
-    align-items: center;
+.form-switch-custom {
+    --switch-width: 3rem;
+    --switch-height: 1.5rem;
+    --switch-padding: 0.25rem;
     position: relative;
-    padding-left: 3.5rem;
+    display: inline-block;
+    width: var(--switch-width);
+    height: var(--switch-height);
+}
+
+.form-switch-custom .switch-label {
+    position: absolute;
+    left: -9999px;
+    top: 50%;
+}
+
+.form-switch-custom .switch-toggle {
+    position: absolute;
     cursor: pointer;
-}
-
-.form-check-input:checked+.form-check-switch-label::before {
-    content: 'เปิด';
-    color: white;
-    text-align: center;
-    position: absolute;
+    top: 0;
     left: 0;
-    width: 3rem;
-    line-height: 1.25rem;
+    right: 0;
+    bottom: 0;
+    background: #e9ecef;
+    border: 1px solid #ced4da;
+    border-radius: var(--switch-height);
+    transition: 0.15s ease-in-out;
 }
 
-.form-check-input+.form-check-switch-label::before {
-    content: 'ปิด';
-    background-color: #6c757d;
-    color: white;
-    text-align: center;
+.form-switch-custom .switch-toggle:after {
+    content: '';
     position: absolute;
-    left: 0;
-    width: 3rem;
-    height: 1.25rem;
-    border-radius: 1.25rem;
-    line-height: 1.25rem;
-    transition: all 0.3s ease;
+    height: calc(var(--switch-height) - (var(--switch-padding) * 2));
+    width: calc(var(--switch-height) - (var(--switch-padding) * 2));
+    border-radius: 50%;
+    background: white;
+    top: var(--switch-padding);
+    left: var(--switch-padding);
+    transition: 0.15s ease-in-out;
 }
 
-.form-check-input:checked+.form-check-switch-label::before {
-    background-color: #15a362;
-    left: 1.25rem;
+.form-switch-custom input:checked + .switch-toggle {
+    background: var(--bs-primary);
+    border-color: var(--bs-primary);
 }
 
-.form-check-input {
-    display: none;
+.form-switch-custom input:checked + .switch-toggle:after {
+    transform: translateX(calc(var(--switch-width) - var(--switch-height)));
+}
+
+.form-switch-custom input:focus + .switch-toggle {
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+.table-weeks {
+    --bs-table-striped-bg: var(--bs-gray-100);
+}
+
+.table-weeks th {
+    background: var(--bs-gray-200);
+    font-weight: 600;
+}
+
+.table-weeks td {
+    vertical-align: middle;
 }
 </style>
+
 <!-- Modal -->
 <div class="modal fade" id="ClubSetDateAttendance" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="exampleModalLabel">ขัอมูลเวลาเรียนปีการศึกษา
-                    <?= isset($CheckOnoffClub->c_onoff_year) ? esc($CheckOnoffClub->c_onoff_year) : '' ?></h5>
+                <div>
+                    <h5 class="modal-title" id="exampleModalLabel">กำหนดเวลาเรียนชุมนุม</h5>
+                    <small class="text-muted">ปีการศึกษา <?= isset($CheckOnoffClub->c_onoff_year) ? esc($CheckOnoffClub->c_onoff_year) : '' ?></small>
+                </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form method="post" id="FormClubSetDateAttendance">
-                <div class="modal-body">
-
+                <div class="modal-body p-4">
                     <div class="table-responsive">
-                        <table class="table app-table-hover mb-0 text-left" id="TbDateWeeks">
+                        <table class="table table-weeks align-middle" id="TbDateWeeks">
                             <thead>
                                 <tr class="text-center">
-                                    <th class="cell">ครั้งที่</th>
-                                    <th class="cell">วันที่เรียน</th>
-                                    <th class="cell">สถานะ</th>
+                                    <th style="width: 80px;">ครั้งที่</th>
+                                    <th>วันที่เรียน</th>
+                                    <th style="width: 100px;">สถานะ</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                
+                                <!-- Dynamic content -->
                             </tbody>
                         </table>
                     </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">ยกเลิก</button>
+                    <button type="submit" class="btn btn-primary btn-sm">
+                        <i class="bi bi-save me-1"></i> บันทึกการตั้งค่า
+                    </button>
                 </div>
             </form>
         </div>

@@ -41,6 +41,29 @@ $routes->get('LoginAdmin', [Control_login::class, 'LoginAdmin']);
 
 // งานวิชาการ
 $routes->get('Admin/Home', [ConAdminHome::class, 'AdminHome']);
+
+// Routes for ConAdminDevelopStudents (Clubs Management)
+$routes->get('Admin/Acade/DevelopStudents/Clubs/Main', [ConAdminDevelopStudents::class, 'ClubsMain']);
+$routes->get('Admin/Acade/DevelopStudents/Clubs/All', [ConAdminDevelopStudents::class, 'ClubsAll']);
+$routes->get('admin/academic/ConAdminDevelopStudents/ClubsShow', [ConAdminDevelopStudents::class, 'ClubsShow']);
+$routes->post('admin/academic/ConAdminDevelopStudents/ClubsInsert', [ConAdminDevelopStudents::class, 'ClubsInsert']);
+$routes->post('admin/academic/ConAdminDevelopStudents/ClubsUpdate', [ConAdminDevelopStudents::class, 'ClubsUpdate']);
+$routes->get('admin/academic/ConAdminDevelopStudents/ClubsEdit/(:num)', [ConAdminDevelopStudents::class, 'ClubsEdit/$1']);
+$routes->post('admin/academic/ConAdminDevelopStudents/ClubsDelete/(:num)', [ConAdminDevelopStudents::class, 'ClubsDelete/$1']);
+$routes->get('admin/academic/ConAdminDevelopStudents/ClubsStudentList', [ConAdminDevelopStudents::class, 'ClubsStudentList']);
+$routes->post('admin/academic/ConAdminDevelopStudents/ClubsAddStudentToClub', [ConAdminDevelopStudents::class, 'ClubsAddStudentToClub']);
+$routes->get('admin/academic/ConAdminDevelopStudents/ClubsTbShowStudentList', [ConAdminDevelopStudents::class, 'ClubsTbShowStudentList']);
+$routes->post('admin/academic/ConAdminDevelopStudents/ClubDeleteStudentToClub', [ConAdminDevelopStudents::class, 'ClubDeleteStudentToClub']);
+$routes->get('admin/academic/ConAdminDevelopStudents/ClubGetClassroom', [ConAdminDevelopStudents::class, 'ClubGetClassroom']);
+$routes->get('admin/academic/ConAdminDevelopStudents/ClubGetStudentRegisterClub', [ConAdminDevelopStudents::class, 'ClubGetStudentRegisterClub']);
+$routes->post('admin/academic/ConAdminDevelopStudents/ClubSetOnoffYear', [ConAdminDevelopStudents::class, 'ClubSetOnoffYear']);
+$routes->get('admin/academic/ConAdminDevelopStudents/ClubGetDateRegister', [ConAdminDevelopStudents::class, 'ClubGetDateRegister']);
+$routes->post('admin/academic/ConAdminDevelopStudents/ClubSetDateRegister', [ConAdminDevelopStudents::class, 'ClubSetDateRegister']);
+$routes->get('admin/academic/ConAdminDevelopStudents/ClubCreateWeeks', [ConAdminDevelopStudents::class, 'ClubCreateWeeks']);
+$routes->get('admin/academic/ConAdminDevelopStudents/ClubGetWeeksToUpdate', [ConAdminDevelopStudents::class, 'ClubGetWeeksToUpdate']);
+$routes->post('admin/academic/ConAdminDevelopStudents/ClubUpdateSchedule', [ConAdminDevelopStudents::class, 'ClubUpdateSchedule']);
+$routes->post('admin/academic/ConAdminDevelopStudents/ClubUpdateStatus', [ConAdminDevelopStudents::class, 'ClubUpdateStatus']);
+
 $routes->get('Admin/Acade/Registration/Enroll', [ConAdminEnroll::class, 'AdminEnrollMain']);
 $routes->get('Admin/Acade/Registration/Enroll/Add/(:segment)/(:segment)', [ConAdminEnroll::class, 'AdminEnrollAdd']);
 $routes->get('Admin/Acade/Registration/Enroll/Edit/(:segment)/(:segment)', [ConAdminEnroll::class, 'AdminEnrollEdit']);
@@ -89,6 +112,7 @@ $routes->match(['get', 'post'], 'admin/academic/sendplan/get_filtered_plan_data'
 $routes->get('admin/academic/sendplan/get_plan_details', [ConAdminCourse::class, 'getPlanDetails']);
 $routes->post('admin/academic/sendplan/update_teacher', [ConAdminCourse::class, 'UpdateSettingSendPlanTeacher']);
 $routes->post('admin/academic/sendplan/add_teacher_subject', [ConAdminCourse::class, 'UpdateSendPlanTeacher']);
+$routes->post('admin/academic/sendplan/update_setting', [ConAdminCourse::class, 'UpdateSettingSendPlan']);
 $routes->post('Admin/Settings/UpdateSchoolYear', [ConAdminCourse::class, 'updateSchoolYear']);
 
 $routes->get('Admin/Acade/Report', [ConAdminExtraSubject::class, 'ExtraReport']);

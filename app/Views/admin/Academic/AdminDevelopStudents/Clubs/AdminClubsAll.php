@@ -2,53 +2,36 @@
 
 <?= $this->section('content') ?>
 <div class="app-content pt-3 p-md-3 p-lg-4">
-    <div class="container">
-        <div class="row g-3 mb-4 align-items-center justify-content-between">
-            <div class="col-auto">
-                <h1 class="app-page-title mb-0">จัดการชุมนุม</h1>
-            </div>
-            <div class="col-auto">
-                <div class="page-utilities">
-                    <div class="row g-2 justify-content-start justify-content-md-end align-items-center">
-
-                        <div class="col-auto">
-                            <select id="academicYearFilter" name="academicYearFilter" class="form-select w-auto">
-
-                                <?php foreach ($YearAll as $key => $v_YearAll) : ?>
-                                <option value="<?= (isset($v_YearAll['club_trem']) ? esc($v_YearAll['club_trem']) : '') ?>/<?= (isset($v_YearAll['club_year']) ? esc($v_YearAll['club_year']) : '') ?>">
-                                    <?= (isset($v_YearAll['club_trem']) ? esc($v_YearAll['club_trem']) : '') ?>/<?= (isset($v_YearAll['club_year']) ? esc($v_YearAll['club_year']) : '') ?></option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-                        <div class="col-auto">
-                            <a class="btn app-btn-primary BtnAddClub" href="#">+ เพิ่มชุมนุม</a>
-                        </div>
-                    </div>
-                    <!--//row-->
+    <div class="container-xl">
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="mb-0">จัดการชุมนุม</h5>
+                    <small class="text-muted">จัดการข้อมูลชุมนุมประจำปีการศึกษา</small>
                 </div>
-                <!--//table-utilities-->
-            </div>
-            <!--//col-auto-->
-        </div>
-        <!-- Activities Table -->
-        <div class="card">
-            <div class="card-header bg-primary text-white d-flex align-items-center justify-content-between">
-                <div>รายชื่อชุมนุม</div>
-
+                <div class="d-flex align-items-center gap-2">
+                    <select id="academicYearFilter" name="academicYearFilter" class="form-select form-select-sm" style="min-width: 150px;">
+                        <?php foreach ($YearAll as $key => $v_YearAll) : ?>
+                        <option value="<?= (isset($v_YearAll['club_trem']) ? esc($v_YearAll['club_trem']) : '') ?>/<?= (isset($v_YearAll['club_year']) ? esc($v_YearAll['club_year']) : '') ?>">
+                            <?= (isset($v_YearAll['club_trem']) ? esc($v_YearAll['club_trem']) : '') ?>/<?= (isset($v_YearAll['club_year']) ? esc($v_YearAll['club_year']) : '') ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                    <button type="button" class="btn btn-primary btn-sm BtnAddClub"><i class="bx bx-plus me-1"></i> เพิ่มชุมนุม</button>
+                </div>
             </div>
             <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-hover" id="TbClubs">
-                        <thead>
+                <div class="table-responsive text-nowrap">
+                    <table class="table table-hover table-striped table-sm align-middle" id="TbClubs">
+                        <thead class="bg-light">
                             <tr>
-                                <th>#</th>
+                                <th class="text-center" style="width: 60px;">#</th>
                                 <th>ปีการศึกษา</th>
                                 <th>ชื่อชุมนุม</th>
-                                <th>ราละเอียดชุมนุม</th>
+                                <th>รายละเอียดชุมนุม</th>
                                 <th>ครูที่ปรึกษาชุมนุม</th>
-                                <th>จำนวนที่รับ</th>
-                                <th>ลงเรียน</th>
-                                <th>คำสั่ง</th>
+                                <th class="text-center" style="width: 100px;">จำนวนที่รับ</th>
+                                <th class="text-center" style="width: 100px;">ลงเรียน</th>
+                                <th class="text-center" style="width: 120px;">คำสั่ง</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -58,7 +41,6 @@
                 </div>
             </div>
         </div>
-
     </div>
 </div>
 <?= $this->endSection() ?>
@@ -67,6 +49,32 @@
 <style>
 .ss-main .ss-single-selected {
     height: 40px;
+}
+/* Template-specific adjustments */
+.modal-header {
+    padding: 1.25rem 1.5rem;
+    background: #f5f5f9;
+}
+.modal-footer {
+    padding: 1.25rem;
+    background: #f5f5f9;
+}
+#ModalAddStudents .modal-dialog {
+    max-width: 900px;
+}
+#studentSelect {
+    min-height: 120px;
+}
+.btn-icon {
+    padding: 0.5rem;
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+.table-sm > :not(caption) > * > * {
+    padding: 0.625rem;
 }
 </style>
 <!-- Modal -->
@@ -81,11 +89,11 @@
                 <!-- Club Form -->
                 <form method="POST" id="FormAddClubs">
                     <input type="hidden" name="club_id" id="club_id">
-                    <div class="row">
+                    <div class="row g-3">
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label for="club_year" class="form-label">ปีการศึกษา</label>
-                                <select class="form-select" id="club_year" name="club_year" required1>
+                                <select class="form-select" id="club_year" name="club_year">
                                     <option value="" disabled selected>เลือกปีการศึกษา</option>
                                     <option value="2567">2567</option>
                                     <option value="2568">2568</option>
@@ -95,7 +103,7 @@
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label for="club_trem" class="form-label">เทอม</label>
-                                <select class="form-select" id="club_trem" name="club_trem" required1>
+                                <select class="form-select" id="club_trem" name="club_trem">
                                     <option value="" disabled selected>เลือกเทอม</option>
                                     <option value="1">1</option>
                                     <option value="2">2</option>
@@ -107,7 +115,7 @@
                     <div class="mb-3">
                         <label for="club_name" class="form-label">ชื่อชุมนุม</label>
                         <input type="text" class="form-control" id="club_name" name="club_name"
-                            placeholder="ระบุชื่อชุมนุม" required1>
+                            placeholder="ระบุชื่อชุมนุม">
                     </div>
 
                     <!-- Club Description -->
@@ -130,7 +138,7 @@
                         <div class="mb-3">
                             <label for="club_faculty_advisor" class="form-label">ครูที่ปรึกษาชุมนุม</label>
                             <select class="club_faculty_advisor" id="club_faculty_advisor" name="club_faculty_advisor[]"
-                                multiple required1 style="width: 100%;">
+                                multiple style="width: 100%;">
                                 <?php foreach ($Teacher as $key => $v_Teacher) : ?>
                                 <option value="<?= isset($v_Teacher->pers_id) ? esc($v_Teacher->pers_id) : '' ?>">
                                     <?= (isset($v_Teacher->pers_prefix) ? esc($v_Teacher->pers_prefix) : '') . (isset($v_Teacher->pers_firstname) ? esc($v_Teacher->pers_firstname) : '') . ' ' . (isset($v_Teacher->pers_lastname) ? esc($v_Teacher->pers_lastname) : '') ?>
@@ -154,7 +162,7 @@
 <!-- Modal -->
 <div class="modal fade" id="ModalAddStudents" tabindex="-1" aria-labelledby="AddStudents" aria-hidden="true"
     data-bs-backdrop="static" data-bs-keyboard="false">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="AddStudentsTitle">จัดการนักเรียน</h5>
@@ -165,40 +173,37 @@
                     <input type="hidden" name="club_id" id="club_id" class="club_id" value="">
                     <div class="mb-3">
                         <label for="studentSelect" class="form-label">เลือกนักเรียน</label>
-                        <select id="studentSelect" name="student_ids[]" multiple>
+                        <select id="studentSelect" name="student_ids[]" multiple class="form-select">
                             <!-- ตัวเลือกจะถูกเพิ่มผ่าน JavaScript -->
                         </select>
                     </div>
                     <div class="d-flex justify-content-center">
-                        <button type="submit" class="btn btn-primary text-center ">เพิ่มนักเรียนเข้าชุมนุม</button>
+                        <button type="submit" class="btn btn-primary">เพิ่มนักเรียนเข้าชุมนุม</button>
                     </div>
-
                 </form>
             </div>
 
             <div class="modal-footer">
                 <div class="w-100">
-                    <!-- Card Footer สำหรับแสดงรายชื่อนักเรียน -->
                     <div class="card">
                         <div class="card-header" id="registeredCount">นักเรียนที่ลงทะเบียนแล้ว:</div>
                         <div class="card-body">
-                            <!-- Registered Students -->
-
-                            <table class="table table-striped" id="TbShowStudentRegisClub">
-                                <thead>
-                                    <tr>
-                                        <th>ชั้น</th>
-                                        <th>เลขที่</th>
-                                        <th>รหัสนักเรียน</th>
-                                        <th>ชื่อ-สกุล</th>
-                                        <th>การกระทำ</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="addedStudentsList">
-                                    <!-- ข้อมูลจะถูกโหลดที่นี่ -->
-                                </tbody>
-                            </table>
-
+                            <div class="table-responsive text-nowrap">
+                                <table class="table table-striped" id="TbShowStudentRegisClub">
+                                    <thead>
+                                        <tr>
+                                            <th>ชั้น</th>
+                                            <th>เลขที่</th>
+                                            <th>รหัสนักเรียน</th>
+                                            <th>ชื่อ-สกุล</th>
+                                            <th>การกระทำ</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="addedStudentsList">
+                                        <!-- ข้อมูลจะถูกโหลดที่นี่ -->
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -234,36 +239,44 @@ const table = $('#TbClubs').DataTable({
       }
     },
     "columns": [
-        { "data": "club_id" },
+        { "data": null, "render": function (data, type, row, meta) { 
+            return `<div class="text-center">${meta.row + 1}</div>`; 
+        }, "orderable": false },
         { "data": null, "render": function (data, type, row, meta) {
-                return row.club_trem+'/'+row.club_year; // แสดงเลขลำดับ
+                return row.club_trem+'/'+row.club_year;
             }
         },
         { "data": "club_name" },
         { "data": "club_description" },
         { 
           "data": null, "render": function (data, type, row, meta) {
-                return row.advisor_names; // แสดงเลขลำดับ
+                return row.advisor_names;
             }
          },
-        { "data": "club_max_participants" },
+        { "data": null, "render": function (data, type, row) {
+                return `<div class="text-center">${row.club_max_participants}</div>`;
+            }
+        },
         { 
           "data": null, "render": function (data, type, row, meta) {
                 return `
-                 <button class="btn-sm btn-warning BtnAddStudents" data-id="${row.club_id}" title="ลงทะเบียนเรียนชุมนุม" clubname="${row.club_name}">
-                      ลงเรียน
-                  </button>
+                 <div class="text-center">
+                     <button class="btn btn-sm btn-outline-primary BtnAddStudents" data-id="${row.club_id}" 
+                         title="ลงทะเบียนเรียนชุมนุม" clubname="${row.club_name}">
+                         <i class="bx bx-user-plus me-1"></i>ลงเรียน
+                     </button>
+                 </div>
                 `
             }
          },
         { "data": null, "render": function (data, type, row) {
           return `
-              <div class="text-center d-flex">
-                  <button class="btn-sm btn-primary edit-btn" data-id="${row.club_id}"  title="แก้ไข">
-                      <i class="fas fa-edit"></i>
+              <div class="text-center d-flex gap-1 justify-content-center">
+                  <button class="btn btn-sm btn-icon btn-outline-primary edit-btn" data-id="${row.club_id}"  title="แก้ไขชุมนุม ${row.club_name}">
+                      <i class="bx bx-edit"></i>
                   </button>
-                  <button class="btn-sm btn-danger remove-btn" data-id="${row.club_id}" title="ลบ">
-                      <i class="fas fa-trash"></i>
+                  <button class="btn btn-sm btn-icon btn-outline-danger delete-btn" data-id="${row.club_id}" title="ลบชุมนุม ${row.club_name}">
+                      <i class="bx bx-trash"></i>
                   </button>
               </div>
           `;

@@ -7,11 +7,13 @@ use App\Controllers\BaseController;
 class ConAdminDevelopStudents extends BaseController
 {
     protected $DBpersonnel; // Declare DBpersonnel property
+    protected $datethai; // Declare datethai property
 
     public function __construct()
     {
         $this->DBpersonnel = \Config\Database::connect('personnel'); // Initialize DBpersonnel
         $this->db = \Config\Database::connect(); // Initialize the default database connection
+        $this->datethai = new \App\Libraries\Datethai(); // Initialize Datethai library
 
         // CI3 session check equivalent
         if (empty(session()->get('fullname'))) {
@@ -33,6 +35,22 @@ class ConAdminDevelopStudents extends BaseController
         $data['CheckYear'] = $this->db->table('tb_send_plan_setup')->get()->getResult();
 
         $data['CheckOnoffClub'] = $this->db->table('tb_club_onoff')->where('c_onoff_id', 1)->get()->getRow();
+
+        // Parse c_onoff_year into year and term for safer access in views
+        $data['CheckOnoffClubParsed'] = ['','']; // Default values
+        if (isset($data['CheckOnoffClub']->c_onoff_year) && !empty($data['CheckOnoffClub']->c_onoff_year)) {
+            $parts = explode(' / ', $data['CheckOnoffClub']->c_onoff_year);
+            if (count($parts) >= 2) {
+                $data['CheckOnoffClubParsed'] = $parts;
+            } else if (count($parts) == 1) {
+                $data['CheckOnoffClubParsed'][0] = $parts[0];
+            }
+        }
+
+        // Format registration dates using the Datethai library
+        $data['formatted_regisstart'] = isset($data['CheckOnoffClub']->c_onoff_regisstart) ? $this->datethai->thai_date_and_time(strtotime($data['CheckOnoffClub']->c_onoff_regisstart)) : '';
+        $data['formatted_regisend'] = isset($data['CheckOnoffClub']->c_onoff_regisend) ? $this->datethai->thai_date_and_time(strtotime($data['CheckOnoffClub']->c_onoff_regisend)) : '';
+
 
         $data['StatusOnoffClub'] = (!empty($data['CheckOnoffClub']) && @$data['CheckOnoffClub']->c_onoff_regisend <= date("Y-m-d H:i:s")) ? "ปิด" : "เปิด";
         return $data;
@@ -132,7 +150,22 @@ class ConAdminDevelopStudents extends BaseController
 
     public function ClubsInsert()
     {
+        $rules = [
+            'club_name' => 'required|min_length[3]|max_length[255]',
+            'club_year' => 'required|numeric|exact_length[4]',
+            'club_trem' => 'required|numeric|in_list[1,2]',
+            'club_max_participants' => 'required|numeric|greater_than[0]',
+            'advisors' => 'required', // Will be checked after json_decode
+        ];
+
+        if (!$this->validate($rules)) {
+            return $this->response->setJSON(['status' => 'error', 'message' => $this->validator->getErrors()]);
+        }
+
         $advisors = json_decode($this->request->getPost('advisors'));
+        if (empty($advisors)) {
+            return $this->response->setJSON(['status' => 'error', 'message' => ['advisors' => 'กรุณาเลือกครูที่ปรึกษาอย่างน้อยหนึ่งคน']]);
+        }
 
         $data = [
             'club_name'             => $this->request->getPost('club_name'),
@@ -146,9 +179,9 @@ class ConAdminDevelopStudents extends BaseController
         ];
 
         if ($this->db->table('tb_clubs')->insert($data)) {
-            return $this->response->setJSON(1);
+            return $this->response->setJSON(['status' => 'success', 'message' => 'บันทึกข้อมูลสำเร็จ']);
         } else {
-            return $this->response->setJSON(0);
+            return $this->response->setJSON(['status' => 'error', 'message' => 'เกิดข้อผิดพลาดในการบันทึกข้อมูล']);
         }
     }
 
@@ -160,7 +193,24 @@ class ConAdminDevelopStudents extends BaseController
 
     public function ClubsUpdate()
     {
+        $rules = [
+            'club_id' => 'required|numeric', // Ensure club_id is present for update
+            'club_name' => 'required|min_length[3]|max_length[255]',
+            'club_year' => 'required|numeric|exact_length[4]',
+            'club_trem' => 'required|numeric|in_list[1,2]',
+            'club_max_participants' => 'required|numeric|greater_than[0]',
+            'advisors' => 'required', // Will be checked after json_decode
+        ];
+
+        if (!$this->validate($rules)) {
+            return $this->response->setJSON(['status' => 'error', 'message' => $this->validator->getErrors()]);
+        }
+
         $advisors = json_decode($this->request->getPost('advisors'));
+        if (empty($advisors)) {
+            return $this->response->setJSON(['status' => 'error', 'message' => ['advisors' => 'กรุณาเลือกครูที่ปรึกษาอย่างน้อยหนึ่งคน']]);
+        }
+
         $data = [
             'club_name'             => $this->request->getPost('club_name'),
             'club_description'      => $this->request->getPost('club_description'),
@@ -172,7 +222,11 @@ class ConAdminDevelopStudents extends BaseController
         $id = $this->request->getPost('club_id');
         $Update = $this->db->table('tb_clubs')->where('club_id', $id)->update($data);
 
-        return $this->response->setJSON($Update);
+        if ($Update) {
+            return $this->response->setJSON(['status' => 'success', 'message' => 'อัปเดตข้อมูลสำเร็จ']);
+        } else {
+            return $this->response->setJSON(['status' => 'error', 'message' => 'เกิดข้อผิดพลาดในการอัปเดตข้อมูล']);
+        }
     }
 
     public function ClubsDelete($id)
@@ -208,12 +262,17 @@ class ConAdminDevelopStudents extends BaseController
 
     public function ClubsAddStudentToClub()
     {
+        $rules = [
+            'club_id' => 'required|numeric',
+            'student_ids' => 'required|array', // Expecting an array of student IDs
+        ];
+
+        if (!$this->validate($rules)) {
+            return $this->response->setJSON(['status' => 'error', 'message' => $this->validator->getErrors()]);
+        }
+
         $student_ids = $this->request->getPost('student_ids');
         $club_id = $this->request->getPost('club_id');
-
-        if (empty($student_ids)) {
-            return $this->response->setJSON(['status' => false, 'message' => 'กรุณาเลือกนักเรียน']);
-        }
 
         // เช็ดข้อมูลซ้ำ
         $result = $this->db->table('tb_club_members')
@@ -249,17 +308,12 @@ class ConAdminDevelopStudents extends BaseController
         $result = $this->db->table('tb_club_members')->insertBatch($data);
 
         if ($result) {
-            $all_students = $this->db->table('tb_club_members')
-                                    ->where('member_club_id', $club_id)
-                                    ->get()->getResultArray();
-
             return $this->response->setJSON([
                 'status'       => 'success',
                 'message'      => 'บันทึกสำเร็จ',
-                'all_students' => $all_students,
             ]);
         } else {
-            return $this->response->setJSON(['status' => false, 'message' => 'เกิดข้อผิดพลาด']);
+            return $this->response->setJSON(['status' => 'error', 'message' => 'เกิดข้อผิดพลาด']);
         }
     }
 
@@ -284,6 +338,15 @@ class ConAdminDevelopStudents extends BaseController
 
     public function ClubDeleteStudentToClub()
     {
+        $rules = [
+            'club_id' => 'required|numeric',
+            'student_id' => 'required|numeric',
+        ];
+
+        if (!$this->validate($rules)) {
+            return $this->response->setJSON(['status' => 'error', 'message' => $this->validator->getErrors()]);
+        }
+
         $club_id = $this->request->getPost('club_id');
         $student_id = $this->request->getPost('student_id');
 
@@ -340,6 +403,15 @@ class ConAdminDevelopStudents extends BaseController
     // ตั้งค่าปีการศึกษา
     public function ClubSetOnoffYear()
     {
+        $rules = [
+            'c_onoff_year' => 'required|numeric|exact_length[4]',
+            'c_onoff_term' => 'required|numeric|in_list[1,2]',
+        ];
+
+        if (!$this->validate($rules)) {
+            return $this->response->setJSON(['status' => 'error', 'message' => $this->validator->getErrors()]);
+        }
+
         $c_onoff_term = $this->request->getPost('c_onoff_term');
         $c_onoff_year = $this->request->getPost('c_onoff_year');
 
@@ -357,6 +429,15 @@ class ConAdminDevelopStudents extends BaseController
     // ตั้งค่าวันลงทะเบียน
     public function ClubSetDateRegister()
     {
+        $rules = [
+            'c_onoff_regisstart' => 'required',
+            'c_onoff_regisend' => 'required|after_or_equal[c_onoff_regisstart]',
+        ];
+
+        if (!$this->validate($rules)) {
+            return $this->response->setJSON(['status' => 'error', 'message' => $this->validator->getErrors()]);
+        }
+
         // แปลงชื่อเดือนจากภาษาไทยเป็นภาษาอังกฤษ
         $thaiMonthFull = [
             'มกราคม' => 'January', 'กุมภาพันธ์' => 'February', 'มีนาคม' => 'March', 'เมษายน' => 'April',
@@ -367,12 +448,19 @@ class ConAdminDevelopStudents extends BaseController
         $c_onoff_regisstart = $this->request->getPost('c_onoff_regisstart');
         $c_onoff_regisend = $this->request->getPost('c_onoff_regisend');
 
+        log_message('debug', 'Incoming c_onoff_regisstart: ' . $c_onoff_regisstart); // Debug log
+        log_message('debug', 'Incoming c_onoff_regisend: ' . $c_onoff_regisend); // Debug log
+
         $dateString1 = strtr($c_onoff_regisstart, $thaiMonthFull);
+        log_message('debug', 'After strtr c_onoff_regisstart: ' . $dateString1); // Debug log
         $start = \DateTime::createFromFormat('d F Y H:i', $dateString1);
+        
         $dateString2 = strtr($c_onoff_regisend, $thaiMonthFull);
+        log_message('debug', 'After strtr c_onoff_regisend: ' . $dateString2); // Debug log
         $end = \DateTime::createFromFormat('d F Y H:i', $dateString2);
         
         if ($start === false || $end === false) {
+            log_message('error', 'DateTime::createFromFormat failed for start: ' . ($start === false ? 'true' : 'false') . ' and end: ' . ($end === false ? 'true' : 'false')); // Debug log
             return $this->response->setJSON(['status' => 'error', 'message' => 'รูปแบบวันที่ไม่ถูกต้อง']);
         }
 
@@ -440,6 +528,15 @@ class ConAdminDevelopStudents extends BaseController
 
     public function ClubUpdateSchedule()
     {
+        $rules = [
+            'id' => 'required|numeric',
+            'date' => 'required|valid_date[Y-m-d]', // Assuming date is in Y-m-d format
+        ];
+
+        if (!$this->validate($rules)) {
+            return $this->response->setJSON(['status' => 'error', 'message' => $this->validator->getErrors()]);
+        }
+
         $CheckYear = $this->db->table('tb_club_onoff')->where('c_onoff_id', 1)->get()->getRow();
         
         if (empty($CheckYear) || empty($CheckYear->c_onoff_year)) {
@@ -449,8 +546,7 @@ class ConAdminDevelopStudents extends BaseController
         $id = $this->request->getPost('id'); // รับค่า ID
         $date = $this->request->getPost('date'); // รับค่าวันที่ใหม่ในรูปแบบ Y-m-d
 
-        if (! empty($id) && ! empty($date)) {
-            $result = $this->db->table('tb_club_settings_schedule')
+        $result = $this->db->table('tb_club_settings_schedule')
                             ->where('tcs_academic_year', $CheckYear->c_onoff_year)
                             ->where('tcs_schedule_id', $id)
                             ->update(['tcs_start_date' => $date]); // อัปเดตวันที่
@@ -460,20 +556,21 @@ class ConAdminDevelopStudents extends BaseController
             } else {
                 return $this->response->setJSON(['status' => 'error', 'message' => 'ไม่สามารถอัปเดตได้']);
             }
-        } else {
-            return $this->response->setJSON(['status' => 'error', 'message' => 'ข้อมูลไม่ครบถ้วน']);
-        }
     }
 
     public function ClubUpdateStatus()
     {
+        $rules = [
+            'id' => 'required|numeric',
+            'status' => 'required|in_list[เปิด,ปิด]', // Assuming status can only be 'เปิด' or 'ปิด'
+        ];
+
+        if (!$this->validate($rules)) {
+            return $this->response->setJSON(['status' => 'error', 'message' => $this->validator->getErrors()]);
+        }
+
         $id = $this->request->getPost('id');
         $status = $this->request->getPost('status');
-
-        // ตรวจสอบค่าที่ส่งมาว่าถูกต้อง
-        if (empty($id) || empty($status)) {
-            return $this->response->setJSON(['status' => 'error', 'message' => 'ข้อมูลไม่ถูกต้อง']);
-        }
 
         // ทำการอัพเดตข้อมูลในฐานข้อมูล
         $data = [
