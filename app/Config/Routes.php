@@ -112,6 +112,7 @@ $routes->match(['get', 'post'], 'admin/academic/sendplan/get_filtered_plan_data'
 $routes->get('admin/academic/sendplan/get_plan_details', [ConAdminCourse::class, 'getPlanDetails']);
 $routes->post('admin/academic/sendplan/update_teacher', [ConAdminCourse::class, 'UpdateSettingSendPlanTeacher']);
 $routes->post('admin/academic/sendplan/add_teacher_subject', [ConAdminCourse::class, 'UpdateSendPlanTeacher']);
+$routes->post('admin/academic/sendplan/delete_teacher_subject', [ConAdminCourse::class, 'delete_teacher_subject']);
 $routes->post('admin/academic/sendplan/update_setting', [ConAdminCourse::class, 'UpdateSettingSendPlan']);
 $routes->post('Admin/Settings/UpdateSchoolYear', [ConAdminCourse::class, 'updateSchoolYear']);
 

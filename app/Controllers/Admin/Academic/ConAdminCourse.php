@@ -385,4 +385,36 @@ class ConAdminCourse extends BaseController
         return $this->response->setStatusCode(405)->setJSON(['status' => 'error', 'message' => 'Method not allowed.']);
     }
 
+    public function delete_teacher_subject()
+    {
+        try {
+            $planCode = $this->request->getPost('plan_code');
+            $teacherId = $this->request->getPost('plan_teacher_id');
+            $planYear = $this->request->getPost('plan_year');
+            $planTerm = $this->request->getPost('plan_term');
+
+            if (empty($planCode) || empty($teacherId) || empty($planYear) || empty($planTerm)) {
+                return $this->response->setJSON(['status' => 'error', 'message' => 'Incomplete data provided.']);
+            }
+
+            $conditions = [
+                'seplan_coursecode' => $planCode,
+                'seplan_usersend' => $teacherId,
+                'seplan_year' => $planYear,
+                'seplan_term' => $planTerm
+            ];
+
+            $this->db->table('tb_send_plan')->where($conditions)->delete();
+
+            if ($this->db->affectedRows() > 0) {
+                return $this->response->setJSON(['status' => 'success', 'message' => 'ลบข้อมูล สำหรับส่งแผน เรียบร้อยแล้ว']);
+            } else {
+                return $this->response->setJSON(['status' => 'error', 'message' => 'No records found to delete.']);
+            }
+        } catch (\Exception $e) {
+            log_message('error', '[ERROR] {exception}', ['exception' => $e]);
+            return $this->response->setJSON(['status' => 'error', 'message' => 'An unexpected error occurred.']);
+        }
+    }
+
 }

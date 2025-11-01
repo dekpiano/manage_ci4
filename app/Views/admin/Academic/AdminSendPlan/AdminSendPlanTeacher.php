@@ -82,6 +82,7 @@
                                                     delplancode="<?= esc($row->seplan_coursecode) ?>"
                                                     delplanyear="<?= esc($row->seplan_year) ?>"
                                                     delplanterm="<?= esc($row->seplan_term) ?>"
+                                                    delplanteacherid="<?= esc($row->pers_id) ?>"
                                                     delplanname="<?= esc($row->seplan_namesubject) ?>" title="ลบ">
                                                     <i class='bx bx-trash'></i>
                                                 </a>
@@ -440,13 +441,13 @@
                 });
             });
 
-            // DeleteTeach click handler
             $(document).on('click', '.DeleteTeach', function(e) {
                 e.preventDefault();
                 var delPlanCode = $(this).attr('delplancode');
                 var delPlanYear = $(this).attr('delplanyear');
                 var delPlanTerm = $(this).attr('delplanterm');
                 var delPlanName = $(this).attr('delplanname');
+                var delPlanTeacherId = $(this).attr('delplanteacherid');
 
                 Swal.fire({
                     title: 'คุณแน่ใจหรือไม่?',
@@ -465,7 +466,8 @@
                             data: {
                                 plan_code: delPlanCode,
                                 plan_year: delPlanYear,
-                                plan_term: delPlanTerm
+                                plan_term: delPlanTerm,
+                                plan_teacher_id: delPlanTeacherId
                             },
                             dataType: 'json',
                             success: function(response) {
