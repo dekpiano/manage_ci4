@@ -40,6 +40,17 @@ class ConAdminStudents extends BaseController
         }
     }
 
+    private function check_pid($pid) {
+        if(strlen($pid) != 13) return false;
+        for($i=0, $sum=0; $i<12; $i++) {
+            $sum += (int)($pid[$i])*(13-$i);
+        }
+        if((11-($sum%11))%10 == (int)($pid[12])) {
+            return true;
+        }
+        return false;
+    }
+
     function getClient()
     {
         $path = dirname(dirname(dirname(dirname(dirname(dirname(dirname(__FILE__)))))));
@@ -247,80 +258,147 @@ class ConAdminStudents extends BaseController
 
     }
 
-    public function AdminStudentsUpdate()
-    {
-        $service = $this->getClient();
-        $spreadsheetId = '1Je4jmVm3l84xDMAJDqQtdrRB13wWwFl2Fy2b7FvX1Ec'; // Assuming this is correct
-        $range = 'stu1!A2:K1000';  // TODO: Update placeholder value.
-
-        $response = $service ? $service->spreadsheets_values->get($spreadsheetId, $range) : null;
-        $values = $response ? $response->getValues() : [];
-
-        if (empty($values)) {
-            session()->setFlashdata(['status' => 'error', 'messge' => 'ไม่พบข้อมูลใน Google Sheet หรือไม่สามารถโหลดข้อมูลได้', 'msg' => 'NO']);
-            return redirect()->to(base_url('Admin/Acade/Registration/Students/Normal'));
+        public function AdminStudentsUpdate()
+        {
+            $service = $this->getClient();
+            $spreadsheetId = '1Je4jmVm3l84xDMAJDqQtdrRB13wWwFl2Fy2b7FvX1Ec'; // Assuming this is correct
+            $range = 'stu1!A2:M1300';  // TODO: Update placeholder value.
+    
+            $response = $service ? $service->spreadsheets_values->get($spreadsheetId, $range) : null;
+            $values = $response ? $response->getValues() : [];
+    
+            if (empty($values)) {
+                session()->setFlashdata(['status' => 'error', 'messge' => 'ไม่พบข้อมูลใน Google Sheet หรือไม่สามารถโหลดข้อมูลได้', 'msg' => 'NO']);
+                return redirect()->to(base_url('Admin/Acade/Registration/Students/Normal'));
+            }
+    
+            $successCount = 0;
+            $conflictCount = 0;
+            $skippedCount = 0;
+            $invalidIdCount = 0; // Counter for invalid ID numbers
+            $conflictDetails = [];
+            $invalidIdDetails = []; // Details for invalid ID numbers
+            $processedIdentifiers = []; // To track processed StudentCode/StudentIDNumber pairs from the sheet
+    
+            foreach ($values as $row) {
+                $studentCode = isset($row[2]) ? trim($row[2]) : '';
+                $studentIdNumberRaw = isset($row[7]) ? trim($row[7]) : '';
+                $studentIdNumber = str_replace('-', '', $studentIdNumberRaw); // Clean the ID number for processing
+    
+                // --- National ID Validation ---
+                if (!empty($studentIdNumber) && !$this->check_pid($studentIdNumber)) {
+                    $invalidIdCount++;
+                    $invalidIdDetails[] = [
+                        'code' => $studentCode,
+                        'id_number' => $studentIdNumberRaw,
+                        'name' => (isset($row[3]) ? $row[3] : '') . (isset($row[4]) ? $row[4] : '') . ' ' . (isset($row[5]) ? $row[5] : '')
+                    ];
+                    continue; // Skip this row due to invalid ID format
+                }
+    
+                // Skip if both primary identifiers are missing
+                if (empty($studentCode) && empty($studentIdNumber)) {
+                    $skippedCount++;
+                    continue;
+                }
+    
+                // Create a unique key for the combination to check for duplicates within the sheet
+                $identifierKey = $studentCode . '-' . $studentIdNumber;
+                if (in_array($identifierKey, $processedIdentifiers)) {
+                    $skippedCount++;
+                    continue; // Skip if this combination has already been processed in this batch
+                }
+                $processedIdentifiers[] = $identifierKey;
+    
+                // Detailed duplicate check
+                $studentByCode = null;
+                if (!empty($studentCode)) {
+                    $studentByCode = $this->db->table('tb_students')->where('StudentCode', $studentCode)->get()->getRow();
+                }
+    
+                $studentByIdNumber = null;
+                if (!empty($studentIdNumber)) {
+                    $studentByIdNumber = $this->db->table('tb_students')->where('StudentIDNumber', $studentIdNumber)->get()->getRow();
+                }
+    
+                $existingStudent = null;
+                $isConflict = false;
+    
+                if ($studentByCode && $studentByIdNumber) {
+                    if ($studentByCode->StudentID !== $studentByIdNumber->StudentID) {
+                        $isConflict = true; // Conflict: Code and ID belong to different students
+                    } else {
+                        $existingStudent = $studentByCode; // Both match the same student
+                    }
+                } elseif ($studentByCode) {
+                    $existingStudent = $studentByCode;
+                } elseif ($studentByIdNumber) {
+                    $existingStudent = $studentByIdNumber;
+                }
+    
+                if ($isConflict) {
+                    $conflictCount++;
+                    $conflictDetails[] = [
+                        'code' => $studentCode,
+                        'id_number' => $studentIdNumberRaw,
+                        'name' => (isset($row[3]) ? $row[3] : '') . (isset($row[4]) ? $row[4] : '') . ' ' . (isset($row[5]) ? $row[5] : '')
+                    ];
+                    continue; // Skip this row due to conflict
+                }
+    
+                // Prepare data array from sheet row
+                $studentData = [
+                    'StudentNumber'    => isset($row[0]) ? $row[0] : '',
+                    'StudentClass'     => isset($row[1]) ? $row[1] : '',
+                    'StudentCode'      => $studentCode,
+                    'StudentPrefix'    => isset($row[3]) ? $row[3] : '',
+                    'StudentFirstName' => isset($row[4]) ? $row[4] : '',
+                    'StudentLastName'  => isset($row[5]) ? $row[5] : '',
+                    'StudentDateBirth' => isset($row[6]) ? $row[6] : '',
+                    'StudentIDNumber'  => $studentIdNumberRaw, // Use the original version for DB
+                    'StudentStatus'    => isset($row[8]) ? $row[8] : '',
+                    'StudentBehavior'  => isset($row[9]) ? $row[9] : '',
+                    'StudentStudyLine' => isset($row[10]) ? $row[10] : '',
+                    'StudentSex' => isset($row[11]) ? $row[11] : '',
+                    'StudentDateEntrance' => isset($row[12]) ? $row[12] : '',
+                ];
+    
+                if ($existingStudent) {
+                    // UPDATE existing record using its primary key
+                    if($this->modAdminStudents->update($existingStudent->StudentID, $studentData)){
+                        $successCount++;
+                    }
+                } else {
+                    // INSERT new record
+                    if($this->modAdminStudents->Students_Insert($studentData)){
+                        $successCount++;
+                    }
+                }
+            }
+    
+            $message = "ประมวลผลเสร็จสิ้น!<br><br>สำเร็จ: {$successCount} รายการ<br>ข้อมูลขัดแย้ง: {$conflictCount} รายการ<br>เลข ปชช. ไม่ถูกต้อง: {$invalidIdCount} รายการ<br>ข้าม (ข้อมูลไม่สมบูรณ์): {$skippedCount} รายการ";
+            
+            if (!empty($conflictDetails)) {
+                $message .= '<br><br><b>รายละเอียดข้อมูลที่ขัดแย้ง:</b><ul style="text-align: left; max-height: 150px; overflow-y: auto;">';
+                foreach ($conflictDetails as $conflict) {
+                    $message .= '<li>' . htmlspecialchars($conflict['name']) . ' (Code: ' . htmlspecialchars($conflict['code']) . ', ID: ' . htmlspecialchars($conflict['id_number']) . ')</li>';
+                }
+                $message .= '</ul>';
+            }
+    
+            if (!empty($invalidIdDetails)) {
+                $message .= '<br><br><b>รายละเอียดเลข ปชช. ที่ไม่ถูกต้อง:</b><ul style="text-align: left; max-height: 150px; overflow-y: auto;">';
+                foreach ($invalidIdDetails as $invalid) {
+                    $message .= '<li>' . htmlspecialchars($invalid['name']) . ' (Code: ' . htmlspecialchars($invalid['code']) . ', ID: ' . htmlspecialchars($invalid['id_number']) . ')</li>';
+                }
+                $message .= '</ul>';
+            }
+    
+            $status = ($successCount > 0) ? 'success' : 'warning';
+    
+            session()->setFlashdata(['status'=> $status,'messge' => $message,'msg'=>'YES']);
+            return redirect()->to(base_url('Admin/Acade/Registration/Students/normal'));
         }
-
-        $processedIdentifiers = []; // To track processed StudentCode/StudentIDNumber pairs from the sheet
-
-        foreach ($values as $row) {
-            $studentCode = !empty($row[2]) ? trim($row[2]) : '';
-            $studentIdNumber = !empty($row[7]) ? str_replace('-', '', trim($row[7])) : ''; // Clean the ID number
-
-            // Skip if both primary identifiers are missing
-            if (empty($studentCode) && empty($studentIdNumber)) {
-                continue;
-            }
-
-            // Create a unique key for the combination to check for duplicates within the sheet
-            $identifierKey = $studentCode . '-' . $studentIdNumber;
-            if (in_array($identifierKey, $processedIdentifiers)) {
-                continue; // Skip if this combination has already been processed in this batch
-            }
-            $processedIdentifiers[] = $identifierKey;
-
-            // Find existing student by StudentCode OR StudentIDNumber
-            $builder = $this->db->table('tb_students');
-            $builder->select('StudentID');
-            $builder->groupStart();
-            if (!empty($studentCode)) {
-                $builder->where('StudentCode', $studentCode);
-            }
-            if (!empty($studentIdNumber)) {
-                $builder->orWhere('StudentIDNumber', $studentIdNumber);
-            }
-            $builder->groupEnd();
-            $existingStudent = $builder->get()->getRow();
-
-            // Prepare data array from sheet row
-            $studyLine = !empty($row[10]) ? $row[10] : '';
-            $studentData = [
-                'StudentNumber'    => !empty($row[0]) ? $row[0] : '',
-                'StudentClass'     => !empty($row[1]) ? $row[1] : '',
-                'StudentCode'      => $studentCode,
-                'StudentPrefix'    => !empty($row[3]) ? $row[3] : '',
-                'StudentFirstName' => !empty($row[4]) ? $row[4] : '',
-                'StudentLastName'  => !empty($row[5]) ? $row[5] : '',
-                'StudentDateBirth' => !empty($row[6]) ? $row[6] : '',
-                'StudentIDNumber'  => !empty($row[7]) ? $row[7] : '', // Use the original, uncleaned version for DB
-                'StudentStatus'    => !empty($row[8]) ? $row[8] : '',
-                'StudentBehavior'  => !empty($row[9]) ? $row[9] : '',
-                'StudentStudyLine' => $studyLine,
-            ];
-
-            if ($existingStudent) {
-                // UPDATE existing record using its primary key
-                $this->modAdminStudents->update($existingStudent->StudentID, $studentData);
-            } else {
-                // INSERT new record
-                $this->modAdminStudents->Students_Insert($studentData);
-            }
-        }
-
-        session()->setFlashdata(['status'=> 'success','messge' => 'อัพเดพข้อมูลสำเร็จ','msg'=>'YES']);
-        return redirect()->to(base_url('Admin/Acade/Registration/Students/normal'));
-    }
-
     public function AdminStudentsMain1(){   
 
         $DBpersonnel = $this->DBpersonnel; 
@@ -464,48 +542,45 @@ class ConAdminStudents extends BaseController
 
     public function get_student_details($student_id)
     {
-        // Rewritten to use a direct JOIN as per user request.
-        // This query joins the academic and personnel student tables using an INNER JOIN.
-        // Note: This assumes the default DB user has permissions on the 'skjacth_personnel' database.
+        // The query now correctly uses a LEFT JOIN to fetch student data, 
+        // ensuring that academic info is returned even if personnel info is missing.
         $student_data = $this->db->table('tb_students AS academic')
-            ->join('skjacth_personnel.tb_students AS personnel', "REPLACE(personnel.stu_iden, '-', '') = academic.StudentIDNumber",'left')
+            ->join('skjacth_personnel.tb_students AS personnel', "REPLACE(personnel.stu_iden, '-', '') = academic.StudentIDNumber", 'left')
             ->where('academic.StudentID', $student_id)
             ->get()
             ->getRow();
 
-            //echo '<pre>';print_r($student_data);exit();
-
-        // If the INNER JOIN returns no result, it means no matching record was found in the personnel table.
-        // In this case, we fall back to fetching only the main academic data.
+        // If no student data is found in the primary tb_students table, return an error.
         if (empty($student_data)) {
-            $student_data = $this->modAdminStudents->get_student_by_id($student_id);
-            // If still no data, then the student doesn't exist at all.
-            if (empty($student_data)) {
-                return '<div class="alert alert-danger">ไม่พบข้อมูลนักเรียน</div>';
-            }
-            // Set a flag to indicate that the linked personnel data was not found.
-            $data['personnel_data_found'] = false;
-        } else {
-            $data['personnel_data_found'] = true;
+            return '<div class="alert alert-danger">ไม่พบข้อมูลนักเรียน</div>';
         }
+
+        // Determine if linked personnel data was found by checking a field from the joined table.
+        $data['personnel_data_found'] = !empty($student_data->stu_iden);
 
         $data['student'] = $student_data;
         $data['class_list'] = $this->classroom->ListRoom();
         $data['study_line_list'] = $this->classroom->studentStudyLineOptions();
-        
-        // Date conversion logic
+
+        // Simplified and safer date conversion.
+        // It handles dates in 'DD/MM/YYYY' (Buddhist) format and converts them to 'YYYY-MM-DD' (Gregorian) for form input.
         if (!empty($data['student']->StudentDateBirth)) {
-            // Check if the date is in Buddhist format 'DD/MM/YYYY'
-            $Ex = explode('/', $data['student']->StudentDateBirth);
-            if (count($Ex) === 3 && is_numeric($Ex[2]) && (int)$Ex[2] > 1000) {
-                $gregorian_year = (int)$Ex[2] - 543;
-                $data['student']->StudentDateBirth = sprintf("%04d-%02d-%02d", $gregorian_year, $Ex[1], $Ex[0]);
+            $parts = explode('/', $data['student']->StudentDateBirth);
+            // Validate the parts and ensure it's a plausible Buddhist date before converting.
+            if (count($parts) === 3 && is_numeric($parts[0]) && is_numeric($parts[1]) && is_numeric($parts[2]) && $parts[2] > 2500) {
+                $gregorian_year = (int)$parts[2] - 543;
+                // Use checkdate for valid date check
+                if (checkdate($parts[1], $parts[0], $gregorian_year)) {
+                    $data['student']->StudentDateBirth = sprintf("%04d-%02d-%02d", $gregorian_year, $parts[1], $parts[0]);
+                } else {
+                    $data['student']->StudentDateBirth = ''; // Invalid date parts
+                }
             } elseif (strpos($data['student']->StudentDateBirth, '-') === false) {
-                // If it's not in the expected Buddhist format and not already YYYY-MM-DD, clear it to avoid errors.
-                 $data['student']->StudentDateBirth = '';
+                // If the format is not DD/MM/YYYY and not already YYYY-MM-DD, clear it.
+                $data['student']->StudentDateBirth = '';
             }
         }
-        
+
         return view('admin/Academic/AdminStudents/_student_details_form', $data);
     }
 
@@ -514,27 +589,33 @@ class ConAdminStudents extends BaseController
         $this->response->setHeader('Content-Type', 'application/json');
 
         $student_id = $this->request->getPost('StudentID');
-        $student_id_number = $this->request->getPost('StudentIDNumber'); // Use StudentIDNumber
+        $student_id_number = $this->request->getPost('StudentIDNumber');
 
         if (empty($student_id) || empty($student_id_number)) {
             return $this->response->setJSON(['status' => 'error', 'message' => 'Missing Student ID or National ID Number.']);
         }
 
-        // Convert Gregorian year from form to Buddhist year for database
+        // --- Date Conversion ---
         $student_date_birth_gregorian = $this->request->getPost('StudentDateBirth');
-        $student_date_birth_buddhist = null;
+        $student_date_birth_buddhist_main = null; // Format: DD/MM/YYYY
+        $student_date_birth_buddhist_personnel = null; // Format: DD-MM-YYYY
+
         if (!empty($student_date_birth_gregorian)) {
-            list($gregorian_year, $month, $day) = explode('-', $student_date_birth_gregorian);
-            $buddhist_year = (int)$gregorian_year + 543;
-            $student_date_birth_buddhist = sprintf('%02d-%02d-%04d', $day, $month, $buddhist_year); // Corrected format to match original CI3 data 'DD/MM/YYYY' for Buddhist year
-        }
-        if (!empty($student_date_birth_gregorian)) {
-            list($gregorian_year, $month, $day) = explode('-', $student_date_birth_gregorian);
-            $buddhist_year = (int)$gregorian_year + 543;
-            $student_date_birth_buddhist_main = sprintf('%02d/%02d/%04d', $day, $month, $buddhist_year); // Corrected format to match original CI3 data 'DD/MM/YYYY' for Buddhist year
+            try {
+                $date = new \DateTime($student_date_birth_gregorian);
+                $buddhist_year = (int)$date->format('Y') + 543;
+                $month = $date->format('m');
+                $day = $date->format('d');
+                
+                $student_date_birth_buddhist_main = sprintf('%s/%s/%d', $day, $month, $buddhist_year);
+                $student_date_birth_buddhist_personnel = sprintf('%s-%s-%d', $day, $month, $buddhist_year);
+            } catch (\Exception $e) {
+                // Handle invalid date format from POST
+                log_message('error', 'Invalid date format during student update: ' . $e->getMessage());
+            }
         }
 
-        // Data for default tb_students
+        // --- Prepare Data Arrays ---
         $data_main = [
             'StudentPrefix' => $this->request->getPost('StudentPrefix'),
             'StudentFirstName' => $this->request->getPost('StudentFirstName'),
@@ -546,12 +627,18 @@ class ConAdminStudents extends BaseController
             'StudentStudyLine' => $this->request->getPost('StudentStudyLine'),
             'StudentStatus' => $this->request->getPost('StudentStatus'),
             'StudentBehavior' => $this->request->getPost('StudentBehavior'),
-            'StudentIDNumber' => $this->request->getPost('StudentIDNumber'),
-            'StudentDateBirth' => $student_date_birth_buddhist_main // Use converted Buddhist year
+            'StudentIDNumber' => $student_id_number,
+            'StudentDateBirth' => $student_date_birth_buddhist_main
         ];
 
-        // Data for personnel.tb_students
         $data_personnel = [
+            // Common data synced from main table
+            'stu_prefix'    => $this->request->getPost('StudentPrefix'),
+            'stu_fristName' => $this->request->getPost('StudentFirstName'), // Note: 'fristName' might be a typo in the original DB schema
+            'stu_lastName'  => $this->request->getPost('StudentLastName'),
+            'stu_birthDay'  => $student_date_birth_buddhist_personnel,
+            'stu_iden'      => $student_id_number,
+            // Personnel-specific data
             'stu_nickName' => $this->request->getPost('stu_nickName'),
             'stu_phone' => $this->request->getPost('stu_phone'),
             'stu_email' => $this->request->getPost('stu_email'),
@@ -562,7 +649,6 @@ class ConAdminStudents extends BaseController
             'stu_religion' => $this->request->getPost('stu_religion'),
             'stu_wieght' => $this->request->getPost('stu_wieght'),
             'stu_hieght' => $this->request->getPost('stu_hieght'),
-            // Home Address
             'stu_hCode' => $this->request->getPost('stu_hCode'),
             'stu_hNumber' => $this->request->getPost('stu_hNumber'),
             'stu_hMoo' => $this->request->getPost('stu_hMoo'),
@@ -571,7 +657,6 @@ class ConAdminStudents extends BaseController
             'stu_hDistrict' => $this->request->getPost('stu_hDistrict'),
             'stu_hProvince' => $this->request->getPost('stu_hProvince'),
             'stu_hPostCode' => $this->request->getPost('stu_hPostCode'),
-            // Current Address
             'stu_cNumber' => $this->request->getPost('stu_cNumber'),
             'stu_cMoo' => $this->request->getPost('stu_cMoo'),
             'stu_cRoad' => $this->request->getPost('stu_cRoad'),
@@ -579,7 +664,6 @@ class ConAdminStudents extends BaseController
             'stu_cDistrict' => $this->request->getPost('stu_cDistrict'),
             'stu_cProvince' => $this->request->getPost('stu_cProvince'),
             'stu_cPostcode' => $this->request->getPost('stu_cPostcode'),
-            // General Info
             'stu_birthTambon' => $this->request->getPost('stu_birthTambon'),
             'stu_birthDistrict' => $this->request->getPost('stu_birthDistrict'),
             'stu_birthProvirce' => $this->request->getPost('stu_birthProvirce'),
@@ -607,42 +691,43 @@ class ConAdminStudents extends BaseController
             'stu_future_education' => $this->request->getPost('stu_future_education'),
             'stu_career_interest' => $this->request->getPost('stu_career_interest')
         ];
+        
+        // Remove null/empty values to avoid overwriting existing data unintentionally
+        $data_main = array_filter($data_main, fn($value) => $value !== null && $value !== '');
+        $data_personnel = array_filter($data_personnel, fn($value) => $value !== null && $value !== '');
 
-        // Sync common data to personnel table based on user request
-        // Assuming column names like 'stu_firstname', 'stu_lastname', etc. exist in personnel.tb_students
-        $common_data_for_personnel = [
-            'stu_prefix'    => $this->request->getPost('StudentPrefix'),
-            'stu_fristName' => $this->request->getPost('StudentFirstName'),
-            'stu_lastName'  => $this->request->getPost('StudentLastName'),
-            'stu_birthDay' => $student_date_birth_buddhist,
-            'stu_iden'      => $this->request->getPost('StudentIDNumber')
-        ];
-        $data_personnel = array_merge($data_personnel, $common_data_for_personnel);
+        // --- Database Transaction ---
+        // Use the default database connection for transaction
+        $this->db->transStart();
 
-       
-        // Remove null values to avoid overwriting existing data with empty strings
-        $data_main = array_filter($data_main, function($value) { return $value !== null && $value !== ''; });
-        $data_personnel = array_filter($data_personnel, function($value) { return $value !== null && $value !== ''; });
-       
-        // Clean the student ID number to remove dashes for matching with 'stu_iden' in the personnel database
-        $student_id_number_cleaned = str_replace('-', '', $student_id_number);
+        // 1. Update main student table
+        if (!empty($data_main)) {
+            $this->modAdminStudents->update($student_id, $data_main);
+        }
 
-        //    // --- DEBUGGING POST DATA ---
-        // echo '<pre>';
-        // print_r($student_id_number_cleaned);
-        // echo '</pre>';
-        // exit;
-        // // --- END DEBUGGING ---
+        // 2. Upsert (Update or Insert) personnel student table
+        if (!empty($data_personnel)) {
+            $student_id_number_cleaned = str_replace('-', '', $student_id_number);
+            $personnel_student = $this->DBpersonnel->table('tb_students')->where('REPLACE(stu_iden, "-", "")', $student_id_number_cleaned)->get()->getRow();
 
+            if ($personnel_student) {
+                // It's safer to use the primary key for updates if available. Assuming 'stu_id'.
+                $this->DBpersonnel->table('tb_students')->where('stu_id', $personnel_student->stu_id)->update($data_personnel);
+            } else {
+                // Insert new record if it doesn't exist
+                $this->DBpersonnel->table('tb_students')->insert($data_personnel);
+            }
+        }
 
-        // Assuming personnel table has stu_iden as primary key or unique identifier for update
-        $success = $this->modAdminStudents->update_student_data($student_id, $data_main);
-        $success_personnel = $this->DBpersonnel->table('tb_students')->where('REPLACE(stu_iden, "-", "")', $student_id_number_cleaned)->update($data_personnel);
+        $this->db->transComplete();
 
-        if ($success || $success_personnel) {
-            return $this->response->setJSON(['status' => 'success', 'message' => 'บันทึกข้อมูลนักเรียนเรียบร้อยแล้ว']);
-        } else {
+        // --- Response ---
+        if ($this->db->transStatus() === false) {
+            // Log the error for debugging
+            log_message('error', 'Student data update transaction failed.');
             return $this->response->setJSON(['status' => 'error', 'message' => 'เกิดข้อผิดพลาดในการบันทึกข้อมูล']);
+        } else {
+            return $this->response->setJSON(['status' => 'success', 'message' => 'บันทึกข้อมูลนักเรียนเรียบร้อยแล้ว']);
         }
     }
 }
