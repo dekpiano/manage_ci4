@@ -209,7 +209,7 @@
                     <div class="card-body px-4 py-2">
                        <ul class="list-group list-group-flush">
                             <li class="list-group-item list-group-item-action" style="cursor: pointer;"><i class="bi bi-person-plus-fill me-2"></i> <a href="https://docs.google.com/spreadsheets/d/1Je4jmVm3l84xDMAJDqQtdrRB13wWwFl2Fy2b7FvX1Ec/edit?gid=0#gid=0" target="_blank" rel="noopener noreferrer">เพิ่มข้อมูลนักเรียน</a> </li>
-                            <li class="list-group-item list-group-item-action" style="cursor: pointer;"><i class="bi bi-file-earmark-excel-fill me-2"></i> <a href="<?=base_url('Admin/Acade/Registration/StudentsUpdate')?>">นำเข้าข้อมูลนักเรียน</a> </li>
+                            <li class="list-group-item list-group-item-action" style="cursor: pointer;"><i class="bi bi-file-earmark-excel-fill me-2"></i> <a href="<?=base_url('Admin/Acade/Registration/StudentsUpdate')?>" id="importStudentsBtn">นำเข้าข้อมูลนักเรียน</a> </li>
                             <li class="list-group-item list-group-item-action" style="cursor: pointer;"><i class="bi bi-download me-2"></i> ส่งออกข้อมูลทั้งหมด</li>
                        </ul>
                     </div>
@@ -360,6 +360,29 @@ document.addEventListener("DOMContentLoaded", function() {
 
     // เรียกใช้ฟังก์ชันเมื่อหน้าเว็บโหลดเสร็จ
     loadDashboardData();
+
+    // Handle click on "นำเข้าข้อมูลนักเรียน" button
+    const importStudentsBtn = document.getElementById('importStudentsBtn');
+    if (importStudentsBtn) {
+        importStudentsBtn.addEventListener('click', function(e) {
+            e.preventDefault(); // Prevent default link navigation
+
+            const updateUrl = this.href;
+
+            Swal.fire({
+                title: 'กำลังนำเข้าข้อมูลนักเรียน',
+                html: 'กรุณารอสักครู่ ระบบกำลังดึงและประมวลผลข้อมูลจาก Google Sheet...',
+                allowOutsideClick: false,
+                showConfirmButton: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            // Proceed with navigation after showing the loading dialog
+            window.location.href = updateUrl;
+        });
+    }
 });
 </script>
 <?= $this->endSection() ?>

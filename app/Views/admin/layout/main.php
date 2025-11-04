@@ -93,6 +93,7 @@
     <!-- Core JS -->
 <!-- Helpers -->
     <script src="<?= base_url()?>/assets/vendor/js/helpers.js"></script>
+    <script src="<?=base_url();?>assets/js/config.js"></script>
     <script src="<?=base_url();?>assets/vendor/libs/jquery/jquery.js"></script>
     
     <script src="<?=base_url();?>assets/vendor/libs/popper/popper.js"></script>

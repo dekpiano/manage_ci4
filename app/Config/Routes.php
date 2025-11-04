@@ -28,7 +28,8 @@ use App\Controllers\Admin\General\ConAdminGeneralPersonnel;
 use App\Controllers\Admin\General\ConAdminSettingAdminRoles as GeneralConAdminSettingAdminRoles; // Alias to avoid conflict
 use App\Controllers\Student\ConStudentExtraSubject;
 use App\Controllers\Student\ConStudentHome;
-use App\Controllers\User\ConStudents;
+use App\Controllers\User\ConUser_Home;
+use App\Controllers\Session;
 
 /**
  * @var RouteCollection $routes
@@ -188,7 +189,7 @@ $routes->get('Admin/Acade/Evaluate/ReportAcademicSummaryRoyalRoseStandard', [Con
 $routes->get('Admin/Acade/Evaluate/ReportAcademicSummary', [ConAdminReportResult::class, 'AdminReportAcademicSummary']);
 
 // Session check for auto-logout
-$routes->get('session/check', 'App\\Controllers\\Session::check');
+$routes->get('session/check', [Session::class, 'check']);
 
 // Login
 $routes->get('Logout', [Control_login::class, 'logout']);
