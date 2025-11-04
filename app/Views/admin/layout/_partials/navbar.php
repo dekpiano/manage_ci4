@@ -35,13 +35,13 @@
                                     <li>
                                         <a class="dropdown-item" href="#">
                                             <div class="d-flex">
-                                                <div class="flex-shrink-0 me-3">
+                                                <div class="shrink-0 me-3">
                                                     <div class="avatar avatar-online">
                                                         <img src="../assets/img/avatars/1.png" alt=""
                                                             class="w-px-40 h-auto rounded-circle">
                                                     </div>
                                                 </div>
-                                                <div class="flex-grow-1">
+                                                <div class="grow">
                                                     <h6 class="mb-0"><?= session()->get('fullname') ?></h6>
                                                     <small class="text-body-secondary"><?= session()->get('admin_rloes_status') ?></small>
                                                 </div>
