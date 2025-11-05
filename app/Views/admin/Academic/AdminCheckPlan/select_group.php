@@ -2,7 +2,7 @@
 
 <?= $this->section('content') ?>
 <div class="container-xxl flex-grow-1 container-p-y">
-    <h4 class="fw-bold py-3 mb-4"><span class="text-muted fw-light">Academic /</span> เลือกกลุ่มสาระการเรียนรู้</h4>
+    <h4 class="fw-bold py-3 mb-4"><span class="text-muted fw-light">ตรวจสอบแผนการสอน /</span> เลือกกลุ่มสาระการเรียนรู้</h4>
 
     <div class="row">
         <?php if (empty($learningGroups)) : ?>

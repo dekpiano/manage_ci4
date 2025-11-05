@@ -165,7 +165,7 @@
                     <?php endif; ?>
 
                     <?php if(in_array("งานหลักสูตร",$Exp_Checkrloes)): ?>
-                    <li class="menu-item <?= ($uri->getTotalSegments() >= 3 && $uri->getSegment(3) == 'Course' ? 'active open' : '') ?>">
+                    <li class="menu-item <?= ($uri->getTotalSegments() >= 3 && $uri->getSegment(3) == 'Course') || ($uri->getSegment(2) == 'academic' && $uri->getSegment(3) == 'checkplan') ? 'active open' : '' ?>">
                         <a href="javascript:void(0);" class="menu-link menu-toggle">
                             <i class="menu-icon tf-icons bx bx-book"></i>
                             <div data-i18n="งานหลักสูตร">งานหลักสูตร</div>
@@ -186,7 +186,7 @@
                                     <div data-i18n="จัดการส่งแผน">จัดการส่งแผน</div>
                                 </a>
                             </li>
-                            <li class="menu-item <?= ($uri->getTotalSegments() >= 4 && $uri->getSegment(4) == 'checkplan' ? 'active' : '') ?>">
+                            <li class="menu-item <?= ($uri->getSegment(3) == 'checkplan' ? 'active' : '') ?>">
                                 <a href="<?=base_url('admin/academic/checkplan');?>" class="menu-link">
                                     <div data-i18n="ตรวจแผนการสอน">ตรวจแผนการสอน</div>
                                 </a>
