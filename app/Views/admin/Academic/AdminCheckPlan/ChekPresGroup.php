@@ -2,7 +2,30 @@
 
 <?= $this->section('content') ?>
 <div class="container-xxl flex-grow-1 container-p-y">
-    <h4 class="fw-bold py-3 mb-4"><span class="text-muted fw-light">Academic /</span> Check Lesson Plan</h4>
+    <?php
+    $uri = service('uri');
+    $segments = $uri->getSegments();
+    $breadcrumb = [
+        'เลือกกลุ่มสาระ' => base_url('admin/academic/checkplan'),
+    ];
+
+    // This view is for displaying grouped teachers (group selection page)
+    // So the breadcrumb should be Home / Learning Groups
+    if (isset($segments[1]) && $segments[1] == 'academic' && isset($segments[2]) && $segments[2] == 'checkplan') {
+        $breadcrumb['กลุ่มสาระการเรียนรู้'] = '#'; // Current page, no link
+    }
+    ?>
+
+    <h4 class="fw-bold py-3 mb-4">
+        <?php foreach ($breadcrumb as $title => $link) : ?>
+            <?php if ($link == '#' || end($breadcrumb) == $link) : // Last item or placeholder ?>
+                <span class="text-muted fw-light"><?= esc($title) ?></span>
+            <?php else : ?>
+                <a href="<?= esc($link) ?>" class="text-muted fw-light"><?= esc($title) ?></a> /
+            <?php endif; ?>
+        <?php endforeach; ?>
+    </h4>
+
 
     <div class="row">
         <?php if (empty($groupedPlans)) : ?>
@@ -30,9 +53,9 @@
                             </div>
                             
                             <div class="d-flex justify-content-between align-items-center">
-                                <div>
+                                <!-- <div>
                                     <p class="card-text mb-1"><strong>จำนวนแผนที่ส่ง:</strong> <?= count($teacherData['plans']) ?></p>
-                                </div>
+                                </div> -->
 
                                 <button type="button" class="btn btn-primary btn-sm view-teacher-plans-btn" 
                                         data-teacher-id="<?= esc($teacherData['pers_id']) ?>" 
@@ -75,6 +98,7 @@
                 <th>โครงการสอน</th>
                 <th>แผนการสอนหน้าเดียว</th>
                 <th>บันทึกหลังสอน</th>
+                <th>รายละเอียด</th>
               </tr>
             </thead>
             <tbody id="plans-table-body">
@@ -93,6 +117,46 @@
 <?= $this->endSection() ?>
 
 <?= $this->section('modals') ?>
+<!-- Plan Details Modal -->
+<div class="modal fade" id="planDetailsModal" tabindex="-1" aria-labelledby="planDetailsModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="planDetailsModalLabel">รายละเอียดแผนการสอน</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <dl class="row">
+          <dt class="col-sm-4">ปีการศึกษา/ภาคเรียน:</dt>
+          <dd class="col-sm-8" id="detail-seplan_year_term"></dd>
+
+          <dt class="col-sm-4">รหัสวิชา:</dt>
+          <dd class="col-sm-8" id="detail-seplan_coursecode"></dd>
+
+          <dt class="col-sm-4">ชื่อวิชา:</dt>
+          <dd class="col-sm-8" id="detail-seplan_namesubject"></dd>
+
+          <dt class="col-sm-4">ระดับ:</dt>
+          <dd class="col-sm-8" id="detail-seplan_class"></dd>
+
+          <dt class="col-sm-4">ประเภท:</dt>
+          <dd class="col-sm-8" id="detail-seplan_subject_type"></dd>
+
+          <dt class="col-sm-4">วันที่ส่งแผน:</dt>
+          <dd class="col-sm-8" id="detail-seplan_createdate"></dd>
+        </dl>
+        <h6>ไฟล์แผนการสอน:</h6>
+        <ul class="list-group" id="detail-plan-files">
+          <!-- Plan files will be loaded here -->
+        </ul>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ปิด</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Approval Modal -->
 <div class="modal fade" id="approvalModal" tabindex="-1" aria-labelledby="approvalModalLabel" aria-hidden="true">
   <div class="modal-dialog">
@@ -122,6 +186,23 @@
 <?= $this->section('script') ?>
 <script>
 const UPLOAD_PLAN_BASE_URL = '<?= getenv('upload.server.baseurl.plan') ?>';
+
+function renderApprovalStatus(status, comment, label) {
+    let statusText = status || 'ยังไม่ตรวจสอบ';
+    let commentText = comment ? ` (ความคิดเห็น: ${comment})` : '';
+    return `<span class="badge bg-label-secondary">${label}: ${statusText}${commentText}</span>`;
+}
+
+function renderApprovalButton(planFileId, level, status, comment, label) {
+    if (level === 1) { // For Group Head, just display status
+        return renderApprovalStatus(status, comment, label);
+    } else { // For Curriculum Head, render interactive button
+        const status_class = status === 'ผ่าน' ? 'btn-success' : (status === 'ไม่ผ่าน' ? 'btn-danger' : (status === 'รอตรวจ' ? 'btn-warning' : 'btn-secondary'));
+        const icon_html = status === 'ผ่าน' ? '<i class="bx bx-check"></i>' : (status === 'ไม่ผ่าน' ? '<i class="bx bx-x"></i>' : (status === 'รอตรวจ' ? '<i class="bx bx-time"></i>' : ''));
+        return `<button type="button" class="btn ${status_class} btn-sm approval-btn" data-plan-id="${planFileId}" data-level="${level}" data-comment="${comment}">${icon_html}${label}</button>`;
+    }
+}
+
 $(document).ready(function() {
     // Handle the click event for the 'ตรวจสอบแผน' button to open and populate the modal
     $(document).on('click', '.view-teacher-plans-btn', function() {
@@ -132,12 +213,14 @@ $(document).ready(function() {
         $('#modal-teacher-name-full').text(teacherName);
         $('#modal-learning-group-full').text(learningGroup);
         $('#plans-table-body').empty(); // Clear previous plans
+        $('#plans-table-body').append('<tr><td colspan="13" class="text-center"><div class="spinner-border spinner-border-sm text-primary" role="status"><span class="visually-hidden">Loading...</span></div> กำลังโหลดข้อมูล...</td></tr>'); // Add loading indicator
 
         $.ajax({
             url: '<?= site_url("admin/academic/checkplan/teacherplans/") ?>' + teacherId,
             type: 'GET',
             dataType: 'json',
             success: function(plans) {
+                $('#plans-table-body').empty(); // Clear loading indicator
                 if (plans.length > 0) {
                     plans.forEach(function(plan) {
                         const status1_class = plan.seplan_status1 === 'ผ่าน' ? 'btn-success' : (plan.seplan_status1 === 'ไม่ผ่าน' ? 'btn-danger' : (plan.seplan_status1 === 'รอตรวจ' ? 'btn-warning' : 'btn-secondary'));
@@ -198,6 +281,9 @@ $(document).ready(function() {
                                         </div>
                                     ` : ''}
                                 </td>
+                                <td>
+                                    <button type="button" class="btn btn-info btn-sm view-plan-details-btn" data-plan='${JSON.stringify(plan)}'>ดูรายละเอียด</button>
+                                </td>
                             </tr>
                         `;
                         $('#plans-table-body').append(row);
@@ -207,16 +293,64 @@ $(document).ready(function() {
                 }
             },
             error: function() {
+                $('#plans-table-body').empty(); // Clear loading indicator
                 $('#plans-table-body').append('<tr><td colspan="13" class="text-center">เกิดข้อผิดพลาดในการดึงข้อมูลแผนการสอน</td></tr>');
             }
         });
 
-        const checkPlanModal = new bootstrap.Modal(document.getElementById('checkPlanModal'));
-        checkPlanModal.show();
-    });
-
-            let clickedButton;
-
+                    const checkPlanModal = new bootstrap.Modal(document.getElementById('checkPlanModal'));
+                    checkPlanModal.show();
+                });
+        
+                // Handle the click event for the 'ดูรายละเอียด' button to open and populate the plan details modal
+                $(document).on('click', '.view-plan-details-btn', function() {
+                    const plan = $(this).data('plan');
+        
+                    $('#detail-seplan_year_term').text(`${plan.seplan_year}/${plan.seplan_term}`);
+                    $('#detail-seplan_coursecode').text(plan.seplan_coursecode);
+                    $('#detail-seplan_namesubject').text(plan.seplan_namesubject);
+                    $('#detail-seplan_class').text(plan.seplan_class);
+                    $('#detail-seplan_subject_type').text(plan.seplan_subject_type);
+                    $('#detail-seplan_createdate').text(plan.seplan_createdate);
+        
+                    const planFilesList = $('#detail-plan-files');
+                    planFilesList.empty(); // Clear previous files
+        
+                    const fileTypes = [
+                        { key: 'check_plan_file', label: 'แบบตรวจแผน' },
+                        { key: 'record_check_file', label: 'บันทึกตรวจ' },
+                        { key: 'project_plan_file', label: 'โครงการสอน' },
+                        { key: 'use_plan_file', label: 'แผนการสอนหน้าเดียว' },
+                        { key: 'after_teach_note_file', label: 'บันทึกหลังสอน' }
+                    ];
+        
+                    fileTypes.forEach(fileType => {
+                        const fileKey = fileType.key;
+                        const fileLabel = fileType.label;
+                        const fileName = plan[fileKey];
+                        const fileStatus1 = plan[`${fileKey}_status1`];
+                        const fileComment1 = plan[`${fileKey}_comment1`];
+                        const fileStatus2 = plan[`${fileKey}_status2`];
+                        const fileComment2 = plan[`${fileKey}_comment2`];
+        
+                        if (fileName) {
+                            const listItem = `
+                                <li class="list-group-item">
+                                    <strong>${fileLabel}:</strong>
+                                    <a href="${UPLOAD_PLAN_BASE_URL}${plan.seplan_year}/${plan.seplan_term}/${plan.seplan_namesubject}/${fileName}" target="_blank" class="btn btn-sm btn-primary ms-2">ดูไฟล์</a>
+                                    <p class="mb-0 mt-2"><strong>สถานะ หน.กลุ่ม:</strong> ${fileStatus1 || 'ยังไม่ตรวจสอบ'} ${fileComment1 ? `(ความคิดเห็น: ${fileComment1})` : ''}</p>
+                                    <p class="mb-0"><strong>สถานะ หน.หลักสูตร:</strong> ${fileStatus2 || 'ยังไม่ตรวจสอบ'} ${fileComment2 ? `(ความคิดเห็น: ${fileComment2})` : ''}</p>
+                                </li>
+                            `;
+                            planFilesList.append(listItem);
+                        }
+                    });
+        
+                    const planDetailsModal = new bootstrap.Modal(document.getElementById('planDetailsModal'));
+                    planDetailsModal.show();
+                });
+        
+                let clickedButton;
             // Handle the click event for the approval buttons
             $(document).on('click', '.approval-btn', function() {
                 clickedButton = $(this);
@@ -234,6 +368,16 @@ $(document).ready(function() {
 
             // Handle approve/reject buttons in the approval modal
             $(document).on('click', '#approve-btn, #reject-btn', function() {
+                const approveBtn = $('#approve-btn');
+                const rejectBtn = $('#reject-btn');
+                const originalApproveHtml = approveBtn.html();
+                const originalRejectHtml = rejectBtn.html();
+
+                // Disable buttons and show loading indicator
+                approveBtn.prop('disabled', true);
+                rejectBtn.prop('disabled', true);
+                $(this).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> กำลังบันทึก...');
+
                 const planId = $('#approval-plan-id').val();
                 const level = $('#approval-level').val();
                 const comment = $('#approval-comment').val();
@@ -251,6 +395,10 @@ $(document).ready(function() {
                     },
                     dataType: 'json',
                     success: function(response) {
+                        // Re-enable buttons and restore original HTML before showing Swal
+                        approveBtn.prop('disabled', false).html(originalApproveHtml);
+                        rejectBtn.prop('disabled', false).html(originalRejectHtml);
+
                         if (response.success) {
                             const approvalModal = bootstrap.Modal.getInstance(document.getElementById('approvalModal'));
                             approvalModal.hide();
@@ -276,14 +424,17 @@ $(document).ready(function() {
                             });
                         }
                     },
-            error: function() {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'เกิดข้อผิดพลาด',
-                    text: 'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้'
-                });
-            }
-        });
+                            error: function() {
+                                // Re-enable buttons and restore original HTML
+                                approveBtn.prop('disabled', false).html(originalApproveHtml);
+                                rejectBtn.prop('disabled', false).html(originalRejectHtml);
+            
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'เกิดข้อผิดพลาด',
+                                    text: 'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้'
+                                });
+                            }        });
     });
 });
 </script>
