@@ -194,10 +194,11 @@ $(document).ready(function() {
     // Display success message from session flashdata
     <?php if (session()->getFlashdata('msg') === 'YES'): ?>
         Swal.fire({
+            title: 'ผลการประมวลผล',
+            html: '<?= session()->getFlashdata('messge') ?>',
             icon: '<?= session()->getFlashdata('status') ?>',
-            title: '<?= session()->getFlashdata('messge') ?>',
-            showConfirmButton: false,
-            timer: 2000
+            width: '600px',
+            confirmButtonText: 'ตกลง'
         });
     <?php endif; ?>
 
