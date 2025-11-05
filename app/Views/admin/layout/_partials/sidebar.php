@@ -186,6 +186,11 @@
                                     <div data-i18n="จัดการส่งแผน">จัดการส่งแผน</div>
                                 </a>
                             </li>
+                            <li class="menu-item <?= ($uri->getTotalSegments() >= 4 && $uri->getSegment(4) == 'checkplan' ? 'active' : '') ?>">
+                                <a href="<?=base_url('admin/academic/checkplan');?>" class="menu-link">
+                                    <div data-i18n="ตรวจแผนการสอน">ตรวจแผนการสอน</div>
+                                </a>
+                            </li>
                         </ul>
                     </li>
                     <?php endif; ?>

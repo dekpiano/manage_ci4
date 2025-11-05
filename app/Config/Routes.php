@@ -9,6 +9,7 @@ use App\Controllers\Admin\Academic\ConAdminAcademinResult;
 use App\Controllers\Admin\Academic\ConAdminClassRoom;
 use App\Controllers\Admin\Academic\ConAdminClassSchedule;
 use App\Controllers\Admin\Academic\ConAdminCourse;
+use App\Controllers\Admin\Academic\ConAdminCheckPlan;
 use App\Controllers\Admin\Academic\ConAdminDevelopStudents;
 use App\Controllers\Admin\Academic\ConAdminEnroll;
 use App\Controllers\Admin\Academic\ConAdminEvaluateEditGrade;
@@ -115,6 +116,11 @@ $routes->post('admin/academic/sendplan/add_teacher_subject', [ConAdminCourse::cl
 $routes->post('admin/academic/sendplan/delete_teacher_subject', [ConAdminCourse::class, 'delete_teacher_subject']);
 $routes->post('admin/academic/sendplan/update_setting', [ConAdminCourse::class, 'UpdateSettingSendPlan']);
 $routes->post('Admin/Settings/UpdateSchoolYear', [ConAdminCourse::class, 'updateSchoolYear']);
+$routes->get('admin/academic/checkplan', [ConAdminCheckPlan::class, 'index']);
+$routes->post('admin/academic/checkplan/update', [ConAdminCheckPlan::class, 'updatePlanStatus']);
+$routes->post('admin/academic/checkplan/updateplanstatus', [ConAdminCheckPlan::class, 'updatePlanStatus']);
+$routes->get('admin/academic/checkplan/plans/(:segment)', [ConAdminCheckPlan::class, 'plansByGroup/$1']);
+$routes->get('admin/academic/checkplan/teacherplans/(:segment)', [ConAdminCheckPlan::class, 'getTeacherPlans/$1']);
 
 $routes->get('Admin/Acade/Report', [ConAdminExtraSubject::class, 'ExtraReport']);
 
