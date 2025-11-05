@@ -30,9 +30,22 @@ class ConAdminCheckPlan extends BaseController
 
     public function plansByGroup($groupId)
     {
-        $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
+         $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
         $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();
-        $data['plans'] = $this->ModAdminCheckPlan->getPlansByGroupId($groupId);
+        $yearTerm = $this->request->getGet('year_term');
+        $data['year_terms'] = $this->ModAdminCheckPlan->getDistinctYearTerm();
+
+        if (!empty($yearTerm)) {
+            list($year, $term) = explode('/', $yearTerm);
+        } else {
+            // Use the latest year/term as default if not selected
+            $latestYearTerm = $data['year_terms'][0] ?? null;
+            $year = $latestYearTerm ? $latestYearTerm->seplan_year : date('Y') + 543;
+            $term = $latestYearTerm ? $latestYearTerm->seplan_term : '1';
+        }
+
+        $data['selected_year_term'] = $year . '/' . $term;
+        $data['plans'] = $this->ModAdminCheckPlan->getPlansByGroupId($groupId, $year, $term);
         
         $groupedPlans = [];
         foreach ($data['plans'] as $plan) {
@@ -84,7 +97,9 @@ class ConAdminCheckPlan extends BaseController
 
     public function getTeacherPlans($teacherId)
     {
-        $plans = $this->ModAdminCheckPlan->getPlansByTeacherId($teacherId);
+        $year = $this->request->getGet('year');
+        $term = $this->request->getGet('term');
+        $plans = $this->ModAdminCheckPlan->getPlansByTeacherId($teacherId, $year, $term);
         return $this->response->setJSON($plans);
     }
 }

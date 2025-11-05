@@ -16,7 +16,18 @@ class ModAdminCheckPlan extends Model
         return $query->getResult();
     }
 
-    public function getPlansByGroupId($groupId)
+    public function getDistinctYearTerm()
+    {
+        $builder = $this->db->table('tb_send_plan');
+        $builder->select('seplan_year, seplan_term');
+        $builder->distinct();
+        $builder->orderBy('seplan_year', 'DESC');
+        $builder->orderBy('seplan_term', 'DESC');
+        $query = $builder->get();
+        return $query->getResult();
+    }
+
+    public function getPlansByGroupId($groupId, $year, $term)
     {
         $builder = $this->db->table('tb_send_plan');
         $builder->select('
@@ -36,6 +47,8 @@ class ModAdminCheckPlan extends Model
         $builder->join('skjacth_personnel.tb_personnel as p', 'p.pers_id = tb_send_plan.seplan_usersend');
         $builder->join('skjacth_skj.tb_learning as l', 'l.lear_id = tb_send_plan.seplan_learning');
         $builder->where('tb_send_plan.seplan_learning', $groupId);
+        $builder->where('tb_send_plan.seplan_year', $year);
+        $builder->where('tb_send_plan.seplan_term', $term);
         $builder->where('p.pers_status','กำลังใช้งาน');
         $builder->where('p.pers_position >','posi_002');
         $builder->orderBy('tb_send_plan.seplan_createdate', 'DESC');
@@ -50,7 +63,7 @@ class ModAdminCheckPlan extends Model
         return $builder->update($data);
     }
 
-    public function getPlansByTeacherId($teacherId)
+    public function getPlansByTeacherId($teacherId, $year, $term)
     {
         $builder = $this->db->table('tb_send_plan');
         $builder->select('
@@ -98,8 +111,8 @@ class ModAdminCheckPlan extends Model
         ');
         $builder->join('skjacth_academic.tb_subjects', 'tb_subjects.SubjectCode = tb_send_plan.seplan_coursecode');
         $builder->where('tb_send_plan.seplan_usersend', $teacherId);
-        $builder->where('tb_send_plan.seplan_year','2567');
-        $builder->where('tb_send_plan.seplan_term','2');
+        $builder->where('tb_send_plan.seplan_year', $year);
+        $builder->where('tb_send_plan.seplan_term', $term);
         $builder->groupBy('tb_send_plan.seplan_coursecode, tb_send_plan.seplan_namesubject, tb_send_plan.seplan_year, tb_send_plan.seplan_term, tb_subjects.SubjectClass, tb_subjects.SubjectType');
         $builder->orderBy('tb_send_plan.seplan_coursecode', 'ASC');
         $query = $builder->get();
