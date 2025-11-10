@@ -148,6 +148,7 @@ $routes->post('Admin/Acade/Evaluate/exportRoomReportToExcel', [ConAdminReportRes
 // Custom AJAX POST routes for ConAdminAcademicRepeat (for AdminEvaluateLearnRepeatGrade.php)
 $routes->post('Admin/Acade/Evaluate/ConAdminAcademicRepeat/update_study_time', [ConAdminAcademicRepeat::class, 'update_study_time']);
 $routes->post('Admin/Acade/Evaluate/ConAdminAcademicRepeat/update_score', [ConAdminAcademicRepeat::class, 'update_score']);
+$routes->post('Admin/Acade/Evaluate/update_repeat_settings', [ConAdminAcademicRepeat::class, 'update_repeat_settings']);
 
 
 

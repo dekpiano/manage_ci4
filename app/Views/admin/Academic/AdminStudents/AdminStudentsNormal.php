@@ -17,6 +17,11 @@
                                 <?php endforeach; ?>
                             </select>
                         </div>
+                        <div class="col-md-8 text-end">
+                            <a href="#" id="exportBtn" class="btn btn-primary">
+                                <i class="bi bi-file-earmark-excel"></i> Export to Excel
+                            </a>
+                        </div>
                     </div>
                 <table class="table table-bordered" id="tbStudent">
                         <thead>
@@ -269,6 +274,19 @@ $(document).ready(function() {
     // Filter by school year
     $('#school_year_filter').on('change', function() {
         tbStudent.ajax.reload();
+    });
+
+    // Handle Export button click
+    $('#exportBtn').on('click', function(e) {
+        e.preventDefault();
+        const currentKeyStatus = $('#KeyStatus').val();
+        const currentClassFilter = $('#classFilter').val();
+        
+        let exportUrl = `<?= site_url('admin/academic/students/export/') ?>${currentKeyStatus}`;
+        if (currentClassFilter) {
+            exportUrl += `?classFilter=${currentClassFilter}`;
+        }
+        window.location.href = exportUrl;
     });
 
     // Edit Student Modal

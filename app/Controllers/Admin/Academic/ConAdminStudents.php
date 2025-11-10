@@ -730,4 +730,122 @@ class ConAdminStudents extends BaseController
             return $this->response->setJSON(['status' => 'success', 'message' => 'บันทึกข้อมูลนักเรียนเรียบร้อยแล้ว']);
         }
     }
+
+    public function exportStudents($filterType = 'all')
+    {
+        $path = dirname(dirname(dirname(dirname(dirname(dirname(dirname(__FILE__)))))));
+		require $path . '/librarie_skj/spreadsheet/vendor/autoload.php';
+
+        // Ensure the PhpSpreadsheet library is loaded
+        // It's already included via use statements at the top of the file.
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+
+        // --- TEMPORARY: Read headers from M11_2568.xls template ---
+        $templateFileName = ROOTPATH . 'M11_2568.xls';
+        $templateSpreadsheet = IOFactory::load($templateFileName);
+        $templateSheet = $templateSpreadsheet->getActiveSheet();
+        $headers = $templateSheet->rangeToArray('A2:' . $templateSheet->getHighestColumn() . '2', NULL, TRUE, TRUE, TRUE)[2];
+        echo '<pre>'; print_r($headers); exit();
+        // --- END TEMPORARY ---
+
+        // Set headers
+        // $headers = [
+        //     'รหัสนักเรียน',
+        //     'เลขประจำตัวประชาชน',
+        //     'คำนำหน้า',
+        //     'ชื่อ',
+        //     'นามสกุล',
+        //     'ชื่อ-นามสกุล',
+        //     'เพศ',
+        //     'วันเกิด',
+        //     'ชั้น',
+        //     'เลขที่',
+        //     'สายการเรียน',
+        //     'สถานะนักเรียน',
+        //     'สถานะพฤติกรรม',
+        //     'วันที่เข้าเรียน',
+        // ];
+        $sheet->fromArray($headers, NULL, 'A1');
+
+        // Fetch student data based on filterType and classFilter
+        $builder = $this->db->table('tb_students');
+        $builder->select(
+            'StudentID,'
+            .'StudentIDNumber,'
+            .'StudentPrefix,'
+            .'StudentFirstName,'
+            .'StudentLastName,'
+            .'CONCAT(StudentPrefix, StudentFirstName, " ", StudentLastName) AS Fullname,'
+            .'StudentSex,'
+            .'StudentDateBirth,'
+            .'StudentClass,'
+            .'StudentNumber,'
+            .'StudentStudyLine,'
+            .'StudentStatus,'
+            .'StudentBehavior,'
+            .'StudentDateEntrance'
+        );
+
+        $Keyword = "";
+        if ($filterType == "normal") {
+            $Keyword = "StudentStatus = '1/ปกติ' AND StudentBehavior != 'ขาดเรียนนาน'";
+        } elseif ($filterType == 'absent_long') {
+            $Keyword = "StudentBehavior = 'ขาดเรียนนาน' AND StudentStatus = '1/ปกติ'";
+        } elseif ($filterType == 'dismissed') {
+            $Keyword = "StudentBehavior = 'จำหน่าย'";
+        } elseif ($filterType == 'studying') {
+            $Keyword = "StudentStatus != '5/จบการศึกษา' AND StudentBehavior != 'จำหน่าย'";
+        } elseif ($filterType == 'all') {
+            // No specific filter for 'all', but exclude 'จบการศึกษา' and 'จำหน่าย' by default for a general list
+            $Keyword = "StudentStatus != '5/จบการศึกษา' AND StudentBehavior != 'จำหน่าย'";
+        }
+
+        if (!empty($Keyword)) {
+            $builder->where($Keyword);
+        }
+
+        // Apply class filter if present in GET request (for AdminStudentsNormal page)
+        $classFilter = $this->request->getGet('classFilter');
+        if (!empty($classFilter)) {
+            $builder->where('StudentClass', $classFilter);
+        }
+
+        $students = $builder->get()->getResultArray();
+
+        $row = 2; // Start data from row 2, after headers
+        foreach ($students as $student) {
+            $sheet->setCellValueByColumnAndRow(1, $row, $student['StudentID']);
+            $sheet->setCellValueByColumnAndRow(2, $row, $student['StudentIDNumber']);
+            $sheet->setCellValueByColumnAndRow(3, $row, $student['StudentPrefix']);
+            $sheet->setCellValueByColumnAndRow(4, $row, $student['StudentFirstName']);
+            $sheet->setCellValueByColumnAndRow(5, $row, $student['StudentLastName']);
+            $sheet->setCellValueByColumnAndRow(6, $row, $student['Fullname']);
+            $sheet->setCellValueByColumnAndRow(7, $row, $student['StudentSex']);
+            $sheet->setCellValueByColumnAndRow(8, $row, $student['StudentDateBirth']);
+            $sheet->setCellValueByColumnAndRow(9, $row, $student['StudentClass']);
+            $sheet->setCellValueByColumnAndRow(10, $row, $student['StudentNumber']);
+            $sheet->setCellValueByColumnAndRow(11, $row, $student['StudentStudyLine']);
+            $sheet->setCellValueByColumnAndRow(12, $row, $student['StudentStatus']);
+            $sheet->setCellValueByColumnAndRow(13, $row, $student['StudentBehavior']);
+            $sheet->setCellValueByColumnAndRow(14, $row, $student['StudentDateEntrance']);
+            $row++;
+        }
+
+        // Set auto size for columns
+        foreach (range('A', $sheet->getHighestColumn()) as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        $fileName = 'student_data_' . date('Ymd_His') . '.xlsx';
+
+        $this->response->setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        $this->response->setHeader('Content-Disposition', 'attachment;filename="' . $fileName . '"');
+        $this->response->setHeader('Cache-Control', 'max-age=0');
+
+        $writer = new Xlsx($spreadsheet);
+        $writer->save('php://output');
+        exit();
+    }
 }
