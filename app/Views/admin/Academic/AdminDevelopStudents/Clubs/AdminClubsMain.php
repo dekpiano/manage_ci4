@@ -4,7 +4,7 @@
 <?php 
 // Initialize variables with defaults
 $ExYearClub = [date('Y'), '1']; // Default to current year and term 1
-if (isset($CheckOnoffClubParsed) && is_array($CheckOnoffClubParsed)) {
+if (isset($CheckOnoffClubParsed) && is_array($CheckOnoffClubParsed) && count($CheckOnoffClubParsed) >= 2) {
     $ExYearClub = $CheckOnoffClubParsed;
 }
 
@@ -369,6 +369,71 @@ $(document).on('click', '#MenuSetYear', function () {
     $('#ModalClubSetYear').modal('show');
  });
 
+$('#ModalClubSetYear').on('shown.bs.modal', function () {
+    const currentAcademicYear = '<?= esc($ExYearClub[0]) ?>'; // Get current year from PHP
+    const currentAcademicTerm = '<?= esc($ExYearClub[1]) ?>'; // Get current term from PHP
+
+    $.ajax({
+        url: '<?= site_url('admin/academic/ConAdminDevelopStudents/ClubGetAcademicYears') ?>',
+        type: 'GET',
+        dataType: 'json',
+        success: function (response) {
+            console.log('Response from ClubGetAcademicYears:', response); // Debugging line
+            const yearSelect = $('#c_onoff_year');
+            yearSelect.empty(); // Clear existing options
+
+            // Add a default disabled option
+            yearSelect.append($('<option>', {
+                value: '',
+                text: 'เลือกปีการศึกษา',
+                disabled: true,
+                selected: true
+            }));
+
+            // Populate with years from the database
+            response.forEach(function (year) {
+                const option = $('<option>', {
+                    value: year,
+                    text: year
+                });
+                if (year == currentAcademicYear) {
+                    option.attr('selected', true);
+                }
+                yearSelect.append(option);
+            });
+
+            // Populate and pre-select the current term
+            const termSelect = $('#c_onoff_term');
+            termSelect.empty(); // Clear existing options
+            termSelect.append($('<option>', { value: '1', text: '1' }));
+            termSelect.append($('<option>', { value: '2', text: '2' }));
+            termSelect.val(currentAcademicTerm);
+        },
+        error: function (jqXHR, textStatus, errorThrown) {
+            console.error("AJAX Error for ClubGetAcademicYears:", textStatus, errorThrown, jqXHR);
+            Swal.fire({
+                icon: "error",
+                title: "แจ้งเตือน!",
+                text: "ไม่สามารถโหลดปีการศึกษาได้: " + textStatus
+            });
+
+            // Fallback: Populate with current year and next year
+            const yearSelect = $('#c_onoff_year');
+            yearSelect.empty();
+            yearSelect.append($('<option>', {
+                value: '',
+                text: 'เลือกปีการศึกษา',
+                disabled: true,
+                selected: true
+            }));
+            const currentYear = new Date().getFullYear();
+            yearSelect.append($('<option>', { value: currentYear, text: currentYear }));
+            yearSelect.append($('<option>', { value: currentYear + 1, text: currentYear + 1 }));
+            yearSelect.val(currentAcademicYear); // Try to pre-select current year
+        }
+    });
+});
+
  $(document).on('submit','#FormClubSetOnoffYear',function (e) {
     e.preventDefault();
     // ดึงค่าจากฟอร์ม
@@ -478,6 +543,31 @@ $(document).on('submit','#FormClubSetDateRegister',function (e) {
         url: '<?= site_url('admin/academic/ConAdminDevelopStudents/ClubSetDateRegister') ?>', // ชี้ไปที่ Controller
         type: 'POST',
         dataType: 'json',
+        data: {
+            c_onoff_regisstart: c_onoff_regisstart,
+            c_onoff_regisend: c_onoff_regisend
+        },
+        success: function (response) {
+            if (response.status === 'success') {
+                $('#ClubSetDateRegister').modal('hide');
+                $('.modal-backdrop').remove();
+                Swal.fire({
+                    title: "แจ้งเตือน!",
+                    text: response.message,
+                    icon: "success",
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.reload();
+                    }
+                });
+            } else {
+                Swal.fire({
+                    icon: "error",
+                    title: "แจ้งเตือน!",
+                    text: response.message || 'เกิดข้อผิดพลาดในการบันทึกข้อมูล'
+                });
+            }
+        },
         error: function (jqXHR, textStatus, errorThrown) {
             console.error("AJAX Error for ClubSetDateRegister:", textStatus, errorThrown, jqXHR);
             Swal.fire({

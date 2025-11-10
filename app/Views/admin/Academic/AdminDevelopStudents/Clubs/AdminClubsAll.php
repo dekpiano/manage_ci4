@@ -7,29 +7,33 @@
             <div class="card-header d-flex justify-content-between align-items-center">
                 <div>
                     <h5 class="mb-0">จัดการชุมนุม</h5>
-                    <small class="text-muted">จัดการข้อมูลชุมนุมประจำปีการศึกษา</small>
                 </div>
                 <div class="d-flex align-items-center gap-2">
-                    <select id="academicYearFilter" name="academicYearFilter" class="form-select form-select-sm" style="min-width: 150px;">
+                    <select id="academicYearFilter" name="academicYearFilter" class="form-select form-select-sm"
+                        style="min-width: 150px;">
                         <?php foreach ($YearAll as $key => $v_YearAll) : ?>
-                        <option value="<?= (isset($v_YearAll['club_trem']) ? esc($v_YearAll['club_trem']) : '') ?>/<?= (isset($v_YearAll['club_year']) ? esc($v_YearAll['club_year']) : '') ?>">
-                            <?= (isset($v_YearAll['club_trem']) ? esc($v_YearAll['club_trem']) : '') ?>/<?= (isset($v_YearAll['club_year']) ? esc($v_YearAll['club_year']) : '') ?></option>
+                        <option
+                            value="<?= (isset($v_YearAll['club_trem']) ? esc($v_YearAll['club_trem']) : '') ?>/<?= (isset($v_YearAll['club_year']) ? esc($v_YearAll['club_year']) : '') ?>">
+                            <?= (isset($v_YearAll['club_trem']) ? esc($v_YearAll['club_trem']) : '') ?>/<?= (isset($v_YearAll['club_year']) ? esc($v_YearAll['club_year']) : '') ?>
+                        </option>
                         <?php endforeach; ?>
                     </select>
-                    <button type="button" class="btn btn-primary btn-sm BtnAddClub"><i class="bx bx-plus me-1"></i> เพิ่มชุมนุม</button>
+                    <button type="button" class="btn btn-primary btn-sm BtnAddClub w-100">
+                        <i class="bx bx-plus me-1"></i>
+                        เพิ่มชุมนุม</button>
                 </div>
             </div>
             <div class="card-body">
-                <div class="table-responsive text-nowrap">
+                <div class="table-responsive">
                     <table class="table table-hover table-striped table-sm align-middle" id="TbClubs">
                         <thead class="bg-light">
                             <tr>
                                 <th class="text-center" style="width: 60px;">#</th>
                                 <th>ปีการศึกษา</th>
                                 <th>ชื่อชุมนุม</th>
-                                <th>รายละเอียดชุมนุม</th>
                                 <th>ครูที่ปรึกษาชุมนุม</th>
                                 <th class="text-center" style="width: 100px;">จำนวนที่รับ</th>
+                                <th class="text-center" style="width: 100px;">ลงทะเบียนแล้ว</th>
                                 <th class="text-center" style="width: 100px;">ลงเรียน</th>
                                 <th class="text-center" style="width: 120px;">คำสั่ง</th>
                             </tr>
@@ -47,36 +51,12 @@
 
 <?= $this->section('modals') ?>
 <style>
-.ss-main .ss-single-selected {
-    height: 40px;
-}
-/* Template-specific adjustments */
-.modal-header {
-    padding: 1.25rem 1.5rem;
-    background: #f5f5f9;
-}
-.modal-footer {
-    padding: 1.25rem;
-    background: #f5f5f9;
-}
-#ModalAddStudents .modal-dialog {
-    max-width: 900px;
-}
-#studentSelect {
-    min-height: 120px;
-}
-.btn-icon {
-    padding: 0.5rem;
-    width: 32px;
-    height: 32px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-}
-.table-sm > :not(caption) > * > * {
-    padding: 0.625rem;
+.swal2-container {
+    z-index: 999999;
+    /* Very high z-index to ensure it's always on top */
 }
 </style>
+
 <!-- Modal -->
 <div class="modal fade" id="ModalAddClubs" tabindex="-1" aria-labelledby="clubModalLabel" aria-hidden="true">
     <div class="modal-dialog">
@@ -137,13 +117,8 @@
                     <div class="mb-3">
                         <div class="mb-3">
                             <label for="club_faculty_advisor" class="form-label">ครูที่ปรึกษาชุมนุม</label>
-                            <select class="club_faculty_advisor" id="club_faculty_advisor" name="club_faculty_advisor[]"
-                                multiple style="width: 100%;">
-                                <?php foreach ($Teacher as $key => $v_Teacher) : ?>
-                                <option value="<?= isset($v_Teacher->pers_id) ? esc($v_Teacher->pers_id) : '' ?>">
-                                    <?= (isset($v_Teacher->pers_prefix) ? esc($v_Teacher->pers_prefix) : '') . (isset($v_Teacher->pers_firstname) ? esc($v_Teacher->pers_firstname) : '') . ' ' . (isset($v_Teacher->pers_lastname) ? esc($v_Teacher->pers_lastname) : '') ?>
-                                </option>
-                                <?php endforeach; ?>
+                            <select class="form-select" id="club_faculty_advisor" name="club_faculty_advisor[]" multiple
+                                style="width: 100%;" data-placeholder="ค้นหาและเลือกครูที่ปรึกษา">
                             </select>
                         </div>
                     </div>
@@ -178,7 +153,8 @@
                         </select>
                     </div>
                     <div class="d-flex justify-content-center">
-                        <button type="submit" class="btn btn-primary">เพิ่มนักเรียนเข้าชุมนุม</button>
+                        <button type="button" id="btnAddStudentToClub"
+                            class="btn btn-primary">เพิ่มนักเรียนเข้าชุมนุม</button>
                     </div>
                 </form>
             </div>
@@ -188,7 +164,7 @@
                     <div class="card">
                         <div class="card-header" id="registeredCount">นักเรียนที่ลงทะเบียนแล้ว:</div>
                         <div class="card-body">
-                            <div class="table-responsive text-nowrap">
+                            <div class="table-responsive">
                                 <table class="table table-striped" id="TbShowStudentRegisClub">
                                     <thead>
                                         <tr>
@@ -215,50 +191,58 @@
 
 <?= $this->section('script') ?>
 <script>
-const faculty = new SlimSelect({
-    select: '#club_faculty_advisor',
-    showSearch: true, // เปิดให้สามารถค้นหาได้
-    allowDeselect: true, // สามารถเลือกได้มากกว่า 1
-});
-
-
-$('#academicYearFilter').change(function () {   
-   table.ajax.reload();
+$('#academicYearFilter').change(function() {
+    table.ajax.reload();
 });
 
 const table = $('#TbClubs').DataTable({
-  processing: true,
+    processing: true,
     "ajax": {
         "url": "<?= site_url('admin/academic/ConAdminDevelopStudents/ClubsShow') ?>", // URL ที่จะดึงข้อมูล
         "type": "GET",
         "dataSrc": "data",
         data: function(d) {
-          
-          console.log('Selected Year:', $('#academicYearFilter').val());
-          d.year = decodeURIComponent($('#academicYearFilter').val());  // ส่ง year ไปใน ajax data
-      }
+            d.year = decodeURIComponent($('#academicYearFilter').val()); // ส่ง year ไปใน ajax data
+        }
     },
-    "columns": [
-        { "data": null, "render": function (data, type, row, meta) { 
-            return `<div class="text-center">${meta.row + 1}</div>`; 
-        }, "orderable": false },
-        { "data": null, "render": function (data, type, row, meta) {
-                return row.club_trem+'/'+row.club_year;
+    "columns": [{
+            "data": null,
+            "render": function(data, type, row, meta) {
+                return `<div class="text-center">${meta.row + 1}</div>`;
+            },
+            "orderable": false
+        },
+        {
+            "data": null,
+            "render": function(data, type, row, meta) {
+                return row.club_trem + '/' + row.club_year;
             }
         },
-        { "data": "club_name" },
-        { "data": "club_description" },
-        { 
-          "data": null, "render": function (data, type, row, meta) {
+        {
+            "data": "club_name"
+        },
+        {
+            "data": null,
+            "render": function(data, type, row, meta) {
                 return row.advisor_names;
-            }
-         },
-        { "data": null, "render": function (data, type, row) {
+            },
+            "width": "200px" // Set a fixed width for the advisor names column
+        },
+        {
+            "data": null,
+            "render": function(data, type, row) {
                 return `<div class="text-center">${row.club_max_participants}</div>`;
             }
         },
-        { 
-          "data": null, "render": function (data, type, row, meta) {
+        {
+            "data": null,
+            "render": function(data, type, row) {
+                return `<div class="text-center">${row.member_count}</div>`;
+            }
+        },
+        {
+            "data": null,
+            "render": function(data, type, row, meta) {
                 return `
                  <div class="text-center">
                      <button class="btn btn-sm btn-outline-primary BtnAddStudents" data-id="${row.club_id}" 
@@ -268,9 +252,11 @@ const table = $('#TbClubs').DataTable({
                  </div>
                 `
             }
-         },
-        { "data": null, "render": function (data, type, row) {
-          return `
+        },
+        {
+            "data": null,
+            "render": function(data, type, row) {
+                return `
               <div class="text-center d-flex gap-1 justify-content-center">
                   <button class="btn btn-sm btn-icon btn-outline-primary edit-btn" data-id="${row.club_id}"  title="แก้ไขชุมนุม ${row.club_name}">
                       <i class="bx bx-edit"></i>
@@ -280,92 +266,135 @@ const table = $('#TbClubs').DataTable({
                   </button>
               </div>
           `;
-      }}
+            }
+        }
     ],
-    error: function (settings, helpPage, message) {
-       console.error('DataTable Error:', message);
+    error: function(settings, helpPage, message) {
+        console.error('DataTable Error:', message);
     }
 });
 
 $(document).on('click', '.BtnAddClub', function() {
-   $('#ModalAddClubs').modal('show');
-   $('#FormAddClubs')[0].reset();
-   faculty.set([]);
-   $('#clubModalLabel').text('เพิ่มชุมนุม');
+    $('#ModalAddClubs').modal('show');
+    $('#FormAddClubs')[0].reset();
+    $('#club_faculty_advisor').val(null).trigger('change');
+    $('#clubModalLabel').text('เพิ่มชุมนุม');
+
+    // Destroy previous instance if it exists
+    if ($('#club_faculty_advisor').data('select2')) {
+        $('#club_faculty_advisor').select2('destroy');
+    }
+
+    // Initialize Select2 for add modal
+    $('#club_faculty_advisor').select2({
+        theme: 'bootstrap-5',
+        dropdownParent: $('#ModalAddClubs'),
+        placeholder: 'ค้นหาและเลือกครูที่ปรึกษา',
+        allowClear: true,
+        ajax: {
+            url: "<?= site_url('admin/academic/ConAdminDevelopStudents/ClubsTeacherList') ?>",
+            dataType: 'json',
+            delay: 250,
+            processResults: function(data) {
+                return {
+                    results: data.map(teacher => ({
+                        id: teacher.pers_id,
+                        text: teacher.FullName
+                    }))
+                };
+            },
+            cache: true
+        }
+    });
 });
 
-$(document).on('submit','#FormAddClubs',function (e) {
+$(document).on('submit', '#FormAddClubs', function(e) {
     e.preventDefault(); // Prevent default form submission
-    var selectedAdvisors = faculty.selected();  // ได้อาร์เรย์ของที่ปรึกษาที่เลือก
+    var selectedAdvisors = $('#club_faculty_advisor').val(); // ได้อาร์เรย์ของที่ปรึกษาที่เลือก
     if (selectedAdvisors.length === 0) {
         Swal.fire('กรุณาเลือกที่ปรึกษาก่อน');
         return;
     }
 
-    const url = $('#club_id').val() 
-    ? "<?= site_url('admin/academic/ConAdminDevelopStudents/ClubsUpdate') ?>" // แก้ไข
-    : "<?= site_url('admin/academic/ConAdminDevelopStudents/ClubsInsert') ?>"; // เพิ่มใหม่
+    const url = $('#club_id').val() ?
+        "<?= site_url('admin/academic/ConAdminDevelopStudents/ClubsUpdate') ?>" // แก้ไข
+        :
+        "<?= site_url('admin/academic/ConAdminDevelopStudents/ClubsInsert') ?>"; // เพิ่มใหม่
 
-     // ใช้ serialize() เพื่อดึงข้อมูลจากฟอร์ม
+    // ใช้ serialize() เพื่อดึงข้อมูลจากฟอร์ม
     var formData = $(this).closest('form').serializeArray();
-    
-    formData.push({ name: 'advisors', value: JSON.stringify(selectedAdvisors) });
+
+    formData.push({
+        name: 'advisors',
+        value: JSON.stringify(selectedAdvisors)
+    });
 
     $.ajax({
-      url: url, // Controller method for saving data
-      type: 'POST',
-      data: formData, // Serialize form data
-      success: function (response) {
+        url: url, // Controller method for saving data
+        type: 'POST',
+        data: formData, // Serialize form data
+        success: function(response) {
 
-        if (response > 0) {
-          // Close modal
-          $('#ModalAddClubs').modal('hide');
-          $('.modal-backdrop').remove(); 
-        
-          // Reset form
-          $('#FormAddClubs')[0].reset();
-          faculty.set([]);
+            if (response.status === 'success') {
+                // Close modal
+                $('#ModalAddClubs').modal('hide');
+                $('.modal-backdrop').remove();
 
-          $('#TbClubs').DataTable().ajax.reload(); // รีเฟรช DataTable
-          Swal.fire({
-            icon: 'success', // ไอคอน
-            title: 'แจ้งเตือน!',
-            text: 'บันทึกข้อมูลสำเร็จ',
-            showConfirmButton: false,
-            timer: 2000 
-        });
+                // Reset form
+                $('#FormAddClubs')[0].reset();
+                $('#club_faculty_advisor').val(null).trigger('change');
 
-        } else {
-            console.log('ผิดพลาด');
+                $('#TbClubs').DataTable().ajax.reload(); // รีเฟรช DataTable
+                Swal.fire({
+                    icon: 'success', // ไอคอน
+                    title: 'แจ้งเตือน!',
+                    text: 'บันทึกข้อมูลสำเร็จ',
+                    showConfirmButton: false,
+                    timer: 2000
+                });
+
+            } else {
+                console.log('ผิดพลาด', response.message); // Log the actual error message
+                Swal.fire({
+                    icon: 'error',
+                    title: 'แจ้งเตือน!',
+                    text: response.message || 'เกิดข้อผิดพลาดในการบันทึกข้อมูล',
+                    confirmButtonText: 'OK'
+                });
+            }
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+            console.log(textStatus);
         }
-      },
-      error: function (jqXHR, textStatus, errorThrown) {
-        console.log(textStatus);
-      }
     });
-  });
+});
 
-   // เปิด Modal เพื่อแก้ไขข้อมูล
-   $(document).on('click', '.edit-btn', function() {
-    
+// เปิด Modal เพื่อแก้ไขข้อมูล
+$(document).on('click', '.edit-btn', function() {
+
     const clubId = $(this).data('id');
-   
+
     $.ajax({
         url: "<?= site_url('admin/academic/ConAdminDevelopStudents/ClubsEdit/') ?>" + clubId,
         type: "GET",
         dataType: "json",
         success: function(data) {
             $('#clubModalLabel').text('แก้ไขชุมนุม'); // เปลี่ยน Title
-            $('#club_id').val(data.club_id); 
-            $('#club_year').val(data.club_year); 
-            $('#club_trem').val(data.club_trem); 
-            $('#club_name').val(data.club_name); 
-            $('#club_description').val(data.club_description); 
-            $('#club_max_participants').val(data.club_max_participants);     
-            faculty.set([]);       
+            $('#club_id').val(data.club_id);
+            $('#club_year').val(data.club_year);
+            $('#club_trem').val(data.club_trem);
+            $('#club_name').val(data.club_name);
+            $('#club_description').val(data.club_description);
+            $('#club_max_participants').val(data.club_max_participants);
+            $('#club_faculty_advisor').val(null).trigger('change');
 
             const advisorsArray = data.club_faculty_advisor.split('|');
-            faculty.set(advisorsArray);
+
+            $('#ModalAddClubs').data('preselected-advisors',
+            advisorsArray); // Store pre-selected advisors
+
+            $('#ModalAddClubs').data('preselected-advisor-details', data
+                .preselected_advisor_details); // Store pre-selected advisor details
 
             $('#ModalAddClubs').modal('show'); // เปิด Modal
         },
@@ -373,91 +402,145 @@ $(document).on('submit','#FormAddClubs',function (e) {
             alert('Error fetching data.');
         }
     });
+
+    // Destroy previous instance if it exists
+    if ($('#club_faculty_advisor').data('select2')) {
+        $('#club_faculty_advisor').select2('destroy');
+    }
+
+    $('#ModalAddClubs').on('shown.bs.modal', function() {
+        // Destroy previous instance if it exists
+        if ($('#club_faculty_advisor').data('select2')) {
+            $('#club_faculty_advisor').select2('destroy');
+        }
+
+        // Initialize Select2
+        $('#club_faculty_advisor').select2({
+            theme: 'bootstrap-5',
+            dropdownParent: $('#ModalAddClubs'),
+            placeholder: 'ค้นหาและเลือกครูที่ปรึกษา',
+            allowClear: true,
+            ajax: {
+                url: "<?= site_url('admin/academic/ConAdminDevelopStudents/ClubsTeacherList') ?>",
+                dataType: 'json',
+                delay: 250,
+                processResults: function(data) {
+                    return {
+                        results: data.map(teacher => ({
+                            id: teacher.pers_id,
+                            text: teacher.FullName
+                        }))
+                    };
+                },
+                cache: true
+            }
+        });
+
+        // Apply pre-selected advisors if available (for editing)
+        const preselectedAdvisors = $('#ModalAddClubs').data('preselected-advisors');
+        const preselectedAdvisorDetails = $('#ModalAddClubs').data('preselected-advisor-details');
+
+        if (preselectedAdvisorDetails && preselectedAdvisorDetails.length > 0) {
+            preselectedAdvisorDetails.forEach(function(advisor) {
+                // Check if the option already exists to prevent duplicates
+                if (!$('#club_faculty_advisor option[value="' + advisor.pers_id + '"]')
+                    .length) {
+                    const newOption = new Option(advisor.FullName, advisor.pers_id, true, true);
+                    $('#club_faculty_advisor').append(newOption).trigger('change');
+                }
+            });
+        }
+
+        if (preselectedAdvisors && preselectedAdvisors.length > 0) {
+            $('#club_faculty_advisor').val(preselectedAdvisors).trigger('change');
+        }
+
+        $('#ModalAddClubs').removeData('preselected-advisors'); // Clear the stored data
+        $('#ModalAddClubs').removeData('preselected-advisor-details'); // Clear the stored data
+
+    });
 });
 
-$(document).on('click', '.delete-btn', function () {
-  const clubId = $(this).data('id'); // ดึง ID ชุมนุม
+$(document).on('click', '.delete-btn', function() {
+    const clubId = $(this).data('id'); // ดึง ID ชุมนุม
 
-  // ใช้ SweetAlert2 สำหรับยืนยัน
-  Swal.fire({
-      title: 'คุณต้องการลบข้อมูลหรือไม่?',
-      text: "ถ้าคุณเลือกลบข้อมูล ข้อมูลทั้งชุมนุมจะหายหมด พร้อมด้วยเวลาทั้งหมด!",
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#d33',
-      cancelButtonColor: '#3085d6',
-      confirmButtonText: 'Yes, delete it!'
-  }).then((result) => {
-      if (result.isConfirmed) {
-          // ส่งคำขอลบข้อมูลไปที่เซิร์ฟเวอร์
-          $.ajax({
-              url: "<?= site_url('admin/academic/ConAdminDevelopStudents/ClubsDelete/') ?>" + clubId,
-              type: "POST",
-              success: function (response) {
-                  // แจ้งเตือนสำเร็จ
-                  Swal.fire({
-                      icon: 'success',
-                      title: 'แจ้งเตือน!',
-                      text: 'ข้อมูลชุมนุมได้ถูกลบทั้งหมดแล้ว!',
-                      showConfirmButton: false,
-                      timer: 2000
-                  });
+    // ใช้ SweetAlert2 สำหรับยืนยัน
+    Swal.fire({
+        title: 'คุณต้องการลบข้อมูลหรือไม่?',
+        text: "ถ้าคุณเลือกลบข้อมูล ข้อมูลทั้งชุมนุมจะหายหมด พร้อมด้วยเวลาทั้งหมด!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, delete it!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // ส่งคำขอลบข้อมูลไปที่เซิร์ฟเวอร์
+            $.ajax({
+                url: "<?= site_url('admin/academic/ConAdminDevelopStudents/ClubsDelete/') ?>" +
+                    clubId,
+                type: "POST",
+                success: function(response) {
+                    // แจ้งเตือนสำเร็จ
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'แจ้งเตือน!',
+                        text: 'ข้อมูลชุมนุมได้ถูกลบทั้งหมดแล้ว!',
+                        showConfirmButton: false,
+                        timer: 2000
+                    });
 
-                  // รีเฟรช DataTable
-                  $('#TbClubs').DataTable().ajax.reload();
-              },
-              error: function (jqXHR, textStatus, errorThrown) {
-                  // แจ้งเตือนข้อผิดพลาด
-                  Swal.fire({
-                      icon: 'error',
-                      title: 'Error!',
-                      text: textStatus,
-                      confirmButtonText: 'OK'
-                  });
-              }
-          });
-      }
-  });
+                    // รีเฟรช DataTable
+                    $('#TbClubs').DataTable().ajax.reload();
+                },
+                error: function(jqXHR, textStatus, errorThrown) {
+                    // แจ้งเตือนข้อผิดพลาด
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error!',
+                        text: textStatus,
+                        confirmButtonText: 'OK'
+                    });
+                }
+            });
+        }
+    });
 });
 
-let slimSelectInstance;
-$(document).on('click', '.BtnAddStudents', function () {
-    $('#AddStudentsTitle').text("จัดการนักเรียนชุมนุม "+$(this).attr('clubname'))
+$(document).on('click', '.BtnAddStudents', function() {
+    $('#AddStudentsTitle').text("จัดการนักเรียนชุมนุม " + $(this).attr('clubname'))
     $('#ModalAddStudents').modal('show');
 
     let club_id = $(this).attr('data-id');
     $('.club_id').val(club_id);
     loadRegisteredStudents(club_id);
-    // ตรวจสอบและทำลาย SlimSelect เดิม หากมี
-    if (slimSelectInstance) {
-        slimSelectInstance.destroy();
+
+    // Destroy previous instance if it exists
+    if ($('#studentSelect').data('select2')) {
+        $('#studentSelect').select2('destroy');
     }
 
-    // กำหนด SlimSelect ใหม่
-    slimSelectInstance = new SlimSelect({
-      select: '#studentSelect',
-      placeholder: 'ค้นหาและเลือกนักเรียน',
-      closeOnSelect: false, // ให้เลือกได้หลายรายการ
-      allowDeselect: true, // อนุญาตให้ยกเลิกการเลือก
-      searchPlaceholder: 'พิมพ์เพื่อค้นหา...',
+    // Initialize Select2
+    $('#studentSelect').select2({
+        theme: 'bootstrap-5',
+        dropdownParent: $('#ModalAddStudents'),
+        placeholder: 'ค้นหาและเลือกนักเรียน',
+        allowClear: true,
+        ajax: {
+            url: "<?= site_url('admin/academic/ConAdminDevelopStudents/ClubsStudentList') ?>",
+            dataType: 'json',
+            delay: 250,
+            processResults: function(data) {
+                return {
+                    results: data.map(student => ({
+                        id: student.StudentID,
+                        text: student.FullName
+                    }))
+                };
+            },
+            cache: true
+        }
     });
-
-    // โหลดข้อมูลนักเรียนผ่าน AJAX
-    $.ajax({
-      url: "<?= site_url('admin/academic/ConAdminDevelopStudents/ClubsStudentList') ?>",
-      type: "GET",
-      dataType: "json",
-      success: function (data) {
-          const options = data.map(student => ({
-              text: student.FullName,
-              value: student.StudentID,
-          }));
-          slimSelectInstance.setData(options);
-      },
-      error: function (xhr, status, error) {
-          console.error("Error fetching student list:", error);
-      }
-  });
 });
 
 // ------------------------ทะเบียนเบียนชุมนุม------------------------------------------------
@@ -466,13 +549,15 @@ function loadRegisteredStudents(clubId) {
     $.ajax({
         url: "<?= site_url('admin/academic/ConAdminDevelopStudents/ClubsTbShowStudentList') ?>",
         type: "GET",
-        data: { club_id: clubId },
-        success: function (response) {
-            const data = JSON.parse(response);
+        data: {
+            club_id: clubId
+        },
+        dataType: 'json',
+        success: function(data) {
             //$('#registeredCount').text(`นักเรียนที่ลงทะเบียนแล้ว: ${data} คน`);
             let tableRows = '';
             data.forEach(student => {
-                
+
                 tableRows += `
                     <tr>
                         <td>${student.StudentClass}</td>
@@ -490,7 +575,7 @@ function loadRegisteredStudents(clubId) {
             var rowCount = $("#TbShowStudentRegisClub tbody tr").length;
             $("#registeredCount").text("นักเรียนที่ลงทะเบียนแล้ว: " + rowCount + " คน");
         },
-        error: function (xhr, status, error) {
+        error: function(xhr, status, error) {
             console.error(error);
         }
     });
@@ -498,10 +583,9 @@ function loadRegisteredStudents(clubId) {
 
 
 // เพื่มนักเรียนเข้าชุมนุม
-$(document).on('submit','#FormAddStudentToClub', function (e) {
-    e.preventDefault();
+$(document).on('click', '#btnAddStudentToClub', function(e) {
 
-    const selectedStudents = slimSelectInstance.selected();
+    const selectedStudents = $('#studentSelect').val();
     const ClubID = $('.club_id').val();
 
     $.ajax({
@@ -511,43 +595,43 @@ $(document).on('submit','#FormAddStudentToClub', function (e) {
             student_ids: selectedStudents,
             club_id: ClubID
         },
-        dataType:'json',
-        success: function (response) {
-        if (response.status === 'duplicate') {
-            // แจ้งเตือนข้อมูลซ้ำ
-            Swal.fire({
-                icon: "warning",
-                title: "นักเรียนบางคนได้ลงทะเบียนในชุมนุมนี้แล้ว:",
-                text: response.duplicate_students.join('\n'),
-                footer: 'กรุณาเลือกนักเรียนเข้าชุมนุมใหม่อีกครั้ง!'
-              });
-           
-        }else if (response.status === 'success') {
+        dataType: 'json',
+        success: function(response) {
+            if (response.status === 'duplicate') {
+                // แจ้งเตือนข้อมูลซ้ำ
+                Swal.fire({
+                    icon: "warning",
+                    title: "นักเรียนบางคนได้ลงทะเบียนในชุมนุมนี้แล้ว:",
+                    text: response.duplicate_students.join('\n'),
+                    footer: 'กรุณาเลือกนักเรียนเข้าชุมนุมใหม่อีกครั้ง!'
+                });
+
+            } else if (response.status === 'success') {
                 Swal.fire({
                     icon: "success",
                     title: "แจ้งเตือน!",
                     text: 'เพิ่มนักเรียนเข้าชุมนุมเรียบร้อย'
                 });
                 loadRegisteredStudents(ClubID);
-                // รีเซ็ตฟอร์มและ SlimSelect
-                slimSelectInstance.set([]);
+                // รีเซ็ตฟอร์มและ Select2
+                $('#studentSelect').val(null).trigger('change');
                 $('#FormAddStudentToClub')[0].reset();
             } else {
                 Swal.fire({
                     icon: "error",
                     title: "แจ้งเตือน!",
                     text: response.message || 'เกิดข้อผิดพลาด'
-                  });
+                });
             }
         },
-        error: function (xhr, status, error) {
+        error: function(xhr, status, error) {
             console.error('Error saving data:', error);
         }
     });
 });
 
 // ฟังก์ชันสำหรับลบนักเรียนออกจากชุมนุม
-$(document).on('click', '.remove-btn', function () {
+$(document).on('click', '.remove-btn', function() {
     const studentId = $(this).data('id'); // ดึง ID ของนักเรียนที่ต้องการลบ
     const clubId = $('.club_id').val(); // ID ของชุมนุม
 
@@ -569,7 +653,7 @@ $(document).on('click', '.remove-btn', function () {
                     club_id: clubId,
                     student_id: studentId
                 },
-                success: function (response) {
+                success: function(response) {
                     const result = JSON.parse(response);
                     if (result.status === 'success') {
                         Swal.fire(
@@ -586,7 +670,7 @@ $(document).on('click', '.remove-btn', function () {
                         );
                     }
                 },
-                error: function (xhr, status, error) {
+                error: function(xhr, status, error) {
                     Swal.fire(
                         'เกิดข้อผิดพลาด!',
                         'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้',

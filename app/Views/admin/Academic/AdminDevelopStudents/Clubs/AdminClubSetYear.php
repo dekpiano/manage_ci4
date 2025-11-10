@@ -14,8 +14,10 @@
                         <div class="col-12">
                             <div class="form-floating form-floating-outline">
                                 <select class="form-select" id="c_onoff_year" name="c_onoff_year" required>
-                                    <option value="2567">2567</option>
-                                    <option value="2568">2568</option>
+                                  
+                                    <?php for($i=(date('Y')+543); $i<=(date('Y')+543)+1; $i++): ?>
+                                    <option value="<?=$i;?>"><?=$i;?></option>
+                                    <?php endfor; ?>
                                 </select>
                                 <label for="c_onoff_year">ปีการศึกษา</label>
                             </div>

@@ -1,4 +1,10 @@
 <style>
+.modal {
+    z-index: 99999; /* Very high z-index to ensure it's on top */
+}
+.modal-backdrop {
+    z-index: 99998; /* Slightly lower than modal */
+}
 .form-switch-custom {
     --switch-width: 3rem;
     --switch-height: 1.5rem;
