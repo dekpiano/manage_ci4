@@ -80,7 +80,7 @@
             <div class="modal-header">
                 <div>
                     <h5 class="modal-title" id="exampleModalLabel">กำหนดเวลาเรียนชุมนุม</h5>
-                    <small class="text-muted">ปีการศึกษา <?= isset($CheckOnoffClub->c_onoff_year) ? esc($CheckOnoffClub->c_onoff_year) : '' ?></small>
+                    <small class="text-muted">ปีการศึกษา <?= isset($CheckOnoffClub->c_onoff_year) ? esc($CheckOnoffClub->c_onoff_year) : '' ?><?= isset($CheckOnoffClub->c_onoff_term) ? ' / ' . esc($CheckOnoffClub->c_onoff_term) : '' ?></small>
                 </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>

@@ -510,16 +510,18 @@ class ConAdminDevelopStudents extends BaseController
         log_message('debug', 'ClubGetWeeksToUpdate method called.');
         $CheckYear = $this->db->table('tb_club_onoff')->where('c_onoff_id', 1)->get()->getRow();
         
-        if (empty($CheckYear) || empty($CheckYear->c_onoff_year)) {
-            log_message('error', 'ClubGetWeeksToUpdate: tb_club_onoff is empty or c_onoff_year is not set.');
-            return $this->response->setJSON(['status' => 'error', 'message' => 'ไม่พบปีการศึกษาสำหรับชุมนุม']);
+        if (empty($CheckYear) || empty($CheckYear->c_onoff_year) || empty($CheckYear->c_onoff_term)) {
+            log_message('error', 'ClubGetWeeksToUpdate: tb_club_onoff is empty or year/term is not set.');
+            return $this->response->setJSON(['status' => 'error', 'message' => 'ไม่พบปีการศึกษาหรือภาคเรียนสำหรับชุมนุม']);
         }
-        log_message('debug', 'ClubGetWeeksToUpdate: c_onoff_year is ' . $CheckYear->c_onoff_year);
-        $academicYear = $CheckYear->c_onoff_year; // Use the year directly
+        log_message('debug', 'ClubGetWeeksToUpdate: c_onoff_year is ' . $CheckYear->c_onoff_year . ' and c_onoff_term is ' . $CheckYear->c_onoff_term);
+        $academicYear = $CheckYear->c_onoff_year;
+        $academicTerm = $CheckYear->c_onoff_term;
 
         $weeks = $this->db->table('tb_club_settings_schedule')
-                        ->select('tcs_schedule_id,tcs_start_date, tcs_week_number, tcs_week_status')
+                        ->select('tcs_schedule_id, tcs_start_date, tcs_week_number, tcs_week_status, tcs_academic_trem')
                         ->where('tcs_academic_year', $academicYear)
+                        ->where('tcs_academic_trem', $academicTerm)
                         ->orderBy('tcs_week_number', 'ASC')
                         ->get()->getResultArray();
         
@@ -527,7 +529,7 @@ class ConAdminDevelopStudents extends BaseController
             log_message('debug', 'ClubGetWeeksToUpdate: Found ' . count($weeks) . ' weeks.');
             return $this->response->setJSON(['status' => 'success', 'data' => $weeks]);
         } else {
-            log_message('debug', 'ClubGetWeeksToUpdate: No weeks found for academic year ' . $academicYear);
+            log_message('debug', 'ClubGetWeeksToUpdate: No weeks found for academic year ' . $academicYear . ' term ' . $academicTerm);
             return $this->response->setJSON(['status' => 'error', 'message' => 'ไม่มีข้อมูล']);
         }
     }
@@ -537,14 +539,18 @@ class ConAdminDevelopStudents extends BaseController
         log_message('debug', 'ClubCreateWeeks method called.');
         $CheckYear = $this->db->table('tb_club_onoff')->where('c_onoff_id', 1)->get()->getRow();
         
-        if (empty($CheckYear) || empty($CheckYear->c_onoff_year)) {
-            log_message('error', 'ClubCreateWeeks: tb_club_onoff is empty or c_onoff_year is not set.');
-            return $this->response->setJSON(['status' => 'error', 'message' => 'ไม่พบปีการศึกษาสำหรับชุมนุม']);
+        if (empty($CheckYear) || empty($CheckYear->c_onoff_year) || empty($CheckYear->c_onoff_term)) {
+            log_message('error', 'ClubCreateWeeks: tb_club_onoff is empty or year/term is not set.');
+            return $this->response->setJSON(['status' => 'error', 'message' => 'ไม่พบปีการศึกษาหรือภาคเรียนสำหรับชุมนุม']);
         }
-        log_message('debug', 'ClubCreateWeeks: c_onoff_year is ' . $CheckYear->c_onoff_year);
-        $academicYear = $CheckYear->c_onoff_year; // Use the year directly
+        log_message('debug', 'ClubCreateWeeks: c_onoff_year is ' . $CheckYear->c_onoff_year . ' and c_onoff_term is ' . $CheckYear->c_onoff_term);
+        $academicYear = $CheckYear->c_onoff_year;
+        $academicTerm = $CheckYear->c_onoff_term;
 
-        $CheckYeaDuplicater = $this->db->table('tb_club_settings_schedule')->where('tcs_academic_year', $academicYear)->get()->getRow();
+        $CheckYeaDuplicater = $this->db->table('tb_club_settings_schedule')
+                                        ->where('tcs_academic_year', $academicYear)
+                                        ->where('tcs_academic_trem', $academicTerm)
+                                        ->get()->getRow();
 
         if (! $CheckYeaDuplicater) {
             log_message('debug', 'ClubCreateWeeks: No existing weeks found, creating new ones.');
@@ -552,6 +558,7 @@ class ConAdminDevelopStudents extends BaseController
             for ($i = 0; $i < 20; $i++) {
                 $data[] = [
                     'tcs_academic_year' => $academicYear,
+                    'tcs_academic_trem' => $academicTerm,
                     'tcs_week_number'   => $i + 1,
                     'tcs_week_status'   => 'เปิด',
                 ];
@@ -563,7 +570,7 @@ class ConAdminDevelopStudents extends BaseController
 
             return $this->response->setJSON(['status' => 'success', 'message' => 'เพิ่มข้อมูลสัปดาห์สำเร็จ']);
         } else {
-            log_message('debug', 'ClubCreateWeeks: Weeks already exist for academic year ' . $academicYear);
+            log_message('debug', 'ClubCreateWeeks: Weeks already exist for academic year ' . $academicYear . ' term ' . $academicTerm);
             return $this->response->setJSON(['status' => 'success', 'message' => 'เคยเพิ่มข้อมูลแล้ว']);
         }
     }
@@ -581,8 +588,8 @@ class ConAdminDevelopStudents extends BaseController
 
         $CheckYear = $this->db->table('tb_club_onoff')->where('c_onoff_id', 1)->get()->getRow();
         
-        if (empty($CheckYear) || empty($CheckYear->c_onoff_year)) {
-            return $this->response->setJSON(['status' => 'error', 'message' => 'ไม่พบปีการศึกษาสำหรับชุมนุม']);
+        if (empty($CheckYear) || empty($CheckYear->c_onoff_year) || empty($CheckYear->c_onoff_term)) {
+            return $this->response->setJSON(['status' => 'error', 'message' => 'ไม่พบปีการศึกษาหรือภาคเรียนสำหรับชุมนุม']);
         }
 
         $id = $this->request->getPost('id'); // รับค่า ID
@@ -590,6 +597,7 @@ class ConAdminDevelopStudents extends BaseController
 
         $result = $this->db->table('tb_club_settings_schedule')
                             ->where('tcs_academic_year', $CheckYear->c_onoff_year)
+                            ->where('tcs_academic_trem', $CheckYear->c_onoff_term)
                             ->where('tcs_schedule_id', $id)
                             ->update(['tcs_start_date' => $date]); // อัปเดตวันที่
 
