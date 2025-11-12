@@ -129,6 +129,14 @@ $routes->get('admin/academic/checkplan/teacherplans/(:segment)', [ConAdminCheckP
 $routes->get('Admin/Acade/Report', [ConAdminExtraSubject::class, 'ExtraReport']);
 
 $routes->get('Admin/Acade/Setting/AdminRoles', [ConAdminSettingAdminRoles::class, 'AcademicSettingAdminRoles']);
+$routes->group('ConAdminSettingAdminRoles', function ($routes) {
+    $routes->post('AcademicSettingManager', [ConAdminSettingAdminRoles::class, 'AcademicSettingManager']);
+    $routes->post('AcademicSettingDeputy', [ConAdminSettingAdminRoles::class, 'AcademicSettingDeputy']);
+    $routes->post('AcademicSettingLeader', [ConAdminSettingAdminRoles::class, 'AcademicSettingLeader']);
+    $routes->post('SelectWork', [ConAdminSettingAdminRoles::class, 'SelectWork']);
+    $routes->post('addAcademicStaff', [ConAdminSettingAdminRoles::class, 'addAcademicStaff']);
+    $routes->post('deleteAcademicStaff', [ConAdminSettingAdminRoles::class, 'deleteAcademicStaff']);
+});
 
 $routes->get('Admin/Acade/Evaluate/AcademicRepeat/(:segment)/(:segment)', [ConAdminAcademicRepeat::class, 'AdminAcademicRepeatMain']);
 $routes->get('Admin/Acade/Evaluate/AcademicRepeat/(:segment)/(:segment)/(:segment)', [ConAdminAcademicRepeat::class, 'AdminAcademicRepeatGrade']);

@@ -195,7 +195,7 @@
                     </li>
                     <?php endif; ?>
 
-                    <?php if(in_array("งานพัฒนาผู้เรียน",$Exp_Checkrloes)): ?>
+                    <?php if(in_array("งานกิจกรรมพัฒนาผู้เรียน",$Exp_Checkrloes)): ?>
                     <li class="menu-item <?= ($uri->getTotalSegments() >= 3 && $uri->getSegment(3) == 'DevelopStudents' ? 'active open' : '') ?>">
                         <a href="javascript:void(0);" class="menu-link menu-toggle">
                             <i class="menu-icon tf-icons bx bx-user-check"></i>

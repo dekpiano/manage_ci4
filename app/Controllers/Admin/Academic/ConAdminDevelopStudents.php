@@ -38,8 +38,10 @@ class ConAdminDevelopStudents extends BaseController
 
         // Parse c_onoff_year into year and term for safer access in views
         $data['CheckOnoffClubParsed'] = ['','']; // Default values
-        if (isset($data['CheckOnoffClub']->c_onoff_year) && isset($data['CheckOnoffClub']->c_onoff_term)) {
-            $data['CheckOnoffClubParsed'] = [$data['CheckOnoffClub']->c_onoff_year, $data['CheckOnoffClub']->c_onoff_term];
+        if ($data['CheckOnoffClub']) { // Check if the object itself exists
+            $year = $data['CheckOnoffClub']->c_onoff_year ?? '';
+            $term = $data['CheckOnoffClub']->c_onoff_term ?? '';
+            $data['CheckOnoffClubParsed'] = [$year, $term];
         }
 
         // Format registration dates using the Datethai library
@@ -136,8 +138,8 @@ class ConAdminDevelopStudents extends BaseController
                             (SELECT COUNT(*) FROM skjacth_academic.tb_club_members WHERE skjacth_academic.tb_club_members.member_club_id = skjacth_academic.tb_clubs.club_id) as member_count,
                             GROUP_CONCAT(CONCAT(skjacth_personnel.tb_personnel.pers_prefix,skjacth_personnel.tb_personnel.pers_firstname," ",skjacth_personnel.tb_personnel.pers_lastname) SEPARATOR ", ") as advisor_names') // Explicitly reference DBpersonnel table
                         ->join($this->DBpersonnel->database . '.tb_personnel', 'FIND_IN_SET(' . $this->DBpersonnel->database . '.tb_personnel.pers_id , REPLACE(club_faculty_advisor, "|", ",")) > 0', 'LEFT') // Use the class property for DBpersonnel
-                        ->where('club_year', $ExYear[1])
-                        ->where('club_trem', $ExYear[0])
+                        ->where('club_year', @$ExYear[1])
+                        ->where('club_trem', @$ExYear[0])
                         ->groupBy('club_id')
                         ->get()->getResult();
 
