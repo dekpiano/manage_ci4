@@ -277,77 +277,100 @@
                 dropdownParent: $('#add-tab-pane') // Ensure dropdown is within the tab pane
             });
 
-            // Function to load and render the plans table
-            function loadPlansTable(year, term) {
-                const tableBody = $('#TbSendPlan tbody');
-                tableBody.empty(); // Clear existing rows
-                tableBody.append(
-                    '<tr><td colspan="7" class="text-center"><div class="spinner-border spinner-border-sm text-primary" role="status"><span class="visually-hidden">Loading...</span></div> กำลังโหลดข้อมูล...</td></tr>'
-                );
-
-                $.ajax({
-                    url: '<?= base_url('admin/academic/course/getPlansTableData') ?>',
-                    type: 'GET',
-                    data: {
-                        year: year,
-                        term: term
-                    },
-                    dataType: 'json',
-                    success: function(response) {
-                        tableBody.empty(); // Clear loading indicator
-                        if (response.length > 0) {
-                            response.forEach(function(row) {
-                                const newRow = `
-                                <tr>
-                                    <td>${row.seplan_term}/${row.seplan_year}</td>
-                                    <td>${row.seplan_coursecode}</td>
-                                    <td>${row.seplan_namesubject}</td>
-                                    <td>ม.${row.seplan_gradelevel}</td>
-                                    <td>${row.seplan_typesubject}</td>
-                                    <td>${row.pers_prefix}${row.pers_firstname} ${row.pers_lastname}</td>
-                                    <td>
-                                        <a class="btn btn-primary EditTeach me-1"
-                                            PlanCode="${row.seplan_coursecode}"
-                                            PlanYear="${row.seplan_year}"
-                                            PlanTerm="${row.seplan_term}"
-                                            PlanTeacherID="${row.pers_id}"
-                                            href="#" title="แก้ไข">
-                                            <i class='bx bx-edit'></i>
-                                        </a>
-                                        <a class="btn btn-danger DeleteTeach" href="javascript:void(0)"
-                                            delplancode="${row.seplan_coursecode}"
-                                            delplanyear="${row.seplan_year}"
-                                            delplanterm="${row.seplan_term}"
-                                            delplanteacherid="${row.pers_id}"
-                                            delplanname="${row.seplan_namesubject}" title="ลบ">
-                                            <i class='bx bx-trash'></i>
-                                        </a>
-                                    </td>
-                                </tr>
-                                `;
-                                tableBody.append(newRow);
-                            });
-                        } else {
-                            tableBody.append(
-                                '<tr><td colspan="7" class="text-center">ไม่พบข้อมูลจับคู่ครูกับวิชา</td></tr>'
-                            );
+            // Initialize DataTable
+            var table = $('#TbSendPlan').DataTable({
+                "processing": true,
+                "serverSide": false, // Data is processed client-side
+                "ajax": {
+                    "url": '<?= base_url('admin/academic/course/getPlansTableData') ?>',
+                    "type": 'GET',
+                    "data": function(d) {
+                        const yearTerm = $('#onoff_year').val();
+                        if (yearTerm) {
+                            const [term, year] = yearTerm.split('/');
+                            d.year = year;
+                            d.term = term;
                         }
                     },
-                    error: function(xhr, status, error) {
-                        tableBody.empty();
-                        tableBody.append(
-                            '<tr><td colspan="7" class="text-center text-danger">เกิดข้อผิดพลาดในการโหลดข้อมูล: ' +
-                            error + '</td></tr>');
+                    "dataSrc": "" // The data source is the top-level of the JSON response
+                },
+                "columns": [{
+                        "data": null,
+                        "render": function(data, type, row) {
+                            return `${row.seplan_term}/${row.seplan_year}`;
+                        }
+                    },
+                    {
+                        "data": "seplan_coursecode"
+                    },
+                    {
+                        "data": "seplan_namesubject"
+                    },
+                    {
+                        "data": "seplan_gradelevel",
+                        "render": function(data, type, row) {
+                            return `ม.${data}`;
+                        }
+                    },
+                    {
+                        "data": "seplan_typesubject"
+                    },
+                    {
+                        "data": null,
+                        "render": function(data, type, row) {
+                            return `${row.pers_prefix}${row.pers_firstname} ${row.pers_lastname}`;
+                        }
+                    },
+                    {
+                        "data": null,
+                        "render": function(data, type, row) {
+                            return `
+                            <div class="d-flex">
+                                <a class="btn btn-sm btn-primary EditTeach me-1"
+                                    PlanCode="${row.seplan_coursecode}"
+                                    PlanYear="${row.seplan_year}"
+                                    PlanTerm="${row.seplan_term}"
+                                    PlanTeacherID="${row.pers_id}"
+                                    href="#" title="แก้ไข">
+                                    <i class='bx bx-edit'></i>
+                                </a>
+                                <a class="btn btn-sm btn-danger DeleteTeach" href="javascript:void(0)"
+                                    delplancode="${row.seplan_coursecode}"
+                                    delplanyear="${row.seplan_year}"
+                                    delplanterm="${row.seplan_term}"
+                                    delplanteacherid="${row.pers_id}"
+                                    delplanname="${row.seplan_namesubject}" title="ลบ">
+                                    <i class='bx bx-trash'></i>
+                                </a>
+                            </div>
+                        `;
+                        },
+                        "orderable": false
                     }
-                });
-            }
+                ],
+                "language": {
+                    "search": "ค้นหา:",
+                    "lengthMenu": "แสดง _MENU_ รายการ",
+                    "info": "แสดง _START_ ถึง _END_ จาก _TOTAL_ รายการ",
+                    "infoEmpty": "แสดง 0 ถึง 0 จาก 0 รายการ",
+                    "infoFiltered": "(กรองจาก _MAX_ รายการทั้งหมด)",
+                    "zeroRecords": "ไม่พบข้อมูลที่ตรงกัน",
+                    "paginate": {
+                        "first": "แรก",
+                        "last": "สุดท้าย",
+                        "next": "ถัดไป",
+                        "previous": "ก่อนหน้า"
+                    },
+                    "loadingRecords": "กำลังโหลด...",
+                    "processing": "กำลังประมวลผล...",
+                }
+            });
 
-            // Initial load of the table
-            const initialYearTerm = $('#onoff_year').val();
-            if (initialYearTerm) {
-                const [initialTerm, initialYear] = initialYearTerm.split('/');
-                loadPlansTable(initialYear, initialTerm);
-            }
+
+            // onoff_year change handler
+            $('#onoff_year').change(function() {
+                table.ajax.reload();
+            });
 
             // FormSettingSendPlan submission
             $('#FormSettingSendPlan').submit(function(e) {
@@ -392,12 +415,7 @@
                     success: function(response) {
                         if (response.status === 'success') {
                             Swal.fire('สำเร็จ!', response.message, 'success');
-                            // Reload the table after successful addition
-                            const currentYearTerm = $('#onoff_year').val();
-                            if (currentYearTerm) {
-                                const [currentTerm, currentYear] = currentYearTerm.split('/');
-                                loadPlansTable(currentYear, currentTerm);
-                            }
+                            table.ajax.reload(); // Reload the table
                         } else {
                             Swal.fire('ผิดพลาด!', response.message, 'error');
                         }
@@ -468,15 +486,12 @@
                     success: function(response) {
                         if (response) {
                             $('#editteacher').modal('hide');
-                            Swal.fire('สำเร็จ!', response.message || 'อัปเดตข้อมูลเรียบร้อยแล้ว', 'success');
-                            // Reload the table after successful update
-                            const currentYearTerm = $('#onoff_year').val();
-                            if (currentYearTerm) {
-                                const [currentTerm, currentYear] = currentYearTerm.split('/');
-                                loadPlansTable(currentYear, currentTerm);
-                            }
+                            Swal.fire('สำเร็จ!', response.message ||
+                                'อัปเดตข้อมูลเรียบร้อยแล้ว', 'success');
+                            table.ajax.reload(); // Reload the table
                         } else {
-                            Swal.fire('ผิดพลาด!', response.message || 'ไม่สามารถอัปเดตข้อมูลได้', 'error');
+                            Swal.fire('ผิดพลาด!', response.message ||
+                                'ไม่สามารถอัปเดตข้อมูลได้', 'error');
                         }
                     },
                     error: function(xhr, status, error) {
@@ -523,12 +538,7 @@
                                 if (response.status === 'success') {
                                     Swal.fire('ลบแล้ว!', response.message,
                                         'success');
-                                    // Reload the table after successful deletion
-                                    const currentYearTerm = $('#onoff_year').val();
-                                    if (currentYearTerm) {
-                                        const [currentTerm, currentYear] = currentYearTerm.split('/');
-                                        loadPlansTable(currentYear, currentTerm);
-                                    }
+                                    table.ajax.reload();
                                 } else {
                                     Swal.fire('ผิดพลาด!', response.message,
                                         'error');
@@ -544,14 +554,6 @@
                 });
             });
 
-            // onoff_year change handler
-            $('#onoff_year').change(function() {
-                var selectedYearTerm = $(this).val();
-                if (selectedYearTerm) {
-                    const [selectedTerm, selectedYear] = selectedYearTerm.split('/');
-                    loadPlansTable(selectedYear, selectedTerm);
-                }
-            });
         });
         </script>
         <?= $this->endSection() ?>
