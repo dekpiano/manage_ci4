@@ -59,37 +59,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <?php if (isset($Plan) && !empty($Plan)): ?>
-                                <?php foreach ($Plan as $row): ?>
-                                <tr>
-                                    <td><?= esc($row->seplan_term . '/' . $row->seplan_year) ?></td>
-                                    <td><?= esc($row->seplan_coursecode) ?></td>
-                                    <td><?= esc($row->seplan_namesubject) ?></td>
-                                    <td><?= 'ม.' . esc($row->seplan_gradelevel) ?></td>
-                                    <td><?= esc($row->seplan_typesubject) ?></td>
-                                    <td><?= esc($row->pers_prefix . $row->pers_firstname . ' ' . $row->pers_lastname) ?>
-                                    </td>
-                                            <td>
-                                                <a class="btn btn-primary EditTeach me-1"
-                                                    PlanCode="<?= esc($row->seplan_coursecode) ?>"
-                                                    PlanYear="<?= esc($row->seplan_year) ?>"
-                                                    PlanTerm="<?= esc($row->seplan_term) ?>"
-                                                    PlanTeacherID="<?= esc($row->pers_id) ?>" 
-                                                    href="#" title="แก้ไข">
-                                                    <i class='bx bx-edit'></i>
-                                                </a>
-                                                <a class="btn btn-danger DeleteTeach" href="javascript:void(0)"
-                                                    delplancode="<?= esc($row->seplan_coursecode) ?>"
-                                                    delplanyear="<?= esc($row->seplan_year) ?>"
-                                                    delplanterm="<?= esc($row->seplan_term) ?>"
-                                                    delplanteacherid="<?= esc($row->pers_id) ?>"
-                                                    delplanname="<?= esc($row->seplan_namesubject) ?>" title="ลบ">
-                                                    <i class='bx bx-trash'></i>
-                                                </a>
-                                            </td>
-                                </tr>
-                                <?php endforeach; ?>
-                                <?php endif; ?>
+                                
                             </tbody>
                         </table>
                     </div>
@@ -296,7 +266,7 @@
                 width: $(this).data('width') ? $(this).data('width') : $(this).hasClass('w-100') ?
                     '100%' : 'style',
                 placeholder: $(this).data('placeholder'),
-                dropdownParent: $('#FormUpdateSendPlan')
+                dropdownParent: $('#add-tab-pane')
             });
 
             $('.SelectTeacher').select2({
@@ -304,8 +274,80 @@
                 width: $(this).data('width') ? $(this).data('width') : $(this).hasClass('w-100') ?
                     '100%' : 'style',
                 placeholder: $(this).data('placeholder'),
-                dropdownParent: $('#FormUpdateSendPlan')
+                dropdownParent: $('#add-tab-pane') // Ensure dropdown is within the tab pane
             });
+
+            // Function to load and render the plans table
+            function loadPlansTable(year, term) {
+                const tableBody = $('#TbSendPlan tbody');
+                tableBody.empty(); // Clear existing rows
+                tableBody.append(
+                    '<tr><td colspan="7" class="text-center"><div class="spinner-border spinner-border-sm text-primary" role="status"><span class="visually-hidden">Loading...</span></div> กำลังโหลดข้อมูล...</td></tr>'
+                );
+
+                $.ajax({
+                    url: '<?= base_url('admin/academic/course/getPlansTableData') ?>',
+                    type: 'GET',
+                    data: {
+                        year: year,
+                        term: term
+                    },
+                    dataType: 'json',
+                    success: function(response) {
+                        tableBody.empty(); // Clear loading indicator
+                        if (response.length > 0) {
+                            response.forEach(function(row) {
+                                const newRow = `
+                                <tr>
+                                    <td>${row.seplan_term}/${row.seplan_year}</td>
+                                    <td>${row.seplan_coursecode}</td>
+                                    <td>${row.seplan_namesubject}</td>
+                                    <td>ม.${row.seplan_gradelevel}</td>
+                                    <td>${row.seplan_typesubject}</td>
+                                    <td>${row.pers_prefix}${row.pers_firstname} ${row.pers_lastname}</td>
+                                    <td>
+                                        <a class="btn btn-primary EditTeach me-1"
+                                            PlanCode="${row.seplan_coursecode}"
+                                            PlanYear="${row.seplan_year}"
+                                            PlanTerm="${row.seplan_term}"
+                                            PlanTeacherID="${row.pers_id}"
+                                            href="#" title="แก้ไข">
+                                            <i class='bx bx-edit'></i>
+                                        </a>
+                                        <a class="btn btn-danger DeleteTeach" href="javascript:void(0)"
+                                            delplancode="${row.seplan_coursecode}"
+                                            delplanyear="${row.seplan_year}"
+                                            delplanterm="${row.seplan_term}"
+                                            delplanteacherid="${row.pers_id}"
+                                            delplanname="${row.seplan_namesubject}" title="ลบ">
+                                            <i class='bx bx-trash'></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                `;
+                                tableBody.append(newRow);
+                            });
+                        } else {
+                            tableBody.append(
+                                '<tr><td colspan="7" class="text-center">ไม่พบข้อมูลจับคู่ครูกับวิชา</td></tr>'
+                            );
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        tableBody.empty();
+                        tableBody.append(
+                            '<tr><td colspan="7" class="text-center text-danger">เกิดข้อผิดพลาดในการโหลดข้อมูล: ' +
+                            error + '</td></tr>');
+                    }
+                });
+            }
+
+            // Initial load of the table
+            const initialYearTerm = $('#onoff_year').val();
+            if (initialYearTerm) {
+                const [initialTerm, initialYear] = initialYearTerm.split('/');
+                loadPlansTable(initialYear, initialTerm);
+            }
 
             // FormSettingSendPlan submission
             $('#FormSettingSendPlan').submit(function(e) {
@@ -314,7 +356,7 @@
                 submitBtn.prop('disabled', true).find('.spinner-border').removeClass('d-none');
                 var formData = $(this).serialize();
                 $.ajax({
-                    url: '<?= base_url('admin/academic/sendplan/update_setting') ?>',
+                    url: '<?= base_url('admin/academic/course/update_setting') ?>',
                     type: 'POST',
                     data: formData,
                     dataType: 'json',
@@ -343,15 +385,19 @@
                 submitBtn.prop('disabled', true).find('.spinner-border').removeClass('d-none');
                 var formData = $(this).serialize();
                 $.ajax({
-                    url: '<?= base_url('admin/academic/sendplan/add_teacher_subject') ?>',
+                    url: '<?= base_url('admin/academic/course/add_teacher_subject') ?>',
                     type: 'POST',
                     data: formData,
                     dataType: 'json',
                     success: function(response) {
                         if (response.status === 'success') {
-                            Swal.fire('สำเร็จ!', response.message, 'success').then(() => {
-                                location.reload();
-                            });
+                            Swal.fire('สำเร็จ!', response.message, 'success');
+                            // Reload the table after successful addition
+                            const currentYearTerm = $('#onoff_year').val();
+                            if (currentYearTerm) {
+                                const [currentTerm, currentYear] = currentYearTerm.split('/');
+                                loadPlansTable(currentYear, currentTerm);
+                            }
                         } else {
                             Swal.fire('ผิดพลาด!', response.message, 'error');
                         }
@@ -376,7 +422,7 @@
                 var planTeacherId = $(this).attr('PlanTeacherID');
 
                 $.ajax({
-                    url: '<?= base_url('admin/academic/sendplan/get_plan_details') ?>',
+                    url: '<?= base_url('admin/academic/course/get_plan_details') ?>',
                     type: 'GET',
                     data: {
                         plan_code: planCode,
@@ -415,19 +461,22 @@
                 submitBtn.prop('disabled', true).find('.spinner-border').removeClass('d-none');
                 var formData = $(this).serialize();
                 $.ajax({
-                    url: '<?= base_url('admin/academic/sendplan/update_teacher') ?>',
+                    url: '<?= base_url('admin/academic/course/update_teacher') ?>',
                     type: 'POST',
                     data: formData,
                     dataType: 'json',
                     success: function(response) {
                         if (response) {
                             $('#editteacher').modal('hide');
-                            Swal.fire('สำเร็จ!', response.message, 'success').then(() => {
-                                $('#editteacher').modal('hide');
-                                location.reload();
-                            });
+                            Swal.fire('สำเร็จ!', response.message || 'อัปเดตข้อมูลเรียบร้อยแล้ว', 'success');
+                            // Reload the table after successful update
+                            const currentYearTerm = $('#onoff_year').val();
+                            if (currentYearTerm) {
+                                const [currentTerm, currentYear] = currentYearTerm.split('/');
+                                loadPlansTable(currentYear, currentTerm);
+                            }
                         } else {
-                            Swal.fire('ผิดพลาด!', response.message, 'error');
+                            Swal.fire('ผิดพลาด!', response.message || 'ไม่สามารถอัปเดตข้อมูลได้', 'error');
                         }
                     },
                     error: function(xhr, status, error) {
@@ -461,7 +510,7 @@
                 }).then((result) => {
                     if (result.isConfirmed) {
                         $.ajax({
-                            url: '<?= base_url('admin/academic/sendplan/delete_teacher_subject') ?>',
+                            url: '<?= base_url('admin/academic/course/delete_teacher_subject') ?>',
                             type: 'POST',
                             data: {
                                 plan_code: delPlanCode,
@@ -473,12 +522,16 @@
                             success: function(response) {
                                 if (response.status === 'success') {
                                     Swal.fire('ลบแล้ว!', response.message,
-                                        'success').then(() => {
-                                        location.reload();
-                                    });
+                                        'success');
+                                    // Reload the table after successful deletion
+                                    const currentYearTerm = $('#onoff_year').val();
+                                    if (currentYearTerm) {
+                                        const [currentTerm, currentYear] = currentYearTerm.split('/');
+                                        loadPlansTable(currentYear, currentTerm);
+                                    }
                                 } else {
                                     Swal.fire('ผิดพลาด!', response.message,
-                                    'error');
+                                        'error');
                                 }
                             },
                             error: function(xhr, status, error) {
@@ -491,16 +544,12 @@
                 });
             });
 
-            // Initialize DataTable
-            $('#TbSendPlan').DataTable({
-                // Client-side processing (no options needed for basic functionality)
-            });
-
             // onoff_year change handler
             $('#onoff_year').change(function() {
-                var selectedYear = $(this).val();
-                if (selectedYear) {
-                    window.location.href = '<?= base_url('Admin/Acade/Course/SendPlan') ?>?onoff_year=' + selectedYear;
+                var selectedYearTerm = $(this).val();
+                if (selectedYearTerm) {
+                    const [selectedTerm, selectedYear] = selectedYearTerm.split('/');
+                    loadPlansTable(selectedYear, selectedTerm);
                 }
             });
         });

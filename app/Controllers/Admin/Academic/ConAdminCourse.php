@@ -242,33 +242,6 @@ class ConAdminCourse extends BaseController
         echo ($result);
     }
 
-    public function DeleteSettingSendPlan()
-    {
-        $DelPlanCode = $this->request->getPost('PlanCode');
-        $DelPlanTerm = $this->request->getPost('PlanTerm');
-        $DelPlanYear = $this->request->getPost('PlanYear');
-        $DelPlanName = $this->request->getPost('PlanName');
-
-        $IF = [
-            'seplan_coursecode' => $DelPlanCode,
-            'seplan_year'       => $DelPlanYear,
-            'seplan_term'       => $DelPlanTerm,
-        ];
-        $result = $this->db->table('tb_send_plan')->where($IF)->delete();
-
-        $dir_path = FCPATH . 'uploads/academic/course/plan/' . $DelPlanYear . '/' . $DelPlanTerm . '/' . $DelPlanName;
-        
-        if (is_dir($dir_path)) {
-            // Use CodeIgniter 4's FileSystem library if available, or direct PHP functions
-            // For simplicity, using direct PHP functions here. Consider using recursiveDirectoryIterator for robust deletion.
-            // helper('filesystem'); // Already loaded in constructor
-            delete_files($dir_path, true); // Delete all files in the directory
-            rmdir($dir_path); // Remove the directory itself
-        }
-
-        echo $result;
-    }
-
     public function getPlanDetails()
     {
         $request = service('request');
@@ -300,6 +273,37 @@ class ConAdminCourse extends BaseController
                 'message' => 'ไม่พบข้อมูลแผนการสอน'
             ]);
         }
+    }
+
+    public function getPlansTableData()
+    {
+        $year = $this->request->getGet('year');
+        $term = $this->request->getGet('term');
+
+        $builder = $this->db->table('skjacth_academic.tb_send_plan');
+        $builder->select('
+            MAX(skjacth_personnel.tb_personnel.pers_id) as pers_id,
+            MAX(skjacth_personnel.tb_personnel.pers_prefix) as pers_prefix,
+            MAX(skjacth_personnel.tb_personnel.pers_firstname) as pers_firstname,
+            MAX(skjacth_personnel.tb_personnel.pers_lastname) as pers_lastname,
+            skjacth_academic.tb_send_plan.seplan_coursecode,
+            MAX(skjacth_academic.tb_send_plan.seplan_namesubject) as seplan_namesubject,
+            MAX(skjacth_academic.tb_send_plan.seplan_gradelevel) as seplan_gradelevel,
+            MAX(skjacth_academic.tb_send_plan.seplan_typesubject) as seplan_typesubject,
+            MAX(skjacth_academic.tb_send_plan.seplan_year) as seplan_year,
+            MAX(skjacth_academic.tb_send_plan.seplan_term) as seplan_term
+        ');
+        $builder->join('skjacth_personnel.tb_personnel', 'skjacth_academic.tb_send_plan.seplan_usersend = skjacth_personnel.tb_personnel.pers_id', 'LEFT');
+        if (!empty($year)) {
+            $builder->where('seplan_year', $year);
+        }
+        if (!empty($term)) {
+            $builder->where('seplan_term', $term);
+        }
+        $builder->groupBy('skjacth_academic.tb_send_plan.seplan_coursecode, skjacth_academic.tb_send_plan.seplan_usersend');
+        $plans = $builder->get()->getResult();
+
+        return $this->response->setJSON($plans);
     }
 
     public function getFilteredPlanData()
