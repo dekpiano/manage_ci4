@@ -1,0 +1,84 @@
+<?php
+
+namespace App\Controllers\Admin\Academic;
+
+use App\Controllers\BaseController;
+use App\Models\Admin\Academic\ModAdminCharacteristics; // Re-using the existing model
+
+class ConAdminRWL extends BaseController
+{
+    protected $ModAdminCharacteristics;
+    protected $setting_name = 'ReadingWritingLearning';
+
+    public function __construct()
+    {
+        $this->ModAdminCharacteristics = new ModAdminCharacteristics();
+        $this->db = \Config\Database::connect();
+    }
+
+    public function index()
+    {
+        $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
+        
+        $settings = $this->ModAdminCharacteristics->getSettings($this->setting_name);
+        
+        if (!$settings) {
+            $settings = (object)[
+                'onoff_status' => 'off',
+                'onoff_year' => '',
+                'onoff_name' => $this->setting_name
+            ];
+        }
+
+        // Generate year/term combinations
+        $years = [];
+        $current_buddhist_year = date('Y') + 543;
+        for ($i = $current_buddhist_year + 2; $i >= 2565; $i--) {
+            for ($j = 2; $j >= 1; $j--) {
+                $years[] = (object)['year_term' => $j . '/' . $i];
+            }
+        }
+
+        $data['title'] = 'ตั้งค่าระบบประเมินการอ่าน คิดวิเคราะห์และเขียน';
+        $data['settings'] = $settings;
+        $data['school_years'] = $years;
+
+        // Create the directory if it doesn't exist
+        if (!is_dir(APPPATH . 'Views/admin/Academic/RWL')) {
+            mkdir(APPPATH . 'Views/admin/Academic/RWL', 0777, true);
+        }
+
+        return view('admin/Academic/AdminRWL/index', $data);
+    }
+
+    public function update()
+    {
+        if ($this->request->getMethod() !== 'post') {
+            return redirect()->to('admin/academic/rwl/settings')->with('error', 'Invalid request method.');
+        }
+
+        $status = $this->request->getPost('status') === 'on' ? 'on' : 'off';
+        $yearTerm = $this->request->getPost('year_term');
+
+        $update_data = [
+            'onoff_status' => $status,
+            'onoff_year' => $yearTerm
+        ];
+
+        if ($this->ModAdminCharacteristics->updateSettings($this->setting_name, $update_data)) {
+            session()->setFlashdata('swal_alert', [
+                'type' => 'success',
+                'title' => 'สำเร็จ!',
+                'text' => 'บันทึกการตั้งค่าเรียบร้อยแล้ว'
+            ]);
+        } else {
+            session()->setFlashdata('swal_alert', [
+                'type' => 'error',
+                'title' => 'ผิดพลาด!',
+                'text' => 'ไม่สามารถบันทึกการตั้งค่าได้'
+            ]);
+        }
+
+        return redirect()->to('admin/academic/rwl/settings');
+    }
+}

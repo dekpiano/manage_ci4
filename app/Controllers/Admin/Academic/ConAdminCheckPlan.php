@@ -102,4 +102,10 @@ class ConAdminCheckPlan extends BaseController
         $plans = $this->ModAdminCheckPlan->getPlansByTeacherId($teacherId, $year, $term);
         return $this->response->setJSON($plans);
     }
+
+    public function getPlanDetails($planId)
+    {
+        $planDetails = $this->ModAdminCheckPlan->getPlanDetailsById($planId);
+        return $this->response->setJSON($planDetails);
+    }
 }

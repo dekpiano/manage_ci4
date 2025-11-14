@@ -22,6 +22,8 @@ use App\Controllers\Admin\Academic\ConAdminReportResult;
 use App\Controllers\Admin\Academic\ConAdminRoomOnline;
 use App\Controllers\Admin\Academic\ConAdminSaveScore;
 use App\Controllers\Admin\Academic\ConAdminSettingAdminRoles;
+use App\Controllers\Admin\Academic\ConAdminCharacteristics;
+use App\Controllers\Admin\Academic\ConAdminRWL;
 use App\Controllers\Admin\Academic\ConAdminStudents;
 use App\Controllers\Admin\Affairs\ConAdminStudentHomeRoom;
 use App\Controllers\Admin\Affairs\ConAdminStudentSupport;
@@ -127,6 +129,7 @@ $routes->post('admin/academic/checkplan/update', [ConAdminCheckPlan::class, 'upd
 $routes->post('admin/academic/checkplan/updateplanstatus', [ConAdminCheckPlan::class, 'updatePlanStatus']);
 $routes->get('admin/academic/checkplan/plans/(:segment)', [ConAdminCheckPlan::class, 'plansByGroup/$1']);
 $routes->get('admin/academic/checkplan/teacherplans/(:segment)', [ConAdminCheckPlan::class, 'getTeacherPlans/$1']);
+$routes->get('admin/academic/checkplan/plandetails/(:segment)', [ConAdminCheckPlan::class, 'getPlanDetails/$1']);
 
 $routes->get('Admin/Acade/Report', [ConAdminExtraSubject::class, 'ExtraReport']);
 
@@ -139,6 +142,14 @@ $routes->group('ConAdminSettingAdminRoles', function ($routes) {
     $routes->post('addAcademicStaff', [ConAdminSettingAdminRoles::class, 'addAcademicStaff']);
     $routes->post('deleteAcademicStaff', [ConAdminSettingAdminRoles::class, 'deleteAcademicStaff']);
 });
+
+// Routes for Desirable Characteristics Settings
+$routes->get('admin/academic/characteristics/settings', [ConAdminCharacteristics::class, 'index']);
+$routes->post('admin/academic/characteristics/update', [ConAdminCharacteristics::class, 'update']);
+
+// Routes for Reading, Writing, Learning (RWL) Settings
+$routes->get('admin/academic/rwl/settings', [ConAdminRWL::class, 'index']);
+$routes->post('admin/academic/rwl/update', [ConAdminRWL::class, 'update']);
 
 $routes->get('Admin/Acade/Evaluate/AcademicRepeat/(:segment)/(:segment)', [ConAdminAcademicRepeat::class, 'AdminAcademicRepeatMain']);
 $routes->get('Admin/Acade/Evaluate/AcademicRepeat/(:segment)/(:segment)/(:segment)', [ConAdminAcademicRepeat::class, 'AdminAcademicRepeatGrade']);

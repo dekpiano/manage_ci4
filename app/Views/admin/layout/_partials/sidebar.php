@@ -97,7 +97,7 @@
                     <?php endif; ?>
 
                     <?php if(in_array("งานวัดและประเมินผล",$Exp_Checkrloes)): ?>
-                    <li class="menu-item <?= ($uri->getTotalSegments() >= 3 && $uri->getSegment(3) == 'Evaluate' ? 'active open' : '') ?>">
+                    <li class="menu-item <?= ($uri->getTotalSegments() >= 3 && ($uri->getSegment(3) == 'Evaluate' || $uri->getSegment(3) == 'characteristics' || $uri->getSegment(3) == 'rwl') ? 'active open' : '') ?>">
                         <a href="javascript:void(0);" class="menu-link menu-toggle">
                             <i class="menu-icon tf-icons bx bx-file-find"></i>
                             <div data-i18n="งานวัดและประเมินผล">งานวัดและประเมินผล</div>
@@ -158,6 +158,16 @@
                             <li class="menu-item <?= ($uri->getTotalSegments() >= 4 && $uri->getSegment(4) == 'SaveScore' ? 'active' : '') ?>">
                                 <a href="<?=base_url('Admin/Acade/Evaluate/SaveScore');?>" class="menu-link">
                                     <div data-i18n="ตั้งค่าบันทึกผลการเรียน" style="white-space: normal;">ตั้งค่าบันทึกผลการเรียน</div>
+                                </a>
+                            </li>
+                            <li class="menu-item <?= ($uri->getSegment(2) == 'academic' && $uri->getSegment(3) == 'characteristics' ? 'active' : '') ?>">
+                                <a href="<?=base_url('admin/academic/characteristics/settings');?>" class="menu-link">
+                                    <div data-i18n="ตั้งค่าประเมินคุณลักษณะ" style="white-space: normal;">ตั้งค่าประเมินคุณลักษณะ</div>
+                                </a>
+                            </li>
+                            <li class="menu-item <?= ($uri->getSegment(2) == 'academic' && $uri->getSegment(3) == 'rwl' ? 'active' : '') ?>">
+                                <a href="<?=base_url('admin/academic/rwl/settings');?>" class="menu-link">
+                                    <div data-i18n="ตั้งค่าประเมินการอ่านฯ" style="white-space: normal;">ตั้งค่าประเมินการอ่านฯ</div>
                                 </a>
                             </li>
                         </ul>

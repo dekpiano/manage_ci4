@@ -125,9 +125,8 @@
                                 <th>แบบตรวจแผน</th>
                                 <th>บันทึกตรวจ</th>
                                 <th>โครงการสอน</th>
-                                <th>แผนการสอนหน้าเดียว</th>
+                                <th>แผนการจัดการเรียนรู้</th>
                                 <th>บันทึกหลังสอน</th>
-                                <th>รายละเอียด</th>
                             </tr>
                         </thead>
                         <tbody id="plans-table-body">
@@ -165,18 +164,15 @@
                     <dt class="col-sm-4">ชื่อวิชา:</dt>
                     <dd class="col-sm-8" id="detail-seplan_namesubject"></dd>
 
-                    <dt class="col-sm-4">ระดับ:</dt>
-                    <dd class="col-sm-8" id="detail-seplan_class"></dd>
-
-                    <dt class="col-sm-4">ประเภท:</dt>
-                    <dd class="col-sm-8" id="detail-seplan_subject_type"></dd>
+                    <dt class="col-sm-4">ประเภทแผน:</dt>
+                    <dd class="col-sm-8" id="detail-seplan_type_name"></dd>
 
                     <dt class="col-sm-4">วันที่ส่งแผน:</dt>
                     <dd class="col-sm-8" id="detail-seplan_createdate"></dd>
                 </dl>
-                <h6>ไฟล์แผนการสอน:</h6>
+                <h6>ไฟล์และสถานะ:</h6>
                 <ul class="list-group" id="detail-plan-files">
-                    <!-- Plan files will be loaded here -->
+                    <!-- Plan file and status will be loaded here -->
                 </ul>
             </div>
             <div class="modal-footer">
@@ -247,7 +243,7 @@ $(document).ready(function() {
         $('#modal-learning-group-full').text(learningGroup);
         $('#plans-table-body').empty(); // Clear previous plans
         $('#plans-table-body').append(
-            '<tr><td colspan="13" class="text-center"><div class="spinner-border spinner-border-sm text-primary" role="status"><span class="visually-hidden">Loading...</span></div> กำลังโหลดข้อมูล...</td></tr>'
+            '<tr><td colspan="10" class="text-center"><div class="spinner-border spinner-border-sm text-primary" role="status"><span class="visually-hidden">Loading...</span></div> กำลังโหลดข้อมูล...</td></tr>'
             ); // Add loading indicator
 
         $.ajax({
@@ -258,28 +254,6 @@ $(document).ready(function() {
                 $('#plans-table-body').empty(); // Clear loading indicator
                 if (plans.length > 0) {
                     plans.forEach(function(plan) {
-                        const status1_class = plan.seplan_status1 === 'ผ่าน' ?
-                            'btn-success' : (plan.seplan_status1 === 'ไม่ผ่าน' ?
-                                'btn-danger' : (plan.seplan_status1 === 'รอตรวจ' ?
-                                    'btn-warning' : 'btn-secondary'));
-                        const status1_icon = plan.seplan_status1 === 'ผ่าน' ?
-                            '<i class="bx bx-check"></i> ' : (plan
-                                .seplan_status1 === 'ไม่ผ่าน' ?
-                                '<i class="bx bx-x"></i> ' : (plan
-                                    .seplan_status1 === 'รอตรวจ' ?
-                                    '<i class="bx bx-time"></i> ' : ''));
-
-                        const status2_class = plan.seplan_status2 === 'ผ่าน' ?
-                            'btn-success' : (plan.seplan_status2 === 'ไม่ผ่าน' ?
-                                'btn-danger' : (plan.seplan_status2 === 'รอตรวจ' ?
-                                    'btn-warning' : 'btn-secondary'));
-                        const status2_icon = plan.seplan_status2 === 'ผ่าน' ?
-                            '<i class="bx bx-check"></i> ' : (plan
-                                .seplan_status2 === 'ไม่ผ่าน' ?
-                                '<i class="bx bx-x"></i> ' : (plan
-                                    .seplan_status2 === 'รอตรวจ' ?
-                                    '<i class="bx bx-time"></i> ' : ''));
-
                         const row = `
                             <tr>
                                 <td>${plan.seplan_year}/${plan.seplan_term}</td>
@@ -290,7 +264,8 @@ $(document).ready(function() {
                                 <td>
                                     ${plan.check_plan_file ? `
                                         <div class="btn-group">
-                                            <a href="${UPLOAD_PLAN_BASE_URL}${plan.seplan_year}/${plan.seplan_term}/${plan.seplan_namesubject}/${plan.check_plan_file}" target="_blank" class="btn btn-info btn-sm">ดู</a>
+                                            <a href="${UPLOAD_PLAN_BASE_URL}${plan.seplan_year}/${plan.seplan_term}/${plan.seplan_namesubject}/${plan.check_plan_file}" target="_blank" class="btn btn-info btn-sm"><i class="bx bx-show"></i></a>
+                                            <button type="button" class="btn btn-primary btn-sm view-plan-details-btn" data-plan-id="${plan.check_plan_file_id}"><i class="bx bx-search-alt"></i></button>
                                             <button type="button" class="btn ${plan.check_plan_file_status1 === 'ผ่าน' ? 'btn-success' : (plan.check_plan_file_status1 === 'ไม่ผ่าน' ? 'btn-danger' : (plan.check_plan_file_status1 === 'รอตรวจ' ? 'btn-warning' : 'btn-secondary'))} btn-sm approval-btn" data-plan-id="${plan.check_plan_file_id}" data-level="1" data-comment="${plan.check_plan_file_comment1}">${plan.check_plan_file_status1 === 'ผ่าน' ? '<i class="bx bx-check"></i>' : (plan.check_plan_file_status1 === 'ไม่ผ่าน' ? '<i class="bx bx-x"></i>' : (plan.check_plan_file_status1 === 'รอตรวจ' ? '<i class="bx bx-time"></i>' : ''))}หน.กลุ่ม</button>
                                             <button type="button" class="btn ${plan.check_plan_file_status2 === 'ผ่าน' ? 'btn-success' : (plan.check_plan_file_status2 === 'ไม่ผ่าน' ? 'btn-danger' : (plan.check_plan_file_status2 === 'รอตรวจ' ? 'btn-warning' : 'btn-secondary'))} btn-sm approval-btn" data-plan-id="${plan.check_plan_file_id}" data-level="2" data-comment="${plan.check_plan_file_comment2}">${plan.check_plan_file_status2 === 'ผ่าน' ? '<i class="bx bx-check"></i>' : (plan.check_plan_file_status2 === 'ไม่ผ่าน' ? '<i class="bx bx-x"></i>' : (plan.check_plan_file_status2 === 'รอตรวจ' ? '<i class="bx bx-time"></i>' : ''))}หน.หลักสูตร</button>
                                         </div>
@@ -299,7 +274,8 @@ $(document).ready(function() {
                                 <td>
                                     ${plan.record_check_file ? `
                                         <div class="btn-group">
-                                            <a href="${UPLOAD_PLAN_BASE_URL}${plan.seplan_year}/${plan.seplan_term}/${plan.seplan_namesubject}/${plan.record_check_file}" target="_blank" class="btn btn-info btn-sm">ดู</a>
+                                            <a href="${UPLOAD_PLAN_BASE_URL}${plan.seplan_year}/${plan.seplan_term}/${plan.seplan_namesubject}/${plan.record_check_file}" target="_blank" class="btn btn-info btn-sm"><i class="bx bx-show"></i></a>
+                                            <button type="button" class="btn btn-primary btn-sm view-plan-details-btn" data-plan-id="${plan.record_check_file_id}"><i class="bx bx-search-alt"></i></button>
                                             <button type="button" class="btn ${plan.record_check_file_status1 === 'ผ่าน' ? 'btn-success' : (plan.record_check_file_status1 === 'ไม่ผ่าน' ? 'btn-danger' : (plan.record_check_file_status1 === 'รอตรวจ' ? 'btn-warning' : 'btn-secondary'))} btn-sm approval-btn" data-plan-id="${plan.record_check_file_id}" data-level="1" data-comment="${plan.record_check_file_comment1}">${plan.record_check_file_status1 === 'ผ่าน' ? '<i class="bx bx-check"></i>' : (plan.record_check_file_status1 === 'ไม่ผ่าน' ? '<i class="bx bx-x"></i>' : (plan.record_check_file_status1 === 'รอตรวจ' ? '<i class="bx bx-time"></i>' : ''))}หน.กลุ่ม</button>
                                             <button type="button" class="btn ${plan.record_check_file_status2 === 'ผ่าน' ? 'btn-success' : (plan.record_check_file_status2 === 'ไม่ผ่าน' ? 'btn-danger' : (plan.record_check_file_status2 === 'รอตรวจ' ? 'btn-warning' : 'btn-secondary'))} btn-sm approval-btn" data-plan-id="${plan.record_check_file_id}" data-level="2" data-comment="${plan.record_check_file_comment2}">${plan.record_check_file_status2 === 'ผ่าน' ? '<i class="bx bx-check"></i>' : (plan.record_check_file_status2 === 'ไม่ผ่าน' ? '<i class="bx bx-x"></i>' : (plan.record_check_file_status2 === 'รอตรวจ' ? '<i class="bx bx-time"></i>' : ''))}หน.หลักสูตร</button>
                                         </div>
@@ -308,7 +284,8 @@ $(document).ready(function() {
                                 <td>
                                     ${plan.project_plan_file ? `
                                         <div class="btn-group">
-                                            <a href="${UPLOAD_PLAN_BASE_URL}${plan.seplan_year}/${plan.seplan_term}/${plan.seplan_namesubject}/${plan.project_plan_file}" target="_blank" class="btn btn-info btn-sm">ดู</a>
+                                            <a href="${UPLOAD_PLAN_BASE_URL}${plan.seplan_year}/${plan.seplan_term}/${plan.seplan_namesubject}/${plan.project_plan_file}" target="_blank" class="btn btn-info btn-sm"><i class="bx bx-show"></i></a>
+                                            <button type="button" class="btn btn-primary btn-sm view-plan-details-btn" data-plan-id="${plan.project_plan_file_id}"><i class="bx bx-search-alt"></i></button>
                                             <button type="button" class="btn ${plan.project_plan_file_status1 === 'ผ่าน' ? 'btn-success' : (plan.project_plan_file_status1 === 'ไม่ผ่าน' ? 'btn-danger' : (plan.project_plan_file_status1 === 'รอตรวจ' ? 'btn-warning' : 'btn-secondary'))} btn-sm approval-btn" data-plan-id="${plan.project_plan_file_id}" data-level="1" data-comment="${plan.project_plan_file_comment1}">${plan.project_plan_file_status1 === 'ผ่าน' ? '<i class="bx bx-check"></i>' : (plan.project_plan_file_status1 === 'ไม่ผ่าน' ? '<i class="bx bx-x"></i>' : (plan.project_plan_file_status1 === 'รอตรวจ' ? '<i class="bx bx-time"></i>' : ''))}หน.กลุ่ม</button>
                                             <button type="button" class="btn ${plan.project_plan_file_status2 === 'ผ่าน' ? 'btn-success' : (plan.project_plan_file_status2 === 'ไม่ผ่าน' ? 'btn-danger' : (plan.project_plan_file_status2 === 'รอตรวจ' ? 'btn-warning' : 'btn-secondary'))} btn-sm approval-btn" data-plan-id="${plan.project_plan_file_id}" data-level="2" data-comment="${plan.project_plan_file_comment2}">${plan.project_plan_file_status2 === 'ผ่าน' ? '<i class="bx bx-check"></i>' : (plan.project_plan_file_status2 === 'ไม่ผ่าน' ? '<i class="bx bx-x"></i>' : (plan.project_plan_file_status2 === 'รอตรวจ' ? '<i class="bx bx-time"></i>' : ''))}หน.หลักสูตร</button>
                                         </div>
@@ -317,7 +294,8 @@ $(document).ready(function() {
                                 <td>
                                     ${plan.use_plan_file ? `
                                         <div class="btn-group">
-                                            <a href="${UPLOAD_PLAN_BASE_URL}${plan.seplan_year}/${plan.seplan_term}/${plan.seplan_namesubject}/${plan.use_plan_file}" target="_blank" class="btn btn-info btn-sm">ดู</a>
+                                            <a href="${UPLOAD_PLAN_BASE_URL}${plan.seplan_year}/${plan.seplan_term}/${plan.seplan_namesubject}/${plan.use_plan_file}" target="_blank" class="btn btn-info btn-sm"><i class="bx bx-show"></i></a>
+                                            <button type="button" class="btn btn-primary btn-sm view-plan-details-btn" data-plan-id="${plan.use_plan_file_id}"><i class="bx bx-search-alt"></i></button>
                                             <button type="button" class="btn ${plan.use_plan_file_status1 === 'ผ่าน' ? 'btn-success' : (plan.use_plan_file_status1 === 'ไม่ผ่าน' ? 'btn-danger' : (plan.use_plan_file_status1 === 'รอตรวจ' ? 'btn-warning' : 'btn-secondary'))} btn-sm approval-btn" data-plan-id="${plan.use_plan_file_id}" data-level="1" data-comment="${plan.use_plan_file_comment1}">${plan.use_plan_file_status1 === 'ผ่าน' ? '<i class="bx bx-check"></i>' : (plan.use_plan_file_status1 === 'ไม่ผ่าน' ? '<i class="bx bx-x"></i>' : (plan.use_plan_file_status1 === 'รอตรวจ' ? '<i class="bx bx-time"></i>' : ''))}หน.กลุ่ม</button>
                                             <button type="button" class="btn ${plan.use_plan_file_status2 === 'ผ่าน' ? 'btn-success' : (plan.use_plan_file_status2 === 'ไม่ผ่าน' ? 'btn-danger' : (plan.use_plan_file_status2 === 'รอตรวจ' ? 'btn-warning' : 'btn-secondary'))} btn-sm approval-btn" data-plan-id="${plan.use_plan_file_id}" data-level="2" data-comment="${plan.use_plan_file_comment2}">${plan.use_plan_file_status2 === 'ผ่าน' ? '<i class="bx bx-check"></i>' : (plan.use_plan_file_status2 === 'ไม่ผ่าน' ? '<i class="bx bx-x"></i>' : (plan.use_plan_file_status2 === 'รอตรวจ' ? '<i class="bx bx-time"></i>' : ''))}หน.หลักสูตร</button>
                                         </div>
@@ -326,14 +304,12 @@ $(document).ready(function() {
                                 <td>
                                     ${plan.after_teach_note_file ? `
                                         <div class="btn-group">
-                                            <a href="${UPLOAD_PLAN_BASE_URL}${plan.seplan_year}/${plan.seplan_term}/${plan.seplan_namesubject}/${plan.after_teach_note_file}" target="_blank" class="btn btn-info btn-sm">ดู</a>
+                                            <a href="${UPLOAD_PLAN_BASE_URL}${plan.seplan_year}/${plan.seplan_term}/${plan.seplan_namesubject}/${plan.after_teach_note_file}" target="_blank" class="btn btn-info btn-sm"><i class="bx bx-show"></i></a>
+                                            <button type="button" class="btn btn-primary btn-sm view-plan-details-btn" data-plan-id="${plan.after_teach_note_file_id}"><i class="bx bx-search-alt"></i></button>
                                             <button type="button" class="btn ${plan.after_teach_note_file_status1 === 'ผ่าน' ? 'btn-success' : (plan.after_teach_note_file_status1 === 'ไม่ผ่าน' ? 'btn-danger' : (plan.after_teach_note_file_status1 === 'รอตรวจ' ? 'btn-warning' : 'btn-secondary'))} btn-sm approval-btn" data-plan-id="${plan.after_teach_note_file_id}" data-level="1" data-comment="${plan.after_teach_note_file_comment1}">${plan.after_teach_note_file_status1 === 'ผ่าน' ? '<i class="bx bx-check"></i>' : (plan.after_teach_note_file_status1 === 'ไม่ผ่าน' ? '<i class="bx bx-x"></i>' : (plan.after_teach_note_file_status1 === 'รอตรวจ' ? '<i class="bx bx-time"></i>' : ''))}หน.กลุ่ม</button>
                                             <button type="button" class="btn ${plan.after_teach_note_file_status2 === 'ผ่าน' ? 'btn-success' : (plan.after_teach_note_file_status2 === 'ไม่ผ่าน' ? 'btn-danger' : (plan.after_teach_note_file_status2 === 'รอตรวจ' ? 'btn-warning' : 'btn-secondary'))} btn-sm approval-btn" data-plan-id="${plan.after_teach_note_file_id}" data-level="2" data-comment="${plan.after_teach_note_file_comment2}">${plan.after_teach_note_file_status2 === 'ผ่าน' ? '<i class="bx bx-check"></i>' : (plan.after_teach_note_file_status2 === 'ไม่ผ่าน' ? '<i class="bx bx-x"></i>' : (plan.after_teach_note_file_status2 === 'รอตรวจ' ? '<i class="bx bx-time"></i>' : ''))}หน.หลักสูตร</button>
                                         </div>
                                     ` : ''}
-                                </td>
-                                <td>
-                                    <button type="button" class="btn btn-info btn-sm view-plan-details-btn" data-plan='${JSON.stringify(plan)}'>ดูรายละเอียด</button>
                                 </td>
                             </tr>
                         `;
@@ -341,14 +317,14 @@ $(document).ready(function() {
                     });
                 } else {
                     $('#plans-table-body').append(
-                        '<tr><td colspan="6" class="text-center">ไม่พบแผนการสอนสำหรับครูท่านนี้</td></tr>'
+                        '<tr><td colspan="10" class="text-center">ไม่พบแผนการสอนสำหรับครูท่านนี้</td></tr>'
                         );
                 }
             },
             error: function() {
                 $('#plans-table-body').empty(); // Clear loading indicator
                 $('#plans-table-body').append(
-                    '<tr><td colspan="13" class="text-center">เกิดข้อผิดพลาดในการดึงข้อมูลแผนการสอน</td></tr>'
+                    '<tr><td colspan="10" class="text-center">เกิดข้อผิดพลาดในการดึงข้อมูลแผนการสอน</td></tr>'
                     );
             }
         });
@@ -359,65 +335,69 @@ $(document).ready(function() {
 
     // Handle the click event for the 'ดูรายละเอียด' button to open and populate the plan details modal
     $(document).on('click', '.view-plan-details-btn', function() {
-        const plan = $(this).data('plan');
+        const planId = $(this).data('plan-id');
 
-        $('#detail-seplan_year_term').text(`${plan.seplan_year}/${plan.seplan_term}`);
-        $('#detail-seplan_coursecode').text(plan.seplan_coursecode);
-        $('#detail-seplan_namesubject').text(plan.seplan_namesubject);
-        $('#detail-seplan_class').text(plan.seplan_class);
-        $('#detail-seplan_subject_type').text(plan.seplan_subject_type);
-        $('#detail-seplan_createdate').text(plan.seplan_createdate);
-
-        const planFilesList = $('#detail-plan-files');
-        planFilesList.empty(); // Clear previous files
-
-        const fileTypes = [{
-                key: 'check_plan_file',
-                label: 'แบบตรวจแผน'
-            },
-            {
-                key: 'record_check_file',
-                label: 'บันทึกตรวจ'
-            },
-            {
-                key: 'project_plan_file',
-                label: 'โครงการสอน'
-            },
-            {
-                key: 'use_plan_file',
-                label: 'แผนการสอนหน้าเดียว'
-            },
-            {
-                key: 'after_teach_note_file',
-                label: 'บันทึกหลังสอน'
-            }
-        ];
-
-        fileTypes.forEach(fileType => {
-            const fileKey = fileType.key;
-            const fileLabel = fileType.label;
-            const fileName = plan[fileKey];
-            const fileStatus1 = plan[`${fileKey}_status1`];
-            const fileComment1 = plan[`${fileKey}_comment1`];
-            const fileStatus2 = plan[`${fileKey}_status2`];
-            const fileComment2 = plan[`${fileKey}_comment2`];
-
-            if (fileName) {
-                const listItem = `
-                                <li class="list-group-item">
-                                    <strong>${fileLabel}:</strong>
-                                    <a href="${UPLOAD_PLAN_BASE_URL}${plan.seplan_year}/${plan.seplan_term}/${plan.seplan_namesubject}/${fileName}" target="_blank" class="btn btn-sm btn-primary ms-2">ดูไฟล์</a>
-                                    <p class="mb-0 mt-2"><strong>สถานะ หน.กลุ่ม:</strong> ${fileStatus1 || 'ยังไม่ตรวจสอบ'} ${fileComment1 ? `(ความคิดเห็น: ${fileComment1})` : ''}</p>
-                                    <p class="mb-0"><strong>สถานะ หน.หลักสูตร:</strong> ${fileStatus2 || 'ยังไม่ตรวจสอบ'} ${fileComment2 ? `(ความคิดเห็น: ${fileComment2})` : ''}</p>
-                                </li>
-                            `;
-                planFilesList.append(listItem);
-            }
-        });
+        // Clear previous details
+        $('#detail-seplan_year_term').text('');
+        $('#detail-seplan_coursecode').text('');
+        $('#detail-seplan_namesubject').text('');
+        $('#detail-seplan_type_name').text('');
+        $('#detail-seplan_createdate').text('');
+        $('#detail-plan-files').empty().append('<li class="list-group-item">กำลังโหลด...</li>');
 
         const planDetailsModal = new bootstrap.Modal(document.getElementById('planDetailsModal'));
         planDetailsModal.show();
+
+        $.ajax({
+            url: `<?= site_url("admin/academic/checkplan/plandetails/") ?>${planId}`,
+            type: 'GET',
+            dataType: 'json',
+            success: function(plan) {
+                if (plan) {
+                    $('#detail-seplan_year_term').text(`${plan.seplan_year}/${plan.seplan_term}`);
+                    $('#detail-seplan_coursecode').text(plan.seplan_coursecode);
+                    $('#detail-seplan_namesubject').text(plan.seplan_namesubject);
+                    $('#detail-seplan_type_name').text(plan.type_name);
+                    $('#detail-seplan_createdate').text(plan.seplan_createdate);
+
+                    const planFilesList = $('#detail-plan-files');
+                    planFilesList.empty(); // Clear loading indicator
+
+                    if (plan.seplan_file) {
+                        const listItem = `
+                            <li class="list-group-item">
+                                <strong>ไฟล์:</strong>
+                                <a href="${UPLOAD_PLAN_BASE_URL}${plan.seplan_year}/${plan.seplan_term}/${plan.seplan_namesubject}/${plan.seplan_file}" target="_blank" class="btn btn-sm btn-primary ms-2">ดูไฟล์</a>
+                                <p class="mb-0 mt-2"><strong>สถานะ หน.กลุ่ม:</strong> ${plan.seplan_status1 || 'ยังไม่ตรวจสอบ'} ${plan.seplan_comment1 ? `(ความคิดเห็น: ${plan.seplan_comment1})` : ''}</p>
+                                <p class="mb-0"><strong>สถานะ หน.หลักสูตร:</strong> ${plan.seplan_status2 || 'ยังไม่ตรวจสอบ'} ${plan.seplan_comment2 ? `(ความคิดเห็น: ${plan.seplan_comment2})` : ''}</p>
+                            </li>
+                        `;
+                        planFilesList.append(listItem);
+                    } else {
+                        planFilesList.append('<li class="list-group-item">ไม่พบไฟล์สำหรับแผนนี้</li>');
+                    }
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'ไม่พบรายละเอียดแผน',
+                        text: 'ไม่สามารถดึงข้อมูลแผนการสอนได้'
+                    }).then(() => {
+                        planDetailsModal.hide();
+                    });
+                }
+            },
+            error: function() {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'เกิดข้อผิดพลาด',
+                    text: 'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์เพื่อดึงรายละเอียดแผนได้'
+                }).then(() => {
+                    planDetailsModal.hide();
+                });
+            }
+        });
     });
+
 
     let clickedButton;
     // Handle the click event for the approval buttons
