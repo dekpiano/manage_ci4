@@ -194,32 +194,16 @@ class ConStudents extends BaseController
     public function SearchClassSchedule()
     {
         $year = $this->request->getGet('year');
-        $term = 1; // Default term
+        $term = $this->request->getGet('term');
+        $schedule = [];
 
-        if (!empty($year)) {
+        if (!empty($year) && !empty($term)) {
             $schedule = $this->db->table('tb_class_schedule')
                 ->where('schestu_term', $term)
                 ->where('schestu_year', $year)
                 ->orderBy('schestu_classname', 'ASC')
                 ->get()
                 ->getResult();
-        } else {
-            // Optional: handle case where no year is provided, maybe default to current year or return empty
-            $schoolYearData = $this->db->table('tb_schoolyear')->get()->getRow();
-            if ($schoolYearData) {
-                $yearParts = explode('/', $schoolYearData->schyear_year);
-                $term = $yearParts[0];
-                $year = $yearParts[1];
-
-                $schedule = $this->db->table('tb_class_schedule')
-                    ->where('schestu_term', $term)
-                    ->where('schestu_year', $year)
-                    ->orderBy('schestu_classname', 'ASC')
-                    ->get()
-                    ->getResult();
-            } else {
-                $schedule = [];
-            }
         }
 
         return $this->response->setJSON($schedule);

@@ -14,6 +14,11 @@
                             <option value="">เลือกปีการศึกษา...</option>
                         </select>
                     </div>
+                    <div style="margin-right: 10px;">
+                        <select class="w-auto countries" id="SearchTerm">
+                            <option value="">เลือกภาคเรียน...</option>
+                        </select>
+                    </div>
                     <div>
                         <select class="w-auto countries" id="SearchClassSchedule">
                             <option value="">เลือกตารางเรียน...</option>
@@ -48,11 +53,17 @@ $(document).ready(function() {
         select: '#SearchYear'
     });
 
+    var slimTerm = new SlimSelect({
+        select: '#SearchTerm'
+    });
+
     var slimClass = new SlimSelect({
         select: '#SearchClassSchedule'
     });
 
-    // Initially disable class schedule select
+    // Initially disable term and class schedule selects
+    $('#SearchTerm').prop('disabled', true);
+    slimTerm.disable();
     $('#SearchClassSchedule').prop('disabled', true);
     slimClass.disable();
 
@@ -77,20 +88,47 @@ $(document).ready(function() {
     $('#SearchYear').change(function() {
         var selectedYear = $(this).val();
         
-        // Reset and disable class schedule select
+        // Reset and disable term and class schedule selects
+        slimTerm.setData([{ text: 'เลือกภาคเรียน...', value: '' }]);
         slimClass.setData([{ text: 'เลือกตารางเรียน...', value: '' }]);
         $('#image').hide();
+        $('#SearchClassSchedule').prop('disabled', true);
+        slimClass.disable();
         
         if (selectedYear) {
-            $('#schedule-title').html('ตารางเรียน ภาคเรียนที่ 1/' + selectedYear + ' <small>(ฉบับทดลอง)</small>');
+            $('#schedule-title').html('ตารางเรียน <small>(ฉบับทดลอง)</small>');
+            $('#SearchTerm').prop('disabled', false);
+            slimTerm.enable();
+            slimTerm.setData([
+                { text: 'เลือกภาคเรียน...', value: '' },
+                { text: 'ภาคเรียนที่ 1', value: '1' },
+                { text: 'ภาคเรียนที่ 2', value: '2' }
+            ]);
+        } else {
+            $('#SearchTerm').prop('disabled', true);
+            slimTerm.disable();
+        }
+    });
+
+    // Handle term selection change
+    $('#SearchTerm').change(function() {
+        var selectedYear = $('#SearchYear').val();
+        var selectedTerm = $(this).val();
+
+        // Reset class schedule select
+        slimClass.setData([{ text: 'เลือกตารางเรียน...', value: '' }]);
+        $('#image').hide();
+
+        if (selectedYear && selectedTerm) {
+            $('#schedule-title').html('ตารางเรียน ภาคเรียนที่ ' + selectedTerm + '/' + selectedYear + ' <small>(ฉบับทดลอง)</small>');
             $('#SearchClassSchedule').prop('disabled', false);
             slimClass.enable();
             
-            // Load class schedules for the selected year
+            // Load class schedules for the selected year and term
             $.ajax({
                 url: '<?= site_url('user/searchclassschedule') ?>',
                 method: 'GET',
-                data: { year: selectedYear },
+                data: { year: selectedYear, term: selectedTerm },
                 dataType: 'json',
                 success: function(data) {
                     var classOptions = [{ text: 'เลือกตารางเรียน...', value: '' }];
@@ -109,7 +147,6 @@ $(document).ready(function() {
                 }
             });
         } else {
-            $('#schedule-title').html('ตารางเรียน <small>(ฉบับทดลอง)</small>');
             $('#SearchClassSchedule').prop('disabled', true);
             slimClass.disable();
         }
@@ -119,11 +156,11 @@ $(document).ready(function() {
     $('#SearchClassSchedule').change(function() {
         var selectedImage = $(this).val();
         var selectedYear = $('#SearchYear').val();
-        var term = 1; // Assuming term 1 as it is not selectable
+        var selectedTerm = $('#SearchTerm').val();
 
-        if (selectedImage && selectedYear) {
+        if (selectedImage && selectedYear && selectedTerm) {
             // Path is now just the dynamic parts, as the base URL contains the static path
-            var imagePath = selectedYear + '/' + term + '/' + selectedImage;
+            var imagePath = selectedYear + '/' + selectedTerm + '/' + selectedImage;
             var imageUrl = uploadServerBaseUrl + imagePath;
             var proxiedUrl = '<?= base_url('image_proxy.php?url=') ?>' + encodeURIComponent(imageUrl);
             $('#image').attr('src', proxiedUrl).show();
