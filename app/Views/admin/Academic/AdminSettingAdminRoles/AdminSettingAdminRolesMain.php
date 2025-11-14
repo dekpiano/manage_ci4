@@ -67,7 +67,7 @@
     <!-- Admin Staff and Permissions -->
     <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">เจ้าหน้าที่ฝ่ายวิชาการและสิทธิ์การเข้าถึง</h5>
+            <h5 class="mb-0">เจ้าหน้าที่และหัวหน้างานฝ่ายวิชาการ</h5>
             <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addStaffModal">
                 <i class='bx bx-plus me-1'></i> เพิ่มเจ้าหน้าที่
             </button>
@@ -78,13 +78,14 @@
                     <tr>
                         <th>ชื่อ-นามสกุล</th>
                         <th>บทบาท</th>
-                        <th>สิทธิ์การเข้าถึงระบบ</th>
+                        <th>สิทธิ์การเข้าถึง</th>
+                        <th>ตำแหน่งหัวหน้างาน</th>
                         <th>จัดการ</th>
                     </tr>
                 </thead>
                 <tbody class="table-border-bottom-0">
                     <?php foreach ($Manager as $user_role) : ?>
-                        <?php if ($user_role->admin_rloes_status == 'admin') : ?>
+                        <?php if (in_array($user_role->admin_rloes_status, ['admin', 'superadmin'])) : ?>
                             <tr>
                                 <td><strong><?= getTeacherName($user_role->admin_rloes_userid, $teachers) ?></strong></td>
                                 <td><span class="badge bg-label-info me-1"><?= ucfirst($user_role->admin_rloes_status) ?></span></td>
@@ -99,11 +100,15 @@
                                     ?>
                                 </td>
                                 <td>
+                                    <?= !empty($user_role->admin_rloes_academic_position) ? htmlspecialchars($user_role->admin_rloes_academic_position) : '<span class="text-muted">-- ไม่มี --</span>' ?>
+                                </td>
+                                <td>
                                     <div class="btn-group">
                                         <button class="btn btn-sm btn-icon btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editPermissionsModal" 
                                                 data-user-id="<?= $user_role->admin_rloes_userid ?>" 
                                                 data-user-name="<?= getTeacherName($user_role->admin_rloes_userid, $teachers) ?>"
-                                                data-permissions="<?= htmlspecialchars($user_role->admin_rloes_nanetype) ?>">
+                                                data-permissions="<?= htmlspecialchars($user_role->admin_rloes_nanetype) ?>"
+                                                data-position="<?= htmlspecialchars($user_role->admin_rloes_academic_position) ?>">
                                             <i class="bx bx-edit"></i>
                                         </button>
                                         <button class="btn btn-sm btn-icon btn-outline-danger delete-staff-btn" 
@@ -205,6 +210,30 @@
                         </div>
                     <?php endforeach; ?>
                 </div>
+
+                <hr class="my-4">
+
+                <h5>ตำแหน่งหัวหน้างาน (ถ้ามี)</h5>
+                <div class="mb-3">
+                    <label for="edit-supervisor-position-select" class="form-label">ตำแหน่ง</label>
+                    <select id="edit-supervisor-position-select" class="form-select">
+                        <option value="">-- ไม่มี --</option>
+                        <option value="หัวหน้างานข้อมูลสารสนเทศและแผนงานวิชาการ">หัวหน้างานข้อมูลสารสนเทศและแผนงานวิชาการ</option>
+                        <option value="หัวหน้างานพัฒนาและใช้หลักสูตรสถานศึกษา">หัวหน้างานพัฒนาและใช้หลักสูตรสถานศึกษา</option>
+                        <option value="หัวหน้าโครงการห้องเรียนพิเศษ">หัวหน้าโครงการห้องเรียนพิเศษ</option>
+                        <option value="หัวหน้างานจัดตารางสอน">หัวหน้างานจัดตารางสอน</option>
+                        <option value="หัวหน้างานนิเทศวิชาการ">หัวหน้างานนิเทศวิชาการ</option>
+                        <option value="หัวหน้างานกิจกรรมพัฒนาผู้เรียน">หัวหน้างานกิจกรรมพัฒนาผู้เรียน</option>
+                        <option value="หัวหน้างานห้องสมุด">หัวหน้างานห้องสมุด</option>
+                        <option value="หัวหน้างานวัดผลและประเมินผล">หัวหน้างานวัดผลและประเมินผล</option>
+                        <option value="หัวหน้างานแนะแนว">หัวหน้างานแนะแนว</option>
+                        <option value="other">อื่น ๆ</option>
+                    </select>
+                </div>
+                <div class="mb-3" id="edit-supervisor-position-other-wrapper" style="display: none;">
+                    <label for="edit-supervisor-position-other" class="form-label">ระบุตำแหน่งอื่น ๆ</label>
+                    <input type="text" id="edit-supervisor-position-other" class="form-control">
+                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">ปิด</button>
@@ -213,6 +242,7 @@
         </div>
     </div>
 </div>
+
 <?= $this->endSection() ?>
 
 <?= $this->section('script') ?>
@@ -234,6 +264,12 @@
         $('#add-teacher-select').select2({
             theme: "bootstrap-5",
             dropdownParent: $('#addStaffModal'), // Important for modals
+            placeholder: "-- เลือกรายชื่อ --",
+            allowClear: true
+        });
+        $('#add-supervisor-select').select2({
+            theme: "bootstrap-5",
+            dropdownParent: $('#addSupervisorModal'),
             placeholder: "-- เลือกรายชื่อ --",
             allowClear: true
         });
@@ -385,7 +421,8 @@
             const button = $(event.relatedTarget);
             permissionUserId = button.data('user-id');
             const userName = button.data('user-name');
-            const currentPermissions = button.data('permissions').split('|');
+            const currentPermissions = button.data('permissions').toString().split('|');
+            const currentPosition = button.data('position').toString();
 
             $('#permission-user-name').text(userName);
             $('#permission-user-id-input').val(permissionUserId);
@@ -397,6 +434,27 @@
                     $('#permissions-checkbox-list input[value="' + perm + '"]').prop('checked', true);
                 }
             });
+
+            // Reset and set supervisor position
+            $('#edit-supervisor-position-other-wrapper').hide();
+            $('#edit-supervisor-position-other').val('');
+            if ($('#edit-supervisor-position-select option[value="' + currentPosition + '"]').length > 0) {
+                $('#edit-supervisor-position-select').val(currentPosition);
+            } else if (currentPosition) {
+                $('#edit-supervisor-position-select').val('other');
+                $('#edit-supervisor-position-other').val(currentPosition);
+                $('#edit-supervisor-position-other-wrapper').show();
+            } else {
+                $('#edit-supervisor-position-select').val('');
+            }
+        });
+
+        $('#edit-supervisor-position-select').on('change', function() {
+            if ($(this).val() === 'other') {
+                $('#edit-supervisor-position-other-wrapper').show();
+            } else {
+                $('#edit-supervisor-position-other-wrapper').hide();
+            }
         });
 
         $('#save-permissions-btn').on('click', function() {
@@ -405,16 +463,20 @@
                 selectedPermissions.push($(this).val());
             });
 
+            let supervisorPosition = $('#edit-supervisor-position-select').val();
+            if (supervisorPosition === 'other') {
+                supervisorPosition = $('#edit-supervisor-position-other').val();
+            }
+
             const dataToSend = {
-                'option': [{
-                    'mainKey': permissionUserId,
-                    'options': selectedPermissions
-                }],
+                'user_id': permissionUserId,
+                'permissions': selectedPermissions.join('|'),
+                'position': supervisorPosition,
                 '<?= csrf_token() ?>': '<?= csrf_hash() ?>'
             };
 
             $.ajax({
-                url: '<?= site_url("ConAdminSettingAdminRoles/SelectWork") ?>',
+                url: '<?= site_url("ConAdminSettingAdminRoles/updateStaffDetails") ?>', // Point to a new or updated controller method
                 type: 'POST',
                 data: dataToSend,
                 dataType: 'json',
@@ -423,7 +485,7 @@
                 },
                 success: function(response) {
                     if (response.success) {
-                        Swal.fire({ icon: 'success', title: 'บันทึกสิทธิ์สำเร็จ', showConfirmButton: false, timer: 1500 });
+                        Swal.fire({ icon: 'success', title: 'บันทึกข้อมูลสำเร็จ', showConfirmButton: false, timer: 1500 });
                         $('#editPermissionsModal').modal('hide');
                         setTimeout(() => location.reload(), 1000);
                     } else {

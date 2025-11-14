@@ -29,7 +29,7 @@ class ConAdminSettingAdminRoles extends BaseController
                                  ->get()
                                  ->getRow();
 
-        if (!in_array(@$check_status->admin_rloes_status, ['admin', 'manager'])) {
+        if (!in_array(@$check_status->admin_rloes_status, ['admin', 'manager', 'superadmin'])) {
             session()->setFlashdata('msg', 'OK');
             session()->setFlashdata('messge', 'คุณไม่มีสิทธิ์ในระบบจัดข้อมูลนี้ ติดต่อเจ้าหน้าที่คอม');
             session()->setFlashdata('alert', 'error');
@@ -40,12 +40,29 @@ class ConAdminSettingAdminRoles extends BaseController
 
     public function AcademicSettingAdminRoles()
     {
+        $currentUserRole = $this->db->table('tb_admin_rloes')
+            ->where('admin_rloes_userid', session('login_id'))
+            ->get()
+            ->getRow();
+
+        // admin_rloes_status = 'superadmin' is Super Admin
+        // The user record for 'หัวหน้าฝ่ายวิชาการ' has admin_rloes_id = 3
+        $isSuperAdmin = ($currentUserRole && $currentUserRole->admin_rloes_status === 'superadmin');
+        $isAcademicHead = ($currentUserRole && $currentUserRole->admin_rloes_id == 3);
+
+        if (!$isSuperAdmin && !$isAcademicHead) {
+            session()->setFlashdata('msg', 'OK');
+            session()->setFlashdata('messge', 'คุณไม่มีสิทธิ์ในการเข้าถึงหน้านี้');
+            session()->setFlashdata('alert', 'error');
+            return redirect()->to('admin/home');
+        }
+
         $data['title'] = "บทบาทในวิชาการ";
         $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
         $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();
         
         $data['Manager'] = $this->db->table('tb_admin_rloes')
-                                    ->select('admin_rloes_userid, admin_rloes_id, admin_rloes_nanetype, admin_rloes_status')
+                                    ->select('admin_rloes_userid, admin_rloes_id, admin_rloes_nanetype, admin_rloes_status, admin_rloes_academic_position')
                                     ->get()
                                     ->getResult();
 
@@ -161,6 +178,30 @@ class ConAdminSettingAdminRoles extends BaseController
             return $this->response->setJSON(['success' => true, 'message' => 'ลบเจ้าหน้าที่สำเร็จ']);
         } else {
             return $this->response->setJSON(['success' => false, 'message' => 'ไม่สามารถลบเจ้าหน้าที่ได้']);
+        }
+    }
+
+    public function updateStaffDetails()
+    {
+        $userId = $this->request->getPost('user_id');
+        $permissions = $this->request->getPost('permissions');
+        $position = $this->request->getPost('position');
+
+        if (empty($userId)) {
+            return $this->response->setJSON(['success' => false, 'message' => 'ไม่พบรหัสผู้ใช้']);
+        }
+
+        $data = [
+            'admin_rloes_nanetype' => $permissions,
+            'admin_rloes_academic_position' => $position
+        ];
+
+        $result = $this->db->table('tb_admin_rloes')->where('admin_rloes_userid', $userId)->update($data);
+
+        if ($result) {
+            return $this->response->setJSON(['success' => true, 'message' => 'อัปเดตข้อมูลสำเร็จ']);
+        } else {
+            return $this->response->setJSON(['success' => false, 'message' => 'ไม่สามารถอัปเดตข้อมูลได้']);
         }
     }
 }
