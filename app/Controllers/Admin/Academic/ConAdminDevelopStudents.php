@@ -205,7 +205,11 @@ class ConAdminDevelopStudents extends BaseController
         $data['TotalStudent'] = $this->db->table('tb_club_members')
                                         ->select('COUNT(tb_club_members.member_student_id) AS StudentAll')
                                         ->join('tb_clubs', 'tb_club_members.member_club_id = tb_clubs.club_id')
-                                        ->where('club_year', $activeYear)->where('club_trem', $activeTerm)
+                                        ->join('tb_students', 'tb_club_members.member_student_id = tb_students.StudentID') // New JOIN
+                                        ->where('tb_clubs.club_year', $activeYear)
+                                        ->where('tb_clubs.club_trem', $activeTerm)
+                                        ->where('tb_club_members.member_status', 'active') // New WHERE
+                                        ->where('tb_students.StudentStatus', '1/ปกติ') // New WHERE
                                         ->get()->getResult();
         // นับจำนวนครู
         $data['TotalTeacher'] = $this->db->table('tb_clubs')
@@ -502,7 +506,7 @@ class ConAdminDevelopStudents extends BaseController
 
         $query = $this->db->table('tb_club_members')
                         ->select('
-                            CONCAT(StudentPrefix,StudentFirstName," ",StudentLastName) AS Fullname,
+                            CONCAT_WS(" ", StudentPrefix, StudentFirstName, StudentLastName) AS Fullname,
                             tb_students.StudentCode,
                             tb_students.StudentID,
                             tb_students.StudentClass,
@@ -510,7 +514,8 @@ class ConAdminDevelopStudents extends BaseController
                             tb_club_members.member_club_id')
                         ->join('tb_students', 'tb_students.StudentID = tb_club_members.member_student_id')
                         ->where('member_club_id', $club_id)
-                        ->orderBy('StudentClass,StudentNumber', 'ASC')
+                        ->orderBy('tb_students.StudentClass', 'ASC')
+                        ->orderBy('tb_students.StudentNumber', 'ASC')
                         ->get();
         return $this->response->setJSON($query->getResultArray());
     }
@@ -547,7 +552,8 @@ class ConAdminDevelopStudents extends BaseController
     public function ClubGetClassroom()
     {
         $query = $this->db->table('tb_students')
-                        ->select('DISTINCT StudentClass')
+                        ->select('StudentClass')
+                        ->distinct()
                         ->where('StudentStatus', '1/ปกติ')
                         ->orderBy('StudentClass', 'ASC')
                         ->get();
@@ -558,24 +564,28 @@ class ConAdminDevelopStudents extends BaseController
 
     public function ClubGetStudentRegisterClub()
     {
-        $classFilter = $this->request->getGet('classFilter');
-        $this->db->table('tb_students')
-                ->select('
-                    IFNULL(tb_clubs.club_name, "ยังไม่ได้เลือกชุมนุม") AS club_status,
-                    tb_clubs.club_id,
-                    tb_clubs.club_name,
-                    tb_students.StudentClass,
-                    tb_students.StudentCode,
-                    tb_students.StudentNumber,
-                    CONCAT(StudentPrefix,StudentFirstName," ",StudentLastName) AS Fullname
-                ')
-                ->join('tb_club_members', 'tb_club_members.member_student_id = tb_students.StudentID', 'left')
-                ->join('tb_clubs', 'tb_club_members.member_club_id = tb_clubs.club_id', 'left')
-                ->where('tb_students.StudentStatus', '1/ปกติ');
-        if (! empty($classFilter)) {
-            $this->db->where('tb_students.StudentClass', $classFilter);
-        }
-        $query = $this->db->get();
+        $data = $this->AllData();
+        $activeYear = $data['CheckOnoffClubParsed'][0];
+        $activeTerm = $data['CheckOnoffClubParsed'][1];
+
+        $builder = $this->db->table('tb_students')
+                        ->select('
+                            IFNULL(tb_clubs.club_name, "ยังไม่ได้เลือกชุมนุม") AS club_status,
+                            tb_clubs.club_id,
+                            tb_clubs.club_name,
+                            tb_students.StudentClass,
+                            tb_students.StudentCode,
+                            tb_students.StudentNumber,
+                            CONCAT_WS(" ", StudentPrefix, StudentFirstName, StudentLastName) AS Fullname
+                        ')
+                        ->join('tb_club_members', 'tb_club_members.member_student_id = tb_students.StudentID', 'left')
+                        ->join('tb_clubs', 'tb_club_members.member_club_id = tb_clubs.club_id AND tb_clubs.club_year = '.$this->db->escape($activeYear).' AND tb_clubs.club_trem = '.$this->db->escape($activeTerm), 'left');
+        
+        $builder->where('tb_students.StudentStatus', '1/ปกติ');
+        $builder->where('tb_club_members.member_status', 'active');
+        $builder->orderBy('tb_students.StudentClass', 'ASC');
+        $builder->orderBy('tb_students.StudentNumber', 'ASC');
+        $query = $builder->get();
         return $this->response->setJSON(['data' => $query->getResultArray()]);
     }
 

@@ -129,14 +129,7 @@
 
 <!-- SweetAlert2 JS -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
-<script>
-    // Global SweetAlert2 configuration to ensure it's always on top
-    Swal.fire.mixin({
-        customClass: {
-            popup: 'swal2-popup-on-top'
-        }
-    });
-</script>
+
 <style>
     .swal2-popup-on-top {
         z-index: 99999 !important; /* A very high z-index to ensure it's always on top */

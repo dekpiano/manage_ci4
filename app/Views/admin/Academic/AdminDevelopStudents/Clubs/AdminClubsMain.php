@@ -214,17 +214,7 @@ $formatted_regisend = isset($formatted_regisend) ? $formatted_regisend : '-';
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <div class="row mb-4">
-                    <div class="col-md-6">
-                        <div class="form-floating form-floating-outline">
-                            <select id="classFilter" class="form-select">
-                                <option value="">แสดงทั้งหมด</option>
-                                <!-- Options จะถูกสร้างด้วยข้อมูลห้องเรียนจากฐานข้อมูล -->
-                            </select>
-                            <label for="classFilter">กรองตามห้องเรียน</label>
-                        </div>
-                    </div>
-                </div>
+
 
                 <div class="card">
                     <div class="table-responsive text-nowrap">
@@ -432,112 +422,53 @@ $(document).ready(function() {
 });
 
 //---------------------- แดชบอร์ด ---------------------------
-const classFilter = new SlimSelect({
-    select: '#classFilter',
-    showSearch: true, // เปิดให้สามารถค้นหาได้
-    allowDeselect: true, // สามารถเลือกได้มากกว่า 1
-});
-
-
-function convertThaiDateToISO(dateString) {
-    // รายชื่อเดือนภาษาไทย
-    const thaiMonths = [
-        "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน",
-        "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"
-    ];
-
-    console.log("convertThaiDateToISO input:", dateString); // Add this line
-    // แยกส่วนวันที่
-    const dateParts = dateString.split(" ");
-    console.log("dateParts:", dateParts); // Add this line
-
-    const day = dateParts[0];
-    const month = thaiMonths.indexOf(dateParts[1]) + 1;
-    const year = dateParts[2];
-
-    // ตรวจสอบว่าแปลงสำเร็จหรือไม่
-    if (!day || !month || !year) {
-        console.error("รูปแบบวันที่ไม่ถูกต้อง! (Debug: day=" + day + ", month=" + month + ", year=" + year + ")"); // Modify this line
-        return null;
-    }
-
-    // คืนค่ารูปแบบ "YYYY/MM/DD"
-    return `${year}-${month.toString().padStart(2, '0')}-${day.padStart(2, '0')}`;
-}
 
 //ดูข้อมูลนักเรียน
 $(document).on('click', '.BtnShowStudent', function () {   
     $('#ModalShowStudentRegisterToClub').modal('show');
-
-    $.ajax({
-        url: '<?= site_url('admin/academic/ConAdminDevelopStudents/ClubGetClassroom') ?>',
-        type: 'GET',
-        dataType: 'json',
-        success: function(response) {
-            console.log(response);
-            
-            var classFilter = $('#classFilter');
-            response.classrooms.forEach(function(classroom) {
-                classFilter.append('<option value="'+ classroom.StudentClass +'">'+ classroom.StudentClass +'</option>');
-            });
-        }
-    });
+    loadStudentRegisterClubTable(); // Load data when modal opens
 });
 
-var TbStudentRegisterClub = $('#TbStudentRegisterClub').DataTable({
-    autoWidth: false, // ปิดการตั้งค่าความกว้างอัตโนมัติ
-    responsive: true,
-    order: [[3, 'asc'], [2, 'asc']],
-    ajax: {
+function loadStudentRegisterClubTable() {
+    $.ajax({
         url: '<?= site_url('admin/academic/ConAdminDevelopStudents/ClubGetStudentRegisterClub') ?>',
         type: 'GET',
         dataType: 'json',
-        data: function(d) {
-            d.classFilter = $('#classFilter').val(); // ส่งค่าที่เลือกจาก Dropdown ไป
-        }
-    },
-    columns: [
-        { data: 'StudentCode',title: 'รหัสนักเรียน' },
-        { data: 'Fullname', title: 'ชื่อ - สกุล' },
-        { data: 'StudentNumber', title: 'เลขที่' },
-        { data: 'StudentClass', title: 'ห้องเรียน' },
-        { data: 'club_status', title: 'สถานะชุมนุม',
-            render: function(data, type, row) {
-                if (data === 'ยังไม่ได้เลือกชุมนุม') {
-                    return `<span class="badge bg-danger">${data}</span>`;
-                } else {
-                    return `<span class="badge bg-success">${data}</span>`;
-                }
-            }
-         }
-    ],
-    dom: 'Bfrtip', // เพิ่มปุ่ม
-        buttons: [
-            {
-                extend: 'excelHtml5',
-                text: 'ดาวน์โหลด Excel',
-                className: 'btn btn-success',
-                 title: 'รายงานข้อมูลนักเรียนที่ลงทะเบียนชุมนุม',
-                filename:'รายงานข้อมูลนักเรียนที่ลงทะเบียนชุมนุม'
-            },
-            {
-                extend: 'print',
-                text: 'พิมพ์รายงาน',
-                className: 'btn btn-primary',
-                 title: 'รายงานข้อมูลนักเรียนที่ลงทะเบียนชุมนุม',
-                filename:'รายงานข้อมูลนักเรียนที่ลงทะเบียนชุมนุม'
-            }
-        ],
-    responsive: true,
-    language: {
-        url: "//cdn.datatables.net/plug-ins/1.13.5/i18n/th.json" // เพิ่มภาษาไทย
-    }
-});
+        success: function(response) {
+            const tableBody = $('#TbStudentRegisterClub tbody');
+            tableBody.empty(); // Clear existing rows
 
-// เมื่อเลือกห้องเรียนใหม่
-$('#classFilter').on('change', function() {
-    TbStudentRegisterClub.ajax.reload(); // รีเฟรชข้อมูล
-});
+            if (response.data && response.data.length > 0) {
+                response.data.forEach(function(student) {
+                    let clubStatusBadge;
+                    if (student.club_status === 'ยังไม่ได้เลือกชุมนุม') {
+                        clubStatusBadge = `<span class="badge bg-danger">${student.club_status}</span>`;
+                    } else {
+                        clubStatusBadge = `<span class="badge bg-success">${student.club_status}</span>`;
+                    }
+
+                    const row = `<tr>
+                        <td>${student.StudentCode}</td>
+                        <td>${student.Fullname}</td>
+                        <td class="text-center">${student.StudentNumber}</td>
+                        <td class="text-center">${student.StudentClass}</td>
+                        <td>${clubStatusBadge}</td>
+                    </tr>`;
+                    tableBody.append(row);
+                });
+            } else {
+                const emptyRow = '<tr><td colspan="5" class="text-center">ไม่พบข้อมูลนักเรียน</td></tr>';
+                tableBody.append(emptyRow);
+            }
+        },
+        error: function(xhr, status, error) {
+            const tableBody = $('#TbStudentRegisterClub tbody');
+            tableBody.empty();
+            const errorRow = `<tr><td colspan="5" class="text-center text-danger">เกิดข้อผิดพลาดในการโหลดข้อมูล: ${error}</td></tr>`;
+            tableBody.append(errorRow);
+        }
+    });
+}
 
 // กำหนดปีการศึกษา
 $(document).on('click', '#MenuSetYear', function () { 
