@@ -49,6 +49,8 @@ $routes->get('Admin/Home', [ConAdminHome::class, 'AdminHome']);
 
 // Routes for ConAdminDevelopStudents (Clubs Management)
 $routes->get('Admin/Acade/DevelopStudents/Clubs/Main', [ConAdminDevelopStudents::class, 'ClubsMain']);
+$routes->post('admin/academic/developstudents/update_onoff_status', [ConAdminDevelopStudents::class, 'updateClubOnoffStatus']);
+$routes->post('admin/academic/developstudents/update_onoff_dates', [ConAdminDevelopStudents::class, 'updateClubOnoffDates']);
 $routes->get('Admin/Acade/DevelopStudents/Clubs/All', [ConAdminDevelopStudents::class, 'ClubsAll']);
 $routes->get('admin/academic/ConAdminDevelopStudents/ClubsShow', [ConAdminDevelopStudents::class, 'ClubsShow']);
 $routes->post('admin/academic/ConAdminDevelopStudents/ClubsInsert', [ConAdminDevelopStudents::class, 'ClubsInsert']);
@@ -64,7 +66,6 @@ $routes->get('admin/academic/ConAdminDevelopStudents/ClubGetClassroom', [ConAdmi
 $routes->get('admin/academic/ConAdminDevelopStudents/ClubGetStudentRegisterClub', [ConAdminDevelopStudents::class, 'ClubGetStudentRegisterClub']);
 $routes->post('admin/academic/ConAdminDevelopStudents/ClubSetOnoffYear', [ConAdminDevelopStudents::class, 'ClubSetOnoffYear']);
 $routes->get('admin/academic/ConAdminDevelopStudents/ClubGetDateRegister', [ConAdminDevelopStudents::class, 'ClubGetDateRegister']);
-$routes->get('admin/academic/ConAdminDevelopStudents/ClubSetDateRegister', [ConAdminDevelopStudents::class, 'ClubSetDateRegister']);
 $routes->post('admin/academic/ConAdminDevelopStudents/ClubSetDateRegister', [ConAdminDevelopStudents::class, 'ClubSetDateRegister']);
 $routes->get('admin/academic/ConAdminDevelopStudents/ClubCreateWeeks', [ConAdminDevelopStudents::class, 'ClubCreateWeeks']);
 $routes->get('admin/academic/ConAdminDevelopStudents/ClubGetWeeksToUpdate', [ConAdminDevelopStudents::class, 'ClubGetWeeksToUpdate']);

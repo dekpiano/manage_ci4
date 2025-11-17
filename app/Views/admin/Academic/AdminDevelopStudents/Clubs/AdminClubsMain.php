@@ -41,7 +41,11 @@ $formatted_regisend = isset($formatted_regisend) ? $formatted_regisend : '-';
                                                                             <i class="bx bx-calendar me-2"></i> ตั้งค่าปีการศึกษา
                                                                         </a></li>
                                                                         <li><a class="dropdown-item d-flex align-items-center" href="#" id="MenuSetDateRegister">
-                                                                            <i class="bx bx-calendar-check me-2"></i> ตั้งค่าเปิด-ปิดระบบ
+                                                                            <i class="bx bx-calendar-check me-2"></i> ตั้งค่าช่วงเวลาลงทะเบียน
+                                                                        </a></li>
+                                                                        <li><hr class="dropdown-divider"></li>
+                                                                        <li><a class="dropdown-item d-flex align-items-center" href="#" id="MenuOpenClubSettings" data-bs-toggle="modal" data-bs-target="#modalClubSettings">
+                                                                            <i class="bx bx-toggle-right me-2"></i> เปิด/ปิด ระบบ
                                                                         </a></li>
                                                                     </ul>
                                                                 </div>
@@ -252,10 +256,181 @@ $formatted_regisend = isset($formatted_regisend) ? $formatted_regisend : '-';
 <?= view('admin/Academic/AdminDevelopStudents/Clubs/AdminClubSetYear.php'); ?>
 <?= view('admin/Academic/AdminDevelopStudents/Clubs/AdminClubSetDateRegister.php'); ?>
 <?= view('admin/Academic/AdminDevelopStudents/Clubs/AdminClubSetDateAttendance.php'); ?>
+<?= view('admin/Academic/AdminDevelopStudents/_modalClubsSetting.php'); ?>
 <?= $this->endSection() ?>
 
 <?= $this->section('script') ?>
 <script>
+// Add global SweetAlert2 z-index fix
+// Ideally, this CSS should be in a separate global stylesheet.
+// But for immediate effect and demonstration, it's placed here.
+$('head').append('<style>.swal2-container { z-index: 99999 !important; }</style>');
+
+//---------------------- Club On/Off Settings Script ---------------------------
+$(document).ready(function() {
+
+    // Initialize datepickers inside the settings modal when it's shown
+    $('#modalClubSettings').on('shown.bs.modal', function () {
+        flatpickr(".club-onoff-datepicker", {
+            dateFormat: "Y-m-d",
+            locale: "th",
+            onChange: function(selectedDates, dateStr, instance) {
+                const target = $(instance.element).data('target');
+                const type = $(instance.element).data('type');
+                
+                const startDateInput = $(`.club-onoff-datepicker[data-target='${target}'][data-type='start']`);
+                const endDateInput = $(`.club-onoff-datepicker[data-target='${target}'][data-type='end']`);
+
+                const startDate = startDateInput.val();
+                const endDate = endDateInput.val();
+
+                // Optional: Add validation, e.g., end date must be after start date
+                if (startDate && endDate && startDate > endDate) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'ผิดพลาด',
+                        text: 'วันที่สิ้นสุดต้องอยู่หลังวันที่เริ่มต้น',
+                    });
+                    // Revert the changed date
+                    // This part can be complex, for now, we just notify the user.
+                    return;
+                }
+
+                // AJAX call to save the dates
+                $.ajax({
+                    url: '<?= site_url('admin/academic/developstudents/update_onoff_dates') ?>',
+                    type: 'POST',
+                    data: {
+                        '<?= csrf_token() ?>': '<?= csrf_hash() ?>',
+                        target: target,
+                        startDate: startDate,
+                        endDate: endDate
+                    },
+                    dataType: 'json',
+                    success: function(response) {
+                        if (response.success) {
+                            // Show a small success toast
+                            const Toast = Swal.mixin({
+                                toast: true,
+                                position: 'top-end',
+                                showConfirmButton: false,
+                                timer: 1500,
+                                timerProgressBar: true
+                            });
+                            Toast.fire({
+                                icon: 'success',
+                                title: 'บันทึกวันที่แล้ว'
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'ผิดพลาด!',
+                                text: response.message || 'ไม่สามารถบันทึกวันที่ได้'
+                            });
+                        }
+                    },
+                    error: function() {
+                         Swal.fire({
+                            icon: 'error',
+                            title: 'ผิดพลาด!',
+                            text: 'เกิดข้อผิดพลาดในการสื่อสารกับเซิร์ฟเวอร์'
+                        });
+                    }
+                });
+            }
+        });
+    });
+
+    $('.club-onoff-toggle').on('change', function() {
+        const checkbox = $(this);
+        const target = checkbox.data('target');
+        const isChecked = checkbox.is(':checked');
+        const status = isChecked ? 1 : 0;
+        const statusTextElement = $(`#${target}-status-text`);
+        
+        let newStatusText, title, text;
+
+        if (target === 'system') {
+            newStatusText = isChecked ? 'ปิดปรับปรุง' : 'ออนไลน์';
+            title = isChecked ? 'ยืนยันการปิดปรับปรุงระบบ?' : 'ยืนยันการเปิดระบบ?';
+            text = isChecked 
+                ? 'ผู้ใช้ทั่วไปจะไม่สามารถเข้าใช้งานระบบได้จนกว่าจะเปิดอีกครั้ง' 
+                : 'ผู้ใช้ทั่วไปจะสามารถกลับเข้าใช้งานระบบได้ตามปกติ';
+        } else {
+            newStatusText = isChecked ? 'เปิด' : 'ปิด';
+            const targetThai = target === 'student' ? 'นักเรียน' : 'ครู';
+            title = `ยืนยันการ${newStatusText}ระบบสำหรับ${targetThai}?`;
+            text = `ระบบการลงทะเบียนชุมนุมสำหรับ ${targetThai} จะถูก ${newStatusText}`;
+        }
+
+        Swal.fire({
+            title: title,
+            text: text,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'ยืนยัน',
+            cancelButtonText: 'ยกเลิก'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Proceed with AJAX call
+                const originalStatusText = statusTextElement.text();
+                statusTextElement.html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>');
+                checkbox.prop('disabled', true);
+
+                $.ajax({
+                    url: '<?= site_url('admin/academic/developstudents/update_onoff_status') ?>',
+                    type: 'POST',
+                    data: {
+                        '<?= csrf_token() ?>': '<?= csrf_hash() ?>',
+                        target: target,
+                        status: status,
+                        year: '<?= esc($current_year) ?>',
+                        term: '<?= esc($current_term) ?>'
+                    },
+                    dataType: 'json',
+                    success: function(response) {
+                        if (response.success) {
+                            statusTextElement.text(newStatusText);
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'สำเร็จ!',
+                                text: response.message || 'อัปเดตสถานะเรียบร้อยแล้ว',
+                                timer: 1500,
+                                showConfirmButton: false
+                            });
+                        } else {
+                            checkbox.prop('checked', !isChecked); // Revert checkbox
+                            statusTextElement.text(originalStatusText);
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'ผิดพลาด!',
+                                text: response.message || 'ไม่สามารถอัปเดตสถานะได้'
+                            });
+                        }
+                    },
+                    error: function() {
+                        checkbox.prop('checked', !isChecked); // Revert checkbox
+                        statusTextElement.text(originalStatusText);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'ผิดพลาด!',
+                            text: 'เกิดข้อผิดพลาดในการสื่อสารกับเซิร์ฟเวอร์'
+                        });
+                    },
+                    complete: function() {
+                        checkbox.prop('disabled', false);
+                    }
+                });
+            } else {
+                // User cancelled, revert the checkbox state
+                checkbox.prop('checked', !isChecked);
+            }
+        });
+    });
+});
+
 //---------------------- แดชบอร์ด ---------------------------
 const classFilter = new SlimSelect({
     select: '#classFilter',
@@ -456,6 +631,8 @@ $('#ModalClubSetYear').on('shown.bs.modal', function () {
             c_onoff_year: c_onoff_year
         },
         success: function (response) {
+            console.log('Response ', response); // Debugging line
+             
             if (response.status === 'success') {
                         
                 $('#ModalClubSetYear').modal('hide');
@@ -478,8 +655,9 @@ $('#ModalClubSetYear').on('shown.bs.modal', function () {
                 });
             }
         },
-        error: function () {
-            $('#responseMessage').html(`<div class="alert alert-danger">เกิดข้อผิดพลาดในการบันทึกข้อมูล</div>`);
+        error: function (xhr, status, error) {
+            
+            console.log(' ', xhr.responseText); // Debugging line
         }
     });
 });
