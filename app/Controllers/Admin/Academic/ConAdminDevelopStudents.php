@@ -127,54 +127,51 @@ class ConAdminDevelopStudents extends BaseController
         $data['CheckYear'] = $this->db->table('tb_send_plan_setup')->get()->getResult();
 
         // Fetch active config for club year/term
-        $data['CheckOnoffClub'] = $this->db->table('tb_club_onoff')
-                                            ->select('c_onoff_id, c_onoff_year, c_onoff_term, c_onoff_regisstart, c_onoff_regisend')
-                                            ->where('c_onoff_for', 'active_config') // Use 'active_config'
+        $activeConfig = $this->db->table('tb_club_onoff')
+                                            ->select('c_onoff_year, c_onoff_term')
+                                            ->where('c_onoff_for', 'active_config')
                                             ->get()->getRow();
 
-        // Parse c_onoff_year into year and term for safer access in views
-        $data['CheckOnoffClubParsed'] = ['','']; // Default values
-        if ($data['CheckOnoffClub']) { // Check if the object itself exists
-            $raw_year = $data['CheckOnoffClub']->c_onoff_year ?? '';
-            $term = $data['CheckOnoffClub']->c_onoff_term ?? '';
-
-            // Extract only the year part
+        // Parse c_onoff_year into year and term for safer access
+        $activeYear = date('Y') + 543; // Default value
+        $activeTerm = '1'; // Default value
+        if ($activeConfig) {
+            $raw_year = $activeConfig->c_onoff_year ?? '';
+            $term = $activeConfig->c_onoff_term ?? '';
             if (strpos($raw_year, '/') !== false) {
                 $parts = explode('/', $raw_year);
-                $year = end($parts);
+                $activeYear = end($parts);
             } else {
-                $year = $raw_year;
+                $activeYear = $raw_year;
             }
-            $data['CheckOnoffClubParsed'] = [$year, $term];
-        } else {
-            // If no active_config exists, try to create a default one from the latest year in the table
-            $latest_config = $this->db->table('tb_club_onoff')
-                                      ->orderBy('c_onoff_year', 'DESC')
-                                      ->get()->getRow();
-            
-            $current_year = $latest_config->c_onoff_year ?? date('Y') + 543;
-            // The year from the DB might still have the "term/year" format
-            if (strpos($current_year, '/') !== false) {
-                $parts = explode('/', $current_year);
-                $current_year = end($parts);
-            }
-
-            $current_term = '1'; // Default term
-            $this->db->table('tb_club_onoff')->insert([
-                'c_onoff_year' => $current_year,
-                'c_onoff_term' => $current_term,
-                'c_onoff_for' => 'active_config',
-                'c_onoff_status' => 1 // Default to active
-            ]);
-            $data['CheckOnoffClubParsed'] = [$current_year, $current_term];
+            $activeTerm = $term;
         }
+        $data['CheckOnoffClubParsed'] = [$activeYear, $activeTerm];
 
-        // Format registration dates using the Datethai library
-        $data['formatted_regisstart'] = isset($data['CheckOnoffClub']->c_onoff_regisstart) ? $this->datethai->thai_date_and_time(strtotime($data['CheckOnoffClub']->c_onoff_regisstart)) : '';
-        $data['formatted_regisend'] = isset($data['CheckOnoffClub']->c_onoff_regisend) ? $this->datethai->thai_date_and_time(strtotime($data['CheckOnoffClub']->c_onoff_regisend)) : '';
+        // Fetch student and teacher registration periods
+        $onoffData = $this->db->table('tb_club_onoff')
+                              ->where('c_onoff_year', $activeYear)
+                              ->where('c_onoff_term', $activeTerm)
+                              ->whereIn('c_onoff_for', ['student', 'teacher'])
+                              ->get()->getResult();
+
+        $student_dates = array_filter($onoffData, fn($row) => $row->c_onoff_for === 'student');
+        $teacher_dates = array_filter($onoffData, fn($row) => $row->c_onoff_for === 'teacher');
+
+        $student_dates = reset($student_dates);
+        $teacher_dates = reset($teacher_dates);
+
+        // Format student dates
+        $data['formatted_student_regisstart'] = isset($student_dates->c_onoff_regisstart) ? $this->datethai->thai_date_and_time(strtotime($student_dates->c_onoff_regisstart)) : '-';
+        $data['formatted_student_regisend'] = isset($student_dates->c_onoff_regisend) ? $this->datethai->thai_date_and_time(strtotime($student_dates->c_onoff_regisend)) : '-';
+        $data['StatusOnoffClubStudent'] = (isset($student_dates->c_onoff_status) && $student_dates->c_onoff_status == 1 && (!isset($student_dates->c_onoff_regisend) || $student_dates->c_onoff_regisend > date("Y-m-d H:i:s"))) ? "เปิด" : "ปิด";
 
 
-        $data['StatusOnoffClub'] = (!empty($data['CheckOnoffClub']) && @$data['CheckOnoffClub']->c_onoff_regisend <= date("Y-m-d H:i:s")) ? "ปิด" : "เปิด";
+        // Format teacher dates
+        $data['formatted_teacher_regisstart'] = isset($teacher_dates->c_onoff_regisstart) ? $this->datethai->thai_date_and_time(strtotime($teacher_dates->c_onoff_regisstart)) : '-';
+        $data['formatted_teacher_regisend'] = isset($teacher_dates->c_onoff_regisend) ? $this->datethai->thai_date_and_time(strtotime($teacher_dates->c_onoff_regisend)) : '-';
+        $data['StatusOnoffClubTeacher'] = (isset($teacher_dates->c_onoff_status) && $teacher_dates->c_onoff_status == 1 && (!isset($teacher_dates->c_onoff_regisend) || $teacher_dates->c_onoff_regisend > date("Y-m-d H:i:s"))) ? "เปิด" : "ปิด";
+
         return $data;
     }
 

@@ -59,53 +59,85 @@ $formatted_regisend = isset($formatted_regisend) ? $formatted_regisend : '-';
                                                 </div>
                                             </div>
                                 
-                                            <?php 
-                                            $Status = isset($StatusOnoffClub) && $StatusOnoffClub == "เปิด" ? "success" : "danger";
-                                            $StatusBg = isset($StatusOnoffClub) && $StatusOnoffClub == "เปิด" ? "bg-success-subtle" : "bg-danger-subtle";
-                                            $Icon = isset($StatusOnoffClub) && $StatusOnoffClub == "เปิด" ? '<i class="bx bx-check-circle"></i>' : '<i class="bx bx-x-circle"></i>';
-                                            ?>
                                             <div class="row mb-4">
-                                                <div class="col-12">
-                                                    <div class="card border-<?= esc($Status) ?> shadow-sm">
-                                                        <div class="card-header border-bottom border-<?= esc($Status) ?> <?= esc($StatusBg) ?> py-3">
-                                                            <div class="d-flex justify-content-between align-items-center">
-                                                                <div class="d-flex align-items-center">
-                                                                    <?= $Icon ?>
-                                                                    <h5 class="mb-0 ms-2">กำหนดการลงทะเบียนชุมนุม</h5>
-                                                                </div>
-                                                                <div class="badge bg-<?= esc($Status) ?> px-3 py-2">
-                                                                    <?= isset($StatusOnoffClub) ? esc($StatusOnoffClub) : '' ?>ลงทะเบียน
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        <div class="card-body p-4">
-                                                            <div class="row align-items-center">
-                                                                <div class="col-md-6">
-                                                                    <h6 class="text-muted mb-3">ระยะเวลาลงทะเบียน</h6>
-                                                                    <div class="d-flex gap-3 align-items-center mb-2">
-                                                                        <i class="bx bx-calendar-check fs-4 text-<?= esc($Status) ?>"></i>
-                                                                        <div>
-                                                                            <small class="text-muted d-block">เริ่มลงทะเบียน</small>
-                                                                            <span class="fw-semibold fs-5"><?php echo $formatted_regisstart ?></span>
-                                                                        </div>
-                                                                    </div>
-                                                                    <div class="d-flex gap-3 align-items-center">
-                                                                        <i class="bx bx-calendar-x fs-4 text-<?= esc($Status) ?>"></i>
-                                                                        <div>
-                                                                            <small class="text-muted d-block">สิ้นสุดการลงทะเบียน</small>
-                                                                            <span class="fw-semibold fs-5"><?php echo $formatted_regisend ?></span>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                                <div class="col-md-6 text-md-end mt-4 mt-md-0">
-                                                                    <div class="text-muted mb-2">ภาคเรียนที่ <?= esc($ExYearClub[1]) ?></div>
-                                                                    <h4 class="mb-0">ปีการศึกษา <?= esc($ExYearClub[0]) ?></h4>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
+                <!-- Student Registration Card -->
+                <div class="col-md-6">
+                    <?php 
+                        $studentStatus = $StatusOnoffClubStudent ?? 'ปิด';
+                        $studentStatusClass = $studentStatus == "เปิด" ? "success" : "danger";
+                        $studentStatusBg = $studentStatus == "เปิด" ? "bg-success-subtle" : "bg-danger-subtle";
+                        $studentIcon = $studentStatus == "เปิด" ? '<i class="bx bx-check-circle"></i>' : '<i class="bx bx-x-circle"></i>';
+                    ?>
+                    <div class="card border-<?= esc($studentStatusClass) ?> shadow-sm h-100">
+                        <div class="card-header border-bottom border-<?= esc($studentStatusClass) ?> <?= esc($studentStatusBg) ?> py-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center">
+                                    <?= $studentIcon ?>
+                                    <h5 class="mb-0 ms-2">กำหนดการลงทะเบียน (นักเรียน)</h5>
+                                </div>
+                                <div class="badge bg-<?= esc($studentStatusClass) ?> px-3 py-2">
+                                    <?= esc($studentStatus) ?>ลงทะเบียน
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body p-4">
+                            <div class="d-flex gap-3 align-items-center mb-3">
+                                <i class="bx bx-calendar-check fs-4 text-<?= esc($studentStatusClass) ?>"></i>
+                                <div>
+                                    <small class="text-muted d-block">เริ่มลงทะเบียน</small>
+                                    <span class="fw-semibold fs-5"><?= $formatted_student_regisstart ?? '-' ?></span>
+                                </div>
+                            </div>
+                            <div class="d-flex gap-3 align-items-center">
+                                <i class="bx bx-calendar-x fs-4 text-<?= esc($studentStatusClass) ?>"></i>
+                                <div>
+                                    <small class="text-muted d-block">สิ้นสุดการลงทะเบียน</small>
+                                    <span class="fw-semibold fs-5"><?= $formatted_student_regisend ?? '-' ?></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Teacher Registration Card -->
+                <div class="col-md-6">
+                    <?php 
+                        $teacherStatus = $StatusOnoffClubTeacher ?? 'ปิด';
+                        $teacherStatusClass = $teacherStatus == "เปิด" ? "success" : "danger";
+                        $teacherStatusBg = $teacherStatus == "เปิด" ? "bg-success-subtle" : "bg-danger-subtle";
+                        $teacherIcon = $teacherStatus == "เปิด" ? '<i class="bx bx-check-circle"></i>' : '<i class="bx bx-x-circle"></i>';
+                    ?>
+                    <div class="card border-<?= esc($teacherStatusClass) ?> shadow-sm h-100">
+                        <div class="card-header border-bottom border-<?= esc($teacherStatusClass) ?> <?= esc($teacherStatusBg) ?> py-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center">
+                                    <?= $teacherIcon ?>
+                                    <h5 class="mb-0 ms-2">กำหนดการเปิด/ปิด (ครู)</h5>
+                                </div>
+                                <div class="badge bg-<?= esc($teacherStatusClass) ?> px-3 py-2">
+                                    <?= esc($teacherStatus) ?>ใช้งาน
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body p-4">
+                            <div class="d-flex gap-3 align-items-center mb-3">
+                                <i class="bx bx-calendar-check fs-4 text-<?= esc($teacherStatusClass) ?>"></i>
+                                <div>
+                                    <small class="text-muted d-block">เริ่ม</small>
+                                    <span class="fw-semibold fs-5"><?= $formatted_teacher_regisstart ?? '-' ?></span>
+                                </div>
+                            </div>
+                            <div class="d-flex gap-3 align-items-center">
+                                <i class="bx bx-calendar-x fs-4 text-<?= esc($teacherStatusClass) ?>"></i>
+                                <div>
+                                    <small class="text-muted d-block">สิ้นสุด</small>
+                                    <span class="fw-semibold fs-5"><?= $formatted_teacher_regisend ?? '-' ?></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
                                             <!-- Cards Section -->
                                             <div class="row g-4 mb-4">
                                                 <!-- Card 1: ชุมนุมทั้งหมด -->
@@ -258,6 +290,10 @@ $('head').append('<style>.swal2-container { z-index: 99999 !important; }</style>
 
 //---------------------- Club On/Off Settings Script ---------------------------
 $(document).ready(function() {
+    // Reload page when any settings modal is closed
+    $('#ClubSetDateRegister, #modalClubSettings, #ModalClubSetYear').on('hidden.bs.modal', function (e) {
+        window.location.reload();
+    });
 
     // Initialize datepickers inside the settings modal when it's shown
     $('#modalClubSettings').on('shown.bs.modal', function () {
