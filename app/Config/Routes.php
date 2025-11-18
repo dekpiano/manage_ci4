@@ -64,6 +64,7 @@ $routes->get('admin/academic/ConAdminDevelopStudents/ClubsTbShowStudentList', [C
 $routes->post('admin/academic/ConAdminDevelopStudents/ClubDeleteStudentToClub', [ConAdminDevelopStudents::class, 'ClubDeleteStudentToClub']);
 $routes->get('admin/academic/ConAdminDevelopStudents/ClubGetClassroom', [ConAdminDevelopStudents::class, 'ClubGetClassroom']);
 $routes->get('admin/academic/ConAdminDevelopStudents/ClubGetStudentRegisterClub', [ConAdminDevelopStudents::class, 'ClubGetStudentRegisterClub']);
+$routes->get('admin/academic/develop-students/student-registrations', [ConAdminDevelopStudents::class, 'ClubsStudentRegistrationPage']);
 $routes->post('admin/academic/ConAdminDevelopStudents/ClubSetOnoffYear', [ConAdminDevelopStudents::class, 'ClubSetOnoffYear']);
 $routes->get('admin/academic/ConAdminDevelopStudents/ClubGetDateRegister', [ConAdminDevelopStudents::class, 'ClubGetDateRegister']);
 $routes->post('admin/academic/ConAdminDevelopStudents/ClubSetDateRegister', [ConAdminDevelopStudents::class, 'ClubSetDateRegister']);

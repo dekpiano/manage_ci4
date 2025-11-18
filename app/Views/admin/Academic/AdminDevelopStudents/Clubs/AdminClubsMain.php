@@ -180,7 +180,7 @@ $formatted_regisend = isset($formatted_regisend) ? $formatted_regisend : '-';
                                                                 </span>
                                                             </div>
                                                         </div>
-                                                        <a class="stretched-link BtnShowStudent" id="BtnShowStudent" href="#"></a>
+                                                        <a class="stretched-link" href="<?= base_url('admin/academic/develop-students/student-registrations') ?>"></a>
                                                     </div>
                                                 </div>
                                 
@@ -234,47 +234,6 @@ $formatted_regisend = isset($formatted_regisend) ? $formatted_regisend : '-';
 <?= $this->endSection() ?>
 
 <?= $this->section('modals') ?>
-<!-- Modal ดูนักเรียนที่ลงทะเบียน -->
-<div class="modal fade" id="ModalShowStudentRegisterToClub" tabindex="-1" aria-labelledby="exampleModalLabel"
-    aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-scrollable">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="exampleModalLabel">
-                    <i class="bx bx-user me-2"></i>รายชื่อนักเรียนที่ลงทะเบียนชุมนุม
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-
-
-                <div class="card">
-                    <div class="table-responsive text-nowrap">
-                        <table id="TbStudentRegisterClub" class="table">
-                            <thead>
-                                <tr>
-                                    <th>รหัสนักเรียน</th>
-                                    <th>ชื่อนักเรียน</th>
-                                    <th class="text-center">เลขที่</th>
-                                    <th class="text-center">ห้องเรียน</th>
-                                    <th>ชุมนุม</th>
-                                </tr>
-                            </thead>
-                            <tbody class="table-border-bottom-0"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
-                    <i class="bx bx-x me-1"></i>ปิด
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-
 <?= view('admin/Academic/AdminDevelopStudents/Clubs/AdminClubSetYear.php'); ?>
 <?= view('admin/Academic/AdminDevelopStudents/Clubs/AdminClubSetDateRegister.php'); ?>
 <?= view('admin/Academic/AdminDevelopStudents/Clubs/AdminClubSetDateAttendance.php'); ?>
@@ -458,53 +417,6 @@ $(document).ready(function() {
 });
 
 //---------------------- แดชบอร์ด ---------------------------
-
-//ดูข้อมูลนักเรียน
-$(document).on('click', '.BtnShowStudent', function () {   
-    $('#ModalShowStudentRegisterToClub').modal('show');
-    loadStudentRegisterClubTable(); // Load data when modal opens
-});
-
-function loadStudentRegisterClubTable() {
-    $.ajax({
-        url: '<?= site_url('admin/academic/ConAdminDevelopStudents/ClubGetStudentRegisterClub') ?>',
-        type: 'GET',
-        dataType: 'json',
-        success: function(response) {
-            const tableBody = $('#TbStudentRegisterClub tbody');
-            tableBody.empty(); // Clear existing rows
-
-            if (response.data && response.data.length > 0) {
-                response.data.forEach(function(student) {
-                    let clubStatusBadge;
-                    if (student.club_status === 'ยังไม่ได้เลือกชุมนุม') {
-                        clubStatusBadge = `<span class="badge bg-danger">${student.club_status}</span>`;
-                    } else {
-                        clubStatusBadge = `<span class="badge bg-success">${student.club_status}</span>`;
-                    }
-
-                    const row = `<tr>
-                        <td>${student.StudentCode}</td>
-                        <td>${student.Fullname}</td>
-                        <td class="text-center">${student.StudentNumber}</td>
-                        <td class="text-center">${student.StudentClass}</td>
-                        <td>${clubStatusBadge}</td>
-                    </tr>`;
-                    tableBody.append(row);
-                });
-            } else {
-                const emptyRow = '<tr><td colspan="5" class="text-center">ไม่พบข้อมูลนักเรียน</td></tr>';
-                tableBody.append(emptyRow);
-            }
-        },
-        error: function(xhr, status, error) {
-            const tableBody = $('#TbStudentRegisterClub tbody');
-            tableBody.empty();
-            const errorRow = `<tr><td colspan="5" class="text-center text-danger">เกิดข้อผิดพลาดในการโหลดข้อมูล: ${error}</td></tr>`;
-            tableBody.append(errorRow);
-        }
-    });
-}
 
 // กำหนดปีการศึกษา
 $(document).on('click', '#MenuSetYear', function () { 

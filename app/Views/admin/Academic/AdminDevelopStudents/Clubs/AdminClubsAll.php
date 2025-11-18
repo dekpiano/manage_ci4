@@ -11,11 +11,14 @@
                 <div class="d-flex align-items-center gap-2">
                     <select id="academicYearFilter" name="academicYearFilter" class="form-select form-select-sm"
                         style="min-width: 150px;">
+                        <?php $isFirst = true; ?>
                         <?php foreach ($YearAll as $key => $v_YearAll) : ?>
                         <option
-                            value="<?= (isset($v_YearAll['club_trem']) ? esc($v_YearAll['club_trem']) : '') ?>/<?= (isset($v_YearAll['club_year']) ? esc($v_YearAll['club_year']) : '') ?>">
+                            value="<?= (isset($v_YearAll['club_trem']) ? esc($v_YearAll['club_trem']) : '') ?>/<?= (isset($v_YearAll['club_year']) ? esc($v_YearAll['club_year']) : '') ?>"
+                            <?= $isFirst ? 'selected' : '' ?>>
                             <?= (isset($v_YearAll['club_trem']) ? esc($v_YearAll['club_trem']) : '') ?>/<?= (isset($v_YearAll['club_year']) ? esc($v_YearAll['club_year']) : '') ?>
                         </option>
+                        <?php $isFirst = false; ?>
                         <?php endforeach; ?>
                     </select>
                     <button type="button" class="btn btn-primary btn-sm BtnAddClub w-100">

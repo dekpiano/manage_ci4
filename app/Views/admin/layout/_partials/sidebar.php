@@ -206,13 +206,13 @@
                     <?php endif; ?>
 
                     <?php if(in_array("งานกิจกรรมพัฒนาผู้เรียน",$Exp_Checkrloes)): ?>
-                    <li class="menu-item <?= ($uri->getTotalSegments() >= 3 && $uri->getSegment(3) == 'DevelopStudents' ? 'active open' : '') ?>">
+                    <li class="menu-item <?= ($uri->getTotalSegments() >= 3 && $uri->getSegment(3) == 'DevelopStudents' || ($uri->getTotalSegments() >= 4 && $uri->getSegment(4) == 'student-registrations') ? 'active open' : '') ?>">
                         <a href="javascript:void(0);" class="menu-link menu-toggle">
                             <i class="menu-icon tf-icons bx bx-user-check"></i>
                             <div data-i18n="งานพัฒนาผู้เรียน">งานพัฒนาผู้เรียน</div>
                         </a>
                         <ul class="menu-sub">
-                            <li class="menu-item <?= ($uri->getTotalSegments() >= 4 && $uri->getSegment(4) == 'Clubs' ? 'active' : '') ?>">
+                            <li class="menu-item <?= ($uri->getTotalSegments() >= 4 && ($uri->getSegment(4) == 'Clubs' || $uri->getSegment(4) == 'student-registrations') ? 'active' : '') ?>">
                                 <a href="<?=base_url('Admin/Acade/DevelopStudents/Clubs/Main');?>" class="menu-link">
                                     <div data-i18n="จัดการชุมนุม">จัดการชุมนุม</div>
                                 </a>

@@ -407,7 +407,7 @@ class ConAdminDevelopStudents extends BaseController
                         ->select('club_year,club_trem')
                         ->groupBy('club_year, club_trem') // รวมปีและเทอมที่ไม่ซ้ำ
                         ->orderBy('club_year', 'DESC') // เรียงปีการศึกษาล่าสุดลงไป
-                        ->orderBy('club_trem', 'ASC') // เรียงเทอม
+                        ->orderBy('club_trem', 'DESC') // เรียงเทอม
                         ->get()->getResultArray();
     }
 
@@ -567,23 +567,29 @@ class ConAdminDevelopStudents extends BaseController
 
         $builder = $this->db->table('tb_students')
                         ->select('
-                            IFNULL(tb_clubs.club_name, "ยังไม่ได้เลือกชุมนุม") AS club_status,
-                            tb_clubs.club_id,
-                            tb_clubs.club_name,
+                            IFNULL(tb_clubs.club_name, "ยังไม่ได้เลือกชุมนุม") AS club_name,
                             tb_students.StudentClass,
                             tb_students.StudentCode,
                             tb_students.StudentNumber,
                             CONCAT_WS(" ", StudentPrefix, StudentFirstName, StudentLastName) AS Fullname
                         ')
-                        ->join('tb_club_members', 'tb_club_members.member_student_id = tb_students.StudentID', 'left')
+                        ->join('tb_club_members', 'tb_club_members.member_student_id = tb_students.StudentID AND tb_club_members.member_status = "active"', 'left')
                         ->join('tb_clubs', 'tb_club_members.member_club_id = tb_clubs.club_id AND tb_clubs.club_year = '.$this->db->escape($activeYear).' AND tb_clubs.club_trem = '.$this->db->escape($activeTerm), 'left');
         
         $builder->where('tb_students.StudentStatus', '1/ปกติ');
-        $builder->where('tb_club_members.member_status', 'active');
         $builder->orderBy('tb_students.StudentClass', 'ASC');
         $builder->orderBy('tb_students.StudentNumber', 'ASC');
         $query = $builder->get();
         return $this->response->setJSON(['data' => $query->getResultArray()]);
+    }
+
+    public function ClubsStudentRegistrationPage()
+    {
+        $data['title'] = "ข้อมูลนักเรียนที่ลงทะเบียนชุมนุม";
+        $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
+        $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();
+        
+        return view('admin/Academic/AdminDevelopStudents/Clubs/AdminClubsStudentRegistration', $data);
     }
 
     // ตั้งค่าปีการศึกษา
