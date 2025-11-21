@@ -1,4 +1,4 @@
-            <aside id="layout-menu" class="layout-menu menu-vertical menu bg-menu-theme">
+<aside id="layout-menu" class="layout-menu menu-vertical menu bg-menu-theme">
                 <div class="app-brand demo">
                     <a href="index.html" class="app-brand-link">
                         <span class="app-brand-logo demo">
@@ -36,7 +36,7 @@
                                     <?php $Y = date('Y')+543;
                                                             for ($i=2565; $i <= $Y+2; $i++):
                                                             for ($j=1; $j <= 2; $j++) : ?>
-                                    <option <?=$SchoolYear->schyear_year == $j.'/'.$i ?"selected":""?> value="<?=$j.'/'.$i;?>">
+                                    <option <?=(isset($SchoolYear->schyear_year) && $SchoolYear->schyear_year == $j.'/'.$i) ?"selected":""?> value="<?=$j.'/'.$i;?>">
                                         <?=$j.'/'.$i;?></option>
                                     <?php endfor; ?>
                                     <?php endfor; ?>
@@ -92,29 +92,8 @@
                                     <div data-i18n="จัดการห้องเรียนออนไลน์">จัดการห้องเรียนออนไลน์</div>
                                 </a>
                             </li>
-                        </ul>
-                    </li>
-                    <?php endif; ?>
-
-                    <?php if(in_array("งานวัดและประเมินผล",$Exp_Checkrloes)): ?>
-                    <li class="menu-item <?= ($uri->getTotalSegments() >= 3 && ($uri->getSegment(3) == 'Evaluate' || $uri->getSegment(3) == 'characteristics' || $uri->getSegment(3) == 'rwl') ? 'active open' : '') ?>">
-                        <a href="javascript:void(0);" class="menu-link menu-toggle">
-                            <i class="menu-icon tf-icons bx bx-file-find"></i>
-                            <div data-i18n="งานวัดและประเมินผล">งานวัดและประเมินผล</div>
-                        </a>
-                        <ul class="menu-sub">
-                            <li class="menu-item <?= ($uri->getTotalSegments() >= 4 && $uri->getSegment(4) == 'EditGrade' ? 'active' : '') ?>">
-                                <a href="<?=base_url('Admin/Acade/Evaluate/EditGrade/').$SchoolYear->schyear_year?>" class="menu-link">
-                                    <div data-i18n="จัดการผลการเรียน (0 ร)">จัดการผลการเรียน (0 ร)</div>
-                                </a>
-                            </li>
-                            <li class="menu-item <?= ($uri->getTotalSegments() >= 4 && $uri->getSegment(4) == 'ReportScoreRoomMain' && $uri->getTotalSegments() >= 3 && $uri->getSegment(3) == 'Evaluate' ? 'active' : '') ?>">
-                                <a href="<?=base_url('Admin/Acade/Evaluate/ReportScoreRoomMain/').$SchoolYear->schyear_year.'/All/All';?>" class="menu-link">
-                                    <div data-i18n="รายงานผลการบันทึกคะแนน (รายห้องเรียน)" style="white-space: normal;">รายงานผลการบันทึกคะแนน (รายห้องเรียน)</div>
-                                </a>
-                            </li>
                             <li class="menu-item <?= (($uri->getTotalSegments() >= 4 && $uri->getSegment(4) == 'ReportTeacherSaveScore' && $uri->getTotalSegments() >= 3 && $uri->getSegment(3) == 'Evaluate') || ($uri->getTotalSegments() >= 4 && $uri->getSegment(4) == 'ReportTeacherSaveScoreCheck') ? 'active' : '') ?>">
-                                <a href="<?=base_url('Admin/Acade/Evaluate/ReportTeacherSaveScore/').$SchoolYear->schyear_year;?>" class="menu-link">
+                                <a href="<?=base_url('Admin/Acade/Evaluate/ReportTeacherSaveScore/').(isset($SchoolYear->schyear_year) ? $SchoolYear->schyear_year:'');?>" class="menu-link">
                                     <div data-i18n="รายงานผลการบันทึกคะแนน (ครูผู้สอน)" style="white-space: normal;">รายงานผลการบันทึกคะแนน (ครูผู้สอน)</div>
                                 </a>
                             </li>
@@ -175,7 +154,7 @@
                     <?php endif; ?>
 
                     <?php if(in_array("งานหลักสูตร",$Exp_Checkrloes)): ?>
-                    <li class="menu-item <?= ($uri->getTotalSegments() >= 3 && $uri->getSegment(3) == 'Course') || ($uri->getSegment(2) == 'academic' && $uri->getSegment(3) == 'checkplan') ? 'active open' : '' ?>">
+                    <li class="menu-item <?= ($uri->getTotalSegments() >= 3 && ($uri->getSegment(3) == 'Course' || $uri->getSegment(3) == 'Research')) || ($uri->getSegment(2) == 'academic' && $uri->getSegment(3) == 'checkplan') ? 'active open' : '' ?>">
                         <a href="javascript:void(0);" class="menu-link menu-toggle">
                             <i class="menu-icon tf-icons bx bx-book"></i>
                             <div data-i18n="งานหลักสูตร">งานหลักสูตร</div>
@@ -191,14 +170,26 @@
                                     <div data-i18n="จัดการตารางเรียน">จัดการตารางเรียน</div>
                                 </a>
                             </li>
+                            <hr>
                             <li class="menu-item <?= ($uri->getTotalSegments() >= 4 && $uri->getSegment(4) == 'SendPlan' ? 'active' : '') ?>">
                                 <a href="<?=base_url('Admin/Acade/Course/SendPlan');?>" class="menu-link">
-                                    <div data-i18n="จัดการส่งแผน">จัดการส่งแผน</div>
+                                    <div data-i18n="ตั้งค่าส่งแผน">ตั้งค่าส่งแผน</div>
                                 </a>
                             </li>
                             <li class="menu-item <?= ($uri->getSegment(3) == 'checkplan' ? 'active' : '') ?>">
                                 <a href="<?=base_url('admin/academic/checkplan');?>" class="menu-link">
                                     <div data-i18n="ตรวจแผนการสอน">ตรวจแผนการสอน</div>
+                                </a>
+                            </li>
+                            <hr>
+                            <li class="menu-item <?= ($uri->getTotalSegments() >= 4 && $uri->getSegment(3) == 'Research' && $uri->getSegment(4) == 'Setup' ? 'active' : '') ?>">
+                                <a href="<?=base_url('Admin/Acade/Research/Setup');?>" class="menu-link">
+                                    <div data-i18n="ตั้งค่าส่งงานวิจัย">ตั้งค่าส่งงานวิจัย</div>
+                                </a>
+                            </li>
+                            <li class="menu-item <?= ($uri->getTotalSegments() >= 4 && $uri->getSegment(3) == 'Research' && $uri->getSegment(4) == 'Report' ? 'active' : '') ?>">
+                                <a href="<?=base_url('Admin/Acade/Research/Report');?>" class="menu-link">
+                                    <div data-i18n="รายงานส่งงานวิจัย">รายงานส่งงานวิจัย</div>
                                 </a>
                             </li>
                         </ul>
@@ -215,6 +206,22 @@
                             <li class="menu-item <?= ($uri->getTotalSegments() >= 4 && ($uri->getSegment(4) == 'Clubs' || $uri->getSegment(4) == 'student-registrations') ? 'active' : '') ?>">
                                 <a href="<?=base_url('Admin/Acade/DevelopStudents/Clubs/Main');?>" class="menu-link">
                                     <div data-i18n="จัดการชุมนุม">จัดการชุมนุม</div>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                    <?php endif; ?>
+
+                    <?php if(in_array("งานแนะแนว",$Exp_Checkrloes)): ?>
+                    <li class="menu-item <?= ($uri->getTotalSegments() >= 3 && $uri->getSegment(3) == 'Guidance') ? 'active open' : '' ?>">
+                        <a href="javascript:void(0);" class="menu-link menu-toggle">
+                            <i class="menu-icon tf-icons bx bx-support"></i>
+                            <div data-i18n="งานแนะแนว">งานแนะแนว</div>
+                        </a>
+                        <ul class="menu-sub">
+                            <li class="menu-item <?= ($uri->getTotalSegments() >= 4 && $uri->getSegment(4) == 'HomeVisit' ? 'active' : '') ?>">
+                                <a href="<?=base_url('Admin/Acade/Guidance/HomeVisit');?>" class="menu-link">
+                                    <div data-i18n="ข้อมูลเยี่ยมบ้าน">ข้อมูลเยี่ยมบ้าน</div>
                                 </a>
                             </li>
                         </ul>

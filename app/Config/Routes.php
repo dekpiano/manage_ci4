@@ -18,6 +18,7 @@ use App\Controllers\Admin\Academic\ConAdminExtraSubject;
 use App\Controllers\Admin\Academic\ConAdminHome;
 use App\Controllers\Admin\Academic\ConAdminRegisRepeat;
 use App\Controllers\Admin\Academic\ConAdminRegisterSubject;
+use App\Controllers\Admin\Academic\ConAdminResearch;
 use App\Controllers\Admin\Academic\ConAdminReportResult;
 use App\Controllers\Admin\Academic\ConAdminRoomOnline;
 use App\Controllers\Admin\Academic\ConAdminSaveScore;
@@ -126,6 +127,12 @@ $routes->post('admin/academic/course/delete_teacher_subject', [ConAdminCourse::c
 $routes->post('admin/academic/course/update_setting', [ConAdminCourse::class, 'UpdateSettingSendPlan']);
 $routes->get('admin/academic/course/getPlansTableData', [ConAdminCourse::class, 'getPlansTableData']);
 $routes->post('Admin/Settings/UpdateSchoolYear', [ConAdminCourse::class, 'updateSchoolYear']);
+
+// Research Submission Settings Routes
+$routes->get('Admin/Acade/Research/Setup', [ConAdminResearch::class, 'index']);
+$routes->match(['get', 'post'], 'Admin/Acade/Research/Report', [ConAdminResearch::class, 'research_report']);
+$routes->match(['get', 'post'], 'admin/academic/research/update_setting', [ConAdminResearch::class, 'update_setting']);
+
 $routes->get('admin/academic/checkplan', [ConAdminCheckPlan::class, 'index']);
 $routes->post('admin/academic/checkplan/update', [ConAdminCheckPlan::class, 'updatePlanStatus']);
 $routes->post('admin/academic/checkplan/updateplanstatus', [ConAdminCheckPlan::class, 'updatePlanStatus']);
