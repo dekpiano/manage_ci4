@@ -150,6 +150,7 @@ $routes->group('ConAdminSettingAdminRoles', function ($routes) {
     $routes->post('SelectWork', [ConAdminSettingAdminRoles::class, 'SelectWork']);
     $routes->post('addAcademicStaff', [ConAdminSettingAdminRoles::class, 'addAcademicStaff']);
     $routes->post('deleteAcademicStaff', [ConAdminSettingAdminRoles::class, 'deleteAcademicStaff']);
+    $routes->post('updateStaffDetails', [ConAdminSettingAdminRoles::class, 'updateStaffDetails']);
 });
 
 // Routes for Desirable Characteristics Settings
