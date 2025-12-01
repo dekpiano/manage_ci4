@@ -43,10 +43,18 @@
                         </a>
                     </li>
                     <li class="menu-header small text-uppercase">
+                    <span class="menu-header-text">ประกันคุณภาพ</span>
+                    </li>
+                        <li class="menu-item <?= ($uri->getSegment(1) == 'QADocument' ? 'active' : null) ?>">
+                            <a href="https://sites.google.com/skj.ac.th/skj68/home" class="menu-link">
+                                <i class="menu-icon tf-icons bx bx-file"></i>
+                                <div class="text-truncate" data-i18n="Basic">การประกันคุณภาพภายนอก</div>
+                            </a>
+                    <li class="menu-header small text-uppercase">
                     <span class="menu-header-text">ดาวน์โหลด</span>
                     </li>
                       <li class="menu-item <?= ($uri->getSegment(1) == 'file' ? 'active' : null) ?>">
-                        <a href="<?=base_url('StudentsList');?>" class="menu-link">
+                        <a href="https://documentcenter.skj.ac.th/" class="menu-link">
                             <i class="menu-icon tf-icons bx bx-group"></i>
                             <div class="text-truncate" data-i18n="Basic">ดาวน์โหลดไฟล์</div>
                         </a>
