@@ -21,7 +21,7 @@ class ConAdminCourse extends BaseController
 
         $check_status_data = $this->db->table('tb_admin_rloes')->where('admin_rloes_userid', session()->get('login_id'))->get()->getRow();
 
-        if (empty($check_status_data) || (! in_array($check_status_data->admin_rloes_status, ["admin", "manager"]))) {
+        if (empty($check_status_data) || (! in_array($check_status_data->admin_rloes_status, ["admin", "manager", "superadmin"]))) {
             session()->setFlashdata(['msg' => 'OK', 'messge' => 'คุณไม่มีสิทธ์ในระบบจัดข้อมูลนี้ ติดต่อเจ้าหน้าที่คอม', 'alert' => 'error']);
             return redirect()->to(base_url('welcome'));
         }
@@ -44,6 +44,10 @@ class ConAdminCourse extends BaseController
 
         $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
         $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();
+        
+        // Use session-stored selected year
+        $data['selectedYear'] = get_selected_year();
+        
         $data['CheckYearSendPlan'] = $this->db->table('tb_send_plan')
                                             ->select('seplan_year,seplan_term')
                                             ->groupBy('seplan_year,seplan_term')

@@ -25,7 +25,7 @@ class ConAdminRegisterSubject extends BaseController
 
         $check_status_data = $this->db->table('tb_admin_rloes')->where('admin_rloes_userid', session()->get('login_id'))->get()->getRow();
 
-        if (empty($check_status_data) || (! in_array($check_status_data->admin_rloes_status, ["admin", "manager"]))) {
+        if (empty($check_status_data) || (! in_array($check_status_data->admin_rloes_status, ["admin", "manager", "superadmin"]))) {
             session()->setFlashdata(['msg' => 'OK', 'messge' => 'คุณไม่มีสิทธ์ในระบบจัดข้อมูลนี้ ติดต่อเจ้าหน้าที่คอม', 'alert' => 'error']);
             return redirect()->to(base_url('welcome'));
         }
@@ -100,6 +100,7 @@ class ConAdminRegisterSubject extends BaseController
                 "SubjectYear" => !empty($record->SubjectYear) ? $record->SubjectYear : null,
                 "SubjectCode" => !empty($record->SubjectCode) ? $record->SubjectCode : null,
                 "SubjectName" => !empty($record->SubjectName) ? $record->SubjectName : null,
+                "SubjectType" => !empty($record->SubjectType) ? $record->SubjectType : null,
                 "FirstGroup" => !empty($record->FirstGroup) ? $record->FirstGroup : null,
                 "SubjectClass" => !empty($record->SubjectClass) ? $record->SubjectClass : null,
                 "SubjectYear" => !empty($record->SubjectYear) ? $record->SubjectYear : null,
@@ -177,7 +178,7 @@ class ConAdminRegisterSubject extends BaseController
         $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();
         $data['classroom'] = new \App\Libraries\Classroom();
         
-        echo view('admin/Academic/AdminRegisterSubject/AdminRegisterSubjectMain.php', $data);
+        echo view('admin/Academic/AdminRegisterSubject/AdminRegisterSubjectMain', $data);
 
     }
 }

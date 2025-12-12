@@ -120,7 +120,7 @@ class Control_login extends BaseController
 			return view('user/Login/PageLoginTeacher', $data);
 	    }	
     function LoginTeacher(){
-		include_once APPPATH . "../vendor/google_sheet/vendor/autoload.php"; // Re-added manual require
+        require_once SHARED_LIB_PATH . '/google_sheet/vendor/autoload.php';
 		$google_client = new Client();
 
 		$google_client->setClientId('29638025169-aeobhq04v0lvimcjd27osmhlpua380gl.apps.googleusercontent.com');
@@ -246,8 +246,7 @@ class Control_login extends BaseController
 
 	    public function LoginMenager_callback(){
 		
-		$path = dirname(dirname(dirname(dirname(dirname((dirname(__FILE__)))))));
-		require $path . '/librarie_skj/google_sheet/vendor/autoload.php';
+		require_once SHARED_LIB_PATH . '/google_sheet/vendor/autoload.php';
 		
 		$google_client = new Client();
 

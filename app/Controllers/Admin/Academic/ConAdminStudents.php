@@ -34,7 +34,7 @@ class ConAdminStudents extends BaseController
 
         $check_status_data = $this->db->table('tb_admin_rloes')->where('admin_rloes_userid', session()->get('login_id'))->get()->getRow();
 
-        if (empty($check_status_data) || (! in_array($check_status_data->admin_rloes_status, ["admin", "manager"]))) {
+        if (empty($check_status_data) || (! in_array($check_status_data->admin_rloes_status, ["admin", "manager", "superadmin"]))) {
             session()->setFlashdata(['msg' => 'OK', 'messge' => 'คุณไม่มีสิทธ์ในระบบจัดข้อมูลนี้ ติดต่อเจ้าหน้าที่คอม', 'alert' => 'error']);
             return redirect()->to(base_url('welcome'));
         }
@@ -106,6 +106,9 @@ class ConAdminStudents extends BaseController
         $data['title'] = "จัดการข้อมูลนักเรียน";
         $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
         
+        // Use session-stored selected year
+        $data['selectedYear'] = get_selected_year();
+        
         echo view('admin/Academic/AdminStudents/AdminStudentsMain', $data);
         
 
@@ -166,7 +169,8 @@ class ConAdminStudents extends BaseController
             // Filter by class
             $classFilter = $this->request->getPost('classFilter');
             if (!empty($classFilter)) {
-                $builder->where('StudentClass', $classFilter);
+                // Use LIKE to support filtering by level (ม.1) or exact class (ม.1/1)
+                $builder->like('StudentClass', $classFilter, 'after');
             }
 
             // DataTables parameters

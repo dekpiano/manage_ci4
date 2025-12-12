@@ -33,7 +33,7 @@ class ConAdminSaveScore extends BaseController
 
         $check_status_data = $this->db->table('tb_admin_rloes')->where('admin_rloes_userid', session()->get('login_id'))->get()->getRow();
 
-        if (empty($check_status_data) || (! in_array($check_status_data->admin_rloes_status, ["admin", "manager"]))) {
+        if (empty($check_status_data) || (! in_array($check_status_data->admin_rloes_status, ["admin", "manager", "superadmin"]))) {
             session()->setFlashdata(['msg' => 'OK', 'messge' => 'คุณไม่มีสิทธ์ในระบบจัดข้อมูลนี้ ติดต่อเจ้าหน้าที่คอม', 'alert' => 'error']);
             return redirect()->to(base_url('welcome'));
         }
@@ -66,6 +66,10 @@ class ConAdminSaveScore extends BaseController
         $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();
         $data['admin'] = $this->DBpersonnel->table('tb_personnel')->select('pers_id,pers_img')->where('pers_id',session()->get('login_id'))->get()->getRow();
         $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
+        
+        // Use session-stored selected year
+        $data['selectedYear'] = get_selected_year();
+        
         $data['title'] = "บันทึกผลการเรียน";	
         $data['OnOffSaveScore'] = $this->db->table('tb_register_onoff')->where('onoff_id >=', 2)->where('onoff_id <=', 5)->get()->getResult();
         $data['OnOffSaveScoreSystem'] = $this->db->table('tb_register_onoff')->where('onoff_id',6)->get()->getResult();
@@ -85,7 +89,7 @@ class ConAdminSaveScore extends BaseController
                             ->join('skjacth_academic.tb_subjects','skjacth_academic.tb_subjects.SubjectID = skjacth_academic.tb_register.SubjectID')
                             ->join('skjacth_personnel.tb_personnel','skjacth_personnel.tb_personnel.pers_id = skjacth_academic.tb_register.TeacherID')
                             ->where('RegisterYear','1/2565')
-                            ->groupBy('tb_register.subjectID')
+                            ->groupBy('tb_register.SubjectID, tb_register.RegisterYear, tb_register.TeacherID, tb_register.RegisterClass, tb_personnel.pers_prefix, tb_personnel.pers_firstname, tb_personnel.pers_lastname, tb_subjects.SubjectName, tb_subjects.SubjectCode')
                             ->get()->getResult();
         
         

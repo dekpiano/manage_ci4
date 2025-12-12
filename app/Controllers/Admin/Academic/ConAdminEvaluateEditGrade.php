@@ -31,7 +31,7 @@ class ConAdminEvaluateEditGrade extends BaseController
 
         $check_status_data = $this->db->table('tb_admin_rloes')->where('admin_rloes_userid', session()->get('login_id'))->get()->getRow();
 
-        if (empty($check_status_data) || (! in_array($check_status_data->admin_rloes_status, ["admin", "manager"]))) {
+        if (empty($check_status_data) || (! in_array($check_status_data->admin_rloes_status, ["admin", "manager", "superadmin"]))) {
             session()->setFlashdata(['msg' => 'OK', 'messge' => 'คุณไม่มีสิทธ์ในระบบจัดข้อมูลนี้ ติดต่อเจ้าหน้าที่คอม', 'alert' => 'error']);
             return redirect()->to(base_url('welcome'));
         }
@@ -61,7 +61,7 @@ class ConAdminEvaluateEditGrade extends BaseController
         return $grade;
     }
     
-    public function AdminEvaluateEditGradeMain($Term, $Year)
+    public function AdminEvaluateEditGradeMain($Term = null, $Year = null)
     {
         $data['admin'] = $this->DBpersonnel->table('tb_personnel') // Use the class property
                                     ->select('pers_id,pers_img')
@@ -74,6 +74,25 @@ class ConAdminEvaluateEditGrade extends BaseController
         $data['OnOffSaveScore'] = $this->db->table('tb_register_onoff')->where('onoff_id >=', 2)->where('onoff_id <=', 5)->get()->getResult();
         $data['OnOffSaveScoreSystem'] = $this->db->table('tb_register_onoff')->where('onoff_id', 6)->get()->getResult();
         $data['CheckYearRegis'] = $this->db->table('tb_register')->select('RegisterYear')->groupBy('RegisterYear')->get()->getResult();
+
+        // ถ้าไม่ได้ส่ง Term/Year มา ให้ดึงจาก DB
+        if ($Term === null || $Year === null) {
+            $onoff_year = $data['OnOffSaveScoreSystem'][0]->onoff_year ?? '';
+            $parts = explode('/', $onoff_year);
+            $Term = $parts[0] ?? '';
+            $Year = $parts[1] ?? '';
+
+            if (empty($Term) || empty($Year)) {
+                if ($data['SchoolYear'] && property_exists($data['SchoolYear'], 'schyear_year')) {
+                    $parts = explode('/', $data['SchoolYear']->schyear_year);
+                    $Term = $parts[0] ?? '2';
+                    $Year = $parts[1] ?? '2567';
+                } else {
+                    $Term = '2';
+                    $Year = '2567';
+                }
+            }
+        }
 
         $data['result'] = $this->db->table('skjacth_academic.tb_register')
                                     ->select('
@@ -90,7 +109,7 @@ class ConAdminEvaluateEditGrade extends BaseController
                                     ->join('skjacth_academic.tb_subjects', 'skjacth_academic.tb_subjects.SubjectID = skjacth_academic.tb_register.SubjectID')
                                     ->join('skjacth_personnel.tb_personnel', 'skjacth_personnel.tb_personnel.pers_id = skjacth_academic.tb_register.TeacherID')
                                     ->where('RegisterYear', $Term . '/' . $Year)
-                                    ->groupBy('SubjectCode')
+                                    ->groupBy('tb_register.SubjectID, tb_register.RegisterYear, tb_register.TeacherID, tb_register.RegisterClass, tb_personnel.pers_prefix, tb_personnel.pers_firstname, tb_personnel.pers_lastname, tb_subjects.SubjectName, tb_subjects.SubjectCode')
                                     ->get()->getResult();
 
         

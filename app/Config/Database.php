@@ -30,7 +30,7 @@ class Database extends Config
         'DSN'          => '',
         'hostname'     => 'localhost',
         'username'     => 'root',
-        'password'     => '',
+        'password'     => 'rootpassword',
         'database'     => 'skjacth_academic',
         'DBDriver'     => 'MySQLi',
         'DBPrefix'     => '',
@@ -55,7 +55,7 @@ class Database extends Config
         'DSN'          => '',
         'hostname'     => 'localhost',
         'username'     => 'root',
-        'password'     => '',
+        'password'     => 'rootpassword',
         'database'     => 'skjacth_personnel',
         'DBDriver'     => 'MySQLi',
         'DBPrefix'     => '',
@@ -80,7 +80,7 @@ class Database extends Config
         'DSN'          => '',
         'hostname'     => 'localhost',
         'username'     => 'root',
-        'password'     => '',
+        'password'     => 'rootpassword',
         'database'     => 'skjacth_skj',
         'DBDriver'     => 'MySQLi',
         'DBPrefix'     => '',
@@ -206,14 +206,39 @@ class Database extends Config
     {
         parent::__construct();
 
-        $this->default['username'] = ENV('database.default.username', 'root');
-        $this->default['password'] = ENV('database.default.password', '');
+        // Get database host from environment (for Docker: host.docker.internal)
+        $dbHost = getenv('DB_HOST') ?: 'localhost';
+        
+        // Apply hostname to all database connections
+        $this->default['hostname'] = $dbHost;
+        $this->personnel['hostname'] = $dbHost;
+        $this->skj['hostname'] = $dbHost;
+        $this->affairs['hostname'] = $dbHost;
+        $this->general['hostname'] = $dbHost;
+        $this->admission['hostname'] = $dbHost;
 
-        $this->personnel['username'] = ENV('database.personnel.username', 'root');
-        $this->personnel['password'] = ENV('database.personnel.password', '');
+        // Get username/password from environment (Docker vars)
+        $dbUser = getenv('DB_USERNAME') ?: 'root';
+        $dbPass = getenv('DB_PASSWORD') ?: '';
 
-        $this->skj['username'] = ENV('database.skj.username', 'root');
-        $this->skj['password'] = ENV('database.skj.password', '');
+        // Apply credentials to all database connections
+        $this->default['username'] = $dbUser;
+        $this->default['password'] = $dbPass;
+
+        $this->personnel['username'] = $dbUser;
+        $this->personnel['password'] = $dbPass;
+
+        $this->skj['username'] = $dbUser;
+        $this->skj['password'] = $dbPass;
+
+        $this->affairs['username'] = $dbUser;
+        $this->affairs['password'] = $dbPass;
+
+        $this->general['username'] = $dbUser;
+        $this->general['password'] = $dbPass;
+
+        $this->admission['username'] = $dbUser;
+        $this->admission['password'] = $dbPass;
 
         // Ensure that we always set the database group to 'tests' if
         // we are currently running an automated test suite, so that

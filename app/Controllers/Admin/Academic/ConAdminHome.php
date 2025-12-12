@@ -23,7 +23,7 @@ class ConAdminHome extends BaseController
 
         $check_status_data = $this->db->table('tb_admin_rloes')->where('admin_rloes_userid', session()->get('login_id'))->get()->getRow();
 
-        if (empty($check_status_data) || (! in_array($check_status_data->admin_rloes_status, ["admin", "manager"]))) {
+        if (empty($check_status_data) || (! in_array($check_status_data->admin_rloes_status, ["admin", "manager", "superadmin"]))) {
             session()->setFlashdata(['msg' => 'OK', 'messge' => 'คุณไม่มีสิทธ์ในระบบจัดข้อมูลนี้ ติดต่อเจ้าหน้าที่คอม', 'alert' => 'error']);
             return redirect()->to(base_url('welcome'));
         }
@@ -34,6 +34,9 @@ class ConAdminHome extends BaseController
         $data['admin'] = $this->DBpersonnel->table('tb_personnel')->select('pers_id,pers_img')->where('pers_id',session()->get('login_id'))->get()->getRow();
         $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
         $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();
+        
+        // Use session-stored selected year
+        $data['selectedYear'] = get_selected_year();
 
 
                 // Query for statistics
@@ -50,5 +53,27 @@ class ConAdminHome extends BaseController
 
         echo view('admin/Academic/AdminHome/AdminHome', $data);
         
+    }
+
+    /**
+     * Set the selected academic year in session (AJAX endpoint)
+     */
+    public function setSelectedYear()
+    {
+        $year = $this->request->getPost('year');
+        if (!empty($year)) {
+            session()->set('admin_selected_year', $year);
+            return $this->response->setJSON(['status' => 'success', 'year' => $year]);
+        }
+        return $this->response->setJSON(['status' => 'error', 'message' => 'Year is required']);
+    }
+
+    /**
+     * Get the selected academic year from session (AJAX endpoint)
+     */
+    public function getSelectedYear()
+    {
+        $year = session()->get('admin_selected_year');
+        return $this->response->setJSON(['year' => $year]);
     }
 }

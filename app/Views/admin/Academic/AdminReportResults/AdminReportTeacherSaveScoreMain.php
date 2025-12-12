@@ -1,84 +1,195 @@
 <?= $this->extend('admin/layout/main') ?>
 
 <?= $this->section('content') ?>
-<style>
-.border-left-primary {
-    border-left: .25rem solid #5BC3D5 !important;
-}
-</style>
-<div class="app-content pt-3 p-md-3 p-lg-4">
-    <div class="d-flex justify-content-between">
-        <div class="col-auto justify-content-start">
-            <h3 class="app-page-title"><?= isset($title) ? esc($title) : '' ?></h3>
-        </div>
-        <div class="col-auto justify-content-md-end">
-            <div class="page-utilities">
-                <div class="row g-2  ">
-                    <div class="col-auto">
-                        <form action="#" method="post" class="d-flex align-items-center" data-base-url="<?= site_url('Admin/Acade/Evaluate/ReportTeacherSaveScore') ?>">
-                            <label for="">เลือกปีการศึกษา</label>
-                            <select class="form-select w-auto ms-2" name="CheckYearSaveScore" id="CheckYearSaveScore">
-                                <?php foreach ($CheckYearSaveScore as $key => $value) : ?>
-                                <option <?= (isset($Term) ? $Term : '').'/'.(isset($Year) ? $Year : '') == (isset($value->RegisterYear) ? $value->RegisterYear : '') ? "selected" : ""?> value="<?= isset($value->RegisterYear) ? esc($value->RegisterYear) : '' ?>"><?= isset($value->RegisterYear) ? esc($value->RegisterYear) : '' ?></option>
-                                <?php endforeach; ?>
-                            </select>
-                        </form>
-                    </div>                  
-                </div>
-                <!--//row-->
-            </div>
-            <!--//table-utilities-->
+
+<!-- Header Section -->
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="fw-bold mb-1">
+            <i class='bx bx-bar-chart-alt-2 text-primary me-2'></i>
+            <?= isset($title) ? esc($title) : 'รายงานผลการบันทึกคะแนนครูผู้สอน' ?>
+        </h4>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="<?= base_url('Admin/Home') ?>"><i class='bx bx-home'></i> หน้าหลัก</a></li>
+                <li class="breadcrumb-item"><a href="#">งานทะเบียน</a></li>
+                <li class="breadcrumb-item active">รายงานผลการบันทึกคะแนน</li>
+            </ol>
+        </nav>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        <div class="input-group" style="width: auto;">
+            <span class="input-group-text bg-primary text-white">
+                <i class='bx bx-calendar'></i>
+            </span>
+            <select class="form-select" name="CheckYearSaveScore" id="CheckYearSaveScore" style="min-width: 130px;">
+                <?php foreach ($CheckYearSaveScore as $key => $value) : ?>
+                <option <?= (isset($Term) ? $Term : '').'/'.(isset($Year) ? $Year : '') == (isset($value->RegisterYear) ? $value->RegisterYear : '') ? "selected" : ""?> 
+                    value="<?= isset($value->RegisterYear) ? esc($value->RegisterYear) : '' ?>">
+                    <?= isset($value->RegisterYear) ? esc($value->RegisterYear) : '' ?>
+                </option>
+                <?php endforeach; ?>
+            </select>
         </div>
     </div>
-    <!--//container-->
-    </section>
-    <section class="we-offer-area">
-        <div class="">
+</div>
 
-                <div class="card">
-                    <div class="card-body">
-                        <table class="table app-table-hover mb-0 text-left ShowStudent" id="">
-                            <thead>
-                                <tr>
-                                    <th class="cell">ภาคเรียน</th>
-                                    <th class="cell">กลุ่มสาระ</th>
-                                    <th class="cell">ชื่อ - นามสกุล</th>
-                                    <th class="cell">ตำแหน่ง</th>
-                                    <th class="cell">คำสั่ง</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-
-                                <?php foreach ($Teacher as $key => $v_Teacher) : ?>
-                                <tr>
-                                    <td class="cell"><?= (isset($Term) ? esc($Term) : '').'/'.(isset($Year) ? esc($Year) : '') ?></td>
-                                    <td class="cell"><?= isset($v_Teacher->lear_namethai) ? esc($v_Teacher->lear_namethai) : '' ?></td>
-                                    <td class="cell">
-                                        <?= (isset($v_Teacher->pers_prefix) ? esc($v_Teacher->pers_prefix) : '').(isset($v_Teacher->pers_firstname) ? esc($v_Teacher->pers_firstname) : '').' '.(isset($v_Teacher->pers_lastname) ? esc($v_Teacher->pers_lastname) : '') ?>
-                                    </td>
-                                    <td class="cell"><?= isset($v_Teacher->posi_name) ? esc($v_Teacher->posi_name) : '' ?></td>
-
-                                    <td class="cell">
-                                        <?php // NOTE: This logic should be in the controller
-                                        $level = service('request')->uri->getSegment(3) ?? ''; ?>
-                                        <a class="btn-sm btn-primary clickLoad-spin"
-                                            href="<?= site_url('Admin/Acade/'.esc($level, 'url').'/ReportTeacherSaveScoreCheck/'.(isset($Term) ? esc($Term, 'url') : '').'/'.(isset($Year) ? esc($Year, 'url') : '').'/'.(isset($v_Teacher->pers_id) ? esc($v_Teacher->pers_id, 'url') : ''));?>">
-                                            <i class="bi bi-eye-fill"></i> ดูผลการบันทึกคนแนน
-                                        </a>
-
-                                    </td>
-                                </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                        </table>
+<!-- Summary Cards Row -->
+<div class="row g-4 mb-4">
+    <div class="col-xl-3 col-md-6">
+        <div class="card border-0 shadow-sm h-100" style="border-radius: 12px; background: linear-gradient(135deg, #71dd37 0%, #8de45c 100%);">
+            <div class="card-body text-white">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <h6 class="mb-1 text-white-50">จำนวนครูทั้งหมด</h6>
+                        <h2 class="mb-0 fw-bold"><?= count($Teacher ?? []) ?></h2>
+                    </div>
+                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 60px; height: 60px; background: rgba(255,255,255,0.2);">
+                        <i class='bx bx-group fs-2'></i>
                     </div>
                 </div>
             </div>
-
+        </div>
     </div>
-    </section>
-
+    <div class="col-xl-3 col-md-6">
+        <div class="card border-0 shadow-sm h-100" style="border-radius: 12px; background: linear-gradient(135deg, #28a745 0%, #48c764 100%);">
+            <div class="card-body text-white">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <h6 class="mb-1 text-white-50">ภาคเรียนที่</h6>
+                        <h2 class="mb-0 fw-bold"><?= (isset($Term) ? esc($Term) : '-').'/'.(isset($Year) ? esc($Year) : '-') ?></h2>
+                    </div>
+                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 60px; height: 60px; background: rgba(255,255,255,0.2);">
+                        <i class='bx bx-calendar-check fs-2'></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+        <div class="card border-0 shadow-sm h-100" style="border-radius: 12px; background: linear-gradient(135deg, #20c997 0%, #4dd4ac 100%);">
+            <div class="card-body text-white">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <h6 class="mb-1 text-white-50">สถานะ</h6>
+                        <h2 class="mb-0 fw-bold" style="font-size: 1.2rem;">พร้อมตรวจสอบ</h2>
+                    </div>
+                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 60px; height: 60px; background: rgba(255,255,255,0.2);">
+                        <i class='bx bx-check-circle fs-2'></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+        <div class="card border-0 shadow-sm h-100" style="border-radius: 12px; background: linear-gradient(135deg, #17a2b8 0%, #3dbdd4 100%);">
+            <div class="card-body text-white">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <h6 class="mb-1 text-white-50">กลุ่มสาระ</h6>
+                        <h2 class="mb-0 fw-bold">
+                            <?php 
+                            $uniqueLearning = [];
+                            foreach ($Teacher ?? [] as $t) {
+                                if (!empty($t->lear_namethai)) {
+                                    $uniqueLearning[$t->lear_namethai] = true;
+                                }
+                            }
+                            echo count($uniqueLearning);
+                            ?> กลุ่ม
+                        </h2>
+                    </div>
+                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 60px; height: 60px; background: rgba(255,255,255,0.2);">
+                        <i class='bx bx-category fs-2'></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
+<!-- Main Data Card -->
+<div class="card border-0 shadow-sm" style="border-radius: 12px;">
+    <div class="card-header bg-white border-bottom-0 py-3" style="border-radius: 12px 12px 0 0;">
+        <div class="d-flex flex-wrap justify-content-between align-items-center">
+            <div class="d-flex align-items-center">
+                <div class="rounded-circle bg-primary bg-opacity-10 p-2 me-3">
+                    <i class='bx bx-list-ul text-primary fs-4'></i>
+                </div>
+                <div>
+                    <h5 class="card-title mb-0 fw-bold">รายชื่อครูผู้สอน</h5>
+                    <small class="text-muted">แสดงข้อมูลครูที่มีการบันทึกคะแนน ภาคเรียน <?= (isset($Term) ? esc($Term) : '').'/'.(isset($Year) ? esc($Year) : '') ?></small>
+                </div>
+            </div>
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-outline-success btn-sm" id="btnExportExcel">
+                    <i class='bx bx-file me-1'></i> Export Excel
+                </button>
+                <button type="button" class="btn btn-outline-primary btn-sm" id="btnPrint">
+                    <i class='bx bx-printer me-1'></i> พิมพ์
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0 ShowStudent" id="teacherTable">
+                <thead class="table-light">
+                    <tr>
+                       
+                        <th>ครูผู้สอน</th>
+                        <th>กลุ่มสาระการเรียนรู้</th>
+                        <th>ตำแหน่ง</th>
+                        <th>ภาคเรียน</th>
+                        <th class="text-center" style="width: 150px;">การดำเนินการ</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php $counter = 1; ?>
+                    <?php foreach ($Teacher as $key => $v_Teacher) : ?>
+                    <tr>
+                        <td>
+                            <div>
+                                <h6 class="mb-0 fw-semibold">
+                                    <?= (isset($v_Teacher->pers_prefix) ? esc($v_Teacher->pers_prefix) : '').(isset($v_Teacher->pers_firstname) ? esc($v_Teacher->pers_firstname) : '').' '.(isset($v_Teacher->pers_lastname) ? esc($v_Teacher->pers_lastname) : '') ?>
+                                </h6>
+                                <small class="text-muted">
+                                    <i class='bx bx-id-card'></i> <?= isset($v_Teacher->pers_id) ? esc($v_Teacher->pers_id) : '-' ?>
+                                </small>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge bg-label-info rounded-pill px-3 py-2">
+                                <i class='bx bx-book me-1'></i>
+                                <?= isset($v_Teacher->lear_namethai) ? esc($v_Teacher->lear_namethai) : '-' ?>
+                            </span>
+                        </td>
+                        <td>
+                            <span class="text-muted">
+                                <i class='bx bx-user-pin me-1'></i>
+                                <?= isset($v_Teacher->posi_name) ? esc($v_Teacher->posi_name) : '-' ?>
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge bg-label-success rounded-pill">
+                                <?= (isset($Term) ? esc($Term) : '').'/'.(isset($Year) ? esc($Year) : '') ?>
+                            </span>
+                        </td>
+                        <td class="text-center">
+                            <?php $level = service('request')->uri->getSegment(3) ?? ''; ?>
+                            <a class="btn btn-primary btn-sm rounded-pill px-3 clickLoad-spin"
+                                href="<?= site_url('Admin/Acade/'.esc($level, 'url').'/ReportTeacherSaveScoreCheck/'.(isset($Term) ? esc($Term, 'url') : '').'/'.(isset($Year) ? esc($Year, 'url') : '').'/'.(isset($v_Teacher->pers_id) ? esc($v_Teacher->pers_id, 'url') : ''));?>">
+                                <i class='bx bx-show me-1'></i> ดูคะแนน
+                            </a>
+                        </td>
+                    </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
 <?= $this->endSection() ?>
 
 <?= $this->section('script') ?>
@@ -108,24 +219,57 @@ $(document).ready(function() {
     select.val(selectedValue);
 
     // Initialize DataTable
-    $('.ShowStudent').DataTable({
-        "order": [
-            [4, "asc"],
-            [1, "asc"]
-        ]
+    var table = $('#teacherTable').DataTable({
+        "language": {
+            "lengthMenu": "แสดง _MENU_ รายการ",
+            "zeroRecords": "ไม่พบข้อมูล",
+            "info": "แสดง _START_ ถึง _END_ จาก _TOTAL_ รายการ",
+            "infoEmpty": "ไม่มีข้อมูล",
+            "infoFiltered": "(กรองจากทั้งหมด _MAX_ รายการ)",
+            "search": "ค้นหา:",
+            "paginate": {
+                "first": "หน้าแรก",
+                "last": "หน้าสุดท้าย",
+                "next": "ถัดไป",
+                "previous": "ก่อนหน้า"
+            }
+        },
+        "stateSave": true,
+        "order": [[1, "asc"]]
     });
 
     // Handle dropdown change
     $(document).on("change", "#CheckYearSaveScore", function () {
         let selectedYear = $(this).val();
-        const baseUrl = $(this).closest('form').data('base-url');
+        const baseUrl = "<?= site_url('Admin/Acade/Evaluate/ReportTeacherSaveScore') ?>";
         
         if (baseUrl && selectedYear) {
-            $('.loader').show();
+            // Show loading
+            Swal.fire({
+                title: 'กำลังโหลดข้อมูล...',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
             window.location.href = baseUrl + '/' + selectedYear;
-        } else {
-            console.error('Base URL or selected year not found.');
         }
+    });
+
+    // Export Excel button
+    $('#btnExportExcel').on('click', function() {
+        Swal.fire({
+            icon: 'info',
+            title: 'ฟังก์ชันนี้กำลังพัฒนา',
+            text: 'กรุณาใช้ปุ่มพิมพ์แทน',
+            timer: 2000,
+            showConfirmButton: false
+        });
+    });
+
+    // Print button
+    $('#btnPrint').on('click', function() {
+        window.print();
     });
 });
 </script>

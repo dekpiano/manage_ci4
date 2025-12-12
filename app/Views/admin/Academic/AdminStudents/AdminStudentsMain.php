@@ -2,255 +2,413 @@
 
 <?= $this->section('content') ?>
 <style>
-    /* Custom styles for better UX/UI */
-    body {
-        font-size: 0.95rem; /* Adjust base font size for overall balance */
-    }
-    .page-title {
-        font-size: 2.2rem; /* Larger title */
-        margin-bottom: 1.5rem;
-    }
-    h3 {
-        font-size: 1.6rem;
-    }
-    h4 {
-        font-size: 1.2rem;
-    }
-    .border-left-decoration {
-        border-left: .25rem solid var(--bs-primary) !important; /* Use Bootstrap primary color */
-    }
-    .card-stat .icon-holder {
-        font-size: 2.8rem; /* Slightly larger icons */
-        color: var(--bs-primary);
-        margin-bottom: 0.8rem;
-        display: inline-block;
-    }
-    .card-stat.normal-student-card .icon-holder { color: var(--bs-success); }
-    .card-stat.absent-student-card .icon-holder { color: var(--bs-danger); }
-    .card-stat.dismissed-student-card .icon-holder { color: var(--bs-warning); }
-    .card-stat.all-student-card .icon-holder { color: var(--bs-info); }
+/* ===== Dashboard Stat Cards ===== */
+.stat-card {
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+}
+.stat-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 35px rgba(0,0,0,0.12);
+}
+.stat-icon {
+    width: 56px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    font-size: 1.75rem;
+}
+.stat-value {
+    font-size: 2.25rem;
+    font-weight: 700;
+    line-height: 1.1;
+}
+.stat-label {
+    font-size: 0.9rem;
+    color: #6c757d;
+    margin-top: 6px;
+}
+.stat-meta {
+    font-size: 0.75rem;
+    color: #a1a5b7;
+}
 
-    .card-stat .stats-figure {
-        font-size: 2.5rem; /* Larger stats numbers */
-        font-weight: 700;
-        color: var(--bs-heading-color);
-    }
-    .card-stat .stats-meta {
-        font-size: 1rem; /* Readable meta text */
-        color: var(--bs-secondary-color);
-    }
-    .card-link-mask {
-        position: absolute;
-        width: 100%;
-        height: 100%;
-        top: 0;
-        left: 0;
-        z-index: 1;
-    }
-    .list-group-item-action:hover {
-        background-color: var(--bs-light);
-    }
-    .chart-container {
-        position: relative;
-        height: 300px; /* Fixed height for charts */
-        width: 100%;
-    }
-    .table th, .table td {
-        font-size: 0.9rem; /* Adjust table font size for readability */
-    }
+/* ===== Chart Section ===== */
+.chart-container {
+    position: relative;
+    height: 280px;
+    width: 100%;
+}
+
+/* ===== Shortcut Cards ===== */
+.shortcut-card {
+    transition: all 0.2s ease;
+    border-radius: 10px;
+}
+.shortcut-card:hover {
+    background-color: rgba(40, 167, 69, 0.08);
+    transform: scale(1.02);
+}
+
+/* ===== Recent Students Table ===== */
+.recent-table th {
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    color: #6c757d;
+    border-bottom-width: 2px;
+}
+.recent-table td {
+    vertical-align: middle;
+    padding: 0.85rem;
+}
+
+/* ===== Welcome Banner ===== */
+.welcome-banner {
+    background: linear-gradient(135deg, #28a745 0%, #218838 50%, #1e7e34 100%);
+    border-radius: 16px;
+    color: #fff;
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+}
+.welcome-banner::before {
+    content: '';
+    position: absolute;
+    top: -40%;
+    right: -20%;
+    width: 400px;
+    height: 400px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 50%;
+}
+.welcome-banner h2 {
+    font-size: 1.75rem;
+    font-weight: 700;
+}
+.welcome-banner p {
+    opacity: 0.9;
+    margin-bottom: 0;
+}
 </style>
-<div class="content pt-3 p-md-3 p-lg-4">
-    <div class="container-xl">
 
-       
-        <div class="card alert alert-dismissible shadow-sm mb-4 border-left-decoration" role="alert">
-            <div class="inner">
-                <div class="card-body p-3 p-lg-4">
-                    <h3 class="mb-3">หน้าสรุปภาพรวมข้อมูลนักเรียน</h3>
-                    <div class="row gx-5 gy-3">
-                        <div class="col-12 col-lg-9">
-                            <div>ในส่วนนี้จะแสดงข้อมูลสรุปของนักเรียนทั้งหมดในระบบ และมีทางลัดสำหรับจัดการข้อมูลในส่วนที่สำคัญ</div>
-                        </div>
-                        <!-- <div class="col-12 col-lg-3">
-                            <a class="btn btn-primary" href="https://docs.google.com/spreadsheets/d/1Je4jmVm3l84xDMAJDqQtdrRB13wWwFl2Fy2b7FvX1Ec/edit?gid=0#gid=0" target="_blank"><svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-file-earmark-arrow-up me-2" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M8.5 11.5a.5.5 0 0 1-1 0V7.707L6.354 8.854a.5.5 0 1 1-.708-.708l2-2a.5.5 0 0 1-.708 0l2 2a.5.5 0 0 1-.708.708L8.5 7.707V11.5z"/>
-                            <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2zM9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5v2z"/>
-                            </svg>อัพเดพข้อมูลจาก Google Sheet</a>
-                        </div> -->
-                    </div>
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
+<div class="container-xl py-4">
+    <!-- Welcome Banner -->
+    <div class="welcome-banner mb-4 shadow-lg">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h2 class="mb-2">
+                    <i class="bx bx-user-circle me-2"></i>จัดการข้อมูลนักเรียน
+                </h2>
+                <p>ระบบสรุปภาพรวมและจัดการข้อมูลนักเรียนทั้งหมดในสถานศึกษา</p>
+            </div>
+            <div class="col-md-4 text-end d-none d-md-block">
+                <i class="bx bx-graduation" style="font-size: 6rem; opacity: 0.3;"></i>
             </div>
         </div>
+    </div>
 
-        <!-- ส่วนที่ 1: สรุปข้อมูลภาพรวม (Key Metrics) -->
-        <div class="row g-4 mb-4">
-            
-            <div class="col-6 col-lg-3">
-                <div class="card card-stat shadow-sm h-100 normal-student-card">
-                    <div class="card-body p-3 p-lg-4">
-                        <div class="icon-holder mb-2">
-                            <i class="bi bi-person-fill"></i>
-                        </div>
-                        <h4 class="stats-type mb-1">นักเรียนปกติ</h4>
-                        <div class="stats-figure"><?=$CountNormalStu->stunormal?></div>
-                        <div class="stats-meta">คน</div>
-                    </div>
-                    <a class="card-link-mask" href="<?=base_url('Admin/Acade/Registration/Students/normal')?>"></a>
-                </div>
-            </div>
-            <div class="col-6 col-lg-3">
-                <div class="card card-stat shadow-sm h-100 absent-student-card">
-                    <div class="card-body p-3 p-lg-4">
-                        <div class="icon-holder mb-2">
-                            <i class="bi bi-person-x-fill"></i>
-                        </div>
-                        <h4 class="stats-type mb-1">นักเรียนขาดเรียนนาน</h4>
-                        <div class="stats-figure"><?=$CountAbsentStu->stuabsent?></div>
-                        <div class="stats-meta text-danger">คน</div>
-                    </div>
-                    <a class="card-link-mask" href="<?=base_url('Admin/Acade/Registration/Students/absent_long')?>"></a>
-                </div>
-            </div>
-             <div class="col-6 col-lg-3">
-                <div class="card card-stat shadow-sm h-100 dismissed-student-card">
-                    <div class="card-body p-3 p-lg-4">
-                        <div class="icon-holder mb-2">
-                            <i class="bi bi-person-dash-fill"></i>
-                        </div>
-                        <h4 class="stats-type mb-1">นักเรียนจำหน่าย</h4>
-                        <div class="stats-figure">--</div> <!-- Placeholder, needs controller logic -->
-                        <div class="stats-meta text-warning">คน</div>
-                    </div>
-                    <a class="card-link-mask" href="<?=base_url('Admin/Acade/Registration/Students/dismissed')?>"></a>
-                </div>
-            </div>
-            <div class="col-6 col-lg-3">
-                <div class="card card-stat shadow-sm h-100 all-student-card">
-                    <div class="card-body p-3 p-lg-4">
-                        <div class="icon-holder mb-2">
-                            <i class="bi bi-people-fill"></i>
-                        </div>
-                        <h4 class="stats-type mb-1">นักเรียนทั้งหมด</h4>
-                        <div class="stats-figure"><?=$CountAllStu->stuall?></div>
-                        <div class="stats-meta">คน</div>
-                    </div>
-                    <a class="card-link-mask" href="<?=base_url('Admin/Acade/Registration/Students/studying')?>"></a>
-                </div>
-            </div>
-        </div>
-
-        <!-- ส่วนที่ 2: การแสดงผลด้วยภาพ -->
-        <div class="row g-4 mb-4">
-            <div class="col-12 col-lg-7">
-                <div class="card card-chart h-100 shadow-sm">
-                    <div class="card-header p-3">
-                        <h4 class="card-title">จำนวนนักเรียนแต่ละระดับชั้น</h4>
-                    </div>
-                    <div class="card-body p-3 p-lg-4">
-                        <div class="chart-container">
-                            <canvas id="chart-bar-students-by-class"></canvas>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-12 col-lg-5">
-                <div class="card card-chart h-100 shadow-sm">
-                    <div class="card-header p-3">
-                        <h4 class="card-title">สัดส่วนนักเรียนชาย-หญิง</h4>
-                    </div>
-                    <div class="card-body p-3 p-lg-4">
-                        <div class="chart-container">
-                            <canvas id="chart-doughnut-gender"></canvas>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- ส่วนที่ 3: รายการล่าสุด และ ทางลัด -->
-        <div class="row g-4 mb-4">
-            <div class="col-12 col-lg-7">
-                <div class="card card-orders-table shadow-sm mb-5">
+    <!-- Dashboard Stats -->
+    <div class="row g-4 mb-4">
+        <!-- Normal Students -->
+        <div class="col-sm-6 col-xl-3">
+            <a href="<?=base_url('Admin/Acade/Registration/Students/normal')?>" class="text-decoration-none">
+                <div class="card stat-card h-100 border-0 shadow-sm">
                     <div class="card-body">
-                        <div class="p-3">
-                            <h4 class="card-title">นักเรียนที่เพิ่มล่าสุด</h4>
+                        <div class="d-flex align-items-start justify-content-between">
+                            <div>
+                                <div class="stat-value text-success" id="stat-normal"><?=$CountNormalStu->stunormal ?? 0?></div>
+                                <div class="stat-label">นักเรียนปกติ</div>
+                            </div>
+                            <div class="stat-icon bg-success bg-opacity-10 text-success">
+                                <i class="bx bx-user-check"></i>
+                            </div>
                         </div>
-                        <div class="table-responsive">
-                            <table class="table table-hover mb-0 text-left">
-                                <thead>
-                                    <tr>
-                                        <th class="cell">รหัสนักเรียน</th>
-                                        <th class="cell">ชื่อ-สกุล</th>
-                                        <th class="cell">ระดับชั้น</th>
-                                        <th class="cell">สถานะ</th>
-                                        <th class="cell"></th>
-                                    </tr>
-                                </thead>
-                                <tbody id="recent_students_table">
-                                    <tr>
-                                        <td colspan="5" class="text-center p-3">
-                                            <div class="spinner-border text-primary" role="status">
-                                                <span class="visually-hidden">Loading...</span>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                        <div class="mt-3">
+                            <span class="stat-meta"><i class="bx bx-check-circle me-1"></i>สถานะปกติ</span>
                         </div>
                     </div>
                 </div>
-            </div>
-             <div class="col-12 col-lg-5">
-                <div class="card card-basic d-flex flex-column align-items-start shadow-sm">
-                    <div class="card-header p-3 border-bottom-0">
-                        <h4 class="card-title">ทางลัด</h4>
+            </a>
+        </div>
+
+        <!-- Absent Students -->
+        <div class="col-sm-6 col-xl-3">
+            <a href="<?=base_url('Admin/Acade/Registration/Students/absent_long')?>" class="text-decoration-none">
+                <div class="card stat-card h-100 border-0 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex align-items-start justify-content-between">
+                            <div>
+                                <div class="stat-value text-danger" id="stat-absent"><?=$CountAbsentStu->stuabsent ?? 0?></div>
+                                <div class="stat-label">ขาดเรียนนาน</div>
+                            </div>
+                            <div class="stat-icon bg-danger bg-opacity-10 text-danger">
+                                <i class="bx bx-user-x"></i>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <span class="stat-meta text-danger"><i class="bx bx-error-circle me-1"></i>ต้องติดตาม</span>
+                        </div>
                     </div>
-                    <div class="card-body px-4 py-2">
-                       <ul class="list-group list-group-flush">
-                            <li class="list-group-item list-group-item-action" style="cursor: pointer;"><i class="bi bi-person-plus-fill me-2"></i> <a href="https://docs.google.com/spreadsheets/d/1Je4jmVm3l84xDMAJDqQtdrRB13wWwFl2Fy2b7FvX1Ec/edit?gid=0#gid=0" target="_blank" rel="noopener noreferrer">เพิ่มข้อมูลนักเรียน</a> </li>
-                            <li class="list-group-item list-group-item-action" style="cursor: pointer;"><i class="bi bi-file-earmark-excel-fill me-2"></i> <a href="<?=base_url('Admin/Acade/Registration/StudentsUpdate')?>" id="importStudentsBtn">นำเข้าข้อมูลนักเรียน</a> </li>
-                            <a class="list-group-item list-group-item-action" href="<?= site_url('admin/academic/students/export/all') ?>" style="cursor: pointer;"><i class="bi bi-download me-2"></i> ส่งออกข้อมูลทั้งหมด</a>
-                       </ul>
+                </div>
+            </a>
+        </div>
+
+        <!-- Dismissed Students -->
+        <div class="col-sm-6 col-xl-3">
+            <a href="<?=base_url('Admin/Acade/Registration/Students/dismissed')?>" class="text-decoration-none">
+                <div class="card stat-card h-100 border-0 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex align-items-start justify-content-between">
+                            <div>
+                                <div class="stat-value text-warning" id="stat-dismissed">--</div>
+                                <div class="stat-label">นักเรียนจำหน่าย</div>
+                            </div>
+                            <div class="stat-icon bg-warning bg-opacity-10 text-warning">
+                                <i class="bx bx-user-minus"></i>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <span class="stat-meta"><i class="bx bx-info-circle me-1"></i>พ้นสภาพ</span>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- All Students -->
+        <div class="col-sm-6 col-xl-3">
+            <a href="<?=base_url('Admin/Acade/Registration/Students/studying')?>" class="text-decoration-none">
+                <div class="card stat-card h-100 border-0 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex align-items-start justify-content-between">
+                            <div>
+                                <div class="stat-value text-primary" id="stat-all"><?=$CountAllStu->stuall ?? 0?></div>
+                                <div class="stat-label">นักเรียนทั้งหมด</div>
+                            </div>
+                            <div class="stat-icon bg-primary bg-opacity-10 text-primary">
+                                <i class="bx bx-group"></i>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <span class="stat-meta"><i class="bx bx-id-card me-1"></i>กำลังศึกษา</span>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="row g-4 mb-4">
+        <!-- Bar Chart - Students by Class -->
+        <div class="col-xl-7 col-12">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="bx bx-bar-chart-alt-2 text-success me-2"></i>จำนวนนักเรียนแต่ละระดับชั้น
+                    </h5>
+                    <span class="badge bg-light text-muted">แยกชาย-หญิง</span>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="chart-bar-students-by-class"></canvas>
                     </div>
                 </div>
             </div>
         </div>
 
+        <!-- Doughnut Chart - Gender -->
+        <div class="col-xl-5 col-12">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="bx bx-pie-chart-alt text-success me-2"></i>สัดส่วนนักเรียนชาย-หญิง
+                    </h5>
+                </div>
+                <div class="card-body d-flex flex-column">
+                    <div class="chart-container flex-grow-1">
+                        <canvas id="chart-doughnut-gender"></canvas>
+                    </div>
+                    <div class="row mt-3 text-center">
+                        <div class="col-6">
+                            <div class="d-flex align-items-center justify-content-center">
+                                <span class="badge bg-success rounded-circle p-2 me-2"><i class="bx bx-male"></i></span>
+                                <div>
+                                    <div class="fw-bold" id="stats_male_student">0</div>
+                                    <small class="text-muted">นักเรียนชาย</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="d-flex align-items-center justify-content-center">
+                                <span class="badge bg-warning rounded-circle p-2 me-2"><i class="bx bx-female"></i></span>
+                                <div>
+                                    <div class="fw-bold" id="stats_female_student">0</div>
+                                    <small class="text-muted">นักเรียนหญิง</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions & Recent Students -->
+    <div class="row g-4">
+        <!-- Recent Students Table -->
+        <div class="col-xl-8 col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="bx bx-time-five text-success me-2"></i>นักเรียนที่เพิ่มล่าสุด
+                    </h5>
+                    <a href="<?=base_url('Admin/Acade/Registration/Students/studying')?>" class="btn btn-sm btn-outline-success">
+                        <i class="bx bx-list-ul me-1"></i>ดูทั้งหมด
+                    </a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover recent-table mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>รหัสนักเรียน</th>
+                                    <th>ชื่อ-สกุล</th>
+                                    <th>ระดับชั้น</th>
+                                    <th>สถานะ</th>
+                                    <th class="text-center">การจัดการ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recent_students_table">
+                                <tr>
+                                    <td colspan="5" class="text-center py-4">
+                                        <div class="spinner-border text-success" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                        <p class="text-muted mt-2 mb-0">กำลังโหลดข้อมูล...</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="col-xl-4 col-12">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white py-3">
+                    <h5 class="card-title mb-0">
+                        <i class="bx bx-zap text-success me-2"></i>ทางลัด
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <!-- Add Student -->
+                        <a href="https://docs.google.com/spreadsheets/d/1Je4jmVm3l84xDMAJDqQtdrRB13wWwFl2Fy2b7FvX1Ec/edit?gid=0#gid=0" target="_blank" class="btn btn-outline-success text-start shortcut-card py-3">
+                            <div class="d-flex align-items-center">
+                                <div class="rounded-circle bg-success bg-opacity-10 p-2 me-3">
+                                    <i class="bx bx-user-plus text-success" style="font-size: 1.25rem;"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-semibold">เพิ่มข้อมูลนักเรียน</div>
+                                    <small class="text-muted">Google Sheet</small>
+                                </div>
+                                <i class="bx bx-chevron-right ms-auto text-muted"></i>
+                            </div>
+                        </a>
+
+                        <!-- Import Students -->
+                        <a href="<?=base_url('Admin/Acade/Registration/StudentsUpdate')?>" id="importStudentsBtn" class="btn btn-outline-success text-start shortcut-card py-3">
+                            <div class="d-flex align-items-center">
+                                <div class="rounded-circle bg-success bg-opacity-10 p-2 me-3">
+                                    <i class="bx bx-import text-success" style="font-size: 1.25rem;"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-semibold">นำเข้าข้อมูลนักเรียน</div>
+                                    <small class="text-muted">จาก Google Sheet</small>
+                                </div>
+                                <i class="bx bx-chevron-right ms-auto text-muted"></i>
+                            </div>
+                        </a>
+
+                        <!-- Export Students -->
+                        <a href="<?= site_url('admin/academic/students/export/all') ?>" class="btn btn-outline-info text-start shortcut-card py-3">
+                            <div class="d-flex align-items-center">
+                                <div class="rounded-circle bg-info bg-opacity-10 p-2 me-3">
+                                    <i class="bx bx-export text-info" style="font-size: 1.25rem;"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-semibold">ส่งออกข้อมูลทั้งหมด</div>
+                                    <small class="text-muted">ดาวน์โหลด Excel</small>
+                                </div>
+                                <i class="bx bx-chevron-right ms-auto text-muted"></i>
+                            </div>
+                        </a>
+
+                        <!-- View Normal Students -->
+                        <a href="<?=base_url('Admin/Acade/Registration/Students/normal')?>" class="btn btn-outline-secondary text-start shortcut-card py-3">
+                            <div class="d-flex align-items-center">
+                                <div class="rounded-circle bg-secondary bg-opacity-10 p-2 me-3">
+                                    <i class="bx bx-search-alt text-secondary" style="font-size: 1.25rem;"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-semibold">ค้นหานักเรียน</div>
+                                    <small class="text-muted">รายชื่อนักเรียนปกติ</small>
+                                </div>
+                                <i class="bx bx-chevron-right ms-auto text-muted"></i>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 <?= $this->endSection() ?>
 
 <?= $this->section('script') ?>
-<!-- สคริปต์สำหรับ Chart และโหลดข้อมูล -->
+<!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-    // --- Element สำหรับแสดงผล ---
+    // --- Element References ---
     const statsMale = document.getElementById('stats_male_student');
     const statsFemale = document.getElementById('stats_female_student');
     const recentStudentsTable = document.getElementById('recent_students_table');
 
-    // --- Context สำหรับ Chart ---
+    // --- Bar Chart (Students by Class) ---
     const barChartCanvas = document.getElementById('chart-bar-students-by-class');
     const barChartCtx = barChartCanvas ? barChartCanvas.getContext('2d') : null;
-    let barChart; // Declare barChart here
+    let barChart;
 
     if (barChartCtx) {
         barChart = new Chart(barChartCtx, {
             type: 'bar',
             data: {
-                labels: [], // จะถูกเติมจาก API
+                labels: [],
                 datasets: [
                     {
                         label: 'ชาย',
-                        data: [], // จะถูกเติมจาก API
-                        backgroundColor: 'rgba(54, 162, 235, 0.5)'
+                        data: [],
+                        backgroundColor: 'rgba(40, 167, 69, 0.7)',
+                        borderColor: 'rgba(40, 167, 69, 1)',
+                        borderWidth: 1,
+                        borderRadius: 6
                     },
                     {
                         label: 'หญิง',
-                        data: [], // จะถูกเติมจาก API
-                        backgroundColor: 'rgba(255, 99, 132, 0.5)'
+                        data: [],
+                        backgroundColor: 'rgba(255, 193, 7, 0.7)',
+                        borderColor: 'rgba(255, 193, 7, 1)',
+                        borderWidth: 1,
+                        borderRadius: 6
                     }
                 ]
             },
@@ -259,21 +417,27 @@ document.addEventListener("DOMContentLoaded", function() {
                 maintainAspectRatio: false,
                 scales: { 
                     y: { 
-                        beginAtZero: true 
-                    } 
+                        beginAtZero: true,
+                        grid: { color: 'rgba(0,0,0,0.05)' }
+                    },
+                    x: {
+                        grid: { display: false }
+                    }
                 },
                 plugins: { 
                     legend: { 
-                        display: true // แสดงคำอธิบาย ชาย/หญิง
+                        display: true,
+                        position: 'top'
                     } 
                 }
             }
         });
     }
 
+    // --- Doughnut Chart (Gender) ---
     const doughnutChartCanvas = document.getElementById('chart-doughnut-gender');
     const doughnutChartCtx = doughnutChartCanvas ? doughnutChartCanvas.getContext('2d') : null;
-    let doughnutChart; // Declare doughnutChart here
+    let doughnutChart;
 
     if (doughnutChartCtx) {
         doughnutChart = new Chart(doughnutChartCtx, {
@@ -282,73 +446,76 @@ document.addEventListener("DOMContentLoaded", function() {
                 labels: ['ชาย', 'หญิง'],
                 datasets: [{
                     data: [0, 0],
-                    backgroundColor: ['rgb(54, 162, 235)', 'rgb(255, 99, 132)'],
-                    hoverOffset: 4
+                    backgroundColor: ['rgba(40, 167, 69, 0.85)', 'rgba(255, 193, 7, 0.85)'],
+                    borderWidth: 0,
+                    hoverOffset: 8
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                cutout: '65%',
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
             }
         });
     }
 
-    // --- ฟังก์ชันสำหรับโหลดข้อมูลแดชบอร์ด ---
+    // --- Load Dashboard Data ---
     function loadDashboardData() {
         fetch('<?=base_url("admin/academic/ConAdminStudents/getDashboardData")?>')
             .then(response => response.json())
             .then(data => {
-                // 1. อัปเดต Key Metrics
-                if (statsMale) {
-                    statsMale.textContent = data.gender_count.male || '0';
-                }
-                if (statsFemale) {
-                    statsFemale.textContent = data.gender_count.female || '0';
-                }
+                // Update Gender Stats
+                if (statsMale) statsMale.textContent = data.gender_count.male || '0';
+                if (statsFemale) statsFemale.textContent = data.gender_count.female || '0';
 
-                // 2. อัปเดตกราฟแท่ง (นักเรียนตามระดับชั้น แยกชาย/หญิง)
+                // Update Bar Chart
                 if (barChart) {
                     barChart.data.labels = data.students_by_class.labels;
-                    // ตรวจสอบว่ามี datasets หรือไม่ก่อนที่จะเข้าถึง
                     if(data.students_by_class.datasets && data.students_by_class.datasets.length >= 2) {
-                        barChart.data.datasets[0].data = data.students_by_class.datasets[0].data; // ชาย
-                        barChart.data.datasets[1].data = data.students_by_class.datasets[1].data; // หญิง
+                        barChart.data.datasets[0].data = data.students_by_class.datasets[0].data;
+                        barChart.data.datasets[1].data = data.students_by_class.datasets[1].data;
                     }
                     barChart.update();
                 }
 
-                // 3. อัปเดตกราฟวงกลม (สัดส่วนเพศ)
+                // Update Doughnut Chart
                 if (doughnutChart) {
                     doughnutChart.data.datasets[0].data[0] = data.gender_count.male || 0;
                     doughnutChart.data.datasets[0].data[1] = data.gender_count.female || 0;
                     doughnutChart.update();
                 }
 
-                // 4. อัปเดตตารางนักเรียนล่าสุด
+                // Update Recent Students Table
                 let tableHtml = '';
                 if (data.recent_students && data.recent_students.length > 0) {
                     data.recent_students.forEach(student => {
                         tableHtml += `
                             <tr>
-                                <td class="cell">${student.StudentCode}</td>
-                                <td class="cell"><span class="truncate">${student.Fullname}</span></td>
-                                <td class="cell">${student.StudentClass}</td>
-                                <td class="cell"><span class="badge bg-success">${student.StudentStatus}</span></td>
-                                <td class="cell"><a class="btn-sm btn-secondary" href="<?=base_url('Admin/Acade/Registration/Students/Edit/')?>${student.StudentID}">ดูรายละเอียด</a></td>
+                                <td><span class="badge bg-light text-dark">${student.StudentCode}</span></td>
+                                <td><span class="fw-medium">${student.Fullname}</span></td>
+                                <td><span class="badge bg-primary bg-opacity-10 text-primary">${student.StudentClass}</span></td>
+                                <td><span class="badge bg-success">${student.StudentStatus}</span></td>
+                                <td class="text-center">
+                                    <a class="btn btn-sm btn-outline-success" href="<?=base_url('Admin/Acade/Registration/Students/normal')?>">
+                                        <i class="bx bx-search me-1"></i>ค้นหา
+                                    </a>
+                                </td>
                             </tr>
                         `;
                     });
                 } else {
-                    tableHtml = '<tr><td colspan="5" class="text-center">ไม่พบข้อมูลนักเรียนล่าสุด</td></tr>';
+                    tableHtml = '<tr><td colspan="5" class="text-center py-4 text-muted">ไม่พบข้อมูลนักเรียนล่าสุด</td></tr>';
                 }
                 recentStudentsTable.innerHTML = tableHtml;
-
             })
             .catch(error => {
                 console.error('Error loading dashboard data:', error);
-                statsMale.textContent = 'Error';
-                statsFemale.textContent = 'Error';
-                recentStudentsTable.innerHTML = '<tr><td colspan="5" class="text-center text-danger">ไม่สามารถโหลดข้อมูลได้</td></tr>';
+                recentStudentsTable.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-danger"><i class="bx bx-error-circle me-1"></i>ไม่สามารถโหลดข้อมูลได้</td></tr>';
                 Swal.fire({
                     title: 'เกิดข้อผิดพลาด',
                     text: 'ไม่สามารถโหลดข้อมูล Dashboard ได้: ' + error.message,
@@ -358,20 +525,19 @@ document.addEventListener("DOMContentLoaded", function() {
             });
     }
 
-    // เรียกใช้ฟังก์ชันเมื่อหน้าเว็บโหลดเสร็จ
+    // Load data on page load
     loadDashboardData();
 
-    // Handle click on "นำเข้าข้อมูลนักเรียน" button
+    // Handle Import Students button
     const importStudentsBtn = document.getElementById('importStudentsBtn');
     if (importStudentsBtn) {
         importStudentsBtn.addEventListener('click', function(e) {
-            e.preventDefault(); // Prevent default link navigation
-
+            e.preventDefault();
             const updateUrl = this.href;
 
             Swal.fire({
                 title: 'กำลังนำเข้าข้อมูลนักเรียน',
-                html: 'กรุณารอสักครู่ ระบบกำลังดึงและประมวลผลข้อมูลจาก Google Sheet...',
+                html: '<i class="bx bx-loader-circle bx-spin bx-lg"></i><br><br>กรุณารอสักครู่ ระบบกำลังดึงและประมวลผลข้อมูลจาก Google Sheet...',
                 allowOutsideClick: false,
                 showConfirmButton: false,
                 didOpen: () => {
@@ -379,7 +545,6 @@ document.addEventListener("DOMContentLoaded", function() {
                 }
             });
 
-            // Proceed with navigation after showing the loading dialog
             window.location.href = updateUrl;
         });
     }

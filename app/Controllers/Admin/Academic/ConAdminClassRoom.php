@@ -26,7 +26,7 @@ class ConAdminClassRoom extends BaseController
 
         $check_status_data = $this->db->table('tb_admin_rloes')->where('admin_rloes_userid', session()->get('login_id'))->get()->getRow();
 
-        if (empty($check_status_data) || (! in_array($check_status_data->admin_rloes_status, ["admin", "manager"]))) {
+        if (empty($check_status_data) || (! in_array($check_status_data->admin_rloes_status, ["admin", "manager", "superadmin"]))) {
             session()->setFlashdata(['msg' => 'OK', 'messge' => 'คุณไม่มีสิทธ์ในระบบจัดข้อมูลนี้ ติดต่อเจ้าหน้าที่คอม', 'alert' => 'error']);
             return redirect()->to(base_url('welcome'));
         }
@@ -65,6 +65,33 @@ class ConAdminClassRoom extends BaseController
                                         ->where('pers_position <', 'posi_007')
                                         ->orderBy('pers_learning')
                                         ->get()->getResult();
+
+        // Dashboard Statistics for the selected year
+        // Total classrooms (ห้องเรียน - นับเฉพาะห้องที่ไม่ซ้ำกัน ไม่นับครูที่ปรึกษาหลายคนในห้องเดียวกัน)
+        $data['total_classrooms'] = $this->db->table('tb_regclass')
+            ->select('Reg_Class')
+            ->where('Reg_Year', $data['selectedYear'])
+            ->where('LENGTH(Reg_Class) >', 1)
+            ->distinct()
+            ->countAllResults();
+        
+        // Total level heads (ครูหัวหน้าระดับ - Reg_Class ที่มี 1 หลัก เช่น 1, 2, 3)
+        $data['total_level_heads'] = $this->db->table('tb_regclass')
+            ->where('Reg_Year', $data['selectedYear'])
+            ->where('LENGTH(Reg_Class)', 1)
+            ->countAllResults();
+        
+        // Total advisors (unique teachers) in selected year
+        $data['total_advisors'] = $this->db->table('tb_regclass')
+            ->select('class_teacher')
+            ->where('Reg_Year', $data['selectedYear'])
+            ->distinct()
+            ->countAllResults();
+        
+        // Total records in selected year
+        $data['total_records'] = $this->db->table('tb_regclass')
+            ->where('Reg_Year', $data['selectedYear'])
+            ->countAllResults();
 
         $data['classroom'] = $this->classroom;
         echo view('admin/Academic/AdminClassRoom/AdminClassRoomMain', $data);

@@ -110,11 +110,38 @@
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/slim-select/2.12.1/slimselect.min.js"></script>
 
-    <!-- DataTable JS -->
+<!-- DataTable JS -->
 <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
 <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
 <script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
+
+<!-- DataTables Global Default Configuration -->
+<script>
+/**
+ * Set DataTables global defaults
+ * - stateSave: Remember current page, search, and sorting when navigating back
+ * - stateDuration: Store state for the session (will be cleared when browser closes)
+ * - Use sessionStorage instead of localStorage for better session handling
+ */
+$.extend(true, $.fn.dataTable.defaults, {
+    stateSave: true,
+    stateDuration: -1, // Use sessionStorage (cleared when browser closes)
+    stateLoadCallback: function(settings, callback) {
+        try {
+            var state = JSON.parse(sessionStorage.getItem('DataTables_' + settings.sInstance + '_' + window.location.pathname));
+            callback(state);
+        } catch(e) {
+            callback(null);
+        }
+    },
+    stateSaveCallback: function(settings, data) {
+        try {
+            sessionStorage.setItem('DataTables_' + settings.sInstance + '_' + window.location.pathname, JSON.stringify(data));
+        } catch(e) {}
+    }
+});
+</script>
 
 <!-- DataTable Buttons JS -->
 <script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
@@ -220,6 +247,17 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
     // However, if there are other scenarios where the backend might still redirect to login
     // without a 401 (e.g., non-AJAX requests that are then handled by AJAX),
     // you might keep it as a fallback, but it's generally better to standardize on 401.
+});
+
+/**
+ * Global Year Selection Handler
+ * Automatically saves selected year to session when any common year dropdown changes
+ */
+$(document).on('change', '#onoff_year, #CheckYearEnroll, [name="keyYear"], #CheckYearMain, #selectYear', function() {
+    var selectedYear = $(this).val();
+    if (selectedYear) {
+        $.post("<?= site_url('Admin/SetSelectedYear') ?>", { year: selectedYear });
+    }
 });
 </script>
 

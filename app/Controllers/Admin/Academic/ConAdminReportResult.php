@@ -32,7 +32,7 @@ class ConAdminReportResult extends BaseController
 
         $check_status_data = $this->db->table('tb_admin_rloes')->where('admin_rloes_userid', session()->get('login_id'))->get()->getRow();
 
-        if (empty($check_status_data) || (! in_array($check_status_data->admin_rloes_status, ["admin", "manager"]))) {
+        if (empty($check_status_data) || (! in_array($check_status_data->admin_rloes_status, ["admin", "manager", "superadmin"]))) {
             session()->setFlashdata(['msg' => 'OK', 'messge' => 'คุณไม่มีสิทธ์ในระบบจัดข้อมูลนี้ ติดต่อเจ้าหน้าที่คอม', 'alert' => 'error']);
             return redirect()->to(base_url('welcome'));
         }
@@ -47,6 +47,9 @@ class ConAdminReportResult extends BaseController
 
         // FIX: Always fetch SchoolYear for the layout
         $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
+        
+        // Use session-stored selected year
+        $data['selectedYear'] = get_selected_year();
 
         // Get available years for dropdown
         $data['CheckYearSaveScore'] = $this->db->table('tb_register')->select('RegisterYear')->groupBy('RegisterYear')->get()->getResult();
@@ -81,10 +84,26 @@ class ConAdminReportResult extends BaseController
         echo view('admin/Academic/AdminReportResults/AdminReportPersonMain',$data);
     }
 
-    public function AdminReportTeacherSaveScoreMain($Term,$year){   
-    $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();        
+    public function AdminReportTeacherSaveScoreMain($Term = null, $year = null){   
+        $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();        
+        $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow(); // Fetch SchoolYear
 
-    // Get teacher IDs that have records in the selected term/year
+        if ($Term === null || $year === null) {
+            // Use SchoolYear as default
+            if ($data['SchoolYear'] && property_exists($data['SchoolYear'], 'schyear_year')) {
+                $parts = explode('/', $data['SchoolYear']->schyear_year);
+                $Term = $parts[0] ?? '2';
+                $year = $parts[1] ?? '2567';
+            } else {
+                $Term = '2';
+                $year = '2567';
+            }
+        }
+        
+        $data['Term'] = $Term;
+        $data['Year'] = $year;
+
+        // Get teacher IDs that have records in the selected term/year
     $teacherIdsWithScores = $this->db->table('tb_register')
         ->select('TeacherID')
         ->where('RegisterYear', $Term . '/' . $year)
@@ -105,15 +124,17 @@ class ConAdminReportResult extends BaseController
                       skjacth_skj.tb_position.posi_name,
                       skjacth_skj.tb_learning.lear_namethai,
                       skjacth_personnel.tb_personnel.pers_status')
-            ->join('skjacth_skj.tb_position', 'skjacth_skj.tb_position.posi_id = skjacth_personnel.tb_personnel.pers_position')
-            ->join('skjacth_skj.tb_learning', 'skjacth_skj.tb_learning.lear_id = skjacth_personnel.tb_personnel.pers_learning')
+            ->join('skjacth_skj.tb_position', 'skjacth_skj.tb_position.posi_id = skjacth_personnel.tb_personnel.pers_position', 'left')
+            ->join('skjacth_skj.tb_learning', 'skjacth_skj.tb_learning.lear_id = skjacth_personnel.tb_personnel.pers_learning', 'left')
             ->whereIn('skjacth_personnel.tb_personnel.pers_id', $teacherIds)
+            ->orderBy('skjacth_personnel.tb_personnel.pers_learning', 'ASC')
             ->get()
             ->getResult();
             } else {
                 $data['Teacher'] = []; // No teachers found, so pass an empty array to the view
             }
-            $data['CheckYearSaveScore'] = $this->db->table('tb_register')->select('RegisterYear')->groupBy('RegisterYear')->get()->getResult();        $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
+            $data['CheckYearSaveScore'] = $this->db->table('tb_register')->select('RegisterYear')->groupBy('RegisterYear')->get()->getResult();        
+            $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
         $data['Term'] = $Term;
         $data['Year'] = $year;       
         $data['title'] = "รายงานผลการบันทึกคะแนนครูผู้สอน";
@@ -138,7 +159,7 @@ class ConAdminReportResult extends BaseController
         ->join('tb_subjects','tb_subjects.SubjectID = tb_register.SubjectID')
         ->where('TeacherID',$TeacID)
         ->where('RegisterYear',$Term.'/'.$year)
-        ->groupBy('tb_subjects.SubjectID')
+        ->groupBy('tb_subjects.SubjectID, tb_subjects.SubjectName, tb_subjects.SubjectCode, tb_register.SubjectID')
         ->get()->getResult();
         
         
@@ -217,7 +238,7 @@ class ConAdminReportResult extends BaseController
                             ->where('StudentClass',$keyroom)                                
                             ->where('tb_subjects.SubjectCode !=','I30301')
                             ->where('tb_subjects.SubjectCode !=','I20201')
-                            ->groupBy('tb_register.SubjectID')  
+                            ->groupBy('tb_register.SubjectID, tb_subjects.SubjectName, tb_subjects.SubjectCode, tb_subjects.SubjectUnit')  
                             ->orderBy('SubjectType',"ASC")  
                             ->orderBy('FirstGroup',"ASC")   
                             ->orderBy('SubjectCode',"ASC")                 
@@ -345,7 +366,7 @@ class ConAdminReportResult extends BaseController
                         ->where('StudentClass',$keyroom)                                
                         ->where('tb_subjects.SubjectCode !=','I30301')
                         ->where('tb_subjects.SubjectCode !=','I20201')
-                        ->groupBy('tb_register.SubjectID')  
+                        ->groupBy('tb_register.SubjectID, tb_subjects.SubjectName, tb_subjects.SubjectCode, tb_subjects.SubjectUnit')  
                         ->orderBy('SubjectType',"ASC")  
                         ->orderBy('FirstGroup',"ASC")   
                         ->orderBy('SubjectCode',"ASC")                 
@@ -435,7 +456,7 @@ class ConAdminReportResult extends BaseController
                                             tb_register.RegisterYear,
                                             tb_register.StudentID')
                                     ->where('StudentID',$IdStudent)
-                                    ->groupBy('tb_register.RegisterYear')
+                                    ->groupBy('tb_register.RegisterYear, tb_register.RegisterClass, tb_register.StudentID')
                                     ->orderBy('tb_register.RegisterClass','asc')
                                     ->orderBy('tb_register.RegisterYear','asc')
                                     ->get()->getResult();
@@ -547,7 +568,7 @@ class ConAdminReportResult extends BaseController
                             ->where('tb_subjects.SubjectYear',$data['KeyYear'])
                             ->where('tb_personnel.pers_learning',$data['Keylern'])
                             ->where('StudentBehavior','ปกติ')
-                            ->groupBy('tb_students.StudentClass,tb_register.SubjectID')
+                            ->groupBy('tb_students.StudentClass, tb_register.SubjectID, tb_register.RegisterYear, tb_register.TeacherID, tb_register.Grade, tb_students.StudentBehavior, tb_personnel.pers_prefix, tb_personnel.pers_firstname, tb_personnel.pers_lastname, tb_personnel.pers_learning, tb_subjects.SubjectName, tb_subjects.SubjectCode, tb_subjects.SubjectType, tb_subjects.SubjectUnit, tb_subjects.SubjectYear')
                             ->orderBy('TeacherID,SubjectID,StudentClass')
                             ->get()->getResult();        
 
@@ -603,7 +624,7 @@ class ConAdminReportResult extends BaseController
                                     ->where('tb_subjects.SubjectYear',$data['KeyYear'])
                                     ->where('tb_personnel.pers_learning',$data['Keylern'])
                                     ->where('StudentBehavior','ปกติ')
-                                    ->groupBy('tb_students.StudentClass,tb_register.SubjectID')
+                                    ->groupBy('tb_students.StudentClass, tb_register.SubjectID, tb_register.RegisterYear, tb_register.TeacherID, tb_register.Grade, tb_students.StudentBehavior, tb_personnel.pers_prefix, tb_personnel.pers_firstname, tb_personnel.pers_lastname, tb_personnel.pers_learning, tb_subjects.SubjectName, tb_subjects.SubjectCode, tb_subjects.SubjectType, tb_subjects.SubjectUnit, tb_subjects.SubjectYear')
                                     ->orderBy('TeacherID,SubjectID,StudentClass')
                                     ->get()->getResult();
                 echo view('admin/Academic/AdminReportResults/AdminReportAcademicSummary', $data);
@@ -641,7 +662,7 @@ class ConAdminReportResult extends BaseController
                             ->where('tb_subjects.SubjectYear',$data['KeyYear'])
                             ->where('tb_register.RegisterYear',$data['KeyYear'])
                             ->like('tb_register.RegisterClass',$data['KeyLevel'] . '%')
-                            ->groupBy('tb_subjects.FirstGroup,tb_subjects.SubjectCode')
+                            ->groupBy('tb_subjects.FirstGroup, tb_subjects.SubjectCode, tb_register.RegisterYear, tb_register.RegisterClass, tb_subjects.SubjectName')
                             ->get()->getResult();        
 
         
@@ -699,7 +720,7 @@ class ConAdminReportResult extends BaseController
             ->join('tb_subjects', 'tb_subjects.SubjectID = tb_register.SubjectID')
             ->where('tb_register.RegisterYear', $currentYear)
             ->where('tb_register.RegisterClass',$currentClass)
-            ->groupBy('tb_register.SubjectID')
+            ->groupBy('tb_register.SubjectID, tb_subjects.SubjectName, tb_subjects.SubjectCode')
             ->orderBy('tb_register.SubjectID', 'ASC')
             ->get()
             ->getResult();

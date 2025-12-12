@@ -16,11 +16,11 @@ class App extends BaseConfig
      *
      * E.g., http://example.com/
      */
-    public string $baseURL = '';
+    public string $baseURL = 'https://localhost:8082/';
 
     public function __construct()
     {
-        $this->baseURL = ENV('app.baseURL', 'http://localhost/manage_ci4/');
+        //$this->baseURL = ENV('app.baseURL', 'http://localhost/manage_ci4/');
     }
 
     /**

@@ -28,8 +28,7 @@ class Welcome extends BaseController
     public function LoginMenager(){
         // Ensure the Google Client library's autoloader is included.
         // This path is based on the user's manual setup.
-        $path = dirname(dirname(dirname(dirname((dirname(__FILE__))))));
-        require $path . '/librarie_skj/google_sheet/vendor/autoload.php';
+        require_once SHARED_LIB_PATH . '/google_sheet/vendor/autoload.php';
 
         // Create a new Google Client instance
         $google_client = new Client(); // Using 'Client' due to 'use Google\Client;'

@@ -40,6 +40,7 @@ use App\Controllers\Session;
  * @var RouteCollection $routes
  */
 $routes->get('/', [Welcome::class, 'index']);
+$routes->get('welcome', [Welcome::class, 'index']);
 
 // CI3 Routes Migration
 $routes->get('ClosePage', [Welcome::class, 'ClosePage']);
@@ -47,6 +48,14 @@ $routes->get('LoginAdmin', [Control_login::class, 'LoginAdmin']);
 
 // งานวิชาการ
 $routes->get('Admin/Home', [ConAdminHome::class, 'AdminHome']);
+$routes->post('Admin/SetSelectedYear', [ConAdminHome::class, 'setSelectedYear']);
+$routes->get('Admin/GetSelectedYear', [ConAdminHome::class, 'getSelectedYear']);
+
+// Enrollment Dashboard Stats API
+$routes->post('Admin/Academic/ConAdminEnroll/getDashboardStats', [\App\Controllers\Admin\Academic\ConAdminEnroll::class, 'getDashboardStats']);
+
+// Repeat Registration Dashboard Stats API
+$routes->post('Admin/Academic/ConAdminRegisRepeat/getDashboardStats', [\App\Controllers\Admin\Academic\ConAdminRegisRepeat::class, 'getDashboardStats']);
 
 // Routes for ConAdminDevelopStudents (Clubs Management)
 $routes->get('Admin/Acade/DevelopStudents/Clubs/Main', [ConAdminDevelopStudents::class, 'ClubsMain']);
@@ -161,19 +170,19 @@ $routes->post('admin/academic/characteristics/update', [ConAdminCharacteristics:
 $routes->get('admin/academic/rwl/settings', [ConAdminRWL::class, 'index']);
 $routes->post('admin/academic/rwl/update', [ConAdminRWL::class, 'update']);
 
-$routes->get('Admin/Acade/Evaluate/AcademicRepeat/(:segment)/(:segment)', [ConAdminAcademicRepeat::class, 'AdminAcademicRepeatMain']);
+$routes->get('Admin/Acade/Evaluate/AcademicRepeat', [ConAdminAcademicRepeat::class, 'AdminAcademicRepeatMain']);
 $routes->get('Admin/Acade/Evaluate/AcademicRepeat/(:segment)/(:segment)/(:segment)', [ConAdminAcademicRepeat::class, 'AdminAcademicRepeatGrade']);
 $routes->get('Admin/Acade/Evaluate/AcademicResult', [ConAdminAcademinResult::class, 'AdminAcademinResultMain']);
     $routes->post('admin/academic/ConAdminAcademinResult/OnOffLevel', [ConAdminAcademinResult::class, 'OnOffLevel']);
     $routes->post('admin/academic/ConAdminAcademinResult/CheckOnOffDoGrade', [ConAdminAcademinResult::class, 'CheckOnOffDoGrade']);
     $routes->post('admin/academic/ConAdminAcademinResult/CheckOnOffOpenYear', [ConAdminAcademinResult::class, 'CheckOnOffOpenYear']);
-$routes->get('Admin/Acade/Evaluate/EditGrade/(:segment)/(:segment)', [ConAdminEvaluateEditGrade::class, 'AdminEvaluateEditGradeMain']);
+$routes->get('Admin/Acade/Evaluate/EditGrade', [ConAdminEvaluateEditGrade::class, 'AdminEvaluateEditGradeMain']);
 $routes->get('Admin/Acade/Evaluate/EditGrade/(:segment)/(:segment)/(:segment)', [ConAdminEvaluateEditGrade::class, 'AdminEvaluateEditGradeUpdate']);
 $routes->get('Admin/Acade/Evaluate/SaveScore', [ConAdminSaveScore::class, 'AdminSaveScoreMain']);
 $routes->get('Admin/Acade/Evaluate/SaveScoreGrade/(:segment)/(:segment)/(:segment)', [ConAdminSaveScore::class, 'AdminSaveScoreGrade']);
 $routes->post('admin/academic/ConAdminSaveScore/CheckOnOffSaveScore', [ConAdminSaveScore::class, 'CheckOnOffSaveScore']);
 $routes->get('Admin/Acade/Evaluate/ReportPerson', [ConAdminReportResult::class, 'AdminReportPersonMain']);
-$routes->get('Admin/Acade/Evaluate/ReportPerson/(:num)/(:num)', [ConAdminReportResult::class, 'AdminReportPersonMain']);
+
 $routes->get('Admin/Acade/Evaluate/ReportPerson/(:segment)', [ConAdminReportResult::class, 'AdminStudentsScore']);
 $routes->get('Admin/Acade/Evaluate/ReportRoom', [ConAdminReportResult::class, 'AdminReportRoomMain']);
 $routes->post('Admin/Acade/Evaluate/ReportRoom', [ConAdminReportResult::class, 'AdminReportRoomMain']);
@@ -188,7 +197,7 @@ $routes->post('Admin/Acade/Evaluate/update_repeat_settings', [ConAdminAcademicRe
 
 $routes->post('admin/academic/ConAdminRegisRepeat/AdminRegisRepeatAdd', [ConAdminRegisRepeat::class, 'AdminRegisRepeatAdd']);
 
-$routes->post('admin/academic/ConAdminRegisRepeat/AdminRegisRepeatShow', [ConAdminRegisRepeat::class, 'AdminRegisRepeatShow']);
+$routes->match(['get', 'post'], 'admin/academic/ConAdminRegisRepeat/AdminRegisRepeatShow', [ConAdminRegisRepeat::class, 'AdminRegisRepeatShow']);
 
 $routes->match(['get', 'post'], 'Admin/Academic/ConAdminStudents/AdminStudentsNormalShow/(:segment)', [ConAdminStudents::class, 'AdminStudentsNormalShow/$1']);
 
@@ -213,12 +222,12 @@ $routes->get('Admin/Acade/DevelopStudents/Clubs/All', [ConAdminDevelopStudents::
 
 // ผู้บริหารสถานศึกษา
 $routes->get('Admin/Acade/Executive/ReportPerson', [ConAdminReportResult::class, 'AdminReportPersonMain']);
-$routes->get('Admin/Acade/Executive/ReportPerson/(:num)/(:num)', [ConAdminReportResult::class, 'AdminReportPersonMain']);
+
 $routes->get('Admin/Acade/Executive/ReportPerson/(:segment)', [ConAdminReportResult::class, 'AdminStudentsScore']);
 $routes->get('Admin/Acade/Executive/ReportRoom', [ConAdminReportResult::class, 'AdminReportRoomMain']);
 $routes->get('Admin/Acade/Executive/ReportSummaryTeacher', [ConAdminReportResult::class, 'AdminReportSummaryTeacher']);
-$routes->get('Admin/Acade/Executive/ReportTeacherSaveScore/(:segment)/(:segment)', [ConAdminReportResult::class, 'AdminReportTeacherSaveScoreMain']);
-$routes->get('Admin/Acade/Evaluate/ReportTeacherSaveScore/(:segment)/(:segment)', [ConAdminReportResult::class, 'AdminReportTeacherSaveScoreMain']);
+$routes->get('Admin/Acade/Executive/ReportTeacherSaveScore', [ConAdminReportResult::class, 'AdminReportTeacherSaveScoreMain']);
+$routes->get('Admin/Acade/Evaluate/ReportTeacherSaveScore', [ConAdminReportResult::class, 'AdminReportTeacherSaveScoreMain']);
 $routes->get('Admin/Acade/Executive/ReportTeacherSaveScoreCheck/(:segment)/(:segment)/(:segment)', [ConAdminReportResult::class, 'AdminReportTeacherSaveScoreCheck']);
 $routes->get('Admin/Acade/Evaluate/ReportTeacherSaveScoreCheck/(:segment)/(:segment)/(:segment)', [ConAdminReportResult::class, 'AdminReportTeacherSaveScoreCheck']);
 $routes->get('Admin/Acade/Executive/ReportScoreRoomMain/(:segment)/(:segment)/(:segment)/(:segment)', [ConAdminReportResult::class, 'ReportScoreRoomMain']);

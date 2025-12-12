@@ -72,10 +72,7 @@ $onoff_year = isset($checkOnOff[6]) && isset($checkOnOff[6]->onoff_year) ? $chec
                         <label for="onoff_year" class="form-label">ปีการศึกษา:</label>
                         <select name="onoff_year" id="onoff_year" class="form-select form-select">
                             <?php foreach ($CountYear as $key => $value) : ?>
-                            <?php // NOTE: This logic should be in the controller
-                            $currentYear = (service('request')->uri->getSegment(5) ?? '').'/'.(service('request')->uri->getSegment(6) ?? '');
-                            ?>
-                            <option <?= $currentYear == $value->RegisterYear ? "selected" : "" ?>
+                            <option <?= $onoff_year == $value->RegisterYear ? "selected" : "" ?>
                                 value="<?= esc($value->RegisterYear) ?>"><?= esc($value->RegisterYear) ?></option>
                             <?php endforeach; ?>
                             <option value="1/2567">1/2567</option>
@@ -127,7 +124,10 @@ $onoff_year = isset($checkOnOff[6]) && isset($checkOnOff[6]->onoff_year) ? $chec
                                                 <?= isset($v_result->pers_prefix) ? esc($v_result->pers_prefix.$v_result->pers_firstname.' '.$v_result->pers_lastname) : '' ?>
                                             </td>
                                             <td class="cell">
-                                                <a href="<?= site_url('Admin/Acade/Evaluate/AcademicRepeat/'.(isset($v_result->RegisterYear) ? esc($v_result->RegisterYear,'url') : '').'/'.(isset($v_result->SubjectID) ? esc($v_result->SubjectID,'url') : '')) ?>"
+                                                <a href="<?php 
+                                                    $parts = explode('/', $v_result->RegisterYear);
+                                                    echo site_url('Admin/Acade/Evaluate/AcademicRepeat/'.($parts[0]??'').'/'.($parts[1]??'').'/'.(isset($v_result->SubjectID) ? esc($v_result->SubjectID,'url') : '')); 
+                                                ?>"
                                                     class="btn btn-sm btn-warning"><i
                                                         class="bi bi-pencil-square me-1"></i>แก้ไข</a>
                                             </td>

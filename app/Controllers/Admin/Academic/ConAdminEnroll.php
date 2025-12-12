@@ -15,31 +15,48 @@ class ConAdminEnroll extends BaseController
 
     public function __construct()
     {
+        helper(['url', 'form']);
         $this->modAdminAcademinResult = new ModAdminAcademinResult();
 
         // CI3 session check equivalent
         // Initialize database connections first
         $this->DBPers = \Config\Database::connect('personnel');
         $this->db = \Config\Database::connect(); // Default database
+        
+        $request = \Config\Services::request();
+        $response = \Config\Services::response();
 
         // CI3 session check equivalent
         if (empty(session()->get('fullname'))) {
             // For AJAX requests, return a JSON error
-            if ($this->request->isAJAX()) {
-                return $this->response->setStatusCode(401)->setJSON(['status' => 'error', 'message' => 'Unauthorized']);
+            if ($request->is('ajax')) {
+                $response->setStatusCode(401)->setJSON(['status' => 'error', 'message' => 'Unauthorized'])->send();
+                exit();
             }
-            return redirect()->to(base_url('LogoutTeacher'));
+            header('Location: ' . base_url('LogoutTeacher'));
+            exit();
         }
 
-    $check_status_data = $this->db->table('tb_admin_rloes')->where('admin_rloes_userid', session()->get('login_id'))->get()->getRow();
+        // Check admin roles
+        $check_status_data = $this->db->table('tb_admin_rloes')->where('admin_rloes_userid', session()->get('login_id'))->get()->getRow();
 
-        if (empty($check_status_data) || (! in_array($check_status_data->admin_rloes_status, ["admin", "manager"]))) {
+        // Debugging Log
+        log_message('error', 'DEBUG ADMIN CHECK: login_id=' . session()->get('login_id'));
+        if ($check_status_data) {
+            log_message('error', 'DEBUG ADMIN CHECK: found role status=' . $check_status_data->admin_rloes_status);
+        } else {
+            log_message('error', 'DEBUG ADMIN CHECK: No role data found for user.');
+        }
+
+        if (empty($check_status_data) || (! in_array($check_status_data->admin_rloes_status, ["admin", "manager", "superadmin"]))) {
             // For AJAX requests, return a JSON error
-            if ($this->request->isAJAX()) {
-                return $this->response->setStatusCode(403)->setJSON(['status' => 'error', 'message' => 'Forbidden']);
+            if ($request->is('ajax')) {
+                $response->setStatusCode(403)->setJSON(['status' => 'error', 'message' => 'Forbidden'])->send();
+                exit();
             }
             session()->setFlashdata(['msg' => 'OK', 'messge' => 'คุณไม่มีสิทธ์ในระบบจัดข้อมูลนี้ ติดต่อเจ้าหน้าที่คอม', 'alert' => 'error']);
-            return redirect()->to(base_url('welcome'));
+            header('Location: ' . base_url('welcome'));
+            exit();
         }
     }
 
@@ -52,6 +69,11 @@ class ConAdminEnroll extends BaseController
 
         $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
         $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();
+        
+        // Use session-stored selected year, or fall back to default school year
+        $sessionYear = session()->get('admin_selected_year');
+        $data['selectedYear'] = $sessionYear ?: ($data['SchoolYear']->schyear_year ?? '');
+        
         $data['title'] = "ลงทะเบียนเรียน";
 
         $data['GroupYear'] = $this->db->table('tb_subjects')
@@ -73,19 +95,110 @@ class ConAdminEnroll extends BaseController
             $partsB = explode('/', $subjectYearB);
 
             $yearA = (count($partsA) > 1) ? (int)$partsA[1] : (int)$partsA[0];
-            $termA = (count($partsA) > 1) ? (int)$partsA[0] : 0; // Assume term 0 or 1 if only year is present
+            $termA = (count($partsA) > 1) ? (int)$partsA[0] : 0;
 
             $yearB = (count($partsB) > 1) ? (int)$partsB[1] : (int)$partsB[0];
-            $termB = (count($partsB) > 1) ? (int)$partsB[0] : 0; // Assume term 0 or 1 if only year is present
+            $termB = (count($partsB) > 1) ? (int)$partsB[0] : 0;
 
             if ($yearA == $yearB) {
-                return $termA <=> $termB; // Sort by term if years are equal
+                return $termB <=> $termA; // Sort by term descending
             }
-            return $yearA <=> $yearB; // Sort by year
+            return $yearB <=> $yearA; // Sort by year descending
         });
+
+        // Dashboard Statistics for the selected year
+        $currentYear = $data['selectedYear'];
+        
+        // Total subjects in selected year
+        $data['total_subjects'] = $this->db->table('tb_subjects')
+            ->where('SubjectYear', $currentYear)
+            ->countAllResults();
+        
+        // Total registered students (distinct) in selected year
+        $data['total_registered_students'] = $this->db->table('tb_register')
+            ->select('StudentID')
+            ->where('RegisterYear', $currentYear)
+            ->distinct()
+            ->countAllResults();
+        
+        // Total teachers teaching in selected year
+        $data['total_teachers'] = $this->db->table('tb_register')
+            ->select('TeacherID')
+            ->where('RegisterYear', $currentYear)
+            ->distinct()
+            ->countAllResults();
+        
+        // Total subject groups (กลุ่มสาระ) in selected year
+        $data['total_groups'] = $this->db->table('tb_subjects')
+            ->select('FirstGroup')
+            ->where('SubjectYear', $currentYear)
+            ->where('FirstGroup !=', '')
+            ->distinct()
+            ->countAllResults();
+        
+        // Total registrations (subject-student pairs)
+        $data['total_registrations'] = $this->db->table('tb_register')
+            ->where('RegisterYear', $currentYear)
+            ->countAllResults();
 
         echo view('admin/Academic/AdminEnroll/AdminEnrollMain', $data);
         
+    }
+
+    /**
+     * AJAX endpoint to get dashboard statistics for selected year
+     */
+    public function getDashboardStats()
+    {
+        $year = $this->request->getPost('year') ?? $this->request->getGet('year');
+        
+        if (empty($year)) {
+            return $this->response->setJSON(['status' => 'error', 'message' => 'Year is required']);
+        }
+        
+        // Total subjects in selected year
+        $total_subjects = $this->db->table('tb_subjects')
+            ->where('SubjectYear', $year)
+            ->countAllResults();
+        
+        // Total registered students (distinct) in selected year
+        $total_registered_students = $this->db->table('tb_register')
+            ->select('StudentID')
+            ->where('RegisterYear', $year)
+            ->distinct()
+            ->countAllResults();
+        
+        // Total teachers teaching in selected year
+        $total_teachers = $this->db->table('tb_register')
+            ->select('TeacherID')
+            ->where('RegisterYear', $year)
+            ->distinct()
+            ->countAllResults();
+        
+        // Total subject groups (กลุ่มสาระ) in selected year
+        $total_groups = $this->db->table('tb_subjects')
+            ->select('FirstGroup')
+            ->where('SubjectYear', $year)
+            ->where('FirstGroup !=', '')
+            ->distinct()
+            ->countAllResults();
+        
+        // Total registrations (subject-student pairs)
+        $total_registrations = $this->db->table('tb_register')
+            ->where('RegisterYear', $year)
+            ->countAllResults();
+        
+        return $this->response->setJSON([
+            'status' => 'success',
+            'data' => [
+                'total_subjects' => $total_subjects,
+                'total_registered_students' => $total_registered_students,
+                'total_teachers' => $total_teachers,
+                'total_groups' => $total_groups,
+                'total_registrations' => $total_registrations,
+                'year' => $year
+            ]
+        ]);
     }
 
     public function AdminEnrollAdd($Term, $Year)
@@ -421,9 +534,7 @@ class ConAdminEnroll extends BaseController
                                     ->join('skjacth_personnel.tb_personnel', "skjacth_personnel.tb_personnel.pers_id = skjacth_academic.tb_register.TeacherID")
                                     ->where('tb_subjects.SubjectYear', $keyYear)
                                     ->where('tb_register.RegisterYear', $keyYear)
-                                    ->groupBy('tb_register.SubjectID')
-                                    ->groupBy('tb_register.RegisterClass')
-                                    ->groupBy('tb_register.TeacherID')
+                                    ->groupBy('tb_register.SubjectID, tb_register.RegisterClass, tb_register.TeacherID, tb_subjects.SubjectCode, tb_subjects.SubjectName, tb_subjects.FirstGroup, tb_subjects.SubjectYear, tb_personnel.pers_firstname, tb_personnel.pers_prefix, tb_personnel.pers_lastname')
                                     ->get()->getResult();
 
             foreach ($Register as $record) {

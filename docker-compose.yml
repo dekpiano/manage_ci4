@@ -1,0 +1,25 @@
+
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: academic2025_app # Renamed to avoid conflict with existing skj2025_app
+    ports:
+      - "8082:443"
+    volumes:
+      - .:/var/www/html:cached
+      - D:/librarie_skj:/home/skjacth/domains/skj.ac.th/public_html/librarie_skj:cached
+    environment:
+      # Database connection settings for CodeIgniter
+      DB_HOST: skj2025_db
+      DB_PORT: 3306
+      DB_USERNAME: root
+      DB_PASSWORD: rootpassword
+    networks:
+      - skj2025_default
+
+networks:
+  skj2025_default:
+    external: true

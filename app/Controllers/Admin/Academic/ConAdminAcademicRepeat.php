@@ -31,7 +31,7 @@ class ConAdminAcademicRepeat extends BaseController
 
         $check_status_data = $this->db->table('tb_admin_rloes')->where('admin_rloes_userid', session()->get('login_id'))->get()->getRow();
 
-        if (empty($check_status_data) || (! in_array($check_status_data->admin_rloes_status, ["admin", "manager"]))) {
+        if (empty($check_status_data) || (! in_array($check_status_data->admin_rloes_status, ["admin", "manager", "superadmin"]))) {
             session()->setFlashdata(['msg' => 'OK', 'messge' => 'คุณไม่มีสิทธ์ในระบบจัดข้อมูลนี้ ติดต่อเจ้าหน้าที่คอม', 'alert' => 'error']);
             return redirect()->to(base_url('welcome'));
         }
@@ -62,7 +62,7 @@ class ConAdminAcademicRepeat extends BaseController
         return $grade;
     }
 
-    public function AdminAcademicRepeatMain($term, $year)
+    public function AdminAcademicRepeatMain()
     {
         $data['admin'] = $this->DBpersonnel->table('tb_personnel') // Use the class property
                                     ->select('pers_id, pers_img')
@@ -78,6 +78,28 @@ class ConAdminAcademicRepeat extends BaseController
                                     ->orderBy('RegisterYear', 'ASC')
                                     ->get()->getResult();
 
+        // ดึงค่า Term/Year จาก tb_register_onoff (ID 7 -> Index 6)
+        $onoff_year = $data['checkOnOff'][6]->onoff_year ?? ''; 
+        $parts = explode('/', $onoff_year);
+        $term = $parts[0] ?? '';
+        $year = $parts[1] ?? '';
+
+        // ถ้าไม่มีข้อมูลใน DB ให้ใช้ค่า Default
+        if (empty($term) || empty($year)) {
+             if ($data['SchoolYear'] && property_exists($data['SchoolYear'], 'schyear_year')) {
+                $parts = explode('/', $data['SchoolYear']->schyear_year);
+                $term = $parts[0] ?? '2';
+                $year = $parts[1] ?? '2567';
+            } else {
+                $term = '2';
+                $year = '2567';
+            }
+        }
+
+        $data['Term'] = $term;
+        $data['Year'] = $year;
+        $currentYear = $term . '/' . $year;
+
         $data['DataRepeat'] = $this->db->table('tb_register')
                                     ->select('
                                         skjacth_academic.tb_register.SubjectID,
@@ -92,8 +114,8 @@ class ConAdminAcademicRepeat extends BaseController
                                     ')
                                     ->join('skjacth_academic.tb_subjects', 'skjacth_academic.tb_subjects.SubjectID = skjacth_academic.tb_register.SubjectID')
                                     ->join('skjacth_personnel.tb_personnel', 'skjacth_personnel.tb_personnel.pers_id = skjacth_academic.tb_register.TeacherID')
-                                    ->where('RegisterYear', $term . '/' . $year)
-                                    ->groupBy('SubjectCode')
+                                    ->where('RegisterYear', $currentYear)
+                                    ->groupBy('tb_register.SubjectID, tb_register.RegisterYear, tb_register.TeacherID, tb_register.RegisterClass, tb_personnel.pers_prefix, tb_personnel.pers_firstname, tb_personnel.pers_lastname, tb_subjects.SubjectName, tb_subjects.SubjectCode')
                                     ->get()->getResult();
 
         echo view('admin/Academic/AdminEvaluateLearnRepeat/AdminEvaluateLearnRepeatMain', $data);

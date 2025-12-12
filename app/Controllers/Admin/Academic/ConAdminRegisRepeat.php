@@ -25,7 +25,7 @@ class ConAdminRegisRepeat extends BaseController
 
         $check_status_data = $this->db->table('tb_admin_rloes')->where('admin_rloes_userid', session()->get('login_id'))->get()->getRow();
 
-        if (empty($check_status_data) || (! in_array($check_status_data->admin_rloes_status, ["admin", "manager"]))) {
+        if (empty($check_status_data) || (! in_array($check_status_data->admin_rloes_status, ["admin", "manager", "superadmin"]))) {
             session()->setFlashdata(['msg' => 'OK', 'messge' => 'คุณไม่มีสิทธ์ในระบบจัดข้อมูลนี้ ติดต่อเจ้าหน้าที่คอม', 'alert' => 'error']);
             return redirect()->to(base_url('welcome'));
         }
@@ -35,15 +35,135 @@ class ConAdminRegisRepeat extends BaseController
         $data['admin'] = $this->DBPers->table('tb_personnel')->select('pers_id,pers_img')->where('pers_id',session()->get('login_id'))->get()->getRow();
         $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
         $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult(); // Changed to getResult()
+        
+        // Use session-stored selected year
+        $data['selectedYear'] = get_selected_year();
+        
         $data['title'] = "ลงทะเบียนเรียน (ซ้ำ)";	
 
-        $data['GroupYear'] = $this->db->table('tb_subjects')->select('SubjectYear')->groupBy('SubjectYear')->orderBy('SubjectYear','ASC')->get()->getResult();
+        $data['GroupYear'] = $this->db->table('tb_subjects')->select('SubjectYear')->groupBy('SubjectYear')->get()->getResult();
 
-        //echo "<pre>"; print_r($data['GroupYear']); exit();
+        // Sort the GroupYear array in PHP (Year DESC, Term DESC)
+        usort($data['GroupYear'], function($a, $b) {
+            $subjectYearA = $a->SubjectYear ?? '';
+            $subjectYearB = $b->SubjectYear ?? '';
 
+            // Handle empty SubjectYear values
+            if (empty($subjectYearA) && empty($subjectYearB)) return 0;
+            if (empty($subjectYearA)) return 1; // Empty comes last
+            if (empty($subjectYearB)) return -1; // Empty comes last
+
+            $partsA = explode('/', $subjectYearA);
+            $partsB = explode('/', $subjectYearB);
+
+            $yearA = (count($partsA) > 1) ? (int)$partsA[1] : (int)$partsA[0];
+            $termA = (count($partsA) > 1) ? (int)$partsA[0] : 0;
+
+            $yearB = (count($partsB) > 1) ? (int)$partsB[1] : (int)$partsB[0];
+            $termB = (count($partsB) > 1) ? (int)$partsB[0] : 0;
+
+            if ($yearA == $yearB) {
+                return $termB <=> $termA; // Sort by term descending
+            }
+            return $yearB <=> $yearA; // Sort by year descending
+        });
+
+        // Dashboard Statistics for repeat registration
+        $currentYear = $data['selectedYear'];
+        
+        // Total subjects with repeat registrations in selected year
+        // (วิชาที่มีนักเรียนลงทะเบียนเรียนซ้ำ = มี RepeatTeacher)
+        $data['total_subjects_repeat'] = $this->db->table('tb_register')
+            ->select('SubjectID')
+            ->where('RegisterYear', $currentYear)
+            ->where('RepeatTeacher !=', '')
+            ->distinct()
+            ->countAllResults();
+        
+        // Total students with repeat registrations (distinct) in selected year
+        // (นักเรียนที่ลงทะเบียนเรียนซ้ำ = มี RepeatTeacher)
+        $data['total_repeat_students'] = $this->db->table('tb_register')
+            ->select('StudentID')
+            ->where('RegisterYear', $currentYear)
+            ->where('RepeatTeacher !=', '')
+            ->distinct()
+            ->countAllResults();
+        
+        // Total repeat registration records in selected year
+        // (จำนวนรายการลงทะเบียนเรียนซ้ำทั้งหมด)
+        $data['total_repeat_registrations'] = $this->db->table('tb_register')
+            ->where('RegisterYear', $currentYear)
+            ->where('RepeatTeacher !=', '')
+            ->countAllResults();
+        
+        // Total teachers handling repeat students
+        // (ครูที่รับผิดชอบนักเรียนเรียนซ้ำ)
+        $data['total_repeat_teachers'] = $this->db->table('tb_register')
+            ->select('RepeatTeacher')
+            ->where('RegisterYear', $currentYear)
+            ->where('RepeatTeacher !=', '')
+            ->distinct()
+            ->countAllResults();
         
         return view('admin/Academic/AdminRegisRepeat/AdminRegisRepeatMain', $data);
         
+    }
+
+    /**
+     * AJAX endpoint to get dashboard statistics for repeat registration
+     */
+    public function getDashboardStats()
+    {
+        $year = $this->request->getPost('year') ?? $this->request->getGet('year');
+        
+        if (empty($year)) {
+            return $this->response->setJSON(['status' => 'error', 'message' => 'Year is required']);
+        }
+        
+        // Total subjects with repeat registrations in selected year
+        // (วิชาที่มีนักเรียนลงทะเบียนเรียนซ้ำ = มี RepeatTeacher)
+        $total_subjects_repeat = $this->db->table('tb_register')
+            ->select('SubjectID')
+            ->where('RegisterYear', $year)
+            ->where('RepeatTeacher !=', '')
+            ->distinct()
+            ->countAllResults();
+        
+        // Total students with repeat registrations (distinct) in selected year
+        // (นักเรียนที่ลงทะเบียนเรียนซ้ำ = มี RepeatTeacher)
+        $total_repeat_students = $this->db->table('tb_register')
+            ->select('StudentID')
+            ->where('RegisterYear', $year)
+            ->where('RepeatTeacher !=', '')
+            ->distinct()
+            ->countAllResults();
+        
+        // Total repeat registration records in selected year
+        // (จำนวนรายการลงทะเบียนเรียนซ้ำทั้งหมด)
+        $total_repeat_registrations = $this->db->table('tb_register')
+            ->where('RegisterYear', $year)
+            ->where('RepeatTeacher !=', '')
+            ->countAllResults();
+        
+        // Total teachers handling repeat students
+        // (ครูที่รับผิดชอบนักเรียนเรียนซ้ำ)
+        $total_repeat_teachers = $this->db->table('tb_register')
+            ->select('RepeatTeacher')
+            ->where('RegisterYear', $year)
+            ->where('RepeatTeacher !=', '')
+            ->distinct()
+            ->countAllResults();
+        
+        return $this->response->setJSON([
+            'status' => 'success',
+            'data' => [
+                'total_subjects_repeat' => $total_subjects_repeat,
+                'total_repeat_students' => $total_repeat_students,
+                'total_repeat_registrations' => $total_repeat_registrations,
+                'total_repeat_teachers' => $total_repeat_teachers,
+                'year' => $year
+            ]
+        ]);
     }
 
     public function AdminRegisRepeatDetail($Term,$Year,$IDSubject,$TechID){
@@ -245,7 +365,7 @@ class ConAdminRegisRepeat extends BaseController
     public function AdminRegisRepeatShow(){ 
         $CheckYear = $this->db->table('tb_schoolyear')->get()->getRow();
         $data = [];
-        $keyYear = $this->request->getPost('keyYear');
+        $keyYear = $this->request->getVar('keyYear');
         //$subject = $this->db->where('SubjectYear','1/2565')->get('tb_subjects')->result();
        
         $Register = $this->db->table('tb_register')->select("
@@ -265,9 +385,7 @@ class ConAdminRegisRepeat extends BaseController
                                 ->join($this->DBPers->database . '.tb_personnel', $this->DBPers->database . '.tb_personnel.pers_id = skjacth_academic.tb_register.TeacherID')
                                 ->where('tb_register.RegisterYear',$keyYear)
                                 ->where('tb_subjects.SubjectYear',$keyYear)
-                                ->groupBy('SubjectCode')
-                                ->groupBy('TeacherID')
-                                ->groupBy('RegisterClass')
+                                ->groupBy('skjacth_academic.tb_register.SubjectID, skjacth_academic.tb_register.TeacherID, skjacth_academic.tb_register.RegisterClass, skjacth_academic.tb_subjects.SubjectName, skjacth_academic.tb_subjects.FirstGroup, skjacth_academic.tb_subjects.SubjectCode, skjacth_academic.tb_subjects.SubjectYear, skjacth_personnel.tb_personnel.pers_firstname, skjacth_personnel.tb_personnel.pers_prefix, skjacth_personnel.tb_personnel.pers_lastname')
                                 ->get()->getResult();
 
         //echo '<pre>'; print_r($Register);   exit();    

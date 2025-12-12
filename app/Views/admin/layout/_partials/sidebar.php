@@ -56,7 +56,7 @@
                     ?>
 
                     <?php if(in_array("งานทะเบียน",$Exp_Checkrloes)): ?>
-                    <li class="menu-item <?= ($uri->getTotalSegments() >= 3 && $uri->getSegment(3) == 'Registration' ? 'active open' : '') ?>">
+                    <li class="menu-item <?= ($uri->getTotalSegments() >= 3 && ($uri->getSegment(3) == 'Registration' || $uri->getSegment(3) == 'Evaluate' || $uri->getSegment(3) == 'characteristics' || $uri->getSegment(3) == 'rwl')) ? 'active open' : '' ?>">
                         <a href="javascript:void(0);" class="menu-link menu-toggle">
                             <i class="menu-icon tf-icons bx bx-book-content"></i>
                             <div data-i18n="งานทะเบียน">งานทะเบียน</div>
@@ -92,8 +92,8 @@
                                     <div data-i18n="จัดการห้องเรียนออนไลน์">จัดการห้องเรียนออนไลน์</div>
                                 </a>
                             </li>
-                            <li class="menu-item <?= (($uri->getTotalSegments() >= 4 && $uri->getSegment(4) == 'ReportTeacherSaveScore' && $uri->getTotalSegments() >= 3 && $uri->getSegment(3) == 'Evaluate') || ($uri->getTotalSegments() >= 4 && $uri->getSegment(4) == 'ReportTeacherSaveScoreCheck') ? 'active' : '') ?>">
-                                <a href="<?=base_url('Admin/Acade/Evaluate/ReportTeacherSaveScore/').(isset($SchoolYear->schyear_year) ? $SchoolYear->schyear_year:'');?>" class="menu-link">
+                            <li class="menu-item <?= ($uri->getTotalSegments() >= 4 && ($uri->getSegment(4) == 'ReportTeacherSaveScore' || strpos($uri->getSegment(4), 'ReportTeacherSaveScore') === 0) && $uri->getSegment(3) == 'Evaluate') ? 'active' : '' ?>">
+                                <a href="<?=base_url('Admin/Acade/Evaluate/ReportTeacherSaveScore');?>" class="menu-link">
                                     <div data-i18n="รายงานผลการบันทึกคะแนน (ครูผู้สอน)" style="white-space: normal;">รายงานผลการบันทึกคะแนน (ครูผู้สอน)</div>
                                 </a>
                             </li>
@@ -119,13 +119,7 @@
                             </li>
                             <hr>
                             <li class="menu-item <?= ($uri->getTotalSegments() >= 4 && $uri->getSegment(4) == 'AcademicRepeat' ? 'active' : '') ?>">
-                                <a href="<?php
-                                    $onoff_year = isset($checkOnOff[6]->onoff_year) ? $checkOnOff[6]->onoff_year : '';
-                                    $parts = explode('/', $onoff_year);
-                                    $term = $parts[0] ?? '';
-                                    $year = $parts[1] ?? '';
-                                    echo base_url('Admin/Acade/Evaluate/AcademicRepeat/' . $term . '/' . $year);
-                                ?>" class="menu-link">
+                                <a href="<?= base_url('Admin/Acade/Evaluate/AcademicRepeat'); ?>" class="menu-link">
                                     <div data-i18n="ตั้งค่าเรียนซ้ำ (มส)">ตั้งค่าเรียนซ้ำ (มส)</div>
                                 </a>
                             </li>
