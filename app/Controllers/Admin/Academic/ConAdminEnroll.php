@@ -70,18 +70,15 @@ class ConAdminEnroll extends BaseController
         $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
         $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();
         
-        // Use session-stored selected year, or fall back to default school year
-        $sessionYear = session()->get('admin_selected_year');
-        $data['selectedYear'] = $sessionYear ?: ($data['SchoolYear']->schyear_year ?? '');
-        
         $data['title'] = "ลงทะเบียนเรียน";
 
+        // 1. Fetch GroupYear FIRST
         $data['GroupYear'] = $this->db->table('tb_subjects')
                                     ->select('SubjectYear')
                                     ->groupBy('SubjectYear')
                                     ->get()->getResult();
 
-        // Sort the GroupYear array in PHP
+        // 2. Sort the GroupYear array in PHP to match dropdown order
         usort($data['GroupYear'], function($a, $b) {
             $subjectYearA = $a->SubjectYear ?? '';
             $subjectYearB = $b->SubjectYear ?? '';
@@ -106,37 +103,54 @@ class ConAdminEnroll extends BaseController
             return $yearB <=> $yearA; // Sort by year descending
         });
 
+        // 3. Determine selectedYear (Session -> Fallback to First Option -> Fallback to System Year)
+        $sessionYear = session()->get('admin_selected_year');
+        
+        if (!empty($sessionYear)) {
+             $data['selectedYear'] = $sessionYear;
+        } elseif (!empty($data['GroupYear'])) {
+             // Fallback to the most recent year (first in sorted list) to match UI dropdown
+             $data['selectedYear'] = $data['GroupYear'][0]->SubjectYear;
+        } else {
+             // Fallback to system school year if list is empty
+             $data['selectedYear'] = $data['SchoolYear']->schyear_year ?? '';
+        }
+
         // Dashboard Statistics for the selected year
         $currentYear = $data['selectedYear'];
         
-        // Total subjects in selected year
-        $data['total_subjects'] = $this->db->table('tb_subjects')
-            ->where('SubjectYear', $currentYear)
-            ->countAllResults();
+        // Total subjects in selected year (Distinct SubjectCode from tb_register)
+        $data['total_subjects'] = count($this->db->table('tb_register')
+            ->select('tb_subjects.SubjectCode')
+            ->join('tb_subjects', 'tb_subjects.SubjectID = tb_register.SubjectID')
+            ->where('tb_register.RegisterYear', $currentYear)
+            ->distinct()
+            ->get()->getResult());
         
-        // Total registered students (distinct) in selected year
-        $data['total_registered_students'] = $this->db->table('tb_register')
+        // Total registered students (distinct) in selected year (Already correct from tb_register)
+        $data['total_registered_students'] = count($this->db->table('tb_register')
             ->select('StudentID')
             ->where('RegisterYear', $currentYear)
             ->distinct()
-            ->countAllResults();
+            ->get()->getResult());
         
-        // Total teachers teaching in selected year
-        $data['total_teachers'] = $this->db->table('tb_register')
+        // Total teachers teaching in selected year (Already correct from tb_register)
+        $data['total_teachers'] = count($this->db->table('tb_register')
             ->select('TeacherID')
             ->where('RegisterYear', $currentYear)
             ->distinct()
-            ->countAllResults();
-        
-        // Total subject groups (กลุ่มสาระ) in selected year
-        $data['total_groups'] = $this->db->table('tb_subjects')
-            ->select('FirstGroup')
-            ->where('SubjectYear', $currentYear)
-            ->where('FirstGroup !=', '')
+            ->get()->getResult());
+
+        // Total subject groups (กลุ่มสาระ) in selected year (From tb_register joined with tb_subjects)
+        $data['total_groups'] = count($this->db->table('tb_register')
+            ->select('tb_subjects.FirstGroup')
+            ->join('tb_subjects', 'tb_subjects.SubjectID = tb_register.SubjectID')
+            ->where('tb_register.RegisterYear', $currentYear)
+            ->where('tb_subjects.FirstGroup !=', '')
             ->distinct()
-            ->countAllResults();
+            ->get()->getResult());
         
-        // Total registrations (subject-student pairs)
+        // Total registrations (subject-student pairs) - This is total rows, so countAllResults is fine
         $data['total_registrations'] = $this->db->table('tb_register')
             ->where('RegisterYear', $currentYear)
             ->countAllResults();
@@ -156,32 +170,36 @@ class ConAdminEnroll extends BaseController
             return $this->response->setJSON(['status' => 'error', 'message' => 'Year is required']);
         }
         
-        // Total subjects in selected year
-        $total_subjects = $this->db->table('tb_subjects')
-            ->where('SubjectYear', $year)
-            ->countAllResults();
+        // Total subjects in selected year (Distinct SubjectCode from tb_register)
+        $total_subjects = count($this->db->table('tb_register')
+            ->select('tb_subjects.SubjectCode')
+            ->join('tb_subjects', 'tb_subjects.SubjectID = tb_register.SubjectID')
+            ->where('tb_register.RegisterYear', $year)
+            ->distinct()
+            ->get()->getResult());
         
         // Total registered students (distinct) in selected year
-        $total_registered_students = $this->db->table('tb_register')
+        $total_registered_students = count($this->db->table('tb_register')
             ->select('StudentID')
             ->where('RegisterYear', $year)
             ->distinct()
-            ->countAllResults();
+            ->get()->getResult());
         
         // Total teachers teaching in selected year
-        $total_teachers = $this->db->table('tb_register')
+        $total_teachers = count($this->db->table('tb_register')
             ->select('TeacherID')
             ->where('RegisterYear', $year)
             ->distinct()
-            ->countAllResults();
+            ->get()->getResult());
         
-        // Total subject groups (กลุ่มสาระ) in selected year
-        $total_groups = $this->db->table('tb_subjects')
-            ->select('FirstGroup')
-            ->where('SubjectYear', $year)
-            ->where('FirstGroup !=', '')
+        // Total subject groups (กลุ่มสาระ) in selected year (From tb_register joined with tb_subjects)
+        $total_groups = count($this->db->table('tb_register')
+            ->select('tb_subjects.FirstGroup')
+            ->join('tb_subjects', 'tb_subjects.SubjectID = tb_register.SubjectID')
+            ->where('tb_register.RegisterYear', $year)
+            ->where('tb_subjects.FirstGroup !=', '')
             ->distinct()
-            ->countAllResults();
+            ->get()->getResult());
         
         // Total registrations (subject-student pairs)
         $total_registrations = $this->db->table('tb_register')

@@ -301,43 +301,87 @@ $(document).on("click", ".ShowEnroll", function() {
         if (data && data.length > 0) {
             const subjectName = data[0].SubjectName;
             const teacherName = data[0].pers_prefix + data[0].pers_firstname + ' ' + data[0].pers_lastname;
-            let tableContent = `
-                <p><strong>วิชา:</strong> ${subjectName}</p>
-                <p><strong>ครูผู้สอน:</strong> ${teacherName}</p>
-                <table class="table table-hover">
-                    <thead>
-                        <tr>
-                            <th scope="col">ห้อง</th>
-                            <th scope="col">เลขที่</th>
-                            <th scope="col">เลขประจำตัว</th>
-                            <th scope="col">ชื่อ - นามสกุล</th>
-                        </tr>
-                    </thead>
-                    <tbody>
+            
+            let contentHtml = `
+                <div class="text-start mb-3">
+                    <p class="mb-1"><strong>วิชา:</strong> ${subjectName}</p>
+                    <p class="mb-1"><strong>ครูผู้สอน:</strong> ${teacherName}</p>
+                    <p class="mb-0"><strong>จำนวนนักเรียนทั้งหมด:</strong> ${data.length} คน</p>
+                </div>
             `;
-            $.each(data, function(index, value) {
-                tableContent += `
-                    <tr>
-                        <td>${value.StudentClass}</td>
-                        <td>${value.StudentNumber}</td>
-                        <td>${value.StudentCode}</td>
-                        <td>${value.StudentPrefix}${value.StudentFirstName} ${value.StudentLastName}</td>
-                    </tr>
+
+            // Group students by class
+            const studentsByClass = data.reduce((acc, student) => {
+                const className = student.StudentClass || 'ไม่ระบุห้อง';
+                if (!acc[className]) {
+                    acc[className] = [];
+                }
+                acc[className].push(student);
+                return acc;
+            }, {});
+
+            contentHtml += '<div class="accordion text-start" id="accordionStudentClasses">';
+            let index = 0;
+
+            for (const [className, students] of Object.entries(studentsByClass)) {
+                const headingId = `heading${index}`;
+                const collapseId = `collapse${index}`;
+                const isFirst = index === 0;
+
+                contentHtml += `
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="${headingId}">
+                            <button class="accordion-button ${!isFirst ? 'collapsed' : ''}" type="button" data-bs-toggle="collapse" data-bs-target="#${collapseId}" aria-expanded="${isFirst}" aria-controls="${collapseId}">
+                                ห้อง ${className} <span class="badge bg-label-primary ms-2 rounded-pill">${students.length} คน</span>
+                            </button>
+                        </h2>
+                        <div id="${collapseId}" class="accordion-collapse collapse ${isFirst ? '' : ''}" aria-labelledby="${headingId}" data-bs-parent="#accordionStudentClasses">
+                            <div class="accordion-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-hover table-striped mb-0">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th class="text-center" width="15%">เลขที่</th>
+                                                <th class="text-center" width="25%">รหัสนักเรียน</th>
+                                                <th>ชื่อ - นามสกุล</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
                 `;
-            });
-            tableContent += `
-                    </tbody>
-                </table>
-            `;
+
+                students.forEach(student => {
+                    contentHtml += `
+                        <tr>
+                            <td class="text-center">${student.StudentNumber}</td>
+                            <td class="text-center">${student.StudentCode}</td>
+                            <td>${student.StudentPrefix}${student.StudentFirstName} ${student.StudentLastName}</td>
+                        </tr>
+                    `;
+                });
+
+                contentHtml += `
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                index++;
+            }
+            contentHtml += '</div>';
 
             Swal.fire({
                 title: 'รายชื่อนักเรียนที่ลงทะเบียนแล้ว',
-                html: tableContent,
+                html: contentHtml,
                 icon: 'info',
-                width: '80%',
+                width: '800px', // Wider modal for better view
                 showCloseButton: true,
                 showConfirmButton: false,
                 focusConfirm: false,
+                customClass: {
+                    container: 'my-swal-container'
+                }
             });
         } else {
             Swal.fire({

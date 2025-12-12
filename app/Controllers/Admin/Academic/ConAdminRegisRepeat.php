@@ -73,9 +73,11 @@ class ConAdminRegisRepeat extends BaseController
         
         // Total subjects with repeat registrations in selected year
         // (วิชาที่มีนักเรียนลงทะเบียนเรียนซ้ำ = มี RepeatTeacher)
+        // Total subjects with repeat registrations in selected year
+        // (วิชาที่มีนักเรียนลงทะเบียนเรียนซ้ำ = มี RepeatTeacher)
         $data['total_subjects_repeat'] = $this->db->table('tb_register')
             ->select('SubjectID')
-            ->where('RegisterYear', $currentYear)
+            ->where('RepeatYear', $currentYear) // Changed to RepeatYear
             ->where('RepeatTeacher !=', '')
             ->distinct()
             ->countAllResults();
@@ -84,7 +86,7 @@ class ConAdminRegisRepeat extends BaseController
         // (นักเรียนที่ลงทะเบียนเรียนซ้ำ = มี RepeatTeacher)
         $data['total_repeat_students'] = $this->db->table('tb_register')
             ->select('StudentID')
-            ->where('RegisterYear', $currentYear)
+            ->where('RepeatYear', $currentYear) // Changed to RepeatYear
             ->where('RepeatTeacher !=', '')
             ->distinct()
             ->countAllResults();
@@ -92,7 +94,7 @@ class ConAdminRegisRepeat extends BaseController
         // Total repeat registration records in selected year
         // (จำนวนรายการลงทะเบียนเรียนซ้ำทั้งหมด)
         $data['total_repeat_registrations'] = $this->db->table('tb_register')
-            ->where('RegisterYear', $currentYear)
+            ->where('RepeatYear', $currentYear) // Changed to RepeatYear
             ->where('RepeatTeacher !=', '')
             ->countAllResults();
         
@@ -100,7 +102,7 @@ class ConAdminRegisRepeat extends BaseController
         // (ครูที่รับผิดชอบนักเรียนเรียนซ้ำ)
         $data['total_repeat_teachers'] = $this->db->table('tb_register')
             ->select('RepeatTeacher')
-            ->where('RegisterYear', $currentYear)
+            ->where('RepeatYear', $currentYear) // Changed to RepeatYear
             ->where('RepeatTeacher !=', '')
             ->distinct()
             ->countAllResults();
@@ -124,7 +126,7 @@ class ConAdminRegisRepeat extends BaseController
         // (วิชาที่มีนักเรียนลงทะเบียนเรียนซ้ำ = มี RepeatTeacher)
         $total_subjects_repeat = $this->db->table('tb_register')
             ->select('SubjectID')
-            ->where('RegisterYear', $year)
+            ->where('RepeatYear', $year) // Changed to RepeatYear
             ->where('RepeatTeacher !=', '')
             ->distinct()
             ->countAllResults();
@@ -133,7 +135,7 @@ class ConAdminRegisRepeat extends BaseController
         // (นักเรียนที่ลงทะเบียนเรียนซ้ำ = มี RepeatTeacher)
         $total_repeat_students = $this->db->table('tb_register')
             ->select('StudentID')
-            ->where('RegisterYear', $year)
+            ->where('RepeatYear', $year) // Changed to RepeatYear
             ->where('RepeatTeacher !=', '')
             ->distinct()
             ->countAllResults();
@@ -141,7 +143,7 @@ class ConAdminRegisRepeat extends BaseController
         // Total repeat registration records in selected year
         // (จำนวนรายการลงทะเบียนเรียนซ้ำทั้งหมด)
         $total_repeat_registrations = $this->db->table('tb_register')
-            ->where('RegisterYear', $year)
+            ->where('RepeatYear', $year) // Changed to RepeatYear
             ->where('RepeatTeacher !=', '')
             ->countAllResults();
         
@@ -149,7 +151,7 @@ class ConAdminRegisRepeat extends BaseController
         // (ครูที่รับผิดชอบนักเรียนเรียนซ้ำ)
         $total_repeat_teachers = $this->db->table('tb_register')
             ->select('RepeatTeacher')
-            ->where('RegisterYear', $year)
+            ->where('RepeatYear', $year) // Changed to RepeatYear
             ->where('RepeatTeacher !=', '')
             ->distinct()
             ->countAllResults();
@@ -164,6 +166,96 @@ class ConAdminRegisRepeat extends BaseController
                 'year' => $year
             ]
         ]);
+    }
+
+    /**
+     * AJAX endpoint to get list of students registered for repeat study
+     */
+    public function getRepeatStudentDetails()
+    {
+        // Fetch the active repeat year from tb_register_onoff
+        $checkRepeat = $this->db->table('tb_register_onoff')
+            ->select('onoff_year')
+            ->where('onoff_name', 'เรียนซ้ำ')
+            ->get()->getRow();
+
+        $year = !empty($checkRepeat->onoff_year) ? $checkRepeat->onoff_year : null;
+        
+        if (empty($year)) {
+            return $this->response->setJSON(['status' => 'error', 'message' => 'Active repeat year not found in system settings']);
+        }
+
+        $students = $this->db->table('tb_register')
+            ->select('
+                tb_students.StudentID,
+                tb_students.StudentCode, 
+                tb_students.StudentPrefix, 
+                tb_students.StudentFirstName, 
+                tb_students.StudentLastName, 
+                tb_students.StudentClass, 
+                tb_students.StudentNumber, 
+                COUNT(tb_register.SubjectID) as SubjectCount,
+                GROUP_CONCAT(tb_subjects.SubjectCode SEPARATOR ", ") as RepeatedSubjects
+            ')
+            ->join('tb_students', 'tb_students.StudentID = tb_register.StudentID')
+            ->join('tb_subjects', 'tb_subjects.SubjectID = tb_register.SubjectID')
+            ->where('tb_register.RepeatYear', $year)
+            ->where('tb_register.RepeatTeacher !=', '')
+            ->groupBy('tb_students.StudentID')
+            ->orderBy('tb_students.StudentClass', 'ASC')
+            ->orderBy('tb_students.StudentNumber', 'ASC')
+            ->get()->getResult();
+
+        return $this->response->setJSON(['status' => 'success', 'data' => $students]);
+    }
+
+    /**
+     * AJAX endpoint to get list of students registered for repeat study for a SPECIFIC SUBJECT
+     */
+    public function getRepeatStudentDetailsBySubject()
+    {
+        $subjectID = $this->request->getPost('subject_id');
+        
+        if (empty($subjectID)) {
+            return $this->response->setJSON(['status' => 'error', 'message' => 'Subject ID is required']);
+        }
+
+        // Fetch the active repeat year
+        $checkRepeat = $this->db->table('tb_register_onoff')
+            ->select('onoff_year')
+            ->where('onoff_name', 'เรียนซ้ำ')
+            ->get()->getRow();
+        
+        $year = !empty($checkRepeat->onoff_year) ? $checkRepeat->onoff_year : null;
+
+        if (empty($year)) {
+            // Fallback or error? Let's just return empty if no active year.
+            return $this->response->setJSON(['status' => 'error', 'message' => 'No active repeat year found']);
+        }
+
+        $students = $this->db->table('tb_register')
+            ->select('
+                tb_students.StudentID,
+                tb_students.StudentCode, 
+                tb_students.StudentPrefix, 
+                tb_students.StudentFirstName, 
+                tb_students.StudentLastName, 
+                tb_students.StudentClass, 
+                tb_students.StudentNumber,
+                tb_register.RepeatYear,
+                CONCAT(repeat_teacher.pers_prefix, repeat_teacher.pers_firstname, " ", repeat_teacher.pers_lastname) as RepeatTeacherName
+            ')
+            ->join('tb_students', 'tb_students.StudentID = tb_register.StudentID')
+            // Join personnel for repeat teacher name
+            ->join($this->DBPers->database . '.tb_personnel AS repeat_teacher', 'repeat_teacher.pers_id = tb_register.RepeatTeacher', 'LEFT')
+            ->where('tb_register.SubjectID', $subjectID)
+            ->where('tb_register.RepeatYear', $year)
+            ->where('tb_register.RepeatTeacher !=', '')
+            ->orderBy('tb_students.StudentClass', 'ASC')
+            ->orderBy('tb_students.StudentNumber', 'ASC')
+            ->get()->getResult();
+
+        return $this->response->setJSON(['status' => 'success', 'data' => $students]);
     }
 
     public function AdminRegisRepeatDetail($Term,$Year,$IDSubject,$TechID){
@@ -276,16 +368,24 @@ class ConAdminRegisRepeat extends BaseController
 
                $registerYear = $this->request->getPost('YearRepeat');
                $subjectID = $this->request->getPost('SubjectRepeat');
-               $studentID = $this->request->getPost('StuID');
+               $studentIDs = $this->request->getPost('StuID'); // Can be array or single
 
-               $updated = $this->db->table('tb_register')
-                                    ->where('SubjectID',$subjectID)
-                                    ->where('StudentID',$studentID)
-                                    ->where('RegisterYear',$registerYear)
-                                    ->update($DataUpdateRepeat);
+               if (!is_array($studentIDs)) {
+                   $studentIDs = [$studentIDs];
+               }
+
+               $updatedCount = 0;
+               foreach ($studentIDs as $studentID) {
+                    $updated = $this->db->table('tb_register')
+                                        ->where('SubjectID',$subjectID)
+                                        ->where('StudentID',$studentID)
+                                        ->where('RegisterYear',$registerYear)
+                                        ->update($DataUpdateRepeat);
+                    if ($updated) $updatedCount++;
+               }
                
-               if ($updated) {
-                   return $this->response->setJSON(['status' => 'success', 'message' => 'เพิ่มนักเรียนเรียนซ้ำสำเร็จ', 'affected_rows' => $this->db->affectedRows()]);
+               if ($updatedCount > 0) {
+                   return $this->response->setJSON(['status' => 'success', 'message' => 'เพิ่มนักเรียนเรียนซ้ำสำเร็จ', 'affected_rows' => $updatedCount]);
                } else {
                    return $this->response->setJSON(['status' => 'error', 'message' => 'ไม่สามารถเพิ่มนักเรียนเรียนซ้ำได้', 'affected_rows' => 0]);
                }
@@ -294,22 +394,30 @@ class ConAdminRegisRepeat extends BaseController
         if($this->request->getPost('DelStatus') == "Del"){
             $DataDelete = array('Grade_Type' => "",'RepeatStatus'=>'','RepeatYear'=>"",'RepeatTeacher' => "");                    
             $subjectID = $this->request->getPost('SubjectRepeat');
-            $studentID = $this->request->getPost('DelStuID');
+            $studentIDs = $this->request->getPost('DelStuID'); // Can be array or single
             $registerYear = $this->request->getPost('YearRepeat');
 
-            log_message('debug', 'AdminRegisRepeatAdd: Delete parameters - RegisterYear: ' . $registerYear . ', SubjectID: ' . $subjectID . ', StudentID: ' . $studentID . ', DataDelete: ' . print_r($DataDelete, true));
+            if (!is_array($studentIDs)) {
+                $studentIDs = [$studentIDs];
+            }
 
-             $updated =  $this->db->table('tb_register')
-             ->where('SubjectID',$subjectID)
-             ->where('RepeatConfirm',"")
-             ->where('StudentID',$studentID)
-             ->where('RegisterYear',$registerYear)
-             ->update($DataDelete);
+            // log_message('debug', 'AdminRegisRepeatAdd: Delete parameters - RegisterYear: ' . $registerYear . ', SubjectID: ' . $subjectID . ', StudentIDs: ' . print_r($studentIDs, true));
+
+             $updatedCount = 0;
+             foreach ($studentIDs as $studentID) {
+                 $updated =  $this->db->table('tb_register')
+                 ->where('SubjectID',$subjectID)
+                 ->where('RepeatConfirm',"")
+                 ->where('StudentID',$studentID)
+                 ->where('RegisterYear',$registerYear)
+                 ->update($DataDelete);
+                 if ($updated) $updatedCount++;
+             }
             
-            if ($updated) {
-                return $this->response->setJSON(['status' => 'success', 'message' => 'ถอนข้อมูลนักเรียนเรียนซ้ำสำเร็จ', 'affected_rows' => $this->db->affectedRows()]);
+            if ($updatedCount > 0) {
+                return $this->response->setJSON(['status' => 'success', 'message' => 'ถอนข้อมูลนักเรียนเรียนซ้ำสำเร็จ', 'affected_rows' => $updatedCount]);
             } else {
-                return $this->response->setJSON(['status' => 'error', 'message' => 'ไม่สามารถอนข้อมูลนักเรียนเรียนซ้ำได้', 'affected_rows' => 0]);
+                return $this->response->setJSON(['status' => 'error', 'message' => 'ไม่สามารถถอนข้อมูลนักเรียนเรียนซ้ำได้', 'affected_rows' => 0]);
             }
         }
 

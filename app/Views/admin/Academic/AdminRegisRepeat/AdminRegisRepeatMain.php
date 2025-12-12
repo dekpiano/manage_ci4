@@ -39,6 +39,11 @@
             </h1>
             <p class="text-muted mb-0 mt-1">ปีการศึกษา: <strong id="header-selected-year"><?= isset($selectedYear) ? esc($selectedYear) : '' ?></strong></p>
         </div>
+        <div class="col-auto">
+            <button class="btn btn-warning" onclick="showStudentDetailsModal()">
+                <i class="bx bx-show me-1"></i>ดูรายชื่อนักเรียนลงทะเรียน (ซ้ำ)
+            </button>
+        </div>
     </div>
 
     <!-- Dashboard Stats Cards -->
@@ -200,6 +205,43 @@
             </div>
         </div>
     </div>
+
+    <!-- Student Details Modal -->
+    <div class="modal fade" id="StudentDetailsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bx bx-user-circle me-2"></i>รายชื่อนักเรียนที่ลงทะเบียนเรียนซ้ำ</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="bx bx-info-circle me-1"></i> รายชื่อนักเรียนที่ลงทะเบียนเรียนซ้ำในปีการศึกษา <strong id="student-modal-year"></strong>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover w-100" id="tb_StudentDetails">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>ห้อง</th>
+                                    <th>เลขที่</th>
+                                    <th>เลขประจำตัว</th>
+                                    <th>ชื่อ - นามสกุล</th>
+                                    <th class="text-center">จำนวนวิชา</th>
+                                    <th>วิชาที่ลงทะเบียน</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-label-secondary" data-bs-dismiss="modal">ปิด</button>
+                    <!-- <button type="button" class="btn btn-primary">Export PDF</button> -->
+                </div>
+            </div>
+        </div>
+    </div>
+
 <?= $this->endSection() ?>
 
 <?= $this->section('script') ?>
@@ -255,6 +297,54 @@ function updateRepeatDashboardStats(year) {
     });
 }
 
+// Function to show student details modal
+function showStudentDetailsModal() {
+    var year = $('#CheckYearRegisRepeat').val();
+    $('#student-modal-year').text(year);
+    $('#StudentDetailsModal').modal('show');
+    
+    if ($.fn.DataTable.isDataTable('#tb_StudentDetails')) {
+        $('#tb_StudentDetails').DataTable().destroy();
+    }
+    
+    $('#tb_StudentDetails').DataTable({
+        destroy: true,
+        processing: true,
+        ajax: {
+            url: "<?= site_url('Admin/Academic/ConAdminRegisRepeat/getRepeatStudentDetails') ?>",
+            type: "POST",
+            data: { year: year }
+        },
+        columns: [
+            { data: 'StudentClass' },
+            { data: 'StudentNumber' },
+            { data: 'StudentCode' },
+            { 
+                data: null,
+                render: function(data, type, row) {
+                    return (data.StudentPrefix || '') + (data.StudentFirstName || '') + ' ' + (data.StudentLastName || '');
+                }
+            },
+            { 
+                data: 'SubjectCount',
+                className: 'text-center',
+                render: function(data) {
+                    return '<span class="badge bg-label-warning">' + data + '</span>';
+                }
+            },
+            { 
+                data: 'RepeatedSubjects',
+                render: function(data) {
+                    return data ? '<small class="text-muted">' + data + '</small>' : '-';
+                }
+            }
+        ],
+        order: [[0, 'asc'], [1, 'asc']],
+        language: {
+            url: "//cdn.datatables.net/plug-ins/1.13.7/i18n/th.json"
+        }
+    });
+}
 // Helper function to format numbers with commas
 function numberFormat(num) {
     return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
