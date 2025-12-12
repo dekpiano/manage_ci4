@@ -261,7 +261,10 @@ class ConAdminEnroll extends BaseController
                         tb_students.StudentNumber,
                         tb_students.StudentPrefix,
                         tb_students.StudentFirstName,
-                        tb_students.StudentLastName   
+                        tb_students.StudentPrefix,
+                        tb_students.StudentFirstName,
+                        tb_students.StudentLastName,
+                        tb_students.StudentStudyLine
                         ")
                     ->join('tb_subjects', 'tb_subjects.SubjectID = tb_register.SubjectID')
                     ->join('tb_students', 'tb_students.StudentID = tb_register.StudentID')
@@ -302,7 +305,9 @@ class ConAdminEnroll extends BaseController
                         tb_students.StudentNumber,
                         tb_students.StudentPrefix,
                         tb_students.StudentFirstName,
-                        tb_students.StudentLastName   
+                        tb_students.StudentFirstName,
+                        tb_students.StudentLastName,
+                        tb_students.StudentStudyLine
                         ")
                     ->join('tb_subjects', 'tb_subjects.SubjectID = tb_register.SubjectID')
                     ->join('tb_students', 'tb_students.StudentID = tb_register.StudentID')
@@ -325,7 +330,7 @@ class ConAdminEnroll extends BaseController
         }
 
         $subject = $this->db->table('tb_students')
-                            ->select('StudentID,StudentNumber,StudentCode,StudentPrefix,StudentFirstName,StudentLastName,StudentClass')
+                            ->select('StudentID,StudentNumber,StudentCode,StudentPrefix,StudentFirstName,StudentLastName,StudentClass,StudentStudyLine')
                             ->where('StudentClass', 'ม.'.$keyRoom)
                             ->where('StudentStatus', '1/ปกติ')
                             ->orderBy('StudentNumber')
@@ -537,12 +542,13 @@ class ConAdminEnroll extends BaseController
         // }
 
         try {
+            // ใช้ GROUP_CONCAT เพื่อรวมชั้นเรียนทั้งหมดเป็นค่าเดียว (ชื่อวิชาจะไม่ซ้ำ)
             $Register = $this->db->table("tb_register")
                                     ->select("skjacth_academic.tb_register.SubjectID,
                                             skjacth_academic.tb_subjects.SubjectCode,
                                             skjacth_academic.tb_subjects.SubjectName,
                                             skjacth_academic.tb_subjects.FirstGroup,
-                                            skjacth_academic.tb_register.RegisterClass,
+                                            GROUP_CONCAT(DISTINCT skjacth_academic.tb_register.RegisterClass ORDER BY skjacth_academic.tb_register.RegisterClass ASC SEPARATOR ', ') as RegisterClasses,
                                             skjacth_academic.tb_register.TeacherID,
                                             skjacth_academic.tb_subjects.SubjectYear,
                                             skjacth_personnel.tb_personnel.pers_firstname,
@@ -552,7 +558,7 @@ class ConAdminEnroll extends BaseController
                                     ->join('skjacth_personnel.tb_personnel', "skjacth_personnel.tb_personnel.pers_id = skjacth_academic.tb_register.TeacherID")
                                     ->where('tb_subjects.SubjectYear', $keyYear)
                                     ->where('tb_register.RegisterYear', $keyYear)
-                                    ->groupBy('tb_register.SubjectID, tb_register.RegisterClass, tb_register.TeacherID, tb_subjects.SubjectCode, tb_subjects.SubjectName, tb_subjects.FirstGroup, tb_subjects.SubjectYear, tb_personnel.pers_firstname, tb_personnel.pers_prefix, tb_personnel.pers_lastname')
+                                    ->groupBy('tb_register.SubjectID, tb_register.TeacherID, tb_subjects.SubjectCode, tb_subjects.SubjectName, tb_subjects.FirstGroup, tb_subjects.SubjectYear, tb_personnel.pers_firstname, tb_personnel.pers_prefix, tb_personnel.pers_lastname')
                                     ->get()->getResult();
 
             foreach ($Register as $record) {
@@ -561,7 +567,7 @@ class ConAdminEnroll extends BaseController
                     "SubjectCode"  => $record->SubjectCode,
                     "SubjectName"  => $record->SubjectName,
                     "FirstGroup"   => $record->FirstGroup,
-                    "SubjectClass" => $record->RegisterClass,
+                    "SubjectClass" => $record->RegisterClasses, // ชั้นที่รวมกันแล้ว (เช่น "ม.1/1, ม.1/2, ม.2/1")
                     "SubjectID"    => $record->SubjectID,
                     "TeacherName"  => $record->pers_prefix . $record->pers_firstname . ' ' . $record->pers_lastname,
                     "TeacherID"    => $record->TeacherID,
@@ -633,6 +639,59 @@ class ConAdminEnroll extends BaseController
 
         $teacherId = !empty($TacherId) ? $TacherId->seplan_usersend : null;
         return $this->response->setJSON(['teacherId' => $teacherId]);
+    }
+
+    public function checkRepeatHistory()
+    {
+        $subjectID = $this->request->getPost('subjectregis');
+        $studentIDs = $this->request->getPost('to'); 
+        
+        if (empty($studentIDs)) { 
+             return $this->response->setJSON(['status' => 'pass']);
+        }
+        
+        if (!is_array($studentIDs)) {
+             $studentIDs = [$studentIDs];
+        }
+
+        // Get Subject Information
+        $subject = $this->db->table('tb_subjects')
+                            ->select('SubjectCode, SubjectYear')
+                            ->where('SubjectID', $subjectID)
+                            ->get()->getRow();
+
+        if (!$subject) {
+            return $this->response->setJSON(['status' => 'pass']);
+        }
+
+        // Check for enrollment history
+        $repeats = $this->db->table('tb_register')
+            ->select('tb_students.StudentPrefix, tb_students.StudentFirstName, tb_students.StudentLastName, tb_register.RegisterYear, tb_subjects.SubjectCode')
+            ->join('tb_subjects', 'tb_subjects.SubjectID = tb_register.SubjectID')
+            ->join('tb_students', 'tb_students.StudentID = tb_register.StudentID')
+            ->whereIn('tb_register.StudentID', $studentIDs)
+            ->where('tb_subjects.SubjectCode', $subject->SubjectCode)
+            ->where('tb_register.RegisterYear !=', $subject->SubjectYear)
+            ->orderBy('tb_register.RegisterYear', 'DESC')
+            ->get()->getResult();
+
+        if (!empty($repeats)) {
+            $uniqueRepeats = [];
+            foreach ($repeats as $r) {
+                $name = $r->StudentPrefix . $r->StudentFirstName . ' ' . $r->StudentLastName;
+                if (!isset($uniqueRepeats[$name])) {
+                     $uniqueRepeats[$name] = $r->RegisterYear;
+                }
+            }
+
+            return $this->response->setJSON([
+                'status' => 'found',
+                'repeats' => $uniqueRepeats,
+                'message' => 'ตรวจสอบพบนักเรียนลงทะเบียนซ้ำ'
+            ]);
+        }
+
+        return $this->response->setJSON(['status' => 'pass']);
     }
 }
 

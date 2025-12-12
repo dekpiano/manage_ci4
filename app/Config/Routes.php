@@ -209,6 +209,7 @@ $routes->post('admin/academic/ConAdminEnroll/AdminEnrollUpdate', [ConAdminEnroll
 $routes->post('admin/academic/ConAdminEnroll/AdminEnrollShow', [ConAdminEnroll::class, 'AdminEnrollShow']); // Added route for AJAX call
 $routes->post('admin/academic/ConAdminEnroll/AdminEnrollCancel', [ConAdminEnroll::class, 'AdminEnrollCancel']); // Added route for AJAX call
 $routes->post('admin/academic/ConAdminEnroll/AdminEnrollChangeSubjectToTeacher', [ConAdminEnroll::class, 'AdminEnrollChangeSubjectToTeacher']); // Added route for AJAX call
+$routes->post('admin/academic/ConAdminEnroll/checkRepeatHistory', [ConAdminEnroll::class, 'checkRepeatHistory']);
 $routes->post('admin/academic/ConAdminEnroll/AdminEnrollInsert', [ConAdminEnroll::class, 'AdminEnrollInsert']); // Added route for AJAX call
 $routes->post('admin/academic/ConAdminEnroll/AdminEnrollDel', [ConAdminEnroll::class, 'AdminEnrollDel']); // Added route for AJAX call
 $routes->post('admin/academic/ConAdminEnroll/AdminEnrollChangeTeacher', [ConAdminEnroll::class, 'AdminEnrollChangeTeacher']);

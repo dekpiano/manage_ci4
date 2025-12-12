@@ -2,89 +2,67 @@
 
 <?= $this->section('content') ?>
 <style>
-.border-left-primary {
-    border-left: .25rem solid #5BC3D5 !important;
-}
-
-.ss-main .ss-single-selected {
-    height: 40px;
-}
+    /* Custom Styles for Transfer List */
+    .transfer-list-container {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    .transfer-box {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+    .transfer-controls {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    .transfer-select {
+        height: 300px !important;
+        border-radius: 0.375rem;
+    }
 </style>
-<div class="container-xl">
-    <div class="content pt-3 p-md-3 p-lg-4">
 
+<div class="container-xxl flex-grow-1 container-p-y">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="fw-bold py-3 mb-0">
+            <span class="text-muted fw-light">งานทะเบียน /</span> เพิ่มรายชื่อลงทะเบียน
+        </h4>
+        <a href="<?= site_url('Admin/Acade/Registration/Enroll') ?>" class="btn btn-label-secondary">
+            <i class="bx bx-arrow-back me-1"></i> ย้อนกลับ
+        </a>
+    </div>
 
-        <div class="row g-3 mb-4 align-items-center justify-content-between">
-            <div class="col-auto">
-                <h1 class="page-title mb-0"><?= isset($title) ? esc($title) : '' ?></h1>
-            </div>
-            <div class="col-auto">
-                <div class="page-utilities">
-                    <nav aria-label="breadcrumb">
-                        <ol class="breadcrumb">
-                            <li class="breadcrumb-item"><a
-                                    href="<?= site_url('Admin/Acade/Registration/Enroll') ?>">หน้าหลัก</a></li>
-                            <li class="breadcrumb-item active" aria-current="page"><?= isset($title) ? esc($title) : '' ?></li>
-                        </ol>
-                    </nav>
-                </div>
-                <!--//table-utilities-->
-            </div>
-        </div>
-        <!--//row-->
+    <div class="row">
+        <div class="col-12">
+            <div class="card mb-4">
+                <h5 class="card-header border-bottom">แบบฟอร์มลงทะเบียนเรียน</h5>
+                <div class="card-body pt-4">
+                    <form id="FormEnroll" method="post" class="needs-validation" novalidate>
+                        <input type="hidden" name="<?= csrf_token() ?>" value="<?= csrf_hash() ?>" />
 
-        </section>
-        <hr class="mb-4">
-        <section class="we-offer-area">
-            <form id="FormEnroll" method="post" class="needs-validation" novalidate>
-                <input type="hidden" name="<?= csrf_token() ?>" value="<?= csrf_hash() ?>" />
-
-                <div class="row g-4 settings-section">
-                    <div class="col-12 col-md-4">
-                        <h3 class="section-title">ปีการศึกษา</h3>
-                        <div class="section-intro">ให้เลือกปีการศึกษาที่จะลงทะเบียน </div>
-                    </div>
-                    <div class="col-12 col-md-8">
-                        <div class="card card-settings shadow-sm p-4">
-                            <div class="card-body">
-
-                                <select name="SelectYearRegister" id="SelectYearRegister" class="" required
-                                    autocomplete="off">
+                        <!-- Step 1: Config -->
+                        <h6 class="fw-normal">1. กำหนดข้อมูลรายวิชา</h6>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-4">
+                                <label for="SelectYearRegister" class="form-label">ปีการศึกษา</label>
+                                <select name="SelectYearRegister" id="SelectYearRegister" class="form-select" required>
                                     <option value="">เลือกปีการศึกษา</option>
                                     <?php $d = date('Y')+543; 
                                         for ($i=$d-2; $i<=$d; $i++):
                                             for($j=1; $j<=4; $j++):
                                         ?>
-                                    <?php // NOTE: This logic should be in the controller
+                                    <?php 
                                     $currentSegment = (service('request')->uri->getSegment(6) ?? '').'/'.(service('request')->uri->getSegment(7) ?? '');
                                     ?>
-                                    <option
-                                        <?= $currentSegment == $j.'/'.$i ? "selected" : ""?>
-                                        value="<?= esc($j.'/'.$i) ?>"><?= esc($j.'/'.$i) ?></option>
+                                    <option <?= $currentSegment == $j.'/'.$i ? "selected" : ""?> value="<?= esc($j.'/'.$i) ?>"><?= esc($j.'/'.$i) ?></option>
                                     <?php endfor; endfor; ?>
                                 </select>
-                                <div class="invalid-feedback">
-                                    กรุณาเลือกปีการศึกษา
-                                </div>
                             </div>
-                            <!--//card-body-->
-
-                        </div>
-                        <!--//card-->
-                    </div>
-                </div>
-                <hr class="mb-4">
-
-                <div class="row g-4 settings-section">
-                    <div class="col-12 col-md-4">
-                        <h3 class="section-title">วิชาเรียน</h3>
-                        <div class="section-intro">ให้เลือกวิชาเรียนที่ลงทะเบียน </div>
-                    </div>
-                    <div class="col-12 col-md-8">
-                        <div class="card card-settings shadow-sm p-4">
-                            <div class="card-body">
-                                <select name="subjectregis" id="subjectregis" class="subjectregis" required
-                                    autocomplete="off">
+                            <div class="col-md-4">
+                                <label for="subjectregis" class="form-label">วิชาเรียน</label>
+                                <select name="subjectregis" id="subjectregis" class="form-select" required>
                                     <option value="">เลือกวิชาเรียน</option>
                                     <?php foreach ($subject as $key => $v_subject): ?>
                                     <option value="<?= isset($v_subject->SubjectID) ? esc($v_subject->SubjectID) : '' ?>">
@@ -92,26 +70,10 @@
                                     </option>
                                     <?php endforeach; ?>
                                 </select>
-                                <div class="invalid-feedback">
-                                    กรุณาเลือกวิชาเรียน
-                                </div>
                             </div>
-                            <!--//card-body-->
-
-                        </div>
-                        <!--//card-->
-                    </div>
-                </div>
-                <hr class="mb-4">
-                <div class="row g-4 settings-section">
-                    <div class="col-12 col-md-4">
-                        <h3 class="section-title">ครูผู้สอน</h3>
-                        <div class="section-intro">ให้เลือกครูผู้สอนในวิชาที่ลงทะเบียน </div>
-                    </div>
-                    <div class="col-12 col-md-8">
-                        <div class="card card-settings shadow-sm p-4">
-                            <div class="card-body">
-                                <select name="teacherregis" id="teacherregis" class="teacherregis1" required>
+                            <div class="col-md-4">
+                                <label for="teacherregis" class="form-label">ครูผู้สอน</label>
+                                <select name="teacherregis" id="teacherregis" class="form-select" required>
                                     <option value="">เลือกครูผู้สอน</option>
                                     <?php foreach ($teacher as $key => $v_teacher): ?>
                                     <option value="<?= isset($v_teacher->pers_id) ? esc($v_teacher->pers_id) : '' ?>">
@@ -119,227 +81,273 @@
                                     </option>
                                     <?php endforeach; ?>
                                 </select>
-                                <div class="invalid-feedback">
-                                    กรุณาเลือกคุณครู
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <!-- Step 2: Students -->
+                        <h6 class="fw-normal">2. เลือกนักเรียน</h6>
+                        <div class="row g-3 mb-4">
+                             <div class="col-md-4">
+                                <label for="Room" class="form-label">กรองตามห้องเรียน</label>
+                                <select name="Room" id="Room" class="form-select select2-bs5">
+                                    <option value="">-- เลือกห้องเรียน --</option>
+                                    <?php 
+                                    if (!isset($classroom)) { $classroom = new App\Libraries\Classroom(); }
+                                    $ListRoom = $classroom->ListRoom();
+                                    foreach ($ListRoom as $key => $v_ListRoom): ?>
+                                    <option value="<?= esc($v_ListRoom) ?>">ม.<?= esc($v_ListRoom) ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                             </div>
+                        </div>
+
+                        <div class="transfer-list-container align-items-stretch">
+                            <!-- Left Box -->
+                            <div class="transfer-box">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <label class="form-label mb-0 fw-bold">รายชื่อนักเรียนในห้อง</label>
+                                    <button type="button" id="multiselect_rightAll" class="btn btn-xs btn-outline-primary">
+                                        <i class="bx bx-chevrons-right"></i> เลือกทั้งหมด
+                                    </button>
+                                </div>
+                                <select name="from[]" id="multiselect" class="form-control transfer-select bg-white" multiple="multiple">
+                                    <!-- Options populated via AJAX -->
+                                </select>
+                            </div>
+
+                            <!-- Controls -->
+                            <div class="transfer-controls justify-content-center">
+                                <button type="button" id="multiselect_rightSelected" class="btn btn-primary btn-icon" title="เลือก">
+                                    <i class="bx bx-chevron-right"></i>
+                                </button>
+                                <button type="button" id="multiselect_leftSelected" class="btn btn-label-secondary btn-icon" title="เอาออก">
+                                    <i class="bx bx-chevron-left"></i>
+                                </button>
+                            </div>
+
+                            <!-- Right Box -->
+                            <div class="transfer-box">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <label class="form-label mb-0 fw-bold text-success">นักเรียนที่จะลงทะเบียน</label>
+                                    <button type="button" id="multiselect_leftAll" class="btn btn-xs btn-outline-danger">
+                                        <i class="bx bx-chevrons-left"></i> เอาออกทั้งหมด
+                                    </button>
+                                </div>
+                                <select name="to[]" id="multiselect_to" class="form-control transfer-select border-success bg-white" required multiple="multiple">
+                                    <!-- Selected Items -->
+                                </select>
+                                <div class="d-flex gap-2 mt-2">
+                                    <button type="button" id="multiselect_move_up" class="btn btn-sm btn-label-secondary flex-grow-1"><i class="bx bx-up-arrow-alt"></i></button>
+                                    <button type="button" id="multiselect_move_down" class="btn btn-sm btn-label-secondary flex-grow-1"><i class="bx bx-down-arrow-alt"></i></button>
                                 </div>
                             </div>
-                            <!--//card-body-->
-
                         </div>
-                        <!--//card-->
-                    </div>
+
+                        <div class="mt-4 pt-3 border-top d-flex justify-content-end">
+                            <button type="submit" class="btn btn-success btn-lg px-5">
+                                <i class="bx bx-save me-2"></i> บันทึกข้อมูล
+                            </button>
+                        </div>
+                    </form>
                 </div>
-
-                <hr class="mb-4">
-                <div class="row g-4 settings-section">
-                    <div class="col-12 col-md-4">
-                        <h3 class="section-title">นักเรียน</h3>
-                        <div class="section-intro">
-                            ให้เลือกนักเรียนที่จะเรียนในวิชาที่ลงทะเบียน
-                            <p>
-                                - ให้เลือกห้องเรียนก่อน <br>
-                                - เลือกนักเรียนจากด้านซ้าย เลือกไปด้านขวา <br>
-                                - ** สามารถเลือกนักเรียนกี่ห้องก็ได้ ให้เลือกห้องเรียนใหม่เท่านั้นเอง
-                            </p>
-
-                        </div>
-                    </div>
-                    <div class="col-12 col-md-8">
-                        <div class="card card-settings shadow-sm p-4">
-                            <div class="card-body">
-                                <div class="d-flex">
-                                    <div class="me-3">
-                                        <select name="Room" id="Room" class="mb-3 Room" required>
-                                            <option value="">เลือกห้องเรียน</option>
-                                            <?php 
-                                            if (!isset($classroom)) {
-                                                $classroom = new App\Libraries\Classroom();
-                                            }
-                                            $ListRoom = $classroom->ListRoom();
-                                            foreach ($ListRoom as $key => $v_ListRoom): ?>
-                                            <option value="<?= esc($v_ListRoom) ?>">
-                                                ม.<?= esc($v_ListRoom) ?>
-                                            </option>
-                                            <?php endforeach; ?>
-                                        </select>
-                                        <div class="invalid-feedback">
-                                            กรุณาเลือห้องเรียน
-                                        </div>
-                                    </div>
-
-                                    <div id="StudyLines"></div>
-                                </div>
-
-                                <!-- <div class="table-responsive">
-                                <table class="table mb-0 text-left" id="TB_showStudent">
-                                    <thead>
-                                        <tr>
-                                            <th class="cell">เลือก</th>
-                                            <th class="cell">เลขนักเรียน</th>
-                                            <th class="cell">ชื่อ - สกุล</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-
-
-                                    </tbody>
-                                </table>
-                            </div> -->
-
-                                <div class="row mt-3">
-                                    <div class="col-lg-5">
-                                        <select name="from[]" id="multiselect" class="form-control" size="20"
-                                            multiple="multiple" style="height:20rem">
-                                        </select>
-                                    </div>
-
-                                    <div class="col-lg-2">
-                                        <button type="button" id="multiselect_rightAll"
-                                            class="btn btn-primary w-100 mb-1" title="เลือกทั้งหมด"><i class="bx bx-chevrons-right"></i> เลือกทั้งหมด</button>
-                                        <button type="button" id="multiselect_rightSelected"
-                                            class="btn btn-primary w-100 mb-1" title="เลือก"><i class="bx bx-chevron-right"></i> เลือก</button>
-                                        <button type="button" id="multiselect_leftSelected"
-                                            class="btn btn-primary w-100 mb-1" title="ลบ"><i class="bx bx-chevron-left"></i> ลบ</button>
-                                        <button type="button" id="multiselect_leftAll"
-                                            class="btn btn-primary w-100 mb-1" title="ยกเลิกทั้งหมด"><i class="bx bx-chevrons-left"></i> ยกเลิกทั้งหมด</button>
-                                    </div>
-
-                                    <div class="col-lg-5">
-                                        <select name="to[]" id="multiselect_to" class="form-control" size="8"
-                                            required multiple="multiple" style="height:20rem"></select>
-
-                                        <div class="row">
-                                            <div class="col-lg-6">
-                                                <button type="button" id="multiselect_move_up"
-                                                    class="btn btn-block" title="เลื่อนขึ้น"><i class="bx bx-up-arrow-alt"></i> ขึ้น</button>
-                                            </div>
-                                            <div class="col-lg-6">
-                                                <button type="button" id="multiselect_move_down"
-                                                    class="btn btn-block col-sm-6" title="เลื่อนลง"><i class="bx bx-down-arrow-alt"></i> ลง</button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <!--//card-body-->
-                        </div>
-                        <!--//card-->
-                        <div class="mt-3">
-                            <button type="submit" class="btn btn-success w-100" title="บันทึก"><i class="bx bx-save"></i> บันทึก</button>
-                        </div>
-
-                    </div>
-                </div>
-
+            </div>
+        </div>
     </div>
-    </form>
-    <!--//container-->
-    </section>
-
-</div>
 </div>
 <?= $this->endSection() ?>
 
 <?= $this->section('script') ?>
 <script>
-    $('#multiselect').multiselect();
+$(document).ready(function() {
+    $('#multiselect').multiselect({
+        search: {
+            left: '<input type="text" name="q" class="form-control mb-2" placeholder="ค้นหา..." />',
+            right: '<input type="text" name="q" class="form-control mb-2" placeholder="ค้นหา..." />',
+        },
+        fireSearch: function(value) {
+            return value.length > 1; // Start searching after 2 chars
+        }
+    });
+
+    // Initial Select2 (Standard, not floating label compatible perfectly without custom CSS, but using form-floating on container mostly works or just standard select2)
+    // Note: form-floating with Select2 requires specific CSS hacks. 
+    // To be safe and simple: I used standard form-floating for Select Year/Subject/Teacher if they were standard selects.
+    // BUT user uses Select2. Select2 hides original select.
+    // So I will initialize Select2. Floating Label effect might be lost or look weird unless I use the 'select2-bootstrap-5-theme' properly.
+    // Let's stick to standard Select2 with visual labels on top if Floating fails. 
+    // The code below uses .select2-bs5 class which I assume is mapped to the theme.
+    
+    $('#SelectYearRegister, #subjectregis, #teacherregis, #Room').select2({
+        theme: 'bootstrap-5',
+        width: '100%',
+        dropdownParent: $('body')
+    });
+});
+
 $(document).on("change", "#subjectregis", function() {
     var IDsubjectregis = $(this).val();
     var IDSelectYearRegister = $('#SelectYearRegister').val();
     
+    if(!IDsubjectregis) return;
+
     $.post('<?= site_url('admin/academic/ConAdminEnroll/AdminEnrollChangeSubjectToTeacher') ?>',{
         Keysubjectregis:IDsubjectregis,
         KeySelectYearRegister:IDSelectYearRegister
     },function(data, status){
-        //console.log(data);
-        $('#teacherregis').val(data.teacherId); // Access the property from the JSON object
-        $('#teacherregis').trigger('change');
-    }, 'json') // Added dataType: 'json'
-    .fail(function(jqXHR, textStatus, errorThrown) {
-    // จัดการกับข้อผิดพลาดที่เกิดขึ้น
-    console.error("เกิดข้อผิดพลาด:", textStatus, errorThrown);
-    console.error("สถานะ HTTP:", jqXHR.status);
-    console.error("ข้อความ:", jqXHR.responseText);
-  });;
-  
+        if(data && data.teacherId) {
+            $('#teacherregis').val(data.teacherId).trigger('change');
+        }
+    }, 'json');
 });
-
-
-$(document).ready(function() {
-    $('#SelectYearRegister').select2({
-        theme: 'bootstrap-5',
-        width: 300
-    });
-
-    $('#teacherregis').select2({
-        theme: 'bootstrap-5',
-        width: 300
-    });
-    $('#subjectregis').select2({
-        theme: 'bootstrap-5',
-        width: 300
-    });
-    $('#Room').select2({
-        theme: 'bootstrap-5',
-        width: 300
-    });
-    $('#RoomEdit').select2({
-        theme: 'bootstrap-5',
-        width: 300
-    });
-});
-
-
 
 $(document).on("change", "#SelectYearRegister", function() {
-    window.location.href = '<?= site_url('Admin/Acade/Registration/Enroll/Add/') ?>' + $(this).val();
+    if($(this).val()) {
+        window.location.href = '<?= site_url('Admin/Acade/Registration/Enroll/Add/') ?>' + $(this).val();
+    }
 });
 
-
 $(document).on("change", "#Room", function() {
-
     $('#multiselect option').remove();
+    var val = $(this).val();
+    if(!val) return;
 
-    $.post("<?= site_url('Admin/Academic/ConAdminEnroll/AdminEnrollSelect') ?>", { KeyRoom: $(this).val() }, function(data, status) {
-        //console.log(data);
+    Swal.fire({
+        title: 'กำลังโหลดรายชื่อ...',
+        allowOutsideClick: false,
+        didOpen: () => { Swal.showLoading(); }
+    });
+
+    $.post("<?= site_url('Admin/Academic/ConAdminEnroll/AdminEnrollSelect') ?>", { KeyRoom: val }, function(data, status) {
+        Swal.close();
         $.each(data, function(index, value) {
-            //console.log(index);
-            trHTML = '<tr><td></td><td>' + value.StudentCode + '</td><td>' + value.StudentPrefix+value.StudentFirstName+' '+value.StudentLastName + '</td></tr>';
-            trHTML = '<option value="' + value.StudentID + '">' + value.StudentClass + ' ' + value.StudentNumber.padStart(2, '0') + ' ' + value.StudentPrefix + value.StudentFirstName + ' ' + value.StudentLastName + '</option>';
+            var studyLine = value.StudentStudyLine ? '[' + value.StudentStudyLine + '] ' : '';
+            var trHTML = '<option value="' + value.StudentID + '">' + studyLine + value.StudentClass + ' ' + value.StudentNumber.padStart(2, '0') + ' ' + value.StudentPrefix + value.StudentFirstName + ' ' + value.StudentLastName + '</option>';
             $('#multiselect').append(trHTML);
         });
     }, 'json');
-
 });
 
-$(document).on("submit", "#FormEnroll", function(e) {
-    e.preventDefault();
+// Function to submit enrollment data
+function submitEnrollment(formData) {
     $.ajax({
         url: '<?= site_url('admin/academic/ConAdminEnroll/AdminEnrollInsert') ?>',
         type: 'post',
-        data: $(this).serialize(),
+        data: formData,
+        beforeSend: function() {
+            Swal.fire({
+                title: 'กำลังบันทึก...',
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
+            });
+        },
         error: function() {
             Swal.fire({
-                position: 'top-end',
                 icon: 'error',
-                title: 'นักเรียนในรายชื่อนี้ได้ลงทะเบียนวิชานี้ และปีนี้ไปแล้ว กรุณาเลือกและตรวจสอบใหม่',
+                title: 'เกิดข้อผิดพลาดในการบันทึก กรุณาลองใหม่',
                 showConfirmButton: false,
                 timer: 3000
             })
         },
         success: function(data) {
-      
-              Swal.fire({
-                title: "แจ้งเตือน?",
-                text: "บันทึกข้อมูลสำเร็จ!",
-                icon: "success",
-                showCancelButton: true,
-              }).then((result) => {
-                if (result.isConfirmed) {
-                    window.location.reload();
-                }
-              });
+              if(data.status === 'success'){
+                   Swal.fire({
+                    title: "บันทึกสำเร็จ!",
+                    text: data.message,
+                    icon: "success",
+                    confirmButtonText: 'ตกลง'
+                  }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = '<?= site_url('Admin/Acade/Registration/Enroll') ?>';
+                    }
+                  });
+              } else if (data.status === 'info') {
+                   Swal.fire({
+                    title: "ไม่ได้บันทึก",
+                    text: data.message,
+                    icon: "info",
+                  });
+              } else {
+                  Swal.fire({
+                    title: "ไม่สามารถบันทึกได้",
+                    text: data.message,
+                    icon: "error",
+                  });
+              }
+        }
+    });
+}
 
+$(document).on("submit", "#FormEnroll", function(e) {
+    e.preventDefault();
+    var formData = $(this).serialize();
+
+    // 1. Check for Repeat History (นักเรียนซ้ำชั้น)
+    $.ajax({
+        url: '<?= site_url('admin/academic/ConAdminEnroll/checkRepeatHistory') ?>',
+        type: 'post',
+        data: formData,
+        dataType: 'json',
+        beforeSend: function() {
+            Swal.fire({
+                title: 'กำลังตรวจสอบรายชื่อ...',
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
+            });
+        },
+        success: function(response) {
+            Swal.close();
+            
+            if (response.status === 'found') {
+                // Format List
+                let listHtml = '<ul class="text-start mt-2 border p-2 rounded bg-light" style="max-height: 150px; overflow-y: auto; list-style-type: none;">';
+                let count = 0;
+                for (const [name, year] of Object.entries(response.repeats)) {
+                     listHtml += `<li class="text-danger py-1 border-bottom border-light"><i class="bx bx-user me-2"></i>${name} <small class="text-muted">(เคยเรียนปี ${year})</small></li>`;
+                     count++;
+                }
+                listHtml += '</ul>';
+
+                Swal.fire({
+                    title: '⚠️ พบนักเรียนซ้ำชั้น!',
+                    html: `
+                        <div class="text-start">
+                            <p class="mb-2">มีนักเรียน <strong>${count} คน</strong> เคยลงทะเบียนเรียนรายวิชานี้มาแล้ว:</p>
+                            ${listHtml}
+                            <div class="alert alert-warning mt-3 mb-0" role="alert">
+                                <i class='bx bx-info-circle me-1'></i> ต้องการให้นักเรียนกลุ่มนี้ <strong>เรียนซ้ำอยู่ชั้นเดิม</strong> (ลงทะเบียนใหม่) ใช่หรือไม่?
+                            </div>
+                        </div>
+                    `,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#ffc107', 
+                    cancelButtonColor: '#8592a3',
+                    confirmButtonText: 'ใช่, ยืนยันให้เรียนซ้ำชั้นเดิม',
+                    cancelButtonText: 'ไม่ใช่, ยกเลิก',
+                    customClass: {
+                        confirmButton: 'btn btn-warning text-white me-3',
+                        cancelButton: 'btn btn-label-secondary'
+                    },
+                    buttonsStyling: false,
+                    width: '600px'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        submitEnrollment(formData);
+                    }
+                });
+            } else {
+                // No repeats found, proceed directly
+                submitEnrollment(formData);
+            }
+        },
+        error: function() {
+            Swal.fire({
+                icon: 'error',
+                title: 'เกิดข้อผิดพลาด',
+                text: 'ไม่สามารถตรวจสอบข้อมูลได้ กรุณาลองใหม่อีกครั้ง'
+            });
         }
     });
 });

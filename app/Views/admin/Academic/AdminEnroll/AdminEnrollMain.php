@@ -402,34 +402,64 @@ $(document).on("click", ".ShowEnroll", function() {
 });
 
 $(document).on("click", ".CancelEnroll", function() {
-    console.log($(this).attr('key-teacher'));
+    const keyTeacher = $(this).attr('key-teacher');
+    const keySubject = $(this).attr('key-subject');
+    const tr = $(this).parents('tr');
+
     Swal.fire({
-        title: 'ต้องการลบการลงทะเบียนหรือไม่?',
-        text: 'เมื่อลบการลงทะเบียนวิชานี้แล้ว คะแนนและรายชื่อนักเรียนในวิชานี้ จะถูกลบทั้งหมด',
+        title: 'ยืนยันการลบการลงทะเบียน?',
+        text: 'การลบนี้จะทำให้ข้อมูลการลงทะเบียนและคะแนนทั้งหมดหายไป ไม่สามารถกู้คืนได้!',
         icon: 'warning',
         showCancelButton: true,
-        confirmButtonColor: '#3085d6',
-        cancelButtonColor: '#d33',
-        confirmButtonText: 'Yes!'
+        confirmButtonColor: '#ff3e1d',
+        cancelButtonColor: '#8592a3',
+        confirmButtonText: 'ลบข้อมูลทันที',
+        cancelButtonText: 'ยกเลิก'
     }).then((result) => {
         if (result.isConfirmed) {
-            $(this).parents('tr').remove();
-
-            $.post("<?= site_url('admin/academic/ConAdminEnroll/AdminEnrollCancel') ?>", {
-                KeyTeacher: $(this).attr('key-teacher'),
-                KeySubject: $(this).attr('key-subject')
-            }, function(data, status) {
-                console.log(data);
-
+            
+            $.ajax({
+                url: "<?= site_url('admin/academic/ConAdminEnroll/AdminEnrollCancel') ?>",
+                type: 'POST',
+                data: {
+                    KeyTeacher: keyTeacher,
+                    KeySubject: keySubject
+                },
+                beforeSend: function() {
+                    Swal.fire({
+                        title: 'กำลังลบข้อมูล...',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+                },
+                success: function(data) {
+                    Swal.fire({
+                        title: 'ลบข้อมูลเรียบร้อย!',
+                        text: 'ข้อมูลการลงทะเบียนได้ถูกลบแล้ว',
+                        icon: 'success',
+                        timer: 1500,
+                        showConfirmButton: false
+                    }).then(() => {
+                         // Refresh DataTable instead of just removing row for consistency
+                         if (typeof tbErollSubject !== 'undefined') {
+                             tbErollSubject.ajax.reload(null, false);
+                         } else {
+                             tr.remove();
+                         }
+                    });
+                },
+                error: function() {
+                     Swal.fire({
+                        title: 'เกิดข้อผิดพลาด',
+                        text: 'ไม่สามารถลบข้อมูลได้ กรุณาลองใหม่อีกครั้ง',
+                        icon: 'error'
+                     });
+                }
             });
-
-            Swal.fire(
-                'ลบข้อมูลเรียบร้อย!',
-                'Your data has been deleted.',
-                'success'
-            )
         }
-    })
+    });
 });
 </script>
 <?= $this->endSection() ?>
