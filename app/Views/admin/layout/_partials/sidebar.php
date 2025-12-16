@@ -148,7 +148,7 @@
                     <?php endif; ?>
 
                     <?php if(in_array("งานหลักสูตร",$Exp_Checkrloes)): ?>
-                    <li class="menu-item <?= ($uri->getTotalSegments() >= 3 && ($uri->getSegment(3) == 'Course' || $uri->getSegment(3) == 'Research')) || ($uri->getSegment(2) == 'academic' && $uri->getSegment(3) == 'checkplan') ? 'active open' : '' ?>">
+                    <li class="menu-item <?= ($uri->getTotalSegments() >= 3 && ($uri->getSegment(3) == 'Course' || $uri->getSegment(3) == 'Research')) || ($uri->getSegment(2) == 'academic' && ($uri->getSegment(3) == 'checkplan' || ($uri->getSegment(3) == 'report' && $uri->getSegment(4) == 'checkplan'))) ? 'active open' : '' ?>">
                         <a href="javascript:void(0);" class="menu-link menu-toggle">
                             <i class="menu-icon tf-icons bx bx-book"></i>
                             <div data-i18n="งานหลักสูตร">งานหลักสูตร</div>
@@ -173,6 +173,11 @@
                             <li class="menu-item <?= ($uri->getSegment(3) == 'checkplan' ? 'active' : '') ?>">
                                 <a href="<?=base_url('admin/academic/checkplan');?>" class="menu-link">
                                     <div data-i18n="ตรวจแผนการสอน">ตรวจแผนการสอน</div>
+                                </a>
+                            </li>
+                            <li class="menu-item <?= ($uri->getSegment(3) == 'report' && $uri->getSegment(4) == 'checkplan' ? 'active' : '') ?>">
+                                <a href="<?=base_url('admin/academic/report/checkplan');?>" class="menu-link">
+                                    <div data-i18n="รายงานการส่งแผนการสอน">รายงานการส่งแผนการสอน</div>
                                 </a>
                             </li>
                             <hr>

@@ -74,40 +74,40 @@ class ModAdminCheckPlan extends Model
             sub.SubjectClass as seplan_class,
             sub.SubjectType as seplan_subject_type,
 
-            MAX(CASE WHEN type.type_name = \'แบบตรวจแผนการจัดการเรียนรู้\' THEN tb_send_plan.seplan_file END) AS check_plan_file,
-            MAX(CASE WHEN type.type_name = \'แบบตรวจแผนการจัดการเรียนรู้\' THEN tb_send_plan.seplan_id END) AS check_plan_file_id,
-            MAX(CASE WHEN type.type_name = \'แบบตรวจแผนการจัดการเรียนรู้\' THEN tb_send_plan.seplan_status1 END) AS check_plan_file_status1,
-            MAX(CASE WHEN type.type_name = \'แบบตรวจแผนการจัดการเรียนรู้\' THEN tb_send_plan.seplan_comment1 END) AS check_plan_file_comment1,
-            MAX(CASE WHEN type.type_name = \'แบบตรวจแผนการจัดการเรียนรู้\' THEN tb_send_plan.seplan_status2 END) AS check_plan_file_status2,
-            MAX(CASE WHEN type.type_name = \'แบบตรวจแผนการจัดการเรียนรู้\' THEN tb_send_plan.seplan_comment2 END) AS check_plan_file_comment2,
+            MAX(CASE WHEN tb_send_plan.seplan_typeplan_id = 1 THEN tb_send_plan.seplan_file END) AS check_plan_file,
+            MAX(CASE WHEN tb_send_plan.seplan_typeplan_id = 1 THEN tb_send_plan.seplan_id END) AS check_plan_file_id,
+            MAX(CASE WHEN tb_send_plan.seplan_typeplan_id = 1 THEN tb_send_plan.seplan_status1 END) AS check_plan_file_status1,
+            MAX(CASE WHEN tb_send_plan.seplan_typeplan_id = 1 THEN tb_send_plan.seplan_comment1 END) AS check_plan_file_comment1,
+            MAX(CASE WHEN tb_send_plan.seplan_typeplan_id = 1 THEN tb_send_plan.seplan_status2 END) AS check_plan_file_status2,
+            MAX(CASE WHEN tb_send_plan.seplan_typeplan_id = 1 THEN tb_send_plan.seplan_comment2 END) AS check_plan_file_comment2,
 
-            MAX(CASE WHEN type.type_name = \'บันทึกตรวจใช้แผน\' THEN tb_send_plan.seplan_file END) AS record_check_file,
-            MAX(CASE WHEN type.type_name = \'บันทึกตรวจใช้แผน\' THEN tb_send_plan.seplan_id END) AS record_check_file_id,
-            MAX(CASE WHEN type.type_name = \'บันทึกตรวจใช้แผน\' THEN tb_send_plan.seplan_status1 END) AS record_check_file_status1,
-            MAX(CASE WHEN type.type_name = \'บันทึกตรวจใช้แผน\' THEN tb_send_plan.seplan_comment1 END) AS record_check_file_comment1,
-            MAX(CASE WHEN type.type_name = \'บันทึกตรวจใช้แผน\' THEN tb_send_plan.seplan_status2 END) AS record_check_file_status2,
-            MAX(CASE WHEN type.type_name = \'บันทึกตรวจใช้แผน\' THEN tb_send_plan.seplan_comment2 END) AS record_check_file_comment2,
+            MAX(CASE WHEN tb_send_plan.seplan_typeplan_id = 2 THEN tb_send_plan.seplan_file END) AS record_check_file,
+            MAX(CASE WHEN tb_send_plan.seplan_typeplan_id = 2 THEN tb_send_plan.seplan_id END) AS record_check_file_id,
+            MAX(CASE WHEN tb_send_plan.seplan_typeplan_id = 2 THEN tb_send_plan.seplan_status1 END) AS record_check_file_status1,
+            MAX(CASE WHEN tb_send_plan.seplan_typeplan_id = 2 THEN tb_send_plan.seplan_comment1 END) AS record_check_file_comment1,
+            MAX(CASE WHEN tb_send_plan.seplan_typeplan_id = 2 THEN tb_send_plan.seplan_status2 END) AS record_check_file_status2,
+            MAX(CASE WHEN tb_send_plan.seplan_typeplan_id = 2 THEN tb_send_plan.seplan_comment2 END) AS record_check_file_comment2,
 
-            MAX(CASE WHEN type.type_name = \'แผนการจัดดารเรียนรู้\' THEN tb_send_plan.seplan_file END) AS use_plan_file,
-            MAX(CASE WHEN type.type_name = \'แผนการจัดดารเรียนรู้\' THEN tb_send_plan.seplan_id END) AS use_plan_file_id,
-            MAX(CASE WHEN type.type_name = \'แผนการจัดดารเรียนรู้\' THEN tb_send_plan.seplan_status1 END) AS use_plan_file_status1,
-            MAX(CASE WHEN type.type_name = \'แผนการจัดดารเรียนรู้\' THEN tb_send_plan.seplan_comment1 END) AS use_plan_file_comment1,
-            MAX(CASE WHEN type.type_name = \'แผนการจัดดารเรียนรู้\' THEN tb_send_plan.seplan_status2 END) AS use_plan_file_status2,
-            MAX(CASE WHEN type.type_name = \'แผนการจัดดารเรียนรู้\' THEN tb_send_plan.seplan_comment2 END) AS use_plan_file_comment2,
+            MAX(CASE WHEN tb_send_plan.seplan_typeplan_id = 4 THEN tb_send_plan.seplan_file END) AS use_plan_file,
+            MAX(CASE WHEN tb_send_plan.seplan_typeplan_id = 4 THEN tb_send_plan.seplan_id END) AS use_plan_file_id,
+            MAX(CASE WHEN tb_send_plan.seplan_typeplan_id = 4 THEN tb_send_plan.seplan_status1 END) AS use_plan_file_status1,
+            MAX(CASE WHEN tb_send_plan.seplan_typeplan_id = 4 THEN tb_send_plan.seplan_comment1 END) AS use_plan_file_comment1,
+            MAX(CASE WHEN tb_send_plan.seplan_typeplan_id = 4 THEN tb_send_plan.seplan_status2 END) AS use_plan_file_status2,
+            MAX(CASE WHEN tb_send_plan.seplan_typeplan_id = 4 THEN tb_send_plan.seplan_comment2 END) AS use_plan_file_comment2,
 
-            MAX(CASE WHEN type.type_name = \'โครงการสอน\' THEN tb_send_plan.seplan_file END) AS project_plan_file,
-            MAX(CASE WHEN type.type_name = \'โครงการสอน\' THEN tb_send_plan.seplan_id END) AS project_plan_file_id,
-            MAX(CASE WHEN type.type_name = \'โครงการสอน\' THEN tb_send_plan.seplan_status1 END) AS project_plan_file_status1,
-            MAX(CASE WHEN type.type_name = \'โครงการสอน\' THEN tb_send_plan.seplan_comment1 END) AS project_plan_file_comment1,
-            MAX(CASE WHEN type.type_name = \'โครงการสอน\' THEN tb_send_plan.seplan_status2 END) AS project_plan_file_status2,
-            MAX(CASE WHEN type.type_name = \'โครงการสอน\' THEN tb_send_plan.seplan_comment2 END) AS project_plan_file_comment2,
+            MAX(CASE WHEN tb_send_plan.seplan_typeplan_id = 3 THEN tb_send_plan.seplan_file END) AS project_plan_file,
+            MAX(CASE WHEN tb_send_plan.seplan_typeplan_id = 3 THEN tb_send_plan.seplan_id END) AS project_plan_file_id,
+            MAX(CASE WHEN tb_send_plan.seplan_typeplan_id = 3 THEN tb_send_plan.seplan_status1 END) AS project_plan_file_status1,
+            MAX(CASE WHEN tb_send_plan.seplan_typeplan_id = 3 THEN tb_send_plan.seplan_comment1 END) AS project_plan_file_comment1,
+            MAX(CASE WHEN tb_send_plan.seplan_typeplan_id = 3 THEN tb_send_plan.seplan_status2 END) AS project_plan_file_status2,
+            MAX(CASE WHEN tb_send_plan.seplan_typeplan_id = 3 THEN tb_send_plan.seplan_comment2 END) AS project_plan_file_comment2,
 
-            MAX(CASE WHEN type.type_name = \'บันทึกหลังสอน\' THEN tb_send_plan.seplan_file END) AS after_teach_note_file,
-            MAX(CASE WHEN type.type_name = \'บันทึกหลังสอน\' THEN tb_send_plan.seplan_id END) AS after_teach_note_file_id,
-            MAX(CASE WHEN type.type_name = \'บันทึกหลังสอน\' THEN tb_send_plan.seplan_status1 END) AS after_teach_note_file_status1,
-            MAX(CASE WHEN type.type_name = \'บันทึกหลังสอน\' THEN tb_send_plan.seplan_comment1 END) AS after_teach_note_file_comment1,
-            MAX(CASE WHEN type.type_name = \'บันทึกหลังสอน\' THEN tb_send_plan.seplan_status2 END) AS after_teach_note_file_status2,
-            MAX(CASE WHEN type.type_name = \'บันทึกหลังสอน\' THEN tb_send_plan.seplan_comment2 END) AS after_teach_note_file_comment2
+            MAX(CASE WHEN tb_send_plan.seplan_typeplan_id = 5 THEN tb_send_plan.seplan_file END) AS after_teach_note_file,
+            MAX(CASE WHEN tb_send_plan.seplan_typeplan_id = 5 THEN tb_send_plan.seplan_id END) AS after_teach_note_file_id,
+            MAX(CASE WHEN tb_send_plan.seplan_typeplan_id = 5 THEN tb_send_plan.seplan_status1 END) AS after_teach_note_file_status1,
+            MAX(CASE WHEN tb_send_plan.seplan_typeplan_id = 5 THEN tb_send_plan.seplan_comment1 END) AS after_teach_note_file_comment1,
+            MAX(CASE WHEN tb_send_plan.seplan_typeplan_id = 5 THEN tb_send_plan.seplan_status2 END) AS after_teach_note_file_status2,
+            MAX(CASE WHEN tb_send_plan.seplan_typeplan_id = 5 THEN tb_send_plan.seplan_comment2 END) AS after_teach_note_file_comment2
         ');
         $builder->join('tb_send_plan_type as type', 'type.type_id = tb_send_plan.seplan_typeplan_id');
         $builder->join('skjacth_academic.tb_subjects as sub', 'sub.SubjectCode = tb_send_plan.seplan_coursecode');
@@ -139,5 +139,47 @@ class ModAdminCheckPlan extends Model
         $query = $builder->get();
         return $query->getRow(); // Get a single row
     }
-}
 
+    // ===== Methods from ModAdminReportCheckPlan =====
+    
+    // Alias for getDistinctYearTerm (used by ReportCheckPlanMain)
+    public function getYearsTerms()
+    {
+        return $this->getDistinctYearTerm();
+    }
+
+    // Get Report Data by Group (for Excel Export)
+    public function getReportData($groupId, $year, $term, $type = null)
+    {
+        $builder = $this->db->table('tb_send_plan');
+        
+        $builder->select('
+            p.pers_prefix,
+            p.pers_firstname,
+            p.pers_lastname,
+            tb_send_plan.seplan_coursecode,
+            tb_send_plan.seplan_namesubject,
+            tb_send_plan.seplan_gradelevel,
+            tb_send_plan.seplan_typesubject as subject_type,
+            tb_send_plan.seplan_createdate
+        ');
+        
+        $builder->join('skjacth_personnel.tb_personnel as p', 'p.pers_id = tb_send_plan.seplan_usersend');
+        
+        $builder->where('tb_send_plan.seplan_year', $year);
+        $builder->where('tb_send_plan.seplan_term', $term);
+        
+        if ($groupId != 'all') {
+            $builder->where('tb_send_plan.seplan_learning', $groupId);
+        }
+        
+        if ($type) {
+            $builder->where('tb_send_plan.seplan_typeplan_id', $type);
+        }
+        
+        $builder->orderBy('p.pers_firstname', 'ASC');
+        $builder->orderBy('tb_send_plan.seplan_coursecode', 'ASC');
+
+        return $builder->get()->getResult();
+    }
+}

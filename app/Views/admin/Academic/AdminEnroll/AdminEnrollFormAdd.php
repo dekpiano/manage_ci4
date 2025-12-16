@@ -259,7 +259,8 @@ function submitEnrollment(formData) {
                     confirmButtonText: 'ตกลง'
                   }).then((result) => {
                     if (result.isConfirmed) {
-                        window.location.href = '<?= site_url('Admin/Acade/Registration/Enroll') ?>';
+                        // window.location.href = '<?= site_url('Admin/Acade/Registration/Enroll') ?>';
+                        location.reload();
                     }
                   });
               } else if (data.status === 'info') {

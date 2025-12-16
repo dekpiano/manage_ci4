@@ -108,4 +108,39 @@ class ConAdminCheckPlan extends BaseController
         $planDetails = $this->ModAdminCheckPlan->getPlanDetailsById($planId);
         return $this->response->setJSON($planDetails);
     }
+
+    // ===== Report Check Plan (from ConAdminReportCheckPlan) =====
+    public function report()
+    {
+        if (empty(session()->get('fullname'))) {
+             return redirect()->to(base_url('LogoutTeacher'));
+        }
+
+        $data['title'] = "รายงานการส่งแผนการสอน";
+        $data['groups'] = $this->ModAdminCheckPlan->getLearningGroups();
+        $data['year_terms'] = $this->ModAdminCheckPlan->getYearsTerms();
+
+        // Default Selection
+        $latest = $data['year_terms'][0] ?? null;
+        $data['sel_year'] = $this->request->getGet('year') ?? ($latest->seplan_year ?? date('Y')+543);
+        $data['sel_term'] = $this->request->getGet('term') ?? ($latest->seplan_term ?? 1);
+        $data['sel_group'] = $this->request->getGet('group') ?? ''; // Empty means none selected or 'all'
+        $data['sel_type'] = $this->request->getGet('type') ?? '';
+
+        // If group is selected, fetch data
+        if ($data['sel_group']) {
+            $data['report_data'] = $this->ModAdminCheckPlan->getReportData($data['sel_group'], $data['sel_year'], $data['sel_term'], $data['sel_type']);
+            // Get Group Name for Display
+            foreach($data['groups'] as $g) {
+                if($g->lear_id == $data['sel_group']) {
+                    $data['sel_group_name'] = $g->lear_namethai;
+                    break;
+                }
+            }
+        } else {
+            $data['report_data'] = [];
+        }
+
+        return view('admin/Academic/AdminCheckPlan/ReportCheckPlanMain', $data);
+    }
 }

@@ -148,6 +148,7 @@ $routes->post('admin/academic/checkplan/updateplanstatus', [ConAdminCheckPlan::c
 $routes->get('admin/academic/checkplan/plans/(:segment)', [ConAdminCheckPlan::class, 'plansByGroup/$1']);
 $routes->get('admin/academic/checkplan/teacherplans/(:segment)', [ConAdminCheckPlan::class, 'getTeacherPlans/$1']);
 $routes->get('admin/academic/checkplan/plandetails/(:segment)', [ConAdminCheckPlan::class, 'getPlanDetails/$1']);
+$routes->get('admin/academic/report/checkplan', [ConAdminCheckPlan::class, 'report']);
 
 $routes->get('Admin/Acade/Report', [ConAdminExtraSubject::class, 'ExtraReport']);
 
