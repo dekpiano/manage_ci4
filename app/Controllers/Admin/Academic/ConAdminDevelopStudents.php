@@ -221,7 +221,9 @@ class ConAdminDevelopStudents extends BaseController
                                         tb_clubs.club_name,
                                         COUNT(tb_club_members.member_student_id) AS total_members
                                     ')
-                                    ->join('tb_club_members', 'tb_club_members.member_club_id = tb_clubs.club_id', 'left')
+                                    ->join('tb_club_members', 'tb_club_members.member_club_id = tb_clubs.club_id AND tb_club_members.member_status = "active"', 'left')
+                                    ->where('tb_clubs.club_year', $activeYear)
+                                    ->where('tb_clubs.club_trem', $activeTerm)
                                     ->groupBy('tb_clubs.club_id')
                                     ->orderBy('total_members', 'DESC')
                                     ->limit(1)->get()->getRow();
@@ -273,7 +275,7 @@ class ConAdminDevelopStudents extends BaseController
         $ExYear = explode("/", $year);
         $clubs = $this->db->table('skjacth_academic.tb_clubs')
                         ->select('skjacth_academic.tb_clubs.*,
-                            (SELECT COUNT(*) FROM skjacth_academic.tb_club_members WHERE skjacth_academic.tb_club_members.member_club_id = skjacth_academic.tb_clubs.club_id) as member_count,
+                            (SELECT COUNT(*) FROM skjacth_academic.tb_club_members WHERE skjacth_academic.tb_club_members.member_club_id = skjacth_academic.tb_clubs.club_id AND skjacth_academic.tb_club_members.member_status = "active") as member_count,
                             GROUP_CONCAT(CONCAT(skjacth_personnel.tb_personnel.pers_prefix,skjacth_personnel.tb_personnel.pers_firstname," ",skjacth_personnel.tb_personnel.pers_lastname) SEPARATOR ", ") as advisor_names') // Explicitly reference DBpersonnel table
                         ->join($this->DBpersonnel->database . '.tb_personnel', 'FIND_IN_SET(' . $this->DBpersonnel->database . '.tb_personnel.pers_id , REPLACE(club_faculty_advisor, "|", ",")) > 0', 'LEFT') // Use the class property for DBpersonnel
                         ->where('club_year', @$ExYear[1])
@@ -454,7 +456,7 @@ class ConAdminDevelopStudents extends BaseController
             return $this->response->setJSON(['status' => 'error', 'message' => ['student_ids' => 'กรุณาเลือกนักเรียนอย่างน้อยหนึ่งคน']]);
         }
 
-        // เช็ดข้อมูลซ้ำ
+        // เช็ดข้อมูลซ้ำ (เฉพาะ active members)
         $result = $this->db->table('tb_club_members')
                             ->select('
                                 CONCAT(StudentCode," ",StudentPrefix,StudentFirstName," ",StudentLastName," ",tb_students.StudentClass) AS Fullname,
@@ -464,6 +466,7 @@ class ConAdminDevelopStudents extends BaseController
                                 tb_club_members.member_student_id')
                             ->join('tb_students', 'tb_students.StudentID = tb_club_members.member_student_id')
                             ->where('member_club_id', $club_id)
+                            ->where('tb_club_members.member_status', 'active')
                             ->whereIn('member_student_id', $student_ids)
                             ->get()->getResultArray();
         $duplicate_students = array_column($result, 'Fullname');
@@ -511,6 +514,7 @@ class ConAdminDevelopStudents extends BaseController
                             tb_club_members.member_club_id')
                         ->join('tb_students', 'tb_students.StudentID = tb_club_members.member_student_id')
                         ->where('member_club_id', $club_id)
+                        ->where('tb_club_members.member_status', 'active')
                         ->orderBy('tb_students.StudentClass', 'ASC')
                         ->orderBy('tb_students.StudentNumber', 'ASC')
                         ->get();

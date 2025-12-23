@@ -171,6 +171,7 @@
                                 <table class="table table-striped" id="TbShowStudentRegisClub">
                                     <thead>
                                         <tr>
+                                            <th class="text-center" style="width: 60px;">#</th>
                                             <th>ชั้น</th>
                                             <th>เลขที่</th>
                                             <th>รหัสนักเรียน</th>
@@ -559,10 +560,11 @@ function loadRegisteredStudents(clubId) {
         success: function(data) {
             //$('#registeredCount').text(`นักเรียนที่ลงทะเบียนแล้ว: ${data} คน`);
             let tableRows = '';
-            data.forEach(student => {
+            data.forEach((student, index) => {
 
                 tableRows += `
                     <tr>
+                        <td class="text-center">${index + 1}</td>
                         <td>${student.StudentClass}</td>
                         <td>${student.StudentNumber}</td>
                         <td>${student.StudentCode}</td>
