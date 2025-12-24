@@ -480,7 +480,7 @@ class ConAdminRegisRepeat extends BaseController
                                     skjacth_academic.tb_register.SubjectID,
                                     skjacth_academic.tb_subjects.SubjectName,
                                     skjacth_academic.tb_subjects.FirstGroup,
-                                    skjacth_academic.tb_register.RegisterClass,
+                                    GROUP_CONCAT(DISTINCT skjacth_academic.tb_register.RegisterClass ORDER BY skjacth_academic.tb_register.RegisterClass SEPARATOR ', ') AS RegisterClass,
                                     skjacth_academic.tb_register.TeacherID,
                                     skjacth_academic.tb_subjects.SubjectID,
                                     skjacth_academic.tb_subjects.SubjectCode,
@@ -493,7 +493,7 @@ class ConAdminRegisRepeat extends BaseController
                                 ->join($this->DBPers->database . '.tb_personnel', $this->DBPers->database . '.tb_personnel.pers_id = skjacth_academic.tb_register.TeacherID')
                                 ->where('tb_register.RegisterYear',$keyYear)
                                 ->where('tb_subjects.SubjectYear',$keyYear)
-                                ->groupBy('skjacth_academic.tb_register.SubjectID, skjacth_academic.tb_register.TeacherID, skjacth_academic.tb_register.RegisterClass, skjacth_academic.tb_subjects.SubjectName, skjacth_academic.tb_subjects.FirstGroup, skjacth_academic.tb_subjects.SubjectCode, skjacth_academic.tb_subjects.SubjectYear, skjacth_personnel.tb_personnel.pers_firstname, skjacth_personnel.tb_personnel.pers_prefix, skjacth_personnel.tb_personnel.pers_lastname')
+                                ->groupBy('skjacth_academic.tb_register.SubjectID, skjacth_academic.tb_register.TeacherID, skjacth_academic.tb_subjects.SubjectName, skjacth_academic.tb_subjects.FirstGroup, skjacth_academic.tb_subjects.SubjectCode, skjacth_academic.tb_subjects.SubjectYear, skjacth_personnel.tb_personnel.pers_firstname, skjacth_personnel.tb_personnel.pers_prefix, skjacth_personnel.tb_personnel.pers_lastname')
                                 ->get()->getResult();
 
         //echo '<pre>'; print_r($Register);   exit();    
