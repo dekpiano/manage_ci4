@@ -148,29 +148,44 @@ class ConAdminDevelopStudents extends BaseController
         }
         $data['CheckOnoffClubParsed'] = [$activeYear, $activeTerm];
 
-        // Fetch student and teacher registration periods
+        // Fetch student, teacher, and system registration periods
         $onoffData = $this->db->table('tb_club_onoff')
                               ->where('c_onoff_year', $activeYear)
                               ->where('c_onoff_term', $activeTerm)
-                              ->whereIn('c_onoff_for', ['student', 'teacher'])
+                              ->whereIn('c_onoff_for', ['student', 'teacher', 'system'])
                               ->get()->getResult();
 
         $student_dates = array_filter($onoffData, fn($row) => $row->c_onoff_for === 'student');
         $teacher_dates = array_filter($onoffData, fn($row) => $row->c_onoff_for === 'teacher');
+        $system_status = array_filter($onoffData, fn($row) => $row->c_onoff_for === 'system');
 
         $student_dates = reset($student_dates);
         $teacher_dates = reset($teacher_dates);
+        $system_status = reset($system_status);
 
-        // Format student dates
+        $isSystemClosed = (isset($system_status->c_onoff_status) && $system_status->c_onoff_status == 1);
+
+        // Format dates for display
         $data['formatted_student_regisstart'] = isset($student_dates->c_onoff_regisstart) ? $this->datethai->thai_date_and_time(strtotime($student_dates->c_onoff_regisstart)) : '-';
         $data['formatted_student_regisend'] = isset($student_dates->c_onoff_regisend) ? $this->datethai->thai_date_and_time(strtotime($student_dates->c_onoff_regisend)) : '-';
-        $data['StatusOnoffClubStudent'] = (isset($student_dates->c_onoff_status) && $student_dates->c_onoff_status == 1 && (!isset($student_dates->c_onoff_regisend) || $student_dates->c_onoff_regisend > date("Y-m-d H:i:s"))) ? "เปิด" : "ปิด";
-
-
-        // Format teacher dates
         $data['formatted_teacher_regisstart'] = isset($teacher_dates->c_onoff_regisstart) ? $this->datethai->thai_date_and_time(strtotime($teacher_dates->c_onoff_regisstart)) : '-';
         $data['formatted_teacher_regisend'] = isset($teacher_dates->c_onoff_regisend) ? $this->datethai->thai_date_and_time(strtotime($teacher_dates->c_onoff_regisend)) : '-';
-        $data['StatusOnoffClubTeacher'] = (isset($teacher_dates->c_onoff_status) && $teacher_dates->c_onoff_status == 1 && (!isset($teacher_dates->c_onoff_regisend) || $teacher_dates->c_onoff_regisend > date("Y-m-d H:i:s"))) ? "เปิด" : "ปิด";
+
+        // Student Status Logic
+        if ($isSystemClosed) {
+            $data['StatusOnoffClubStudent'] = "ปิด";
+        } else {
+            $data['StatusOnoffClubStudent'] = (isset($student_dates->c_onoff_status) && $student_dates->c_onoff_status == 1 && (!isset($student_dates->c_onoff_regisend) || $student_dates->c_onoff_regisend > date("Y-m-d H:i:s"))) ? "เปิด" : "ปิด";
+        }
+
+        // Teacher Status Logic: More flexible, priorities manual status if set to 1
+        if ($isSystemClosed) {
+            $data['StatusOnoffClubTeacher'] = "ปิด";
+        } else {
+            // For teachers, we focus on the manual status first. If it's 1, it's open unless the system is closed.
+            // Dates are informative but status toggle is the primary control for teachers.
+            $data['StatusOnoffClubTeacher'] = (isset($teacher_dates->c_onoff_status) && $teacher_dates->c_onoff_status == 1) ? "เปิด" : "ปิด";
+        }
 
         return $data;
     }
@@ -236,9 +251,27 @@ class ConAdminDevelopStudents extends BaseController
     public function ClubGetDateRegister()
     {
         date_default_timezone_set('Asia/Bangkok');
+        
+        // Get active year and term from active_config
+        $activeConfig = $this->db->table('tb_club_onoff')
+                                  ->select('c_onoff_year, c_onoff_term')
+                                  ->where('c_onoff_for', 'active_config')
+                                  ->get()->getRow();
+        
+        if (empty($activeConfig)) {
+            return $this->response->setJSON(['datetime' => null]);
+        }
+        
+        $activeYear = $activeConfig->c_onoff_year;
+        $activeTerm = $activeConfig->c_onoff_term;
+        
+        // Get student registration dates for active year/term
         $Dete = $this->db->table('tb_club_onoff')
-                        ->select('c_onoff_regisstart,c_onoff_regisend')
-                        ->where('c_onoff_for', 'active_config')->get()->getRow();
+                        ->select('c_onoff_regisstart, c_onoff_regisend')
+                        ->where('c_onoff_for', 'student')
+                        ->where('c_onoff_year', $activeYear)
+                        ->where('c_onoff_term', $activeTerm)
+                        ->get()->getRow();
 
         return $this->response->setJSON(['datetime' => $Dete]);
     }
@@ -661,7 +694,26 @@ class ConAdminDevelopStudents extends BaseController
         $start1 = $start->format('Y-m-d H:i:s');
         $end1 = $end->format('Y-m-d H:i:s');
 
-        $result = $this->db->table('tb_club_onoff')->where('c_onoff_id', 1)->update(['c_onoff_regisstart' => $start1, 'c_onoff_regisend' => $end1]);
+        // Get active year and term from active_config
+        $activeConfig = $this->db->table('tb_club_onoff')
+                                  ->select('c_onoff_year, c_onoff_term')
+                                  ->where('c_onoff_for', 'active_config')
+                                  ->get()->getRow();
+        
+        if (empty($activeConfig)) {
+            return $this->response->setJSON(['status' => 'error', 'message' => 'ไม่พบการตั้งค่าปีการศึกษา']);
+        }
+        
+        $activeYear = $activeConfig->c_onoff_year;
+        $activeTerm = $activeConfig->c_onoff_term;
+
+        // Update student registration dates for active year/term
+        $result = $this->db->table('tb_club_onoff')
+                           ->where('c_onoff_for', 'student')
+                           ->where('c_onoff_year', $activeYear)
+                           ->where('c_onoff_term', $activeTerm)
+                           ->update(['c_onoff_regisstart' => $start1, 'c_onoff_regisend' => $end1]);
+        
         if ($result) {
             return $this->response->setJSON(['status' => 'success', 'message' => 'บันทึกข้อมูลสำเร็จ']);
         } else {

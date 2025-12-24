@@ -67,8 +67,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 alert('เกิดข้อผิดพลาดที่ไม่คาดคิด (ดูที่ console สำหรับรายละเอียด)');
             });
         });
-    } else {
-        console.error("Error: Could not find element with id 'schyear_year'.");
     }
 });
 </script>

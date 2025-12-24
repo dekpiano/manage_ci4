@@ -253,10 +253,12 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
  * Global Year Selection Handler
  * Automatically saves selected year to session when any common year dropdown changes
  */
-$(document).on('change', '#onoff_year, #CheckYearEnroll, [name="keyYear"], #CheckYearMain, #selectYear', function() {
+$(document).on('change', '#onoff_year, #CheckYearEnroll, [name="keyYear"], #CheckYearMain, #selectYear, #schyear_year_sidebar', function() {
     var selectedYear = $(this).val();
     if (selectedYear) {
-        $.post("<?= site_url('Admin/SetSelectedYear') ?>", { year: selectedYear });
+        $.post("<?= site_url('Admin/SetSelectedYear') ?>", { year: selectedYear }, function() {
+            location.reload();
+        });
     }
 });
 </script>

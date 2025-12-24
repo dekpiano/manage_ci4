@@ -33,26 +33,63 @@ class ConAdminHome extends BaseController
         $data['title'] = "หน้าแรก";
         $data['admin'] = $this->DBpersonnel->table('tb_personnel')->select('pers_id,pers_img')->where('pers_id',session()->get('login_id'))->get()->getRow();
         $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
-        $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();
+        $data['selectedYear'] = get_selected_year(); // Format: "1/2568"
         
-        // Use session-stored selected year
-        $data['selectedYear'] = get_selected_year();
+        // Roles for Permission check
+        $CheckrloesAcademic = session()->get('CheckrloesAcademic') ?? '';
+        $data['Exp_Checkrloes'] = explode('|', $CheckrloesAcademic);
 
+        // Split year and term for tables that keep them separate
+        $yearParts = explode('/', $data['selectedYear']);
+        $term = $yearParts[0] ?? '';
+        $year = $yearParts[1] ?? '';
 
-                // Query for statistics
+        // --- 1. Basic Stats ---
         $data['total_students'] = $this->db->table('tb_students')->where('StudentStatus', '1/ปกติ')->countAllResults();
         $data['total_teachers'] = $this->DBpersonnel->table('tb_personnel')->whereIn('pers_position', ['posi_003', 'posi_004', 'posi_005','posi_006'])->countAllResults();
-        if ($data['SchoolYear']) {
-            $data['total_subjects'] = $this->db->table('tb_subjects')->where('SubjectYear', $data['SchoolYear']->schyear_year)->countAllResults();
-        } else {
-            $data['total_subjects'] = 0;
-        }
-        //$data['total_classrooms'] = $this->db->table('tb_students')->where('StudentBehavior', '1/ปกติ')->distinct()->countAll('StudentClass');
-        $data['total_classrooms'] = 36;
+        $data['total_subjects'] = $this->db->table('tb_subjects')->where('SubjectYear', $data['selectedYear'])->countAllResults();
+        $data['total_classrooms'] = $this->db->table('tb_students')->where('StudentStatus', '1/ปกติ')->distinct()->select('StudentClass')->countAllResults();
 
+        // --- 2. Lesson Plan Stats ---
+        $data['plan_stats'] = $this->db->table('tb_send_plan')
+            ->select('seplan_status2, COUNT(*) as count')
+            ->where('seplan_year', $year)
+            ->where('seplan_term', $term)
+            ->groupBy('seplan_status2')
+            ->get()->getResultArray();
+        
+        // Calculate percentages/counts for plans
+        $data['plan_total'] = array_sum(array_column($data['plan_stats'], 'count'));
+        $data['plan_approved'] = 0;
+        $data['plan_pending'] = 0;
+        foreach($data['plan_stats'] as $ps) {
+            if($ps['seplan_status2'] == 'ผ่านการตรวจสอบ') $data['plan_approved'] = $ps['count'];
+            if($ps['seplan_status2'] == 'รอการตรวจสอบ') $data['plan_pending'] = $ps['count'];
+        }
+
+        // --- 3. Club Stats ---
+        $data['total_clubs'] = $this->db->table('tb_clubs')->countAllResults();
+        $data['club_registrations'] = $this->db->table('tb_club_members')
+            ->join('tb_clubs', 'tb_club_members.member_club_id = tb_clubs.club_id')
+            ->where('tb_club_members.member_status', 'active')
+            ->where('tb_clubs.club_year', $year) // Table tb_clubs uses year and trem separately
+            ->where('tb_clubs.club_trem', $term)
+            ->countAllResults();
+        
+        // --- 4. Enrollment Stats (Normal) ---
+        $data['enrolled_students'] = $this->db->table('tb_register')
+            ->distinct()
+            ->select('StudentID')
+            ->where('RegisterYear', $data['selectedYear'])
+            ->countAllResults();
+
+        // --- 5. Research Stats ---
+        $data['research_total'] = $this->db->table('tb_send_research')
+            ->where('seres_year', $year) // Research usually uses year and term separately too
+            ->where('seres_term', $term)
+            ->countAllResults();
 
         echo view('admin/Academic/AdminHome/AdminHome', $data);
-        
     }
 
     /**

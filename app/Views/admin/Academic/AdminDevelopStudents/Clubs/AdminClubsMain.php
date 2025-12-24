@@ -2,286 +2,346 @@
 
 <?= $this->section('content') ?>
 <?php 
-// Initialize variables with defaults
-$ExYearClub = [date('Y'), '1']; // Default to current year and term 1
-if (isset($CheckOnoffClubParsed) && is_array($CheckOnoffClubParsed) && count($CheckOnoffClubParsed) >= 2) {
-    $ExYearClub = $CheckOnoffClubParsed;
-}
+$ExYearClub = $CheckOnoffClubParsed ?? [date('Y'), '1'];
+$studentStatus = $StatusOnoffClubStudent ?? 'ปิด';
+$teacherStatus = $StatusOnoffClubTeacher ?? 'ปิด';
 
-// Handle other potential undefined variables
-$Status = isset($StatusOnoffClub) && $StatusOnoffClub == "เปิด" ? "success" : "danger";
-$StatusBg = isset($StatusOnoffClub) && $StatusOnoffClub == "เปิด" ? "bg-success-subtle" : "bg-danger-subtle";
-$Icon = isset($StatusOnoffClub) && $StatusOnoffClub == "เปิด" ? '<i class="bi bi-check-circle"></i>' : '<i class="bi bi-x-circle"></i>';
-$formatted_regisstart = isset($formatted_regisstart) ? $formatted_regisstart : '-';
-$formatted_regisend = isset($formatted_regisend) ? $formatted_regisend : '-';
+// Helper for status styling
+$getStatusConfig = function($status) {
+    if ($status == "เปิด") {
+        return [
+            'class' => 'success',
+            'bg' => 'bg-label-success',
+            'icon' => 'bx-check-double',
+            'label' => 'เปิดระบบ'
+        ];
+    }
+    return [
+        'class' => 'danger',
+        'bg' => 'bg-label-danger',
+        'icon' => 'bx-power-off',
+        'label' => 'ปิดระบบ'
+    ];
+};
+
+$stdCfg = $getStatusConfig($studentStatus);
+$tchCfg = $getStatusConfig($teacherStatus);
 ?>
-<div class="container-xl mt-4">
-            <!-- Dashboard Header -->
-            <div class="row mb-4">
-                <div class="col-12">
-                    <div class="card">
-                        <div class="card-body d-flex justify-content-between align-items-center p-4">
-                            <div>
-                                <h4 class="mb-1">แดชบอร์ดระบบชุมนุม</h4>
-                                <p class="text-muted mb-0">ภาพรวมข้อมูลเกี่ยวกับชุมนุม ปีการศึกษา <?= esc($ExYearClub[0]) ?> ภาคเรียนที่ <?= esc($ExYearClub[1]) ?></p>
-                            </div>
 
-                            <div class="d-flex align-items-center gap-2">
-                                                                <button type="button" class="btn btn-outline-primary btn-sm" id="MenuSetDateAttendancer">
-                                                                    <i class="bx bx-time me-1"></i> ตั้งค่าเวลาเรียน
-                                                                </button>
-                                
-                                                                <div class="dropdown">
-                                                                    <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" id="clubSettingsDropdown" 
-                                                                        data-bs-toggle="dropdown" aria-expanded="false">
-                                                                        <i class="bx bx-cog me-1"></i> ตั้งค่าระบบชุมนุม
-                                                                    </button>
-                                                                    <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="clubSettingsDropdown">
-                                                                        <li><a class="dropdown-item d-flex align-items-center" href="#" id="MenuSetYear">
-                                                                            <i class="bx bx-calendar me-2"></i> ตั้งค่าปีการศึกษา
-                                                                        </a></li>
-                                                                        <li><a class="dropdown-item d-flex align-items-center" href="#" id="MenuSetDateRegister">
-                                                                            <i class="bx bx-calendar-check me-2"></i> ตั้งค่าช่วงเวลาลงทะเบียน
-                                                                        </a></li>
-                                                                        <li><hr class="dropdown-divider"></li>
-                                                                        <li><a class="dropdown-item d-flex align-items-center" href="#" id="MenuOpenClubSettings" data-bs-toggle="modal" data-bs-target="#modalClubSettings">
-                                                                            <i class="bx bx-toggle-right me-2"></i> เปิด/ปิด ระบบ
-                                                                        </a></li>
-                                                                    </ul>
-                                                                </div>
-                                
-                                                                <a class="btn btn-primary btn-sm" href="<?= site_url('Admin/Acade/DevelopStudents/Clubs/All') ?>">
-                                                                    <i class="bx bx-list-ul me-1"></i> จัดการชุมนุม
-                                                                </a>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                
-                                            <div class="row mb-4">
-                <!-- Student Registration Card -->
-                <div class="col-md-6">
-                    <?php 
-                        $studentStatus = $StatusOnoffClubStudent ?? 'ปิด';
-                        $studentStatusClass = $studentStatus == "เปิด" ? "success" : "danger";
-                        $studentStatusBg = $studentStatus == "เปิด" ? "bg-success-subtle" : "bg-danger-subtle";
-                        $studentIcon = $studentStatus == "เปิด" ? '<i class="bx bx-check-circle"></i>' : '<i class="bx bx-x-circle"></i>';
-                    ?>
-                    <div class="card border-<?= esc($studentStatusClass) ?> shadow-sm h-100">
-                        <div class="card-header border-bottom border-<?= esc($studentStatusClass) ?> <?= esc($studentStatusBg) ?> py-3">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div class="d-flex align-items-center">
-                                    <?= $studentIcon ?>
-                                    <h5 class="mb-0 ms-2">กำหนดการลงทะเบียน (นักเรียน)</h5>
-                                </div>
-                                <div class="badge bg-<?= esc($studentStatusClass) ?> px-3 py-2">
-                                    <?= esc($studentStatus) ?>ลงทะเบียน
-                                </div>
-                            </div>
+<div class="container-xxl flex-grow-1 container-p-y">
+    <!-- Page Header & Main Actions -->
+    <div class="d-flex align-items-md-center justify-content-between mb-4 flex-column flex-md-row gap-3">
+        <div>
+            <h4 class="fw-bold py-1 mb-0">
+                <span class="text-muted fw-light">วิชาการ / พัฒนาผู้เรียน /</span> ระบบชุมนุม
+            </h4>
+            <div class="text-muted small">จัดการข้อมูลสถานะและกำหนดการลงทะเบียน</div>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+            <div class="dropdown">
+                <button class="btn btn-primary shadow-sm px-4 py-2 fw-bold" type="button" id="clubSettingsDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bx bx-cog me-1"></i> ตั้งค่าการลงทะเบียนและระบบ
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2" aria-labelledby="clubSettingsDropdown">
+                    <li class="dropdown-header text-uppercase small fw-bold text-primary">การตั้งค่าหลัก</li>
+                    <li><a class="dropdown-item py-2" href="javascript:void(0)" id="MenuSetYear"><i class="bx bx-calendar me-2"></i>ปีการศึกษาที่ใช้งาน</a></li>
+                    <li><a class="dropdown-item py-2" href="javascript:void(0)" id="MenuSetDateAttendancer"><i class="bx bx-time-five me-2"></i>ตารางเวลาเช็คชื่อ</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li class="dropdown-header text-uppercase small fw-bold text-danger">การเข้าถึงระบบ</li>
+                    <li><a class="dropdown-item py-2 text-danger fw-semibold" href="javascript:void(0)" data-bs-toggle="modal" data-bs-target="#modalClubSystemSettings"><i class="bx bx-toggle-right me-2"></i>เปิด/ปิด การใช้งานระบบ (ครู/นักเรียน)</a></li>
+                </ul>
+            </div>
+            <a href="<?= site_url('Admin/Acade/DevelopStudents/Clubs/All') ?>" class="btn btn-warning shadow-sm px-4 py-2 fw-bold">
+                <i class="bx bx-list-check me-1"></i> จัดการชุมนุมทั้งหมด
+            </a>
+        </div>
+    </div>
+
+    <!-- Summary Banner (Info Only) -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-primary bg-gradient border-0 shadow-sm position-relative overflow-hidden" style="min-height: 100px;">
+                <div class="card-body p-4 position-relative z-1">
+                    <div class="d-flex align-items-center text-white">
+                        <div class="avatar avatar-md me-3">
+                            <span class="avatar-initial rounded bg-white text-primary shadow-sm"><i class="bx bxs-graduation fs-3"></i></span>
                         </div>
-                        <div class="card-body p-4">
-                            <div class="d-flex gap-3 align-items-center mb-3">
-                                <i class="bx bx-calendar-check fs-4 text-<?= esc($studentStatusClass) ?>"></i>
-                                <div>
-                                    <small class="text-muted d-block">เริ่มลงทะเบียน</small>
-                                    <span class="fw-semibold fs-5"><?= $formatted_student_regisstart ?? '-' ?></span>
-                                </div>
-                            </div>
-                            <div class="d-flex gap-3 align-items-center">
-                                <i class="bx bx-calendar-x fs-4 text-<?= esc($studentStatusClass) ?>"></i>
-                                <div>
-                                    <small class="text-muted d-block">สิ้นสุดการลงทะเบียน</small>
-                                    <span class="fw-semibold fs-5"><?= $formatted_student_regisend ?? '-' ?></span>
-                                </div>
-                            </div>
+                        <div>
+                            <h4 class="mb-0 text-white fw-bold">ปีการศึกษา <?= esc($ExYearClub[0]) ?> ภาคเรียนที่ <?= esc($ExYearClub[1]) ?></h4>
+                            <p class="mb-0 opacity-75">สถานะและกำหนดการลงทะเบียนชุมนุมประจำภาคเรียน</p>
                         </div>
                     </div>
                 </div>
+                <!-- Abstract Decor -->
+                <div class="position-absolute top-50 end-0 translate-middle-y opacity-25 pe-5">
+                    <i class="bx bx-bar-chart-alt-2 text-white" style="font-size: 8rem;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
 
-                <!-- Teacher Registration Card -->
-                <div class="col-md-6">
-                    <?php 
-                        $teacherStatus = $StatusOnoffClubTeacher ?? 'ปิด';
-                        $teacherStatusClass = $teacherStatus == "เปิด" ? "success" : "danger";
-                        $teacherStatusBg = $teacherStatus == "เปิด" ? "bg-success-subtle" : "bg-danger-subtle";
-                        $teacherIcon = $teacherStatus == "เปิด" ? '<i class="bx bx-check-circle"></i>' : '<i class="bx bx-x-circle"></i>';
-                    ?>
-                    <div class="card border-<?= esc($teacherStatusClass) ?> shadow-sm h-100">
-                        <div class="card-header border-bottom border-<?= esc($teacherStatusClass) ?> <?= esc($teacherStatusBg) ?> py-3">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div class="d-flex align-items-center">
-                                    <?= $teacherIcon ?>
-                                    <h5 class="mb-0 ms-2">กำหนดการเปิด/ปิด (ครู)</h5>
-                                </div>
-                                <div class="badge bg-<?= esc($teacherStatusClass) ?> px-3 py-2">
-                                    <?= esc($teacherStatus) ?>ใช้งาน
-                                </div>
-                            </div>
+    <!-- Stats Grid -->
+    <div class="row g-4 mb-4">
+        <!-- Total Clubs -->
+        <div class="col-sm-6 col-lg-3">
+            <div class="card card-hover shadow-sm border-0 h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="avatar avatar-md flex-shrink-0 me-3">
+                            <span class="avatar-initial rounded bg-label-primary shadow-sm"><i class="bx bx-collection fs-3"></i></span>
                         </div>
-                        <div class="card-body p-4">
-                            <div class="d-flex gap-3 align-items-center mb-3">
-                                <i class="bx bx-calendar-check fs-4 text-<?= esc($teacherStatusClass) ?>"></i>
-                                <div>
-                                    <small class="text-muted d-block">เริ่ม</small>
-                                    <span class="fw-semibold fs-5"><?= $formatted_teacher_regisstart ?? '-' ?></span>
-                                </div>
-                            </div>
-                            <div class="d-flex gap-3 align-items-center">
-                                <i class="bx bx-calendar-x fs-4 text-<?= esc($teacherStatusClass) ?>"></i>
-                                <div>
-                                    <small class="text-muted d-block">สิ้นสุด</small>
-                                    <span class="fw-semibold fs-5"><?= $formatted_teacher_regisend ?? '-' ?></span>
-                                </div>
-                            </div>
+                        <div>
+                            <span class="d-block text-muted small fw-semibold uppercase">ชุมนุมทั้งหมด</span>
+                            <h3 class="card-title mb-0"><?= count($TotalClubs ?? []) ?></h3>
                         </div>
+                    </div>
+                    <div class="d-flex align-items-center text-primary fw-semibold small">
+                        <span>เปิดสอนในเทอมนี้</span>
+                        <i class="bx bx-chevron-right ms-1"></i>
+                    </div>
+                </div>
+                <a href="<?= site_url('Admin/Acade/DevelopStudents/Clubs/All') ?>" class="stretched-link"></a>
+            </div>
+        </div>
+
+        <!-- Registered Students -->
+        <div class="col-sm-6 col-lg-3">
+            <div class="card card-hover shadow-sm border-0 h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="avatar avatar-md flex-shrink-0 me-3">
+                            <span class="avatar-initial rounded bg-label-info shadow-sm"><i class="bx bx-group fs-3"></i></span>
+                        </div>
+                        <div>
+                            <span class="d-block text-muted small fw-semibold uppercase">นักเรียนลงทะเบียน</span>
+                            <h3 class="card-title mb-0"><?= $TotalStudent[0]->StudentAll ?? 0 ?></h3>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center text-info fw-semibold small">
+                        <span>ข้อมูลอัปเดตเรียลไทม์</span>
+                        <i class="bx bx-check-circle ms-1"></i>
+                    </div>
+                </div>
+                <a href="<?= base_url('admin/academic/develop-students/student-registrations') ?>" class="stretched-link"></a>
+            </div>
+        </div>
+
+        <!-- Teachers -->
+        <div class="col-sm-6 col-lg-3">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="avatar avatar-md flex-shrink-0 me-3">
+                            <span class="avatar-initial rounded bg-label-warning shadow-sm"><i class="bx bx-user-voice fs-3"></i></span>
+                        </div>
+                        <div>
+                            <span class="d-block text-muted small fw-semibold uppercase">ครูที่ปรึกษา</span>
+                            <h3 class="card-title mb-0"><?= $TotalTeacher[0]->total_advisors ?? 0 ?></h3>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center text-warning fw-semibold small">
+                        <span>ทั้งหมดในระบบแยกตามรายชื่อ</span>
                     </div>
                 </div>
             </div>
-                                            <!-- Cards Section -->
-                                            <div class="row g-4 mb-4">
-                                                <!-- Card 1: ชุมนุมทั้งหมด -->
-                                                <div class="col-sm-6 col-xl-3">
-                                                    <div class="card">
-                                                        <div class="card-body">
-                                                            <div class="d-flex align-items-start justify-content-between">
-                                                                <div class="content-left">
-                                                                    <span class="fw-semibold d-block mb-1">ชุมนุมทั้งหมด</span>
-                                                                    <div class="d-flex align-items-baseline mt-2">
-                                                                        <h4 class="mb-0 me-2"><?= isset($TotalClubs) && is_array($TotalClubs) ? count($TotalClubs) : 0 ?></h4>
-                                                                        <small class="text-success">ชุมนุม</small>
-                                                                    </div>
-                                                                    <small class="text-muted">ปีการศึกษา <?= esc($ExYearClub[0]) ?>/<?= esc($ExYearClub[1]) ?></small>
-                                                                </div>
-                                                                <span class="badge bg-primary-subtle p-2">
-                                                                    <i class="bx bx-book-bookmark fs-3 text-primary"></i>
-                                                                </span>
-                                                            </div>
-                                                        </div>
-                                                        <a class="stretched-link" href="<?= site_url('Admin/Acade/DevelopStudents/Clubs/All') ?>"></a>
-                                                    </div>
-                                                </div>
-                                
-                                                <!-- Card 2: นักเรียนลงทะเบียน -->
-                                                <div class="col-sm-6 col-xl-3">
-                                                    <div class="card">
-                                                        <div class="card-body">
-                                                            <div class="d-flex align-items-start justify-content-between">
-                                                                <div class="content-left">
-                                                                    <span class="fw-semibold d-block mb-1">นักเรียนลงทะเบียน</span>
-                                                                    <div class="d-flex align-items-baseline mt-2">
-                                                                        <h4 class="mb-0 me-2"><?= isset($TotalStudent[0]->StudentAll) && !is_null($TotalStudent[0]->StudentAll) ? esc($TotalStudent[0]->StudentAll) : 0 ?></h4>
-                                                                        <small class="text-info">คน</small>
-                                                                    </div>
-                                                                    <small class="text-muted">ลงทะเบียนทั้งหมด</small>
-                                                                </div>
-                                                                <span class="badge bg-info-subtle p-2">
-                                                                    <i class="bx bx-group fs-3 text-info"></i>
-                                                                </span>
-                                                            </div>
-                                                        </div>
-                                                        <a class="stretched-link" href="<?= base_url('admin/academic/develop-students/student-registrations') ?>"></a>
-                                                    </div>
-                                                </div>
-                                
-                                                <!-- Card 3: ครูที่ปรึกษา -->
-                                                <div class="col-sm-6 col-xl-3">
-                                                    <div class="card">
-                                                        <div class="card-body">
-                                                            <div class="d-flex align-items-start justify-content-between">
-                                                                <div class="content-left">
-                                                                    <span class="fw-semibold d-block mb-1">ครูที่ปรึกษาชุมนุม</span>
-                                                                    <div class="d-flex align-items-baseline mt-2">
-                                                                        <h4 class="mb-0 me-2"><?= isset($TotalTeacher[0]->total_advisors) && !is_null($TotalTeacher[0]->total_advisors) ? esc($TotalTeacher[0]->total_advisors) : 0 ?></h4>
-                                                                        <small class="text-warning">คน</small>
-                                                                    </div>
-                                                                    <small class="text-muted">ในระบบ</small>
-                                                                </div>
-                                                                <span class="badge bg-warning-subtle p-2">
-                                                                    <i class="bx bx-user-pin fs-3 text-warning"></i>
-                                                                </span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                
-                                                <!-- Card 4: ชุมนุมยอดนิยม -->
-                                                <div class="col-sm-6 col-xl-3">
-                                                    <div class="card">
-                                                        <div class="card-body">
-                                                            <div class="d-flex align-items-start justify-content-between">
-                                                                <div class="content-left">
-                                                                    <span class="fw-semibold d-block mb-1">ชุมนุมยอดนิยม</span>
-                                                                    <div class="d-flex align-items-baseline mt-2">
-                                                                        <h4 class="mb-0 me-2 text-truncate" style="max-width: 150px;">
-                                                                            <?= isset($ClubPopula->club_name) ? esc($ClubPopula->club_name) : 'ไม่มี' ?>
-                                                                        </h4>
-                                                                    </div>
-                                                                    <small class="text-danger"><?= isset($ClubPopula->total_members) ? esc($ClubPopula->total_members) : '0' ?> คน</small>
-                                                                </div>
-                                                                <span class="badge bg-danger-subtle p-2">
-                                                                    <i class="bx bx-star fs-3 text-danger"></i>
-                                                                </span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div><!--//row-->
-
-
         </div>
+
+        <!-- Popular Club -->
+        <div class="col-sm-6 col-lg-3">
+            <div class="card shadow-sm border-0 h-100 bg-light">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3 text-truncate">
+                        <div class="avatar avatar-md flex-shrink-0 me-3">
+                            <span class="avatar-initial rounded bg-label-danger shadow-sm border-2 border-white"><i class="bx bxs-hot fs-3"></i></span>
+                        </div>
+                        <div class="overflow-hidden">
+                            <span class="d-block text-muted small fw-semibold uppercase">ยอดนิยมอันดับ 1</span>
+                            <h5 class="card-title mb-0 text-truncate" title="<?= esc($ClubPopula->club_name ?? 'ไม่มี') ?>">
+                                <?= esc($ClubPopula->club_name ?? 'ไม่มี') ?>
+                            </h5>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <div class="progress w-100 mt-1" style="height: 6px;">
+                            <div class="progress-bar bg-danger" role="progressbar" style="width: 100%" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                        <span class="ms-2 fw-bold text-danger"><?= $ClubPopula->total_members ?? 0 ?></span>
+                    </div>
+                    <small class="text-muted mt-1 d-block fw-300">จำนวนนักเรียนที่เข้าร่วม</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Schedule & Status -->
+    <div class="row g-4">
+        <!-- Student Schedule -->
+        <div class="col-lg-6">
+            <div class="card shadow-sm border-0 h-100 position-relative overflow-hidden">
+                <div class="card-body pb-5">
+                    <div class="d-flex align-items-center justify-content-between mb-4">
+                        <div class="d-flex align-items-center">
+                            <div class="p-2 bg-label-<?= $stdCfg['class'] ?> rounded me-3 shadow-sm">
+                                <i class="bx bx-calendar-event fs-4"></i>
+                            </div>
+                            <div>
+                                <h5 class="mb-0">กำหนดการเปิด/ปิด (นักเรียน)</h5>
+                                <small class="text-muted">นักเรียนลงทะเบียนเลือกชุมนุม</small>
+                            </div>
+                        </div>
+                        <span class="badge <?= $stdCfg['bg'] ?> text-<?= $stdCfg['class'] ?> text-uppercase px-3 py-2 fw-bold shadow-sm">
+                            <i class="bx <?= $stdCfg['icon'] ?> me-1"></i><?= $stdCfg['label'] ?>
+                        </span>
+                    </div>
+
+                    <div class="row g-0 bg-light rounded overflow-hidden mb-3">
+                        <div class="col-6 border-end border-white">
+                            <div class="p-3 d-flex align-items-center">
+                                <i class="bx bx-play-circle text-primary me-2 fs-3 opacity-75"></i>
+                                <div>
+                                    <p class="mb-0 text-muted small">เริ่มระบบ</p>
+                                    <span class="fw-bold small"><?= $formatted_student_regisstart ?? '-' ?></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-3 d-flex align-items-center">
+                                <i class="bx bx-stop-circle text-danger me-2 fs-3 opacity-75"></i>
+                                <div>
+                                    <p class="mb-0 text-muted small">จบระบบ</p>
+                                    <span class="fw-bold small"><?= $formatted_student_regisend ?? '-' ?></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent border-0 pt-0 pb-4 px-4 mt-auto">
+                    <button class="btn btn-outline-primary w-100 fw-bold border-2" data-bs-toggle="modal" data-bs-target="#modalClubStudentSettings">
+                        <i class="bx bx-cog me-1"></i> ตั้งค่าการลงทะเบียนนักเรียน
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Teacher Schedule -->
+        <div class="col-lg-6">
+            <div class="card shadow-sm border-0 h-100 position-relative overflow-hidden">
+                <div class="card-body pb-5">
+                    <div class="d-flex align-items-center justify-content-between mb-4">
+                        <div class="d-flex align-items-center">
+                            <div class="p-2 bg-label-<?= $tchCfg['class'] ?> rounded me-3 shadow-sm">
+                                <i class="bx bx-user-check fs-4"></i>
+                            </div>
+                            <div>
+                                <h5 class="mb-0">กำหนดการเปิด/ปิด (ครู)</h5>
+                                <small class="text-muted">ครูที่ปรึกษาจัดการข้อมูลชุมนุม</small>
+                            </div>
+                        </div>
+                        <span class="badge <?= $tchCfg['bg'] ?> text-<?= $tchCfg['class'] ?> text-uppercase px-3 py-2 fw-bold shadow-sm">
+                            <i class="bx <?= $tchCfg['icon'] ?> me-1"></i><?= $tchCfg['label'] ?>
+                        </span>
+                    </div>
+
+                    <div class="row g-0 bg-light rounded overflow-hidden mb-3">
+                        <div class="col-6 border-end border-white">
+                            <div class="p-3 d-flex align-items-center">
+                                <i class="bx bx-play-circle text-primary me-2 fs-3 opacity-75"></i>
+                                <div>
+                                    <p class="mb-0 text-muted small">เริ่มระบบ</p>
+                                    <span class="fw-bold small"><?= $formatted_teacher_regisstart ?? '-' ?></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-3 d-flex align-items-center">
+                                <i class="bx bx-stop-circle text-danger me-2 fs-3 opacity-75"></i>
+                                <div>
+                                    <p class="mb-0 text-muted small">จบระบบ</p>
+                                    <span class="fw-bold small"><?= $formatted_teacher_regisend ?? '-' ?></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent border-0 pt-0 pb-4 px-4 mt-auto">
+                    <button class="btn btn-outline-info w-100 fw-bold border-2" data-bs-toggle="modal" data-bs-target="#modalClubTeacherSettings">
+                        <i class="bx bx-cog me-1"></i> ตั้งค่าการเข้าถึงของครู
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.bg-label-primary { background-color: #e7e7ff !important; color: #696cff !important; }
+.bg-label-info { background-color: #d7f5fc !important; color: #03c3ec !important; }
+.bg-label-warning { background-color: #fff2d6 !important; color: #ffab00 !important; }
+.bg-label-danger { background-color: #ffe5e5 !important; color: #ff3e1d !important; }
+.bg-label-success { background-color: #e8fadf !important; color: #71dd37 !important; }
+
+.card-hover:hover {
+    transform: translateY(-5px);
+    transition: all 0.3s ease;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+}
+
+.border-dashed { border-style: dashed !important; }
+
+.uppercase { text-transform: uppercase; letter-spacing: 0.5px; }
+
+/* Dashboard Widgets Icons shadow */
+.avatar-initial {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.btn-white {
+    background-color: #fff;
+    color: #696cff;
+    border: 1px solid #fff;
+}
+.btn-white:hover {
+    background-color: #f8f9fa;
+    border-color: #f8f9fa;
+}
+</style>
 
 <?= $this->endSection() ?>
 
 <?= $this->section('modals') ?>
 <?= view('admin/Academic/AdminDevelopStudents/Clubs/AdminClubSetYear.php'); ?>
-<?= view('admin/Academic/AdminDevelopStudents/Clubs/AdminClubSetDateRegister.php'); ?>
 <?= view('admin/Academic/AdminDevelopStudents/Clubs/AdminClubSetDateAttendance.php'); ?>
 <?= view('admin/Academic/AdminDevelopStudents/_modalClubsSetting.php'); ?>
 <?= $this->endSection() ?>
 
 <?= $this->section('script') ?>
 <script>
-// Add global SweetAlert2 z-index fix
-// Ideally, this CSS should be in a separate global stylesheet.
-// But for immediate effect and demonstration, it's placed here.
-$('head').append('<style>.swal2-container { z-index: 99999 !important; }</style>');
-
-//---------------------- Club On/Off Settings Script ---------------------------
 $(document).ready(function() {
-    // Reload page when any settings modal is closed
-    $('#ClubSetDateRegister, #modalClubSettings, #ModalClubSetYear').on('hidden.bs.modal', function (e) {
+    // Add global SweetAlert2 z-index fix
+    $('head').append('<style>.swal2-container { z-index: 99999 !important; }</style>');
+
+    // Reload page when specific setting modals are closed to refresh dashboard stats
+    $('#ModalClubSetYear, #modalClubStudentSettings, #modalClubTeacherSettings, #modalClubSystemSettings').on('hidden.bs.modal', function() {
         window.location.reload();
     });
 
-    // Initialize datepickers inside the settings modal when it's shown
-    $('#modalClubSettings').on('shown.bs.modal', function () {
+    // Initialize datepickers inside any of the setting modals when shown
+    $('#modalClubStudentSettings, #modalClubTeacherSettings, #modalClubSystemSettings').on('shown.bs.modal', function () {
         flatpickr(".club-onoff-datepicker", {
             dateFormat: "Y-m-d",
             locale: "th",
             onChange: function(selectedDates, dateStr, instance) {
                 const target = $(instance.element).data('target');
-                const type = $(instance.element).data('type');
-                
                 const startDateInput = $(`.club-onoff-datepicker[data-target='${target}'][data-type='start']`);
                 const endDateInput = $(`.club-onoff-datepicker[data-target='${target}'][data-type='end']`);
-
                 const startDate = startDateInput.val();
                 const endDate = endDateInput.val();
 
-                // Optional: Add validation, e.g., end date must be after start date
                 if (startDate && endDate && startDate > endDate) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'ผิดพลาด',
-                        text: 'วันที่สิ้นสุดต้องอยู่หลังวันที่เริ่มต้น',
-                    });
-                    // Revert the changed date
-                    // This part can be complex, for now, we just notify the user.
+                    Swal.fire({ icon: 'error', title: 'ผิดพลาด', text: 'วันที่สิ้นสุดต้องอยู่หลังวันที่เริ่มต้น' });
                     return;
                 }
 
-                // AJAX call to save the dates
                 $.ajax({
                     url: '<?= site_url('admin/academic/developstudents/update_onoff_dates') ?>',
                     type: 'POST',
@@ -294,39 +354,19 @@ $(document).ready(function() {
                     dataType: 'json',
                     success: function(response) {
                         if (response.success) {
-                            // Show a small success toast
-                            const Toast = Swal.mixin({
-                                toast: true,
-                                position: 'top-end',
-                                showConfirmButton: false,
-                                timer: 1500,
-                                timerProgressBar: true
-                            });
-                            Toast.fire({
-                                icon: 'success',
-                                title: 'บันทึกวันที่แล้ว'
-                            });
+                            const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 1500, timerProgressBar: true });
+                            Toast.fire({ icon: 'success', title: 'บันทึกวันที่แล้ว' });
                         } else {
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'ผิดพลาด!',
-                                text: response.message || 'ไม่สามารถบันทึกวันที่ได้'
-                            });
+                            Swal.fire({ icon: 'error', title: 'ผิดพลาด!', text: response.message || 'ไม่สามารถบันทึกได้' });
                         }
-                    },
-                    error: function() {
-                         Swal.fire({
-                            icon: 'error',
-                            title: 'ผิดพลาด!',
-                            text: 'เกิดข้อผิดพลาดในการสื่อสารกับเซิร์ฟเวอร์'
-                        });
                     }
                 });
             }
         });
     });
 
-    $('.club-onoff-toggle').on('change', function() {
+    // Handle On/Off toggles
+    $(document).on('change', '.club-onoff-toggle', function() {
         const checkbox = $(this);
         const target = checkbox.data('target');
         const isChecked = checkbox.is(':checked');
@@ -334,18 +374,15 @@ $(document).ready(function() {
         const statusTextElement = $(`#${target}-status-text`);
         
         let newStatusText, title, text;
-
         if (target === 'system') {
-            newStatusText = isChecked ? 'ปิดปรับปรุง' : 'ออนไลน์';
+            newStatusText = isChecked ? 'ปิดปรับปรุง' : 'ออนไลน์ปกติ';
             title = isChecked ? 'ยืนยันการปิดปรับปรุงระบบ?' : 'ยืนยันการเปิดระบบ?';
-            text = isChecked 
-                ? 'ผู้ใช้ทั่วไปจะไม่สามารถเข้าใช้งานระบบได้จนกว่าจะเปิดอีกครั้ง' 
-                : 'ผู้ใช้ทั่วไปจะสามารถกลับเข้าใช้งานระบบได้ตามปกติ';
+            text = isChecked ? 'ผู้ใช้ปกติจะไม่สามารถเข้าใช้งานได้' : 'ผู้ใช้จะสามารถใช้งานได้ตามปกติ';
         } else {
-            newStatusText = isChecked ? 'เปิด' : 'ปิด';
+            newStatusText = isChecked ? 'เปิดระบบ' : 'ปิดระบบ';
             const targetThai = target === 'student' ? 'นักเรียน' : 'ครู';
-            title = `ยืนยันการ${newStatusText}ระบบสำหรับ${targetThai}?`;
-            text = `ระบบการลงทะเบียนชุมนุมสำหรับ ${targetThai} จะถูก ${newStatusText}`;
+            title = `ยืนยันการ${newStatusText}สำหรับ${targetThai}?`;
+            text = `ระบบสำหรับ ${targetThai} จะถูก ${newStatusText}`;
         }
 
         Swal.fire({
@@ -353,17 +390,10 @@ $(document).ready(function() {
             text: text,
             icon: 'warning',
             showCancelButton: true,
-            confirmButtonColor: '#3085d6',
-            cancelButtonColor: '#d33',
             confirmButtonText: 'ยืนยัน',
             cancelButtonText: 'ยกเลิก'
         }).then((result) => {
             if (result.isConfirmed) {
-                // Proceed with AJAX call
-                const originalStatusText = statusTextElement.text();
-                statusTextElement.html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>');
-                checkbox.prop('disabled', true);
-
                 $.ajax({
                     url: '<?= site_url('admin/academic/developstudents/update_onoff_status') ?>',
                     type: 'POST',
@@ -378,456 +408,58 @@ $(document).ready(function() {
                     success: function(response) {
                         if (response.success) {
                             statusTextElement.text(newStatusText);
-                            Swal.fire({
-                                icon: 'success',
-                                title: 'สำเร็จ!',
-                                text: response.message || 'อัปเดตสถานะเรียบร้อยแล้ว',
-                                timer: 1500,
-                                showConfirmButton: false
-                            });
+                            statusTextElement.removeClass('bg-label-success bg-label-danger bg-success bg-danger');
+                            if (target === 'system') {
+                                statusTextElement.addClass(isChecked ? 'badge bg-danger' : 'badge bg-success');
+                            } else {
+                                statusTextElement.addClass(isChecked ? 'badge bg-label-success' : 'badge bg-label-danger');
+                            }
+                            Swal.fire({ icon: 'success', title: 'สำเร็จ!', timer: 1500, showConfirmButton: false });
                         } else {
-                            checkbox.prop('checked', !isChecked); // Revert checkbox
-                            statusTextElement.text(originalStatusText);
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'ผิดพลาด!',
-                                text: response.message || 'ไม่สามารถอัปเดตสถานะได้'
-                            });
+                            checkbox.prop('checked', !isChecked);
+                            Swal.fire({ icon: 'error', title: 'ผิดพลาด!', text: response.message });
                         }
                     },
                     error: function() {
-                        checkbox.prop('checked', !isChecked); // Revert checkbox
-                        statusTextElement.text(originalStatusText);
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'ผิดพลาด!',
-                            text: 'เกิดข้อผิดพลาดในการสื่อสารกับเซิร์ฟเวอร์'
-                        });
-                    },
-                    complete: function() {
-                        checkbox.prop('disabled', false);
+                        checkbox.prop('checked', !isChecked);
+                        Swal.fire({ icon: 'error', title: 'ผิดพลาด!', text: 'การเชื่อมต่อเซิร์ฟเวอร์ขัดข้อง' });
                     }
                 });
-            } else {
-                // User cancelled, revert the checkbox state
-                checkbox.prop('checked', !isChecked);
-            }
+            } else { checkbox.prop('checked', !isChecked); }
         });
     });
-});
 
-//---------------------- แดชบอร์ด ---------------------------
+    // Academic Year Handlers
+    $(document).on('click', '#MenuSetYear', function () { $('#ModalClubSetYear').modal('show'); });
+    $(document).on('click', '#MenuSetDateAttendancer', function () { $('#ClubSetDateAttendance').modal('show'); });
 
-// กำหนดปีการศึกษา
-$(document).on('click', '#MenuSetYear', function () { 
-    $('#ModalClubSetYear').modal('show');
- });
-
-$('#ModalClubSetYear').on('shown.bs.modal', function () {
-    const currentAcademicYear = '<?= esc($ExYearClub[0]) ?>'; // Get current year from PHP
-    const currentAcademicTerm = '<?= esc($ExYearClub[1]) ?>'; // Get current term from PHP
-
-    $.ajax({
-        url: '<?= site_url('admin/academic/ConAdminDevelopStudents/ClubGetAcademicYears') ?>',
-        type: 'GET',
-        dataType: 'json',
-        success: function (response) {
-            console.log('Response from ClubGetAcademicYears:', response); // Debugging line
-            const yearSelect = $('#c_onoff_year');
-            yearSelect.empty(); // Clear existing options
-
-            // Add a default disabled option
-            yearSelect.append($('<option>', {
-                value: '',
-                text: 'เลือกปีการศึกษา',
-                disabled: true,
-                selected: true
-            }));
-
-            // Populate with years from the database
-            response.forEach(function (year) {
-                const option = $('<option>', {
-                    value: year,
-                    text: year
-                });
-                if (year == currentAcademicYear) {
-                    option.attr('selected', true);
-                }
-                yearSelect.append(option);
-            });
-
-            // Populate and pre-select the current term
-            const termSelect = $('#c_onoff_term');
-            termSelect.empty(); // Clear existing options
-            termSelect.append($('<option>', { value: '1', text: '1' }));
-            termSelect.append($('<option>', { value: '2', text: '2' }));
-            termSelect.val(currentAcademicTerm);
-        },
-        error: function (jqXHR, textStatus, errorThrown) {
-            console.error("AJAX Error for ClubGetAcademicYears:", textStatus, errorThrown, jqXHR);
-            Swal.fire({
-                icon: "error",
-                title: "แจ้งเตือน!",
-                text: "ไม่สามารถโหลดปีการศึกษาได้: " + textStatus
-            });
-
-            // Fallback: Populate with current year and next year
-            const yearSelect = $('#c_onoff_year');
-            yearSelect.empty();
-            yearSelect.append($('<option>', {
-                value: '',
-                text: 'เลือกปีการศึกษา',
-                disabled: true,
-                selected: true
-            }));
-            const currentYear = new Date().getFullYear();
-            yearSelect.append($('<option>', { value: currentYear, text: currentYear }));
-            yearSelect.append($('<option>', { value: currentYear + 1, text: currentYear + 1 }));
-            yearSelect.val(currentAcademicYear); // Try to pre-select current year
-        }
-    });
-});
-
- $(document).on('submit','#FormClubSetOnoffYear',function (e) {
-    e.preventDefault();
-    // ดึงค่าจากฟอร์ม
-    const c_onoff_term = $('#c_onoff_term').val();
-    const c_onoff_year = $('#c_onoff_year').val();
-
-    // ตรวจสอบค่าก่อนส่ง
-    if (!c_onoff_term || !c_onoff_year) {
-        alert('กรุณากรอกข้อมูลให้ครบถ้วน');
-        return;
-    }
-
-    // ส่งข้อมูลผ่าน AJAX
-    $.ajax({
-        url: '<?= site_url('admin/academic/ConAdminDevelopStudents/ClubSetOnoffYear') ?>', // ชี้ไปที่ Controller
-        type: 'POST',
-        dataType: 'json',
-        data: {
-            c_onoff_term: c_onoff_term,
-            c_onoff_year: c_onoff_year
-        },
-        success: function (response) {
-            console.log('Response ', response); // Debugging line
-             
-            if (response.status === 'success') {
-                        
-                $('#ModalClubSetYear').modal('hide');
-                $('.modal-backdrop').remove();  
-                Swal.fire({
-                    title: "แจ้งเตือน?",
-                    text: response.message,
-                    icon: "success",
-                  }).then((result) => {
-                    if (result.isConfirmed) {
-                        window.location.reload();
-                    }
-                  });
- 
-            } else {
-                Swal.fire({
-                    icon: "error",
-                    title: "แจ้งเตือน!",
-                    text: response.message
-                });
-            }
-        },
-        error: function (xhr, status, error) {
-            
-            console.log(' ', xhr.responseText); // Debugging line
-        }
-    });
-});
-
-$(document).on('click', '#MenuSetDateRegister', function () { 
-    $('#ClubSetDateRegister').modal('show');
-    $.ajax({
-        url: '<?= site_url('admin/academic/ConAdminDevelopStudents/ClubGetDateRegister') ?>', // URL ของ PHP ที่ดึงข้อมูล
-        method: 'GET',
-        dataType: 'json',
-        success: function (response) {
-
-            var c_onoff_regisstart = response.datetime.c_onoff_regisstart;
-            var c_onoff_regisend = response.datetime.c_onoff_regisend;
-
-            // แปลงค่าให้เป็น Date Object (เพื่อป้องกันการแปลง Time Zone ผิด)
-            var TimeStart = new Date(c_onoff_regisstart);
-            var TimeEnd = new Date(c_onoff_regisend);
-            // ใช้งาน Flatpickr พร้อมตั้งค่าภาษาไทย
-            flatpickr(".thaiDateTimeStart", {
-                enableTime: true, // เปิดเลือกเวลา
-                dateFormat: "d F Y H:i", // กำหนดรูปแบบวันที่เวลา
-                locale: "th", // ตั้งค่าภาษาไทย
-                disableMobile: true ,
-                defaultDate: TimeStart,
-            });
-
-            flatpickr(".thaiDateTimeEnd", {
-                enableTime: true, // เปิดเลือกเวลา
-                dateFormat: "d F Y H:i", // กำหนดรูปแบบวันที่เวลา
-                locale: "th", // ตั้งค่าภาษาไทย
-                disableMobile: true ,
-                defaultDate: TimeEnd,
-            });
-        },
-        error: function (xhr, status, error) {
-            console.error("Error fetching date:", error);
-        }
-    });
-
-
-   
- });
-
-
-
-$(document).on('submit','#FormClubSetDateRegister',function (e) {
-    e.preventDefault();
-    // ดึงค่าจากฟอร์ม
-    const c_onoff_regisstart = $('#c_onoff_regisstart').val();
-    const c_onoff_regisend = $('#c_onoff_regisend').val();
-    
-    // ตรวจสอบค่าก่อนส่ง
-    if (!c_onoff_regisstart || !c_onoff_regisend) {
-        alert('กรุณากรอกข้อมูลให้ครบถ้วน');
-        return;
-    }
-
-    // ส่งข้อมูลผ่าน AJAX
-    $.ajax({
-        url: '<?= site_url('admin/academic/ConAdminDevelopStudents/ClubSetDateRegister') ?>', // ชี้ไปที่ Controller
-        type: 'POST',
-        dataType: 'json',
-        data: {
-            c_onoff_regisstart: c_onoff_regisstart,
-            c_onoff_regisend: c_onoff_regisend
-        },
-        success: function (response) {
-            if (response.status === 'success') {
-                $('#ClubSetDateRegister').modal('hide');
-                $('.modal-backdrop').remove();
-                Swal.fire({
-                    title: "แจ้งเตือน!",
-                    text: response.message,
-                    icon: "success",
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        window.location.reload();
-                    }
-                });
-            } else {
-                Swal.fire({
-                    icon: "error",
-                    title: "แจ้งเตือน!",
-                    text: response.message || 'เกิดข้อผิดพลาดในการบันทึกข้อมูล'
-                });
-            }
-        },
-        error: function (jqXHR, textStatus, errorThrown) {
-            console.error("AJAX Error for ClubSetDateRegister:", textStatus, errorThrown, jqXHR);
-            Swal.fire({
-                icon: "error",
-                title: "แจ้งเตือน!",
-                text: "เกิดข้อผิดพลาดในการบันทึกข้อมูล: " + textStatus
-            });
-        }
-    });
-});
-
-
-$(document).on('click', '#MenuSetDateAttendancer', function () { 
-    $('#ClubSetDateAttendance').modal('show');
-    
-
-    $.ajax({
-        url: '<?= site_url('admin/academic/ConAdminDevelopStudents/ClubGetWeeksToUpdate') ?>', // URL ของ Controller
-        type: 'GET',                    // ประเภทคำขอ
-        dataType: 'json',               // ประเภทข้อมูลที่รับมา
-        success: function (response) {
-            
-            if (response.status === 'success') {
-                response.data.forEach(function (week, index) {
-                   // console.log("week.tcs_start_date:", week.tcs_start_date); // Add this line
-
-                    var TimeEnd = null; // Initialize to null
-                    if (week.tcs_start_date && week.tcs_start_date !== '0000-00-00 00:00:00') { // Check if date is valid
-                        TimeEnd = new Date(week.tcs_start_date);
-                        if (isNaN(TimeEnd.getTime())) { // Check if new Date() resulted in Invalid Date
-                            TimeEnd = null;
-                        }
-                    }
-
-                    flatpickr("#tcs_academic_year"+(index+1), {
-                        dateFormat: "d F Y", // กำหนดรูปแบบวันที่เวลา
-                        locale: "th", // ตั้งค่าภาษาไทย
-                        disableMobile: true ,
-                        defaultDate: TimeEnd,
-                        onChange: function (selectedDates, dateStr, instance) {
-                           // console.log("flatpickr dateStr:", dateStr); // Keep debugging log
-                            const isoDate = convertThaiDateToISO(dateStr); // Convert to YYYY-MM-DD
-                            let id = $(instance.input).data('id');
-                           // console.log("Selected Date ID:", id, "ISO Date:", isoDate); // Debug log
-                            updateClubDateSchedule(id, isoDate); // Call update function
-                        }
-                    });
-                });
-              
-            }
-        }
-    });
-    
-   
-
-    $.ajax({
-        url: `<?= site_url('admin/academic/ConAdminDevelopStudents/ClubCreateWeeks') ?>`,
-        type: 'GET',
-        dataType: 'json',
-        success: function (data) {
-            //console.log(data); // เช็คข้อมูลที่ดึงมา
-        },
-        error: function () {
-            console.error('ไม่สามารถดึงข้อมูลได้');
-        }
-    });
-});
-
-function loadWeeksData() {
-    $.ajax({
-        url: '<?= site_url('admin/academic/ConAdminDevelopStudents/ClubGetWeeksToUpdate') ?>', // URL ของ Controller
-        type: 'GET',                    // ประเภทคำขอ
-        dataType: 'json',               // ประเภทข้อมูลที่รับมา
-        success: function (response) {
-            let rows = '';
-            if (response.status === 'success') {
-                response.data.forEach(function (week, index) {
-                    
-                    if(week.tcs_week_status == "เปิด"){
-                        var Ckecked = "checked";
-                    }else{
-                        var Ckecked = "";
-                    }
-                    rows += `
-                        <tr>
+    // Handle Weeks / Attendance Data (Existing dynamic loading)
+    function loadWeeksData() {
+        $.ajax({
+            url: '<?= site_url('admin/academic/ConAdminDevelopStudents/ClubGetWeeksToUpdate') ?>',
+            type: 'GET',
+            dataType: 'json',
+            success: function (response) {
+                let rows = '';
+                if (response.status === 'success') {
+                    response.data.forEach(function (week, index) {
+                        let checked = (week.tcs_week_status == "เปิด") ? "checked" : "";
+                        rows += `<tr>
                             <td>สัปดาห์ที่ ${index + 1}</td>
-                            <td><input type="date" class="form-control tcs_academic_year" name="tcs_academic_year" id="tcs_academic_year${index + 1}" value="" data-id="${week.tcs_schedule_id}"></td>
+                            <td><input type="date" class="form-control tcs_academic_year" id="tcs_academic_year${index + 1}" data-id="${week.tcs_schedule_id}"></td>
                             <td>
                                 <div class="form-check form-switch d-flex">
-                                    <input class="form-check-input status-btn" type="checkbox" data-status="${week.tcs_week_status}" data-id="${week.tcs_schedule_id}" ${Ckecked} id="customSwitch${index + 1}" >
-                                    <label class="form-check-switch-label" for="customSwitch${index + 1}"></label>
+                                    <input class="form-check-input status-btn" type="checkbox" data-status="${week.tcs_week_status}" data-id="${week.tcs_schedule_id}" ${checked}>
                                 </div>
                             </td>
-                            
-                        </tr>
-                    `;
-
-                });
-
-            } else {
-                rows = '<tr><td colspan="3" class="text-center">ไม่มีข้อมูล</td></tr>';
+                        </tr>`;
+                    });
+                } else { rows = '<tr><td colspan="3" class="text-center">ไม่มีข้อมูล</td></tr>'; }
+                $('#TbDateWeeks tbody').html(rows);
             }
-            $('#TbDateWeeks tbody').html(rows); // แสดงข้อมูลในตาราง
-        },
-        error: function (jqXHR, textStatus, errorThrown) {
-            console.error("AJAX Error for loadWeeksData:", textStatus, errorThrown, jqXHR);
-            Swal.fire({
-                icon: "error",
-                title: "แจ้งเตือน!",
-                text: "ไม่สามารถโหลดข้อมูลได้: " + textStatus
-            });
-        }
-    });
-}
-
-// อัปเดตวันที่เวลาเรียนในฐานข้อมูล
-function updateClubDateSchedule(id, newDate) {
-    $.ajax({
-        url: '<?= site_url('admin/academic/ConAdminDevelopStudents/ClubUpdateSchedule') ?>', // URL ของ Controller
-        type: 'POST',
-        data: {
-            id: id, // ID ของข้อมูลที่จะแก้ไข
-            date: newDate // วันที่ใหม่ในรูปแบบ Y-m-d
-        },
-        dataType:'json',
-        success: function (response) {
-            console.log("updateClubDateSchedule response:", response); // Add this line
-            if (response.status === 'success') {
-                
-                Swal.fire({
-                    position: "top-end",
-                    icon: "success",
-                    title: "อัปเดตวันที่สำเร็จ",
-                    showConfirmButton: false,
-                    timer: 1500
-                  });
-            } else {
-                Swal.fire({
-                    icon: "error",
-                    title: "แจ้งเตือน!",
-                    text: 'เกิดข้อผิดพลาด: ' + (response.message || 'ไม่สามารถอัปเดตวันที่ได้')
-                });
-            }
-        },
-        error: function (jqXHR, textStatus, errorThrown) {
-            console.error("AJAX Error for ClubUpdateSchedule:", textStatus, errorThrown, jqXHR);
-            Swal.fire({
-                icon: "error",
-                title: "แจ้งเตือน!",
-                text: "ไม่สามารถอัปเดตวันที่ได้: " + textStatus
-            });
-        }
-    });
-}
-
-// เรียกฟังก์ชันโหลดข้อมูล
-loadWeeksData();
-
-// --------- เปิด-ปิด ปุ่มสถานะชุมนุม ---------------
-$(document).on('click', '.status-btn', function() {
-    var statusButton = $(this);
-    var Id = statusButton.data('id');  // id ของชุมนุม
-    var currentStatus = statusButton.data('status');  // สถานะปัจจุบัน (เปิดหรือปิด)
-
-    // สลับสถานะ
-    var newStatus = (currentStatus === 'เปิด') ? 'ปิด' : 'เปิด';  // เปลี่ยนสถานะ
-
-    // ส่งคำขอ AJAX ไปอัพเดตสถานะในฐานข้อมูล
-    $.ajax({
-        url: '<?= site_url('admin/academic/ConAdminDevelopStudents/ClubUpdateStatus') ?>',  // URL สำหรับอัพเดตสถานะ
-        method: 'POST',
-        data: {
-            id: Id,  // ส่ง id ของชุมนุม
-            status: newStatus  // ส่งสถานะใหม่
-        },
-        dataType:'json',
-        success: function(response) {
-            console.log(response.status);
-            
-            // เมื่ออัพเดตสำเร็จ, เปลี่ยนสถานะใน UI
-            if (response.status === "success") {
-                // เปลี่ยนข้อความในปุ่มตามสถานะใหม่
-                statusButton.data('status', newStatus);  // อัพเดตสถานะใน data attribute
-                Swal.fire({
-                    position: "top-end",
-                    icon: "success",
-                    title: "สถานะถูกอัพเดตแล้ว",
-                    showConfirmButton: false,
-                    timer: 1500
-                  });
-            } else {
-                alert('เกิดข้อผิดพลาดในการอัพเดตสถานะ');
-            }
-        },
-        error: function (jqXHR, textStatus, errorThrown) {
-            console.error("AJAX Error for ClubUpdateStatus:", textStatus, errorThrown, jqXHR);
-            Swal.fire({
-                icon: "error",
-                title: "แจ้งเตือน!",
-                text: "ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้: " + textStatus
-            });
-        }
-    });
+        });
+    }
+    loadWeeksData();
 });
 </script>
 <?= $this->endSection() ?>

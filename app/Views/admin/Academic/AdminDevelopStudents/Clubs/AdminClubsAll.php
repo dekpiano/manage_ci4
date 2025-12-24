@@ -1,51 +1,73 @@
 <?= $this->extend('admin/layout/main') ?>
 
 <?= $this->section('content') ?>
-<div class="app-content pt-3 p-md-3 p-lg-4">
-    <div class="container-xl">
-        <div class="card mb-4">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <div>
-                    <h5 class="mb-0">จัดการชุมนุม</h5>
+<div class="container-xxl flex-grow-1 container-p-y">
+    <!-- Page Header -->
+    <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+        <div class="page-title">
+            <h4 class="fw-bold py-1 mb-0">
+                <span class="text-muted fw-light">วิชาการ / พัฒนาผู้เรียน / ชุมนุม /</span> จัดการชุมนุมทั้งหมด
+            </h4>
+            <div class="text-muted small">บันทึกข้อมูลและจัดการรายชื่อนักเรียนในแต่ละชุมนุม</div>
+        </div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="<?= site_url('Admin/Acade/DevelopStudents/Clubs/Main') ?>">หน้าแรกชุมนุม</a></li>
+                <li class="breadcrumb-item active">จัดการชุมนุม</li>
+            </ol>
+        </nav>
+    </div>
+
+    <!-- Main Card -->
+    <div class="card shadow-sm border-0 overflow-hidden">
+        <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div class="d-flex align-items-center gap-2">
+                <div class="p-2 bg-label-primary rounded me-1">
+                    <i class="bx bx-collection fs-4"></i>
                 </div>
-                <div class="d-flex align-items-center gap-2">
-                    <select id="academicYearFilter" name="academicYearFilter" class="form-select form-select-sm"
-                        style="min-width: 150px;">
+                <h5 class="mb-0 fw-bold">รายการชุมนุมที่เปิดสอน</h5>
+            </div>
+            
+            <div class="d-flex align-items-center gap-3">
+                <div class="input-group input-group-merge shadow-sm" style="min-width: 200px;">
+                    <span class="input-group-text"><i class="bx bx-calendar text-primary"></i></span>
+                    <select id="academicYearFilter" name="academicYearFilter" class="form-select fw-semibold">
                         <?php $isFirst = true; ?>
                         <?php foreach ($YearAll as $key => $v_YearAll) : ?>
                         <option
                             value="<?= (isset($v_YearAll['club_trem']) ? esc($v_YearAll['club_trem']) : '') ?>/<?= (isset($v_YearAll['club_year']) ? esc($v_YearAll['club_year']) : '') ?>"
                             <?= $isFirst ? 'selected' : '' ?>>
-                            <?= (isset($v_YearAll['club_trem']) ? esc($v_YearAll['club_trem']) : '') ?>/<?= (isset($v_YearAll['club_year']) ? esc($v_YearAll['club_year']) : '') ?>
+                             ภาคเรียนที่ <?= (isset($v_YearAll['club_trem']) ? esc($v_YearAll['club_trem']) : '') ?> / ปีการศึกษา <?= (isset($v_YearAll['club_year']) ? esc($v_YearAll['club_year']) : '') ?>
                         </option>
                         <?php $isFirst = false; ?>
                         <?php endforeach; ?>
                     </select>
-                    <button type="button" class="btn btn-primary btn-sm BtnAddClub w-100">
-                        <i class="bx bx-plus me-1"></i>
-                        เพิ่มชุมนุม</button>
                 </div>
+                <button type="button" class="btn btn-primary shadow px-4 py-2 BtnAddClub text-nowrap">
+                    <i class="bx bx-plus-circle me-1"></i> เพิ่มชุมนุมใหม่
+                </button>
             </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-hover table-striped table-sm align-middle" id="TbClubs">
-                        <thead class="bg-light">
-                            <tr>
-                                <th class="text-center" style="width: 60px;">#</th>
-                                <th>ปีการศึกษา</th>
-                                <th>ชื่อชุมนุม</th>
-                                <th>ครูที่ปรึกษาชุมนุม</th>
-                                <th class="text-center" style="width: 100px;">จำนวนที่รับ</th>
-                                <th class="text-center" style="width: 100px;">ลงทะเบียนแล้ว</th>
-                                <th class="text-center" style="width: 100px;">ลงเรียน</th>
-                                <th class="text-center" style="width: 120px;">คำสั่ง</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-
-                        </tbody>
-                    </table>
-                </div>
+        </div>
+        
+        <div class="card-body p-0">
+            <div class="table-responsive text-nowrap">
+                <table class="table table-hover align-middle mb-0" id="TbClubs" style="width: 100%;">
+                    <thead class="bg-light-primary border-top-0">
+                        <tr>
+                            <th class="text-center py-3" style="width: 50px;">#</th>
+                            <th class="py-3"><i class="bx bx-calendar me-1 small"></i>ปีการศึกษา</th>
+                            <th class="py-3"><i class="bx bx-label me-1 small"></i>ชื่อชุมนุม</th>
+                            <th class="py-3"><i class="bx bx-user-voice me-1 small"></i>ครูที่ปรึกษา</th>
+                            <th class="text-center py-3"><i class="bx bx-group me-1 small"></i>รับจำนวน</th>
+                            <th class="text-center py-3"><i class="bx bx-user-check me-1 small"></i>ยอดปัจจุบัน</th>
+                            <th class="text-center py-3"><i class="bx bx-clipboard me-1 small"></i>ทะเบียน</th>
+                            <th class="text-center py-3"><i class="bx bx-cog me-1 small"></i>จัดการ</th>
+                        </tr>
+                    </thead>
+                    <tbody class="table-border-bottom-0">
+                        <!-- AJAX content -->
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
@@ -54,81 +76,113 @@
 
 <?= $this->section('modals') ?>
 <style>
-.swal2-container {
-    z-index: 999999;
-    /* Very high z-index to ensure it's always on top */
-}
+    .swal2-container { z-index: 100000 !important; }
+    .bg-light-primary { background-color: #f0f2ff !important; }
+    #TbClubs thead th { 
+        text-transform: uppercase; 
+        font-size: 0.8rem; 
+        letter-spacing: 0.5px; 
+        color: #566a7f;
+        border-bottom: 2px solid #e7e7ff !important;
+    }
+    .select2-container--bootstrap-5 .select2-selection { 
+        border-radius: 0.375rem !important; 
+        border-color: #d9dee3 !important;
+    }
+    .select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__choice {
+        background-color: #e7e7ff !important;
+        color: #696cff !important;
+        border: none !important;
+        border-radius: 4px !important;
+        padding: 2px 8px !important;
+        font-weight: 500 !important;
+        margin-top: 5px !important;
+    }
+    .select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__choice__remove {
+        color: #696cff !important;
+        margin-right: 5px !important;
+    }
+    .select2-container--bootstrap-5.select2-container--focus .select2-selection {
+        border-color: #696cff !important;
+        box-shadow: 0 0 0.25rem 0.05rem rgba(105, 108, 255, 0.1) !important;
+    }
+    .card-hover:hover { transform: translateY(-3px); transition: all 0.3s ease; }
 </style>
 
-<!-- Modal -->
-<div class="modal fade" id="ModalAddClubs" tabindex="-1" aria-labelledby="clubModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="clubModalLabel">เพิ่มชุมนุม</h5>
+<!-- Modal Add/Edit Clubs -->
+<div class="modal fade" id="ModalAddClubs" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content shadow-lg border-0">
+            <div class="modal-header border-bottom bg-label-primary py-3">
+                <h5 class="modal-title fw-bold" id="clubModalLabel text-primary">
+                    <i class="bx bx-edit-alt me-2"></i>ข้อมูลชุมนุม
+                </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
-                <!-- Club Form -->
-                <form method="POST" id="FormAddClubs">
+            <div class="modal-body p-4">
+                <form id="FormAddClubs">
                     <input type="hidden" name="club_id" id="club_id">
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="club_year" class="form-label">ปีการศึกษา</label>
-                                <select class="form-select" id="club_year" name="club_year">
+                    
+                    <div class="row g-3 mb-4">
+                        <div class="col-6">
+                            <div class="form-floating">
+                                <select class="form-select" id="club_year" name="club_year" required>
                                     <option value="" disabled selected>เลือกปีการศึกษา</option>
                                     <option value="2567">2567</option>
                                     <option value="2568">2568</option>
+                                    <option value="2569">2569</option>
                                 </select>
+                                <label for="club_year">ปีการศึกษา</label>
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="club_trem" class="form-label">เทอม</label>
-                                <select class="form-select" id="club_trem" name="club_trem">
-                                    <option value="" disabled selected>เลือกเทอม</option>
+                        <div class="col-6">
+                            <div class="form-floating">
+                                <select class="form-select" id="club_trem" name="club_trem" required>
+                                    <option value="" disabled selected>เลือกภาคเรียน</option>
                                     <option value="1">1</option>
                                     <option value="2">2</option>
                                 </select>
+                                <label for="club_trem">ภาคเรียน (เทอม)</label>
                             </div>
                         </div>
                     </div>
-                    <!-- ชื่อชุมนุม -->
-                    <div class="mb-3">
-                        <label for="club_name" class="form-label">ชื่อชุมนุม</label>
-                        <input type="text" class="form-control" id="club_name" name="club_name"
-                            placeholder="ระบุชื่อชุมนุม">
+
+                    <div class="form-floating mb-4">
+                        <input type="text" class="form-control" id="club_name" name="club_name" placeholder="ชื่อชุมนุม" required>
+                        <label for="club_name">ชื่อหัวข้อชุมนุม</label>
                     </div>
 
-                    <!-- Club Description -->
-                    <div class="mb-3">
-                        <label for="club_description" class="form-label">รายละเอียดชุมนุม หรือเกี่ยวกับ</label>
-                        <textarea class="form-control" id="club_description" name="club_description" rows="5"
-                            placeholder="ระบุรายละเอียดชุมนุม หรือเกี่ยวกับ"></textarea>
+                    <div class="form-floating mb-4">
+                        <textarea class="form-control" id="club_description" name="club_description" style="height: 100px" placeholder="รายละเอียด"></textarea>
+                        <label for="club_description">รายละเอียดหรือคำอธิบายชุดกิจกรรม</label>
                     </div>
 
-
-                    <!-- Club Room -->
-                    <div class="mb-3">
-                        <label for="club_max_participants" class="form-label">รับจำนวน</label>
-                        <input type="number" class="form-control" id="club_max_participants"
-                            name="club_max_participants" placeholder="ใส่จำนวนสูงสุดของชุมนุม">
-                    </div>
-
-                    <!-- Club Advisor -->
-                    <div class="mb-3">
-                        <div class="mb-3">
-                            <label for="club_faculty_advisor" class="form-label">ครูที่ปรึกษาชุมนุม</label>
-                            <select class="form-select" id="club_faculty_advisor" name="club_faculty_advisor[]" multiple
-                                style="width: 100%;" data-placeholder="ค้นหาและเลือกครูที่ปรึกษา">
-                            </select>
+                    <div class="row g-3 mb-4">
+                        <div class="col-12">
+                            <div class="form-floating">
+                                <input type="number" class="form-control" id="club_max_participants" name="club_max_participants" placeholder="รับจำนวน" required min="1">
+                                <label for="club_max_participants">จำนวนนักเรียนที่รับ (คน)</label>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Submit Button -->
-                    <div class="text-center">
-                        <button type="submit" class="btn btn-primary">บันทึกชุมนุม</button>
+                    <div class="mb-4">
+                        <label class="form-label fw-bold text-dark small text-uppercase mb-2">
+                             <i class="bx bx-user-check text-primary me-1"></i> ครูที่ปรึกษาชุมนุม (เลือกได้หลายชื่อ)
+                        </label>
+                        <div class="select2-primary">
+                            <select class="form-select select2" id="club_faculty_advisor" name="club_faculty_advisor[]" multiple required style="width: 100%;">
+                            </select>
+                        </div>
+                        <div class="form-text small">พิมพ์รายชื่อครูที่ต้องการค้นหาและเลือก</div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg shadow">
+                            <i class="bx bx-save me-1"></i> บันทึกข้อมูลชุมนุม
+                        </button>
                     </div>
                 </form>
             </div>
@@ -136,54 +190,71 @@
     </div>
 </div>
 
-
-<!-- Modal -->
-<div class="modal fade" id="ModalAddStudents" tabindex="-1" aria-labelledby="AddStudents" aria-hidden="true"
-    data-bs-backdrop="static" data-bs-keyboard="false">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="AddStudentsTitle">จัดการนักเรียน</h5>
+<!-- Modal Manage Students -->
+<div class="modal fade" id="ModalAddStudents" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header border-bottom bg-light py-3">
+                <div class="d-flex align-items-center">
+                    <div class="p-2 bg-primary rounded me-3 shadow-sm text-white">
+                        <i class="bx bx-user-circle fs-4"></i>
+                    </div>
+                    <div>
+                        <h5 class="modal-title fw-bold mb-0 text-dark" id="AddStudentsTitle">จัดการนักเรียน</h5>
+                        <small class="text-muted">เพิ่มและยกเลิกรายการนักเรียนในชุมนุม</small>
+                    </div>
+                </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
-                <form id="FormAddStudentToClub">
-                    <input type="hidden" name="club_id" id="club_id" class="club_id" value="">
-                    <div class="mb-3">
-                        <label for="studentSelect" class="form-label">เลือกนักเรียน</label>
-                        <select id="studentSelect" name="student_ids[]" multiple class="form-select">
-                            <!-- ตัวเลือกจะถูกเพิ่มผ่าน JavaScript -->
-                        </select>
-                    </div>
-                    <div class="d-flex justify-content-center">
-                        <button type="button" id="btnAddStudentToClub"
-                            class="btn btn-primary">เพิ่มนักเรียนเข้าชุมนุม</button>
-                    </div>
-                </form>
-            </div>
-
-            <div class="modal-footer">
-                <div class="w-100">
-                    <div class="card">
-                        <div class="card-header" id="registeredCount">นักเรียนที่ลงทะเบียนแล้ว:</div>
-                        <div class="card-body">
-                            <div class="table-responsive">
-                                <table class="table table-striped" id="TbShowStudentRegisClub">
-                                    <thead>
-                                        <tr>
-                                            <th class="text-center" style="width: 60px;">#</th>
-                                            <th>ชั้น</th>
-                                            <th>เลขที่</th>
-                                            <th>รหัสนักเรียน</th>
-                                            <th>ชื่อ-สกุล</th>
-                                            <th>การกระทำ</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="addedStudentsList">
-                                        <!-- ข้อมูลจะถูกโหลดที่นี่ -->
-                                    </tbody>
-                                </table>
+            <div class="modal-body p-0">
+                <div class="row g-0">
+                    <!-- Left Column: Add Student -->
+                    <div class="col-lg-4 border-end bg-light p-4">
+                        <h6 class="fw-bold mb-3">ค้นหาและเพิ่มนักเรียน</h6>
+                        <form id="FormAddStudentToClub">
+                            <input type="hidden" name="club_id" class="club_id" value="">
+                            <div class="mb-4">
+                                <label class="form-label small fw-bold">เลือกรายชื่อนักเรียน</label>
+                                <select id="studentSelect" name="student_ids[]" multiple class="form-select shadow-sm" style="width: 100%;">
+                                </select>
                             </div>
+                            <button type="button" id="btnAddStudentToClub" class="btn btn-primary w-100 shadow py-2">
+                                <i class="bx bx-plus me-1"></i> ยืนยันการเพิ่มนักเรียน
+                            </button>
+                            
+                            <div class="mt-4 p-3 bg-white rounded border border-dashed">
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="bx bx-info-circle text-info me-2 fs-4"></i>
+                                    <span class="fw-bold">ข้อมูลสรุป</span>
+                                </div>
+                                <div class="h3 mb-0 text-primary" id="registeredCountDisplay">0 <small class="text-muted fs-6">คน</small></div>
+                                <div class="text-muted small mt-1">จำนวนคงเหลือ <span id="remainingCapacity">0</span> จากโควตาทั้งหมด</div>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <!-- Right Column: Registered List -->
+                    <div class="col-lg-8 p-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="fw-bold mb-0">รายชื่อนักเรียนที่ลงทะเบียนแล้ว</h6>
+                            <span class="badge bg-label-primary px-3 py-2" id="registeredCount">โหลดข้อมูล...</span>
+                        </div>
+                        <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
+                            <table class="table table-hover align-middle border" id="TbShowStudentRegisClub" style="width:100%;">
+                                <thead class="bg-light sticky-top" style="z-index: 10;">
+                                    <tr>
+                                        <th class="text-center" style="width: 50px;">#</th>
+                                        <th style="width: 80px;">ชั้น</th>
+                                        <th style="width: 80px;">เลขที่</th>
+                                        <th style="width: 120px;">รหัสนักเรียน</th>
+                                        <th>ชื่อ-นามสกุล</th>
+                                        <th class="text-center" style="width: 100px;">จัดการ</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="addedStudentsList">
+                                    <!-- AJAX Content -->
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
@@ -195,495 +266,350 @@
 
 <?= $this->section('script') ?>
 <script>
-$('#academicYearFilter').change(function() {
-    table.ajax.reload();
-});
+$(document).ready(function() {
+    $('#academicYearFilter').change(function() {
+        table.ajax.reload();
+    });
 
-const table = $('#TbClubs').DataTable({
-    processing: true,
-    "ajax": {
-        "url": "<?= site_url('admin/academic/ConAdminDevelopStudents/ClubsShow') ?>", // URL ที่จะดึงข้อมูล
-        "type": "GET",
-        "dataSrc": "data",
-        data: function(d) {
-            d.year = decodeURIComponent($('#academicYearFilter').val()); // ส่ง year ไปใน ajax data
-        }
-    },
-    "columns": [{
-            "data": null,
-            "render": function(data, type, row, meta) {
-                return `<div class="text-center">${meta.row + 1}</div>`;
-            },
-            "orderable": false
+    const table = $('#TbClubs').DataTable({
+        processing: true,
+        language: {
+            url: "//cdn.datatables.net/plug-ins/1.13.1/i18n/th.json"
         },
-        {
-            "data": null,
-            "render": function(data, type, row, meta) {
-                return row.club_trem + '/' + row.club_year;
-            }
-        },
-        {
-            "data": "club_name"
-        },
-        {
-            "data": null,
-            "render": function(data, type, row, meta) {
-                return row.advisor_names;
-            },
-            "width": "200px" // Set a fixed width for the advisor names column
-        },
-        {
-            "data": null,
-            "render": function(data, type, row) {
-                return `<div class="text-center">${row.club_max_participants}</div>`;
-            }
-        },
-        {
-            "data": null,
-            "render": function(data, type, row) {
-                return `<div class="text-center">${row.member_count}</div>`;
-            }
-        },
-        {
-            "data": null,
-            "render": function(data, type, row, meta) {
-                return `
-                 <div class="text-center">
-                     <button class="btn btn-sm btn-outline-primary BtnAddStudents" data-id="${row.club_id}" 
-                         title="ลงทะเบียนเรียนชุมนุม" clubname="${row.club_name}">
-                         <i class="bx bx-user-plus me-1"></i>ลงเรียน
-                     </button>
-                 </div>
-                `
-            }
-        },
-        {
-            "data": null,
-            "render": function(data, type, row) {
-                return `
-              <div class="text-center d-flex gap-1 justify-content-center">
-                  <button class="btn btn-sm btn-icon btn-outline-primary edit-btn" data-id="${row.club_id}"  title="แก้ไขชุมนุม ${row.club_name}">
-                      <i class="bx bx-edit"></i>
-                  </button>
-                  <button class="btn btn-sm btn-icon btn-outline-danger delete-btn" data-id="${row.club_id}" title="ลบชุมนุม ${row.club_name}">
-                      <i class="bx bx-trash"></i>
-                  </button>
-              </div>
-          `;
-            }
-        }
-    ],
-    error: function(settings, helpPage, message) {
-        console.error('DataTable Error:', message);
-    }
-});
-
-$(document).on('click', '.BtnAddClub', function() {
-    $('#ModalAddClubs').modal('show');
-    $('#FormAddClubs')[0].reset();
-    $('#club_faculty_advisor').val(null).trigger('change');
-    $('#clubModalLabel').text('เพิ่มชุมนุม');
-
-    // Destroy previous instance if it exists
-    if ($('#club_faculty_advisor').data('select2')) {
-        $('#club_faculty_advisor').select2('destroy');
-    }
-
-    // Initialize Select2 for add modal
-    $('#club_faculty_advisor').select2({
-        theme: 'bootstrap-5',
-        dropdownParent: $('#ModalAddClubs'),
-        placeholder: 'ค้นหาและเลือกครูที่ปรึกษา',
-        allowClear: true,
         ajax: {
-            url: "<?= site_url('admin/academic/ConAdminDevelopStudents/ClubsTeacherList') ?>",
-            dataType: 'json',
-            delay: 250,
-            processResults: function(data) {
-                return {
-                    results: data.map(teacher => ({
-                        id: teacher.pers_id,
-                        text: teacher.FullName
-                    }))
-                };
-            },
-            cache: true
-        }
-    });
-});
-
-$(document).on('submit', '#FormAddClubs', function(e) {
-    e.preventDefault(); // Prevent default form submission
-    var selectedAdvisors = $('#club_faculty_advisor').val(); // ได้อาร์เรย์ของที่ปรึกษาที่เลือก
-    if (selectedAdvisors.length === 0) {
-        Swal.fire('กรุณาเลือกที่ปรึกษาก่อน');
-        return;
-    }
-
-    const url = $('#club_id').val() ?
-        "<?= site_url('admin/academic/ConAdminDevelopStudents/ClubsUpdate') ?>" // แก้ไข
-        :
-        "<?= site_url('admin/academic/ConAdminDevelopStudents/ClubsInsert') ?>"; // เพิ่มใหม่
-
-    // ใช้ serialize() เพื่อดึงข้อมูลจากฟอร์ม
-    var formData = $(this).closest('form').serializeArray();
-
-    formData.push({
-        name: 'advisors',
-        value: JSON.stringify(selectedAdvisors)
-    });
-
-    $.ajax({
-        url: url, // Controller method for saving data
-        type: 'POST',
-        data: formData, // Serialize form data
-        success: function(response) {
-
-            if (response.status === 'success') {
-                // Close modal
-                $('#ModalAddClubs').modal('hide');
-                $('.modal-backdrop').remove();
-
-                // Reset form
-                $('#FormAddClubs')[0].reset();
-                $('#club_faculty_advisor').val(null).trigger('change');
-
-                $('#TbClubs').DataTable().ajax.reload(); // รีเฟรช DataTable
-                Swal.fire({
-                    icon: 'success', // ไอคอน
-                    title: 'แจ้งเตือน!',
-                    text: 'บันทึกข้อมูลสำเร็จ',
-                    showConfirmButton: false,
-                    timer: 2000
-                });
-
-            } else {
-                console.log('ผิดพลาด', response.message); // Log the actual error message
-                Swal.fire({
-                    icon: 'error',
-                    title: 'แจ้งเตือน!',
-                    text: response.message || 'เกิดข้อผิดพลาดในการบันทึกข้อมูล',
-                    confirmButtonText: 'OK'
-                });
+            url: "<?= site_url('admin/academic/ConAdminDevelopStudents/ClubsShow') ?>",
+            type: "GET",
+            dataSrc: "data",
+            data: function(d) {
+                d.year = decodeURIComponent($('#academicYearFilter').val());
             }
         },
-        error: function(jqXHR, textStatus, errorThrown) {
-            console.log(textStatus);
+        columns: [
+            {
+                data: null,
+                className: 'text-center',
+                render: function(data, type, row, meta) {
+                    return `<span class="fw-semibold">${meta.row + 1}</span>`;
+                },
+                orderable: false
+            },
+            {
+                data: null,
+                render: function(data, type, row) {
+                    return `<span class="badge bg-label-secondary">${row.club_trem}/${row.club_year}</span>`;
+                }
+            },
+            {
+                data: "club_name",
+                render: function(data) {
+                    return `<span class="fw-bold text-primary">${data}</span>`;
+                }
+            },
+            {
+                data: null,
+                render: function(data, type, row) {
+                    return `<div class="small w-px-200 text-truncate" title="${row.advisor_names}">${row.advisor_names}</div>`;
+                }
+            },
+            {
+                data: null,
+                className: 'text-center',
+                render: function(data, type, row) {
+                    return `<span class="badge bg-label-dark fw-bold px-3">${row.club_max_participants}</span>`;
+                }
+            },
+            {
+                data: null,
+                className: 'text-center',
+                render: function(data, type, row) {
+                    const percent = Math.round((row.member_count / row.club_max_participants) * 100);
+                    let color = percent >= 100 ? 'danger' : (percent > 80 ? 'warning' : 'success');
+                    return `
+                        <div>
+                            <span class="fw-bold text-${color}">${row.member_count}</span>
+                            <div class="progress mt-1" style="height: 4px; width: 60px; margin: 0 auto;">
+                                <div class="progress-bar bg-${color}" role="progressbar" style="width: ${percent > 100 ? 100 : percent}%"></div>
+                            </div>
+                        </div>
+                    `;
+                }
+            },
+            {
+                data: null,
+                className: 'text-center',
+                render: function(data, type, row) {
+                    return `
+                        <button class="btn btn-sm btn-outline-primary BtnAddStudents shadow-sm px-3" data-id="${row.club_id}" clubname="${row.club_name}" max="${row.club_max_participants}" count="${row.member_count}">
+                            <i class="bx bx-user-plus me-1"></i>จัดการ
+                        </button>
+                    `;
+                }
+            },
+            {
+                data: null,
+                className: 'text-center',
+                render: function(data, type, row) {
+                    return `
+                        <div class="d-flex gap-2 justify-content-center">
+                            <button class="btn btn-sm btn-icon btn-label-primary edit-btn" data-id="${row.club_id}" title="แก้ไข">
+                                <i class="bx bx-edit-alt"></i>
+                            </button>
+                            <button class="btn btn-sm btn-icon btn-label-danger delete-btn" data-id="${row.club_id}" title="ลบ">
+                                <i class="bx bx-trash"></i>
+                            </button>
+                        </div>
+                    `;
+                }
+            }
+        ],
+        drawCallback: function() {
+            $('.dataTables_filter input').addClass('form-control shadow-sm').attr('placeholder', 'ค้นหาชุมนุม...');
+            $('.dataTables_length select').addClass('form-select shadow-sm');
         }
     });
-});
 
-// เปิด Modal เพื่อแก้ไขข้อมูล
-$(document).on('click', '.edit-btn', function() {
+    // Add Club Logic
+    $(document).on('click', '.BtnAddClub', function() {
+        $('#ModalAddClubs').modal('show');
+        $('#FormAddClubs')[0].reset();
+        $('#club_id').val('');
+        $('#club_faculty_advisor').val(null).trigger('change');
+        $('#clubModalLabel').html('<i class="bx bx-plus-circle me-2"></i>เพิ่มชุมนุมใหม่');
 
-    const clubId = $(this).data('id');
-
-    $.ajax({
-        url: "<?= site_url('admin/academic/ConAdminDevelopStudents/ClubsEdit/') ?>" + clubId,
-        type: "GET",
-        dataType: "json",
-        success: function(data) {
-            $('#clubModalLabel').text('แก้ไขชุมนุม'); // เปลี่ยน Title
-            $('#club_id').val(data.club_id);
-            $('#club_year').val(data.club_year);
-            $('#club_trem').val(data.club_trem);
-            $('#club_name').val(data.club_name);
-            $('#club_description').val(data.club_description);
-            $('#club_max_participants').val(data.club_max_participants);
-            $('#club_faculty_advisor').val(null).trigger('change');
-
-            const advisorsArray = data.club_faculty_advisor.split('|');
-
-            $('#ModalAddClubs').data('preselected-advisors',
-            advisorsArray); // Store pre-selected advisors
-
-            $('#ModalAddClubs').data('preselected-advisor-details', data
-                .preselected_advisor_details); // Store pre-selected advisor details
-
-            $('#ModalAddClubs').modal('show'); // เปิด Modal
-        },
-        error: function() {
-            alert('Error fetching data.');
-        }
-    });
-
-    // Destroy previous instance if it exists
-    if ($('#club_faculty_advisor').data('select2')) {
-        $('#club_faculty_advisor').select2('destroy');
-    }
-
-    $('#ModalAddClubs').on('shown.bs.modal', function() {
-        // Destroy previous instance if it exists
         if ($('#club_faculty_advisor').data('select2')) {
             $('#club_faculty_advisor').select2('destroy');
         }
 
-        // Initialize Select2
         $('#club_faculty_advisor').select2({
             theme: 'bootstrap-5',
             dropdownParent: $('#ModalAddClubs'),
             placeholder: 'ค้นหาและเลือกครูที่ปรึกษา',
-            allowClear: true,
             ajax: {
                 url: "<?= site_url('admin/academic/ConAdminDevelopStudents/ClubsTeacherList') ?>",
                 dataType: 'json',
                 delay: 250,
                 processResults: function(data) {
-                    return {
-                        results: data.map(teacher => ({
-                            id: teacher.pers_id,
-                            text: teacher.FullName
-                        }))
-                    };
-                },
-                cache: true
+                    return { results: data.map(t => ({ id: t.pers_id, text: t.FullName })) };
+                }
             }
         });
+    });
 
-        // Apply pre-selected advisors if available (for editing)
-        const preselectedAdvisors = $('#ModalAddClubs').data('preselected-advisors');
-        const preselectedAdvisorDetails = $('#ModalAddClubs').data('preselected-advisor-details');
+    $(document).on('submit', '#FormAddClubs', function(e) {
+        e.preventDefault();
+        const selectedAdvisors = $('#club_faculty_advisor').val();
+        if (!selectedAdvisors || selectedAdvisors.length === 0) {
+            Swal.fire({ icon: 'error', title: 'ผิดพลาด', text: 'กรุณาเลือกที่ปรึกษาชุมนุมอย่างน้อย 1 ท่าน' });
+            return;
+        }
 
-        if (preselectedAdvisorDetails && preselectedAdvisorDetails.length > 0) {
-            preselectedAdvisorDetails.forEach(function(advisor) {
-                // Check if the option already exists to prevent duplicates
-                if (!$('#club_faculty_advisor option[value="' + advisor.pers_id + '"]')
-                    .length) {
+        const url = $('#club_id').val() ? 
+            "<?= site_url('admin/academic/ConAdminDevelopStudents/ClubsUpdate') ?>" : 
+            "<?= site_url('admin/academic/ConAdminDevelopStudents/ClubsInsert') ?>";
+
+        let formData = $(this).serializeArray();
+        formData.push({ name: 'advisors', value: JSON.stringify(selectedAdvisors) });
+
+        $.ajax({
+            url: url,
+            type: 'POST',
+            data: formData,
+            success: function(response) {
+                if (response.status === 'success') {
+                    $('#ModalAddClubs').modal('hide');
+                    table.ajax.reload();
+                    Swal.fire({ icon: 'success', title: 'สำเร็จ', text: 'บันทึกข้อมูลเรียบร้อยแล้ว', timer: 1500, showConfirmButton: false });
+                } else {
+                    Swal.fire({ icon: 'error', title: 'แจ้งเตือน', text: response.message || 'บันทึกไม่สำเร็จ' });
+                }
+            }
+        });
+    });
+
+    // Edit Club Logic
+    $(document).on('click', '.edit-btn', function() {
+        const clubId = $(this).data('id');
+        $.ajax({
+            url: "<?= site_url('admin/academic/ConAdminDevelopStudents/ClubsEdit/') ?>" + clubId,
+            type: "GET",
+            dataType: "json",
+            success: function(data) {
+                $('#clubModalLabel').html('<i class="bx bx-edit-alt me-2 text-warning"></i>แก้ไขข้อมูลชุมนุม');
+                $('#club_id').val(data.club_id);
+                $('#club_year').val(data.club_year);
+                $('#club_trem').val(data.club_trem);
+                $('#club_name').val(data.club_name);
+                $('#club_description').val(data.club_description);
+                $('#club_max_participants').val(data.club_max_participants);
+                
+                // Init Select2 with preselected data
+                if ($('#club_faculty_advisor').data('select2')) {
+                    $('#club_faculty_advisor').select2('destroy');
+                }
+                
+                $('#club_faculty_advisor').empty();
+                data.preselected_advisor_details.forEach(advisor => {
                     const newOption = new Option(advisor.FullName, advisor.pers_id, true, true);
-                    $('#club_faculty_advisor').append(newOption).trigger('change');
-                }
-            });
-        }
-
-        if (preselectedAdvisors && preselectedAdvisors.length > 0) {
-            $('#club_faculty_advisor').val(preselectedAdvisors).trigger('change');
-        }
-
-        $('#ModalAddClubs').removeData('preselected-advisors'); // Clear the stored data
-        $('#ModalAddClubs').removeData('preselected-advisor-details'); // Clear the stored data
-
+                    $('#club_faculty_advisor').append(newOption);
+                });
+                
+                $('#club_faculty_advisor').select2({
+                    theme: 'bootstrap-5',
+                    dropdownParent: $('#ModalAddClubs'),
+                    placeholder: 'ค้นหาและเลือกครูที่ปรึกษา',
+                    ajax: {
+                        url: "<?= site_url('admin/academic/ConAdminDevelopStudents/ClubsTeacherList') ?>",
+                        dataType: 'json',
+                        processResults: function(res) {
+                            return { results: res.map(t => ({ id: t.pers_id, text: t.FullName })) };
+                        }
+                    }
+                });
+                
+                $('#ModalAddClubs').modal('show');
+            }
+        });
     });
-});
 
-$(document).on('click', '.delete-btn', function() {
-    const clubId = $(this).data('id'); // ดึง ID ชุมนุม
-
-    // ใช้ SweetAlert2 สำหรับยืนยัน
-    Swal.fire({
-        title: 'คุณต้องการลบข้อมูลหรือไม่?',
-        text: "ถ้าคุณเลือกลบข้อมูล ข้อมูลทั้งชุมนุมจะหายหมด พร้อมด้วยเวลาทั้งหมด!",
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#3085d6',
-        confirmButtonText: 'Yes, delete it!'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            // ส่งคำขอลบข้อมูลไปที่เซิร์ฟเวอร์
-            $.ajax({
-                url: "<?= site_url('admin/academic/ConAdminDevelopStudents/ClubsDelete/') ?>" +
-                    clubId,
-                type: "POST",
-                success: function(response) {
-                    // แจ้งเตือนสำเร็จ
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'แจ้งเตือน!',
-                        text: 'ข้อมูลชุมนุมได้ถูกลบทั้งหมดแล้ว!',
-                        showConfirmButton: false,
-                        timer: 2000
-                    });
-
-                    // รีเฟรช DataTable
-                    $('#TbClubs').DataTable().ajax.reload();
-                },
-                error: function(jqXHR, textStatus, errorThrown) {
-                    // แจ้งเตือนข้อผิดพลาด
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error!',
-                        text: textStatus,
-                        confirmButtonText: 'OK'
-                    });
-                }
-            });
-        }
+    $(document).on('click', '.delete-btn', function() {
+        const id = $(this).data('id');
+        Swal.fire({
+            title: 'ต้องการลบข้อมูล?',
+            text: "ข้อมูลนักเรียนและเวลาเรียนทั้งหมดในชุมนี้จะถูกลบออกด้วย!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ff3e1d',
+            confirmButtonText: 'ยืนยันการลบ',
+            cancelButtonText: 'ยกเลิก'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: "<?= site_url('admin/academic/ConAdminDevelopStudents/ClubsDelete/') ?>" + id,
+                    type: "POST",
+                    success: function() {
+                        table.ajax.reload();
+                        Swal.fire('ลบข้อมูลเรียบร้อย!', '', 'success');
+                    }
+                });
+            }
+        });
     });
-});
 
-$(document).on('click', '.BtnAddStudents', function() {
-    $('#AddStudentsTitle').text("จัดการนักเรียนชุมนุม " + $(this).attr('clubname'))
-    $('#ModalAddStudents').modal('show');
+    // Student Management Logic
+    let current_max = 0;
+    $(document).on('click', '.BtnAddStudents', function() {
+        const club_id = $(this).data('id');
+        const clubname = $(this).attr('clubname');
+        current_max = parseInt($(this).attr('max'));
+        
+        $('#AddStudentsTitle').text("จัดการนักเรียนชุมนุม " + clubname);
+        $('.club_id').val(club_id);
+        
+        loadRegisteredStudents(club_id);
+        $('#ModalAddStudents').modal('show');
 
-    let club_id = $(this).attr('data-id');
-    $('.club_id').val(club_id);
-    loadRegisteredStudents(club_id);
+        if ($('#studentSelect').data('select2')) {
+            $('#studentSelect').select2('destroy');
+        }
 
-    // Destroy previous instance if it exists
-    if ($('#studentSelect').data('select2')) {
-        $('#studentSelect').select2('destroy');
-    }
+        $('#studentSelect').select2({
+            theme: 'bootstrap-5',
+            dropdownParent: $('#ModalAddStudents'),
+            placeholder: 'ค้นหาด้วยชื่อ-สกุล หรือชั้นเรียน...',
+            ajax: {
+                url: "<?= site_url('admin/academic/ConAdminDevelopStudents/ClubsStudentList') ?>",
+                dataType: 'json',
+                processResults: function(data) {
+                    return { results: data.map(s => ({ id: s.StudentID, text: s.FullName })) };
+                }
+            }
+        });
+    });
 
-    // Initialize Select2
-    $('#studentSelect').select2({
-        theme: 'bootstrap-5',
-        dropdownParent: $('#ModalAddStudents'),
-        placeholder: 'ค้นหาและเลือกนักเรียน',
-        allowClear: true,
-        ajax: {
-            url: "<?= site_url('admin/academic/ConAdminDevelopStudents/ClubsStudentList') ?>",
+    function loadRegisteredStudents(clubId) {
+        $.ajax({
+            url: "<?= site_url('admin/academic/ConAdminDevelopStudents/ClubsTbShowStudentList') ?>",
+            type: "GET",
+            data: { club_id: clubId },
             dataType: 'json',
-            delay: 250,
-            processResults: function(data) {
-                return {
-                    results: data.map(student => ({
-                        id: student.StudentID,
-                        text: student.FullName
-                    }))
-                };
-            },
-            cache: true
-        }
-    });
-});
-
-// ------------------------ทะเบียนเบียนชุมนุม------------------------------------------------
-// โหลดตารางลงทะเบียนเบียนชุมนุม
-function loadRegisteredStudents(clubId) {
-    $.ajax({
-        url: "<?= site_url('admin/academic/ConAdminDevelopStudents/ClubsTbShowStudentList') ?>",
-        type: "GET",
-        data: {
-            club_id: clubId
-        },
-        dataType: 'json',
-        success: function(data) {
-            //$('#registeredCount').text(`นักเรียนที่ลงทะเบียนแล้ว: ${data} คน`);
-            let tableRows = '';
-            data.forEach((student, index) => {
-
-                tableRows += `
-                    <tr>
-                        <td class="text-center">${index + 1}</td>
-                        <td>${student.StudentClass}</td>
-                        <td>${student.StudentNumber}</td>
-                        <td>${student.StudentCode}</td>
-                        <td>${student.Fullname}</td>
-                        <td>
-                            <button class="btn btn-danger btn-sm remove-btn" data-id="${student.StudentID}">
-                                ลบ
+            success: function(data) {
+                let rows = '';
+                data.forEach((s, i) => {
+                    rows += `<tr>
+                        <td class="text-center font-bold">${i + 1}</td>
+                        <td class="small">${s.StudentClass}</td>
+                        <td class="small">${s.StudentNumber}</td>
+                        <td class="small fw-semibold">${s.StudentCode}</td>
+                        <td class="fw-bold">${s.Fullname}</td>
+                        <td class="text-center">
+                            <button class="btn btn-icon btn-label-danger btn-sm remove-btn" data-id="${s.StudentID}">
+                                <i class="bx bx-x"></i>
                             </button>
                         </td>
                     </tr>`;
-            });
-            $('#addedStudentsList').html(tableRows);
-            var rowCount = $("#TbShowStudentRegisClub tbody tr").length;
-            $("#registeredCount").text("นักเรียนที่ลงทะเบียนแล้ว: " + rowCount + " คน");
-        },
-        error: function(xhr, status, error) {
-            console.error(error);
-        }
+                });
+                $('#addedStudentsList').html(rows || '<tr><td colspan="5" class="text-center py-4 text-muted small">ไม่พบรายชื่อนักเรียน</td></tr>');
+                const count = data.length;
+                $('#registeredCount').text("ทั้งหมด: " + count + " คน");
+                $('#registeredCountDisplay').html(count + ' <small class="text-muted fs-6">คน</small>');
+                $('#remainingCapacity').text(current_max - count);
+            }
+        });
+    }
+
+    $(document).on('click', '#btnAddStudentToClub', function() {
+        const student_ids = $('#studentSelect').val();
+        const club_id = $('.club_id').val();
+        if (!student_ids) return Swal.fire('กรุณาเลือกนักเรียน', '', 'warning');
+
+        $.ajax({
+            url: "<?= site_url('admin/academic/ConAdminDevelopStudents/ClubsAddStudentToClub') ?>",
+            type: 'POST',
+            data: { student_ids, club_id },
+            dataType: 'json',
+            success: function(res) {
+                if (res.status === 'success') {
+                    Swal.fire({ icon: 'success', title: 'เพิ่มนักเรียนแล้ว', timer: 1000, showConfirmButton: false });
+                    loadRegisteredStudents(club_id);
+                    $('#studentSelect').val(null).trigger('change');
+                    table.ajax.reload();
+                } else if (res.status === 'duplicate') {
+                    Swal.fire({ 
+                        icon: "warning", 
+                        title: "พบข้อมูลซ้ำ!", 
+                        text: "นักเรียนบางคนลงทะเบียนชุมนุมนี้ไปแล้ว:\n" + res.duplicate_students.join(', ')
+                    });
+                } else {
+                    Swal.fire('ผิดพลาด', res.message, 'error');
+                }
+            }
+        });
     });
-}
 
-
-// เพื่มนักเรียนเข้าชุมนุม
-$(document).on('click', '#btnAddStudentToClub', function(e) {
-
-    const selectedStudents = $('#studentSelect').val();
-    const ClubID = $('.club_id').val();
-
-    $.ajax({
-        url: "<?= site_url('admin/academic/ConAdminDevelopStudents/ClubsAddStudentToClub') ?>",
-        type: 'POST',
-        data: {
-            student_ids: selectedStudents,
-            club_id: ClubID
-        },
-        dataType: 'json',
-        success: function(response) {
-            if (response.status === 'duplicate') {
-                // แจ้งเตือนข้อมูลซ้ำ
-                Swal.fire({
-                    icon: "warning",
-                    title: "นักเรียนบางคนได้ลงทะเบียนในชุมนุมนี้แล้ว:",
-                    text: response.duplicate_students.join('\n'),
-                    footer: 'กรุณาเลือกนักเรียนเข้าชุมนุมใหม่อีกครั้ง!'
-                });
-
-            } else if (response.status === 'success') {
-                Swal.fire({
-                    icon: "success",
-                    title: "แจ้งเตือน!",
-                    text: 'เพิ่มนักเรียนเข้าชุมนุมเรียบร้อย'
-                });
-                loadRegisteredStudents(ClubID);
-                // รีเซ็ตฟอร์มและ Select2
-                $('#studentSelect').val(null).trigger('change');
-                $('#FormAddStudentToClub')[0].reset();
-            } else {
-                Swal.fire({
-                    icon: "error",
-                    title: "แจ้งเตือน!",
-                    text: response.message || 'เกิดข้อผิดพลาด'
+    $(document).on('click', '.remove-btn', function() {
+        const student_id = $(this).data('id');
+        const club_id = $('.club_id').val();
+        Swal.fire({
+            title: 'ยกเลิกการลงทะเบียน?',
+            text: 'แน่ใจหรือไม่ว่าต้องการลบรายชื่อนักเรียนออกจากชุมนุมนี้',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'ลบออก',
+            cancelButtonText: 'ปิด'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: "<?= site_url('admin/academic/ConAdminDevelopStudents/ClubDeleteStudentToClub') ?>",
+                    type: "POST",
+                    data: { club_id, student_id },
+                    success: function() {
+                        loadRegisteredStudents(club_id);
+                        table.ajax.reload();
+                        Swal.fire('ลบเรียบร้อย!', '', 'success');
+                    }
                 });
             }
-        },
-        error: function(xhr, status, error) {
-            console.error('Error saving data:', error);
-        }
-    });
-});
-
-// ฟังก์ชันสำหรับลบนักเรียนออกจากชุมนุม
-$(document).on('click', '.remove-btn', function() {
-    const studentId = $(this).data('id'); // ดึง ID ของนักเรียนที่ต้องการลบ
-    const clubId = $('.club_id').val(); // ID ของชุมนุม
-
-    Swal.fire({
-        title: 'คุณแน่ใจหรือไม่?',
-        text: 'คุณต้องการลบนักเรียนคนนี้ออกจากชุมนุมหรือไม่?',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#3085d6',
-        cancelButtonColor: '#d33',
-        confirmButtonText: 'ใช่, ลบเลย!',
-        cancelButtonText: 'ยกเลิก'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            $.ajax({
-                url: "<?= site_url('admin/academic/ConAdminDevelopStudents/ClubDeleteStudentToClub') ?>",
-                type: "POST",
-                data: {
-                    club_id: clubId,
-                    student_id: studentId
-                },
-                success: function(response) {
-                    const result = JSON.parse(response);
-                    if (result.status === 'success') {
-                        Swal.fire(
-                            'ลบสำเร็จ!',
-                            'นักเรียนถูกลบออกจากชุมนุมเรียบร้อยแล้ว',
-                            'success'
-                        );
-                        loadRegisteredStudents(clubId); // โหลดข้อมูลนักเรียนใหม่
-                    } else {
-                        Swal.fire(
-                            'เกิดข้อผิดพลาด!',
-                            result.message,
-                            'error'
-                        );
-                    }
-                },
-                error: function(xhr, status, error) {
-                    Swal.fire(
-                        'เกิดข้อผิดพลาด!',
-                        'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้',
-                        'error'
-                    );
-                }
-            });
-        }
+        });
     });
 });
 </script>
