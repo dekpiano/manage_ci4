@@ -72,14 +72,16 @@ class ConAdminAcademicRepeat extends BaseController
         $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
         $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();
         $data['title'] = "ตั้งค่าเรียนซ้ำ (มส)";
+        $data['repeat_setting'] = $this->db->table('tb_register_onoff')->where('onoff_name', 'เรียนซ้ำ')->get()->getRow();
         $data['CountYear'] = $this->db->table('tb_register')
                                     ->select('RegisterYear')
                                     ->groupBy('RegisterYear')
                                     ->orderBy('RegisterYear', 'ASC')
                                     ->get()->getResult();
 
-        // ดึงค่า Term/Year จาก tb_register_onoff (ID 7 -> Index 6)
-        $onoff_year = $data['checkOnOff'][6]->onoff_year ?? ''; 
+        // ดึงค่า Term/Year จาก tb_register_onoff (onoff_name = 'เรียนซ้ำ')
+        $repeat_setting = $this->db->table('tb_register_onoff')->where('onoff_name', 'เรียนซ้ำ')->get()->getRow();
+        $onoff_year = $repeat_setting->onoff_year ?? ''; 
         $parts = explode('/', $onoff_year);
         $term = $parts[0] ?? '';
         $year = $parts[1] ?? '';
@@ -104,7 +106,8 @@ class ConAdminAcademicRepeat extends BaseController
                                     ->select('
                                         skjacth_academic.tb_register.SubjectID,
                                         skjacth_academic.tb_register.RegisterYear,
-                                        skjacth_academic.tb_register.TeacherID,
+                                        skjacth_academic.tb_register.RepeatYear,
+                                        skjacth_academic.tb_register.RepeatTeacher,
                                         skjacth_personnel.tb_personnel.pers_prefix,
                                         skjacth_personnel.tb_personnel.pers_firstname,
                                         skjacth_personnel.tb_personnel.pers_lastname,
@@ -113,9 +116,10 @@ class ConAdminAcademicRepeat extends BaseController
                                         skjacth_academic.tb_register.RegisterClass
                                     ')
                                     ->join('skjacth_academic.tb_subjects', 'skjacth_academic.tb_subjects.SubjectID = skjacth_academic.tb_register.SubjectID')
-                                    ->join('skjacth_personnel.tb_personnel', 'skjacth_personnel.tb_personnel.pers_id = skjacth_academic.tb_register.TeacherID')
-                                    ->where('RegisterYear', $currentYear)
-                                    ->groupBy('tb_register.SubjectID, tb_register.RegisterYear, tb_register.TeacherID, tb_register.RegisterClass, tb_personnel.pers_prefix, tb_personnel.pers_firstname, tb_personnel.pers_lastname, tb_subjects.SubjectName, tb_subjects.SubjectCode')
+                                    ->join('skjacth_personnel.tb_personnel', 'skjacth_personnel.tb_personnel.pers_id = skjacth_academic.tb_register.RepeatTeacher')
+                                    ->where('tb_register.RepeatYear', $currentYear)
+                                    ->where('tb_register.RepeatTeacher !=', '')
+                                    ->groupBy('tb_register.SubjectID, tb_register.RegisterYear, tb_register.RepeatYear, tb_register.RepeatTeacher, tb_register.RegisterClass, tb_personnel.pers_prefix, tb_personnel.pers_firstname, tb_personnel.pers_lastname, tb_subjects.SubjectName, tb_subjects.SubjectCode')
                                     ->get()->getResult();
 
         echo view('admin/Academic/AdminEvaluateLearnRepeat/AdminEvaluateLearnRepeatMain', $data);
@@ -126,12 +130,17 @@ class ConAdminAcademicRepeat extends BaseController
     {
         $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();
         $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
-        $data['title'] = "กรอกคะแนนผลการเรียน (" . @$data['checkOnOff'][6]->onoff_detail . ")";
+        $repeat_setting = $this->db->table('tb_register_onoff')->where('onoff_name', 'เรียนซ้ำ')->get()->getRow();
+        $onoff_repeat_year = $repeat_setting->onoff_year ?? '';
+        $data['repeat_setting'] = $repeat_setting;
+        $data['title'] = "กรอกคะแนนผลการเรียน (" . @$repeat_setting->onoff_detail . ")";
 
         $data['check_student'] = $this->db->table('tb_register')
                                     ->select('
                                         tb_register.SubjectID,
                                         tb_register.RegisterYear,
+                                        tb_register.RepeatYear,
+                                        tb_register.RepeatTeacher,
                                         tb_register.RegisterClass,
                                         tb_register.Score100,
                                         tb_register.TeacherID,
@@ -157,6 +166,7 @@ class ConAdminAcademicRepeat extends BaseController
                                     ->join('tb_students', 'tb_students.StudentID = tb_register.StudentID')
                                     ->where('tb_students.StudentBehavior !=', 'จำหน่าย')
                                     ->where('tb_register.RegisterYear', $term . '/' . $yaer)
+                                    ->where('tb_register.RepeatYear', $onoff_repeat_year)
                                     ->where('tb_subjects.SubjectYear', $term . '/' . $yaer)
                                     ->where('tb_register.SubjectID', urldecode($subject))
                                     ->orderBy('tb_students.StudentClass', 'ASC')
@@ -165,7 +175,7 @@ class ConAdminAcademicRepeat extends BaseController
 
         $data['Teacher'] = $this->DBpersonnel->table('tb_personnel') // Use the class property
                                     ->select('pers_prefix,pers_firstname,pers_lastname')
-                                    ->where('pers_id', @$data['check_student'][0]->TeacherID)
+                                    ->where('pers_id', @$data['check_student'][0]->RepeatTeacher)
                                     ->get()->getRow();
 
         $check_idSubject = $this->db->table('tb_subjects')
@@ -187,7 +197,7 @@ class ConAdminAcademicRepeat extends BaseController
 
     public function insert_score()
     {
-        $checkOnOff = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();
+        $repeat_setting = $this->db->table('tb_register_onoff')->where('onoff_name', 'เรียนซ้ำ')->get()->getRow();
         $TimeNum = $this->request->getPost('TimeNum');
 
         foreach ($this->request->getPost('StudentID') as $num => $value) {
@@ -226,7 +236,7 @@ class ConAdminAcademicRepeat extends BaseController
                     'Score100'         => $currentScore100,
                     'Grade'            => $Grade,
                     'StudyTime'        => $study_time,
-                    'Grade_Type'       => @$checkOnOff[6]->onoff_detail,
+                    'Grade_Type'       => @$repeat_setting->onoff_detail,
                     'Grade_UpdateTime' => date('Y-m-d H:i:s'),
                 ];
             }
@@ -340,19 +350,19 @@ class ConAdminAcademicRepeat extends BaseController
     public function CheckTimeRepeat()
     {
         $value = $this->request->getPost('value');
-        echo $this->db->table('tb_register_onoff')->where('onoff_id', 7)->set(['onoff_detail' => $value])->update();
+        echo $this->db->table('tb_register_onoff')->where('onoff_name', 'เรียนซ้ำ')->set(['onoff_detail' => $value])->update();
     }
 
     public function CheckOnoffRepeat()
     {
         $value = $this->request->getPost('value');
-        echo $this->db->table('tb_register_onoff')->where('onoff_id', 7)->set(['onoff_status' => $value])->update();
+        echo $this->db->table('tb_register_onoff')->where('onoff_name', 'เรียนซ้ำ')->set(['onoff_status' => $value])->update();
     }
 
     public function CheckOnoffYear()
     {
         $value = $this->request->getPost('value');
-        echo $this->db->table('tb_register_onoff')->where('onoff_id', 7)->set(['onoff_year' => $value])->update();
+        echo $this->db->table('tb_register_onoff')->where('onoff_name', 'เรียนซ้ำ')->set(['onoff_year' => $value])->update();
     }
 
     public function update_repeat_settings()
@@ -368,7 +378,7 @@ class ConAdminAcademicRepeat extends BaseController
                 'onoff_detail' => $time
             ];
 
-            $updated = $this->db->table('tb_register_onoff')->where('onoff_id', 7)->set($data)->update();
+            $updated = $this->db->table('tb_register_onoff')->where('onoff_name', 'เรียนซ้ำ')->set($data)->update();
 
             if ($updated) {
                 return $this->response->setJSON(['status' => 'success', 'message' => 'Repeat settings updated successfully.']);

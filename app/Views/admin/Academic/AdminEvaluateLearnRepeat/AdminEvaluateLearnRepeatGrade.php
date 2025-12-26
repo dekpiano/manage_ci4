@@ -122,7 +122,7 @@
                                     check-score-key="<?=$v_set_score->regscore_score?>"
                                     id="<?=$v_check_student->StudentID?>" name="<?=$v_check_student->StudentID?>[]"
                                     value="<?=$v_check_student->Score100 == "" ? "0" : $s[$key]?>"
-                                    <?=$checkOnOff[6]->onoff_status == "off" ? "readonly" : ""?> autocomplete="off">
+                                    <?=$repeat_setting->onoff_status == "off" ? "readonly" : ""?> autocomplete="off">
                             </td>
                             <?php endforeach; ?>
                             <td class="align-middle">

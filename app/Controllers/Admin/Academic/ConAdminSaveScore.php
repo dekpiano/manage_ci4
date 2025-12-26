@@ -71,8 +71,10 @@ class ConAdminSaveScore extends BaseController
         $data['selectedYear'] = get_selected_year();
         
         $data['title'] = "บันทึกผลการเรียน";	
-        $data['OnOffSaveScore'] = $this->db->table('tb_register_onoff')->where('onoff_id >=', 2)->where('onoff_id <=', 5)->get()->getResult();
-        $data['OnOffSaveScoreSystem'] = $this->db->table('tb_register_onoff')->where('onoff_id',6)->get()->getResult();
+        $data['OnOffNormalMasters'] = $this->db->table('tb_register_onoff')->where('onoff_id', 10)->get()->getRow();
+        $data['OnOffRepeatMasters'] = $this->db->table('tb_register_onoff')->where('onoff_id', 11)->get()->getRow();
+        $data['OnOffNormalPeriods'] = $this->db->table('tb_register_onoff')->where('onoff_id >=', 2)->where('onoff_id <=', 5)->get()->getResult();
+        $data['OnOffRepeatPeriods'] = $this->db->table('tb_register_onoff')->where('onoff_id >=', 12)->where('onoff_id <=', 15)->get()->getResult();
         
         $data['result'] = $this->db->table('skjacth_academic.tb_register')
                             ->select('
@@ -88,7 +90,7 @@ class ConAdminSaveScore extends BaseController
                                 ')
                             ->join('skjacth_academic.tb_subjects','skjacth_academic.tb_subjects.SubjectID = skjacth_academic.tb_register.SubjectID')
                             ->join('skjacth_personnel.tb_personnel','skjacth_personnel.tb_personnel.pers_id = skjacth_academic.tb_register.TeacherID')
-                            ->where('RegisterYear','1/2565')
+                            ->where('RegisterYear', $data['selectedYear'])
                             ->groupBy('tb_register.SubjectID, tb_register.RegisterYear, tb_register.TeacherID, tb_register.RegisterClass, tb_personnel.pers_prefix, tb_personnel.pers_firstname, tb_personnel.pers_lastname, tb_subjects.SubjectName, tb_subjects.SubjectCode')
                             ->get()->getResult();
         
@@ -143,7 +145,10 @@ class ConAdminSaveScore extends BaseController
         $check_idSubject = $this->db->table('tb_subjects')->where('SubjectCode',urldecode($subject))->where('SubjectYear',$term.'/'.$yaer)->get()->getRow();
         
         $data['set_score'] = !empty($check_idSubject->SubjectID) ? $this->db->table('tb_register_score')->where('regscore_subjectID',$check_idSubject->SubjectID)->get()->getResult() : [];
-        $data['onoff_savescore'] = $this->db->table('tb_register_onoff')->where('onoff_id >=',2)->where('onoff_id <=',5)->get()->getResult();
+        $data['OnOffNormalPeriods'] = $this->db->table('tb_register_onoff')->where('onoff_id >=', 2)->where('onoff_id <=', 5)->get()->getResult();
+        $data['OnOffRepeatPeriods'] = $this->db->table('tb_register_onoff')->where('onoff_id >=', 12)->where('onoff_id <=', 15)->get()->getResult();
+        $data['OnOffNormal'] = $this->db->table('tb_register_onoff')->where('onoff_id', 10)->get()->getRow();
+        $data['OnOffRepeat'] = $this->db->table('tb_register_onoff')->where('onoff_id', 11)->get()->getRow();
 
         
         echo view('admin/Academic/AdminSaveScore/AdminSaveScoreGrade.php',$data);
