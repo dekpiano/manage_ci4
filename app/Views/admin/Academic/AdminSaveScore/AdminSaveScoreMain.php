@@ -80,6 +80,19 @@
         background-color: #ffebee;
         color: #f44336;
     }
+
+    .card-off {
+        border-top-color: #f44336 !important;
+        background-color: #fff8f8;
+    }
+
+    .card-on {
+        border-top-color: #15a362 !important;
+    }
+    
+    .text-off {
+        color: #f44336 !important;
+    }
 </style>
 
 <div class="container-xxl flex-grow-1 container-p-y">
@@ -101,15 +114,22 @@
     <div class="row g-4 mb-4">
         <!-- Configuration Panel - Normal Students -->
         <div class="col-lg-6">
-            <div class="card card-custom border-top border-5 border-success h-100">
+            <div class="card card-custom border-top border-5 h-100 <?= (isset($OnOffNormalMasters->onoff_status) && $OnOffNormalMasters->onoff_status == "on") ? "card-on border-success" : "card-off" ?>">
                 <div class="card-body p-4">
                     <div class="d-flex justify-content-between align-items-center mb-4">
-                        <h5 class="section-title mb-0"><i class='bx bx-user'></i> ตั้งค่านักเรียนปกติ</h5>
-                        <div class="form-check form-switch m-0">
-                            <input class="form-check-input onoff_savescore" type="checkbox"
-                                onoff-id="<?= isset($OnOffNormalMasters->onoff_id) ? esc($OnOffNormalMasters->onoff_id) : '' ?>"
-                                value="<?= isset($OnOffNormalMasters->onoff_status) ? esc($OnOffNormalMasters->onoff_status) : '' ?>"
-                                <?= (isset($OnOffNormalMasters->onoff_status) && $OnOffNormalMasters->onoff_status == "on") ? "checked" : ""?>>
+                        <div class="d-flex align-items-center gap-3">
+                            <h5 class="section-title mb-0 <?= (isset($OnOffNormalMasters->onoff_status) && $OnOffNormalMasters->onoff_status == "off") ? "text-off" : "" ?>"><i class='bx bx-user'></i> ตั้งค่านักเรียนปกติ</h5>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="status-badge master-badge <?= (isset($OnOffNormalMasters->onoff_status) && $OnOffNormalMasters->onoff_status == "on") ? "status-on" : "status-off"?>">
+                                <?= (isset($OnOffNormalMasters->onoff_status) && $OnOffNormalMasters->onoff_status == "on") ? "เปิดระบบ" : "ปิดระบบ"?>
+                            </span>
+                            <div class="form-check form-switch m-0">
+                                <input class="form-check-input onoff_savescore master-toggle" type="checkbox"
+                                    onoff-id="<?= isset($OnOffNormalMasters->onoff_id) ? esc($OnOffNormalMasters->onoff_id) : '' ?>"
+                                    value="<?= isset($OnOffNormalMasters->onoff_status) ? esc($OnOffNormalMasters->onoff_status) : '' ?>"
+                                    <?= (isset($OnOffNormalMasters->onoff_status) && $OnOffNormalMasters->onoff_status == "on") ? "checked" : ""?>>
+                            </div>
                         </div>
                     </div>
                     
@@ -144,15 +164,22 @@
 
         <!-- Configuration Panel - Repeat Students -->
         <div class="col-lg-6">
-            <div class="card card-custom border-top border-5 border-warning h-100">
+            <div class="card card-custom border-top border-5 h-100 <?= (isset($OnOffRepeatMasters->onoff_status) && $OnOffRepeatMasters->onoff_status == "on") ? "card-on border-success" : "card-off" ?>">
                 <div class="card-body p-4">
                     <div class="d-flex justify-content-between align-items-center mb-4">
-                        <h5 class="section-title mb-0" style="color: #856404;"><i class='bx bx-refresh'></i> ตั้งค่านักเรียนเรียนซ้ำ</h5>
-                        <div class="form-check form-switch m-0">
-                            <input class="form-check-input onoff_savescore" type="checkbox"
-                                onoff-id="<?= isset($OnOffRepeatMasters->onoff_id) ? esc($OnOffRepeatMasters->onoff_id) : '' ?>"
-                                value="<?= isset($OnOffRepeatMasters->onoff_status) ? esc($OnOffRepeatMasters->onoff_status) : '' ?>"
-                                <?= (isset($OnOffRepeatMasters->onoff_status) && $OnOffRepeatMasters->onoff_status == "on") ? "checked" : ""?>>
+                        <div class="d-flex align-items-center gap-3">
+                            <h5 class="section-title mb-0 <?= (isset($OnOffRepeatMasters->onoff_status) && $OnOffRepeatMasters->onoff_status == "off") ? "text-off" : "" ?>" style="<?= (isset($OnOffRepeatMasters->onoff_status) && $OnOffRepeatMasters->onoff_status == "on") ? "color: #856404;" : "" ?>"><i class='bx bx-refresh'></i> ตั้งค่านักเรียนเรียนซ้ำ</h5>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="status-badge master-badge <?= (isset($OnOffRepeatMasters->onoff_status) && $OnOffRepeatMasters->onoff_status == "on") ? "status-on" : "status-off"?>">
+                                <?= (isset($OnOffRepeatMasters->onoff_status) && $OnOffRepeatMasters->onoff_status == "on") ? "เปิดระบบ" : "ปิดระบบ"?>
+                            </span>
+                            <div class="form-check form-switch m-0">
+                                <input class="form-check-input onoff_savescore master-toggle" type="checkbox"
+                                    onoff-id="<?= isset($OnOffRepeatMasters->onoff_id) ? esc($OnOffRepeatMasters->onoff_id) : '' ?>"
+                                    value="<?= isset($OnOffRepeatMasters->onoff_status) ? esc($OnOffRepeatMasters->onoff_status) : '' ?>"
+                                    <?= (isset($OnOffRepeatMasters->onoff_status) && $OnOffRepeatMasters->onoff_status == "on") ? "checked" : ""?>>
+                            </div>
                         </div>
                     </div>
                     
@@ -195,6 +222,8 @@ $(document).on("change", ".onoff_savescore", function() {
     var self = $(this);
     var isChecked = self.prop('checked');
     var badge = self.closest('.d-flex').find('.status-badge');
+    var isMaster = self.hasClass('master-toggle');
+    var card = self.closest('.card');
 
     $.post("<?= site_url('admin/academic/ConAdminSaveScore/CheckOnOffSaveScore') ?>", {
             check: isChecked,
@@ -203,11 +232,27 @@ $(document).on("change", ".onoff_savescore", function() {
         },
         function(data, status) {
             // Update the badge text and style dynamically
-            if (badge.length) {
+            var badgeContainer = self.closest('.d-flex').find('.status-badge');
+            if (badgeContainer.length) {
+                var onText = isMaster ? 'เปิดระบบ' : 'เปิด';
+                var offText = isMaster ? 'ปิดระบบ' : 'ปิด';
+                
                 if (isChecked) {
-                    badge.text('เปิด').removeClass('status-off').addClass('status-on');
+                    badge.text(onText).removeClass('status-off').addClass('status-on');
                 } else {
-                    badge.text('ปิด').removeClass('status-on').addClass('status-off');
+                    badge.text(offText).removeClass('status-on').addClass('status-off');
+                }
+            }
+
+            // Toggle card-on/off and text-off classes if it's a master toggle
+            if (isMaster) {
+                var sectionTitle = card.find('.section-title');
+                if (isChecked) {
+                    card.removeClass('card-off').addClass('card-on border-success');
+                    sectionTitle.removeClass('text-off');
+                } else {
+                    card.removeClass('card-on border-success').addClass('card-off');
+                    sectionTitle.addClass('text-off');
                 }
             }
 
