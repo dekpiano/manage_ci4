@@ -243,6 +243,7 @@ class ConAdminRegisRepeat extends BaseController
                 tb_students.StudentClass, 
                 tb_students.StudentNumber,
                 tb_register.RepeatYear,
+                tb_register.RepeatStatus,
                 CONCAT(repeat_teacher.pers_prefix, repeat_teacher.pers_firstname, " ", repeat_teacher.pers_lastname) as RepeatTeacherName
             ')
             ->join('tb_students', 'tb_students.StudentID = tb_register.StudentID')
@@ -300,7 +301,19 @@ class ConAdminRegisRepeat extends BaseController
         ->where('tb_register.RegisterYear',$Term.'/'.$Year)
         ->where('tb_subjects.SubjectYear',$Term.'/'.$Year)
         ->where('tb_subjects.SubjectID',urldecode($IDSubject))
-        ->where('tb_register.TeacherID',$TechID)
+        ->groupStart()
+            // กรณีครูหลัก: แสดงเฉพาะนักเรียนที่ยังไม่ได้ลงทะเบียนซ้ำ หรือลงทะเบียนซ้ำกับตัวเอง
+            ->groupStart()
+                ->where('tb_register.TeacherID', $TechID)
+                ->groupStart()
+                    ->where('tb_register.RepeatTeacher', '')
+                    ->orWhere('tb_register.RepeatTeacher', null)
+                    ->orWhere('tb_register.RepeatTeacher', $TechID)
+                ->groupEnd()
+            ->groupEnd()
+            // กรณีครูเรียนซ้ำ: แสดงเฉพาะนักเรียนที่ลงทะเบียนซ้ำกับตัวเอง
+            ->orWhere('tb_register.RepeatTeacher', $TechID)
+        ->groupEnd()
         ->orderBy('StudentClass','ASC')
         ->orderBy('StudentNumber','ASC')
         ->get()->getResult();
@@ -474,7 +487,6 @@ class ConAdminRegisRepeat extends BaseController
         $CheckYear = $this->db->table('tb_schoolyear')->get()->getRow();
         $data = [];
         $keyYear = $this->request->getVar('keyYear');
-        //$subject = $this->db->where('SubjectYear','1/2565')->get('tb_subjects')->result();
        
         $Register = $this->db->table('tb_register')->select("
                                     skjacth_academic.tb_register.SubjectID,
@@ -482,21 +494,26 @@ class ConAdminRegisRepeat extends BaseController
                                     skjacth_academic.tb_subjects.FirstGroup,
                                     GROUP_CONCAT(DISTINCT skjacth_academic.tb_register.RegisterClass ORDER BY skjacth_academic.tb_register.RegisterClass SEPARATOR ', ') AS RegisterClass,
                                     skjacth_academic.tb_register.TeacherID,
+                                    skjacth_academic.tb_register.RepeatTeacher,
                                     skjacth_academic.tb_subjects.SubjectID,
                                     skjacth_academic.tb_subjects.SubjectCode,
                                     skjacth_academic.tb_subjects.SubjectYear,
-                                    skjacth_personnel.tb_personnel.pers_firstname,
-                                    skjacth_personnel.tb_personnel.pers_prefix,
-                                    skjacth_personnel.tb_personnel.pers_lastname,
-                                    SUM(CASE WHEN skjacth_academic.tb_register.RepeatStatus = 'ไม่ผ่าน' THEN 1 ELSE 0 END) AS SumRepeat")
+                                    main_teacher.pers_firstname AS main_pers_firstname,
+                                    main_teacher.pers_prefix AS main_pers_prefix,
+                                    main_teacher.pers_lastname AS main_pers_lastname,
+                                    repeat_teacher.pers_firstname AS repeat_pers_firstname,
+                                    repeat_teacher.pers_prefix AS repeat_pers_prefix,
+                                    repeat_teacher.pers_lastname AS repeat_pers_lastname,
+                                    COUNT(*) AS SumRepeat")
                                 ->join('tb_subjects', 'tb_subjects.SubjectID = tb_register.SubjectID')
-                                ->join($this->DBPers->database . '.tb_personnel', $this->DBPers->database . '.tb_personnel.pers_id = skjacth_academic.tb_register.TeacherID')
-                                ->where('tb_register.RegisterYear',$keyYear)
-                                ->where('tb_subjects.SubjectYear',$keyYear)
-                                ->groupBy('skjacth_academic.tb_register.SubjectID, skjacth_academic.tb_register.TeacherID, skjacth_academic.tb_subjects.SubjectName, skjacth_academic.tb_subjects.FirstGroup, skjacth_academic.tb_subjects.SubjectCode, skjacth_academic.tb_subjects.SubjectYear, skjacth_personnel.tb_personnel.pers_firstname, skjacth_personnel.tb_personnel.pers_prefix, skjacth_personnel.tb_personnel.pers_lastname')
+                                ->join($this->DBPers->database . '.tb_personnel AS main_teacher', 'main_teacher.pers_id = skjacth_academic.tb_register.TeacherID', 'LEFT')
+                                ->join($this->DBPers->database . '.tb_personnel AS repeat_teacher', 'repeat_teacher.pers_id = skjacth_academic.tb_register.RepeatTeacher', 'LEFT')
+                                ->where('tb_register.RegisterYear', $keyYear)
+                                ->where('tb_subjects.SubjectYear', $keyYear)
+                                ->where('tb_register.RepeatTeacher !=', '')
+                                ->where('tb_register.RepeatStatus', 'ไม่ผ่าน')
+                                ->groupBy('skjacth_academic.tb_register.SubjectID, skjacth_academic.tb_register.RepeatTeacher, skjacth_academic.tb_register.TeacherID, skjacth_academic.tb_subjects.SubjectName, skjacth_academic.tb_subjects.FirstGroup, skjacth_academic.tb_subjects.SubjectCode, skjacth_academic.tb_subjects.SubjectYear, main_teacher.pers_firstname, main_teacher.pers_prefix, main_teacher.pers_lastname, repeat_teacher.pers_firstname, repeat_teacher.pers_prefix, repeat_teacher.pers_lastname')
                                 ->get()->getResult();
-
-        //echo '<pre>'; print_r($Register);   exit();    
 
         foreach($Register as $record){
             
@@ -507,8 +524,9 @@ class ConAdminRegisRepeat extends BaseController
                 "FirstGroup" => $record->FirstGroup,
                 "SubjectClass" => $record->RegisterClass,
                 "SubjectID" => $record->SubjectID,
-                "TeacherName" =>  $record->pers_prefix.$record->pers_firstname.' '.$record->pers_lastname,
-                "TeacherID" => $record->TeacherID,
+                "TeacherName" => $record->repeat_pers_prefix . $record->repeat_pers_firstname . ' ' . $record->repeat_pers_lastname,
+                "MainTeacherName" => $record->main_pers_prefix . $record->main_pers_firstname . ' ' . $record->main_pers_lastname,
+                "TeacherID" => $record->RepeatTeacher,
                 "SumRepeat" => $record->SumRepeat
             );
            
@@ -520,6 +538,117 @@ class ConAdminRegisRepeat extends BaseController
 
       
       
+       echo json_encode($output);
+    }
+
+    /**
+     * ดึงข้อมูลวิชาหลักทั้งหมดในปีการศึกษา (แสดงครูผู้สอนและจำนวนนักเรียน)
+     */
+    public function AdminRegisRepeatShowMainSubjects(){ 
+        $data = [];
+        $keyYear = $this->request->getVar('keyYear');
+       
+        // ดึงวิชาหลักทั้งหมดที่มีการลงทะเบียนนักเรียน
+        $Register = $this->db->table('tb_register')->select("
+                                    skjacth_academic.tb_register.SubjectID,
+                                    skjacth_academic.tb_subjects.SubjectName,
+                                    skjacth_academic.tb_subjects.FirstGroup,
+                                    GROUP_CONCAT(DISTINCT skjacth_academic.tb_register.RegisterClass ORDER BY skjacth_academic.tb_register.RegisterClass SEPARATOR ', ') AS RegisterClass,
+                                    skjacth_academic.tb_register.TeacherID,
+                                    skjacth_academic.tb_subjects.SubjectID,
+                                    skjacth_academic.tb_subjects.SubjectCode,
+                                    skjacth_academic.tb_subjects.SubjectYear,
+                                    skjacth_academic.tb_subjects.SubjectUnit,
+                                    teacher.pers_firstname,
+                                    teacher.pers_prefix,
+                                    teacher.pers_lastname,
+                                    COUNT(*) AS TotalStudents")
+                                ->join('tb_subjects', 'tb_subjects.SubjectID = tb_register.SubjectID')
+                                ->join($this->DBPers->database . '.tb_personnel AS teacher', 'teacher.pers_id = skjacth_academic.tb_register.TeacherID', 'LEFT')
+                                ->where('tb_register.RegisterYear', $keyYear)
+                                ->where('tb_subjects.SubjectYear', $keyYear)
+                                ->groupBy('skjacth_academic.tb_register.SubjectID, skjacth_academic.tb_register.TeacherID, skjacth_academic.tb_subjects.SubjectName, skjacth_academic.tb_subjects.FirstGroup, skjacth_academic.tb_subjects.SubjectCode, skjacth_academic.tb_subjects.SubjectYear, skjacth_academic.tb_subjects.SubjectUnit, teacher.pers_firstname, teacher.pers_prefix, teacher.pers_lastname')
+                                ->get()->getResult();
+
+        foreach($Register as $record){
+            $data[] = array( 
+                "SubjectYear" => $record->SubjectYear,
+                "SubjectCode" => $record->SubjectCode,
+                "SubjectName" => $record->SubjectName,
+                "SubjectUnit" => $record->SubjectUnit,
+                "FirstGroup" => $record->FirstGroup,
+                "SubjectClass" => $record->RegisterClass,
+                "SubjectID" => $record->SubjectID,
+                "TeacherName" => $record->pers_prefix . $record->pers_firstname . ' ' . $record->pers_lastname,
+                "TeacherID" => $record->TeacherID,
+                "TotalStudents" => $record->TotalStudents
+            );
+        }   
+
+        $output = array(
+            "data" =>  $data
+        );
+
+       echo json_encode($output);
+    }
+
+    /**
+     * ดึงข้อมูลรายวิชาที่รอลงทะเบียนเรียนซ้ำ (Grade = 0 หรือ ร และ RepeatTeacher ว่าง)
+     */
+    public function AdminRegisRepeatShowPending(){ 
+        $data = [];
+        $keyYear = $this->request->getVar('keyYear');
+       
+        // ดึงวิชาที่มี Grade = 0 หรือ ร แต่ยังไม่ได้ลงทะเบียนเรียนซ้ำ (RepeatTeacher ว่าง)
+        $Register = $this->db->table('tb_register')->select("
+                                    skjacth_academic.tb_register.SubjectID,
+                                    skjacth_academic.tb_subjects.SubjectName,
+                                    skjacth_academic.tb_subjects.FirstGroup,
+                                    GROUP_CONCAT(DISTINCT skjacth_academic.tb_register.RegisterClass ORDER BY skjacth_academic.tb_register.RegisterClass SEPARATOR ', ') AS RegisterClass,
+                                    skjacth_academic.tb_register.TeacherID,
+                                    skjacth_academic.tb_subjects.SubjectID,
+                                    skjacth_academic.tb_subjects.SubjectCode,
+                                    skjacth_academic.tb_subjects.SubjectYear,
+                                    teacher.pers_firstname,
+                                    teacher.pers_prefix,
+                                    teacher.pers_lastname,
+                                    COUNT(*) AS SumPending")
+                                ->join('tb_subjects', 'tb_subjects.SubjectID = tb_register.SubjectID')
+                                ->join($this->DBPers->database . '.tb_personnel AS teacher', 'teacher.pers_id = skjacth_academic.tb_register.TeacherID', 'LEFT')
+                                ->where('tb_register.RegisterYear', $keyYear)
+                                ->where('tb_subjects.SubjectYear', $keyYear)
+                                ->groupStart()
+                                    ->where('tb_register.RepeatTeacher', '')
+                                    ->orWhere('tb_register.RepeatTeacher IS NULL')
+                                ->groupEnd()
+                                ->groupStart()
+                                    ->where('tb_register.Grade', '0')
+                                    ->orWhere('tb_register.Grade', 'ร')
+                                    ->orWhere('tb_register.Grade', 'มส')
+                                ->groupEnd()
+                                ->groupBy('skjacth_academic.tb_register.SubjectID, skjacth_academic.tb_register.TeacherID, skjacth_academic.tb_subjects.SubjectName, skjacth_academic.tb_subjects.FirstGroup, skjacth_academic.tb_subjects.SubjectCode, skjacth_academic.tb_subjects.SubjectYear, teacher.pers_firstname, teacher.pers_prefix, teacher.pers_lastname')
+                                ->get()->getResult();
+
+        foreach($Register as $record){
+            
+            $data[] = array( 
+                "SubjectYear" => $record->SubjectYear,
+                "SubjectCode" => $record->SubjectCode,
+                "SubjectName" => $record->SubjectName,
+                "FirstGroup" => $record->FirstGroup,
+                "SubjectClass" => $record->RegisterClass,
+                "SubjectID" => $record->SubjectID,
+                "TeacherName" => $record->pers_prefix . $record->pers_firstname . ' ' . $record->pers_lastname,
+                "TeacherID" => $record->TeacherID,
+                "SumPending" => $record->SumPending
+            );
+           
+        }   
+
+        $output = array(
+            "data" =>  $data
+        );
+
        echo json_encode($output);
     }
 

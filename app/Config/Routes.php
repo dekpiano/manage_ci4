@@ -202,6 +202,8 @@ $routes->post('Admin/Academic/ConAdminRegisRepeat/getRepeatStudentDetailsBySubje
 $routes->post('admin/academic/ConAdminRegisRepeat/AdminRegisRepeatCancel', [ConAdminRegisRepeat::class, 'AdminRegisRepeatCancel']);
 
 $routes->match(['get', 'post'], 'admin/academic/ConAdminRegisRepeat/AdminRegisRepeatShow', [ConAdminRegisRepeat::class, 'AdminRegisRepeatShow']);
+$routes->match(['get', 'post'], 'admin/academic/ConAdminRegisRepeat/AdminRegisRepeatShowMainSubjects', [ConAdminRegisRepeat::class, 'AdminRegisRepeatShowMainSubjects']);
+$routes->match(['get', 'post'], 'admin/academic/ConAdminRegisRepeat/AdminRegisRepeatShowPending', [ConAdminRegisRepeat::class, 'AdminRegisRepeatShowPending']);
 
 $routes->match(['get', 'post'], 'Admin/Academic/ConAdminStudents/AdminStudentsNormalShow/(:segment)', [ConAdminStudents::class, 'AdminStudentsNormalShow/$1']);
 

@@ -256,20 +256,23 @@
                         </span>
                         <span class="teacher-text"><?= isset($DataRepeat[0]->SubjectName) ? esc($DataRepeat[0]->SubjectName) : '' ?></span>
                         <?php
-                            $subjectTeacherName = '';
-                            if (isset($DataRepeat[0]->SubjectID) && isset($DataRepeatTeacher[0]->RepeatTeacher)) {
-                                $defaultTeacherId = $DataRepeatTeacher[0]->RepeatTeacher;
+                            // ครูผู้สอนหลัก (ประจำวิชา)
+                            $mainTeacherName = '';
+                            if (isset($DataRepeat[0]->TeacherID)) {
+                                $mainTeacherId = $DataRepeat[0]->TeacherID;
                                 foreach ($Teacher as $v_Teache) {
-                                    if (isset($v_Teache->pers_id) && $v_Teache->pers_id == $defaultTeacherId) {
-                                        $subjectTeacherName = (isset($v_Teache->pers_prefix) ? esc($v_Teache->pers_prefix) : '') .
-                                                              (isset($v_Teache->pers_firstname) ? esc($v_Teache->pers_firstname) : '') . ' ' .
-                                                              (isset($v_Teache->pers_lastname) ? esc($v_Teache->pers_lastname) : '');
+                                    if (isset($v_Teache->pers_id) && $v_Teache->pers_id == $mainTeacherId) {
+                                        $mainTeacherName = (isset($v_Teache->pers_prefix) ? esc($v_Teache->pers_prefix) : '') .
+                                                          (isset($v_Teache->pers_firstname) ? esc($v_Teache->pers_firstname) : '') . ' ' .
+                                                          (isset($v_Teache->pers_lastname) ? esc($v_Teache->pers_lastname) : '');
                                         break;
                                     }
                                 }
                             }
-                            if (!empty($subjectTeacherName)) {
-                                echo '<span class="teacher-text"><i class="bx bx-user me-1"></i>ครูผู้สอน: ' . $subjectTeacherName . '</span>';
+                            
+                            // แสดงครูผู้สอนหลัก
+                            if (!empty($mainTeacherName)) {
+                                echo '<span class="teacher-text"><i class="bx bx-chalkboard me-1"></i>ครูประจำวิชา: ' . $mainTeacherName . '</span>';
                             }
                         ?>
                     </div>
@@ -515,6 +518,7 @@
                                 <th>เลขที่</th>
                                 <th>เลขประจำตัว</th>
                                 <th>ชื่อ - นามสกุล</th>
+                                <th>สถานะ</th>
                                 <th>ครูผู้สอน (เรียนซ้ำ)</th>
                                 <th>ปีการศึกษา</th>
                             </tr>
@@ -562,6 +566,19 @@ function showSubjectStudentDetailsModal() {
                 data: null,
                 render: function(data, type, row) {
                     return (data.StudentPrefix || '') + (data.StudentFirstName || '') + ' ' + (data.StudentLastName || '');
+                }
+            },
+            { 
+                data: 'RepeatStatus',
+                className: 'text-center',
+                render: function(data) {
+                    if (data === 'ผ่าน') {
+                        return '<span class="badge bg-label-success"><i class="bx bx-check me-1"></i>ผ่าน</span>';
+                    } else if (data === 'ไม่ผ่าน') {
+                        return '<span class="badge bg-label-info"><i class="bx bx-time me-1"></i>กำลังเรียนซ้ำ</span>';
+                    } else {
+                        return '<span class="badge bg-label-secondary">' + (data || '-') + '</span>';
+                    }
                 }
             },
             { 

@@ -323,10 +323,9 @@
         </div>
     </div>
 
-    <!-- Data Table Section -->
-    <div class="card table-card shadow-sm">
-        <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-3">
-            <h5><i class="bx bx-list-ul me-2"></i>รายการลงทะเบียนเรียนซ้ำ</h5>
+    <!-- Filter Section -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body py-2">
             <div class="d-flex align-items-center gap-2">
                 <label for="CheckYearRegisRepeat" class="form-label mb-0 fw-medium text-nowrap">
                     <i class="bx bx-filter-alt me-1"></i>ปีการศึกษา:
@@ -338,8 +337,69 @@
                 </select>
             </div>
         </div>
+    </div>
+    <input type="hidden" name="schyear_year" id="schyear_year" value="<?= isset($SchoolYear->schyear_year) ? esc($SchoolYear->schyear_year) : '' ?>">
+
+    <!-- Main Subjects Table Section -->
+    <div class="card table-card shadow-sm mb-4">
+        <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-3" style="border-left: 4px solid #6610f2;">
+            <h5 class="mb-0"><i class="bx bx-book-open me-2" style="color: #6610f2;"></i>วิชาหลักทั้งหมด <span class="badge ms-2" style="background: rgba(102, 16, 242, 0.1); color: #6610f2;" id="main-subjects-count">0</span></h5>
+            <small class="text-muted"><i class="bx bx-info-circle me-1"></i>รายการวิชาทั้งหมดที่มีการลงทะเบียนนักเรียนในปีการศึกษานี้</small>
+        </div>
         <div class="card-body">
-            <input type="hidden" name="schyear_year" id="schyear_year" value="<?= isset($SchoolYear->schyear_year) ? esc($SchoolYear->schyear_year) : '' ?>">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0" id="tbMainSubjects">
+                    <thead>
+                        <tr>
+                            <th><i class="bx bx-calendar me-1"></i>เรียนปี</th>
+                            <th><i class="bx bx-hash me-1"></i>รหัสวิชา</th>
+                            <th><i class="bx bx-book me-1"></i>ชื่อวิชา</th>
+                            <th><i class="bx bx-star me-1"></i>หน่วยกิต</th>
+                            <th><i class="bx bx-category me-1"></i>กลุ่มสาระ</th>
+                            <th><i class="bx bx-door-open me-1"></i>ชั้น</th>
+                            <th><i class="bx bx-user me-1"></i>ครูผู้สอน</th>
+                            <th class="text-center text-nowrap"><i class="bx bx-cog me-1"></i>คำสั่ง</th>
+                            <th class="text-center text-nowrap"><i class="bx bx-group me-1"></i>นักเรียน</th>
+                        </tr>
+                    </thead>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pending Registration Table Section -->
+    <div class="card table-card shadow-sm mb-4">
+        <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-3" style="border-left: 4px solid #ffc107;">
+            <h5 class="mb-0"><i class="bx bx-time-five me-2 text-warning"></i>รายการรอลงทะเบียนเรียนซ้ำ <span class="badge bg-label-warning ms-2" id="pending-count">0</span></h5>
+            <small class="text-muted"><i class="bx bx-info-circle me-1"></i>วิชาที่ได้ 0, ร หรือ มส ที่ยังไม่ได้มอบหมายครูดูแลเรียนซ้ำ</small>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0" id="tbRegisRepeatPending">
+                    <thead>
+                        <tr>
+                            <th><i class="bx bx-calendar me-1"></i>เรียนปี</th>
+                            <th><i class="bx bx-hash me-1"></i>รหัสวิชา</th>
+                            <th><i class="bx bx-book me-1"></i>ชื่อวิชา</th>
+                            <th><i class="bx bx-category me-1"></i>กลุ่มสาระ</th>
+                            <th><i class="bx bx-door-open me-1"></i>ชั้น</th>
+                            <th><i class="bx bx-user me-1"></i>ครูผู้สอน (หลัก)</th>
+                            <th class="text-center text-nowrap"><i class="bx bx-cog me-1"></i>คำสั่ง</th>
+                            <th class="text-center text-nowrap"><i class="bx bx-user-x me-1"></i>รอลงทะเบียน</th>
+                        </tr>
+                    </thead>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Registered Table Section -->
+    <div class="card table-card shadow-sm">
+        <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-3" style="border-left: 4px solid #15a362;">
+            <h5 class="mb-0"><i class="bx bx-check-circle me-2 text-success"></i>รายการที่ลงทะเบียนเรียนซ้ำแล้ว <span class="badge bg-label-success ms-2" id="registered-count">0</span></h5>
+            <small class="text-muted"><i class="bx bx-info-circle me-1"></i>วิชาที่มอบหมายครูดูแลเรียนซ้ำเรียบร้อยแล้ว</small>
+        </div>
+        <div class="card-body">
             <div class="table-responsive">
                 <table class="table table-hover mb-0" id="tbRegisRepeatSubject">
                     <thead>
@@ -349,7 +409,7 @@
                             <th><i class="bx bx-book me-1"></i>ชื่อวิชา</th>
                             <th><i class="bx bx-category me-1"></i>กลุ่มสาระ</th>
                             <th><i class="bx bx-door-open me-1"></i>ชั้น</th>
-                            <th><i class="bx bx-user me-1"></i>ครูผู้สอน</th>
+                            <th><i class="bx bx-user me-1"></i>ครูดูแลซ้ำ</th>
                             <th class="text-center text-nowrap"><i class="bx bx-cog me-1"></i>คำสั่ง</th>
                             <th class="text-center text-nowrap"><i class="bx bx-refresh me-1"></i>เรียนซ้ำ</th>
                         </tr>
@@ -435,8 +495,12 @@
 <?= $this->section('script') ?>
 <script>
 let tbRegisRepeatSubject;
+let tbRegisRepeatPending;
+let tbMainSubjects;
 
 // Initialize on page load
+TB_MainSubjects($('#CheckYearRegisRepeat').val());
+TB_RegisRepeatPending($('#CheckYearRegisRepeat').val());
 TB_RegisRepeatSubject($('#CheckYearRegisRepeat').val());
 
 // Year change handler
@@ -446,7 +510,9 @@ $(document).on('change', '#CheckYearRegisRepeat', function() {
     // Save selected year to session
     $.post("<?= site_url('Admin/SetSelectedYear') ?>", { year: selectedYear });
     
-    // Reload table with new year
+    // Reload all tables with new year
+    TB_MainSubjects(selectedYear);
+    TB_RegisRepeatPending(selectedYear);
     TB_RegisRepeatSubject(selectedYear);
     
     // Update dashboard stats
@@ -541,7 +607,181 @@ function animateValue(selector, value) {
     });
 }
 
+// Function to load Main Subjects Table (All subjects with registered students)
+function TB_MainSubjects(Year) {
+    if ($.fn.DataTable.isDataTable('#tbMainSubjects')) {
+        $('#tbMainSubjects').DataTable().destroy();
+    }
+    
+    tbMainSubjects = $('#tbMainSubjects').DataTable({
+        destroy: true,
+        "order": [[8, "desc"]],
+        'processing': true,
+        "ajax": {
+            url: "<?= site_url('admin/academic/ConAdminRegisRepeat/AdminRegisRepeatShowMainSubjects') ?>",
+            "type": "POST",
+            data: { "keyYear": Year },
+            dataSrc: function(json) {
+                $('#main-subjects-count').text(json.data.length);
+                return json.data;
+            }
+        },
+        "language": {
+            "processing": '<div class="py-3"><div class="spinner-border" style="color: #6610f2;"></div><span class="ms-2">กำลังโหลด...</span></div>',
+            "lengthMenu": "แสดง _MENU_ รายการ",
+            "search": '<i class="bx bx-search me-1"></i>ค้นหา:',
+            "info": "แสดง _START_ ถึง _END_ จาก _TOTAL_ รายการ",
+            "infoEmpty": "ไม่พบรายการ",
+            "zeroRecords": '<div class="text-center py-4"><i class="bx bx-folder-open bx-lg text-muted"></i><p class="text-muted mt-2 mb-0">ไม่พบวิชาที่มีการลงทะเบียนนักเรียนในปีการศึกษานี้</p></div>',
+            "paginate": {
+                "first": '<i class="bx bx-chevrons-left"></i>',
+                "last": '<i class="bx bx-chevrons-right"></i>',
+                "next": '<i class="bx bx-chevron-right"></i>',
+                "previous": '<i class="bx bx-chevron-left"></i>'
+            }
+        },
+        'columns': [
+            { 
+                data: 'SubjectYear',
+                render: function(data) {
+                    return '<span class="subject-code-badge">' + data + '</span>';
+                }
+            },
+            { 
+                data: 'SubjectCode',
+                render: function(data) {
+                    return '<span class="fw-semibold">' + data + '</span>';
+                }
+            },
+            { data: 'SubjectName' },
+            { 
+                data: 'SubjectUnit',
+                className: 'text-center',
+                render: function(data) {
+                    return '<span class="badge bg-label-secondary">' + (data || '-') + '</span>';
+                }
+            },
+            { data: 'FirstGroup' },
+            { 
+                data: 'SubjectClass',
+                render: function(data) {
+                    return '<span class="class-badge">ม.' + data + '</span>';
+                }
+            },
+            {
+                data: 'TeacherName',
+                render: function(data, type, row) {
+                    var html = '<div class="d-flex align-items-center"><div class="rounded-circle p-2 me-2" style="background: rgba(102, 16, 242, 0.1);"><i class="bx bx-user" style="color: #6610f2;"></i></div>';
+                    html += '<div><span>' + data + '</span></div></div>';
+                    return html;
+                }
+            },
+            {
+                data: 'SubjectID',
+                className: 'text-center',
+                render: function(data, type, row) {
+                    return '<a class="btn-register" style="background: linear-gradient(135deg, #6610f2 0%, #9b59b6 100%);" href="<?= site_url('Admin/Acade/Registration/Repeat/Detail/') ?>' + (row.SubjectYear ? row.SubjectYear : '') + '/' + (row.SubjectID ? row.SubjectID : '') + '/' + (row.TeacherID ? row.TeacherID : '') +'"><i class="bx bx-plus-circle"></i>ลงทะเบียนซ้ำ</a>';
+                }
+            },
+            {
+                data: 'TotalStudents',
+                className: 'text-center',
+                render: function(data, type, row) {
+                    return '<span class="badge" style="background: rgba(102, 16, 242, 0.1); color: #6610f2;"><i class="bx bx-group me-1"></i>' + data + ' คน</span>';
+                }
+            }
+        ]
+    });
+}
+
+// Function to load Pending Registration Table (Subjects waiting to be assigned for repeat)
+function TB_RegisRepeatPending(Year) {
+    if ($.fn.DataTable.isDataTable('#tbRegisRepeatPending')) {
+        $('#tbRegisRepeatPending').DataTable().destroy();
+    }
+    
+    tbRegisRepeatPending = $('#tbRegisRepeatPending').DataTable({
+        destroy: true,
+        "order": [[7, "desc"]],
+        'processing': true,
+        "ajax": {
+            url: "<?= site_url('admin/academic/ConAdminRegisRepeat/AdminRegisRepeatShowPending') ?>",
+            "type": "POST",
+            data: { "keyYear": Year },
+            dataSrc: function(json) {
+                $('#pending-count').text(json.data.length);
+                return json.data;
+            }
+        },
+        "language": {
+            "processing": '<div class="py-3"><div class="spinner-border text-warning"></div><span class="ms-2">กำลังโหลด...</span></div>',
+            "lengthMenu": "แสดง _MENU_ รายการ",
+            "search": '<i class="bx bx-search me-1"></i>ค้นหา:',
+            "info": "แสดง _START_ ถึง _END_ จาก _TOTAL_ รายการ",
+            "infoEmpty": "ไม่พบรายการ",
+            "zeroRecords": '<div class="text-center py-4"><i class="bx bx-check-circle bx-lg text-success"></i><p class="text-muted mt-2 mb-0">ไม่มีวิชาที่รอลงทะเบียนเรียนซ้ำ ทุกวิชาได้รับการมอบหมายแล้ว!</p></div>',
+            "paginate": {
+                "first": '<i class="bx bx-chevrons-left"></i>',
+                "last": '<i class="bx bx-chevrons-right"></i>',
+                "next": '<i class="bx bx-chevron-right"></i>',
+                "previous": '<i class="bx bx-chevron-left"></i>'
+            }
+        },
+        'columns': [
+            { 
+                data: 'SubjectYear',
+                render: function(data) {
+                    return '<span class="subject-code-badge">' + data + '</span>';
+                }
+            },
+            { 
+                data: 'SubjectCode',
+                render: function(data) {
+                    return '<span class="fw-semibold">' + data + '</span>';
+                }
+            },
+            { data: 'SubjectName' },
+            { data: 'FirstGroup' },
+            { 
+                data: 'SubjectClass',
+                render: function(data) {
+                    return '<span class="class-badge">ม.' + data + '</span>';
+                }
+            },
+            {
+                data: 'TeacherName',
+                render: function(data, type, row) {
+                    var html = '<div class="d-flex align-items-center"><div class="rounded-circle bg-warning bg-opacity-10 p-2 me-2"><i class="bx bx-user text-warning"></i></div>';
+                    html += '<div><span>' + data + '</span>';
+                    html += '<br><small class="text-muted"><i class="bx bx-info-circle me-1"></i>ครูหลัก (ยังไม่มีครูดูแลซ้ำ)</small>';
+                    html += '</div></div>';
+                    return html;
+                }
+            },
+            {
+                data: 'SubjectID',
+                className: 'text-center',
+                render: function(data, type, row) {
+                    return '<a class="btn-register" style="background: linear-gradient(135deg, #ffc107 0%, #ffda44 100%); color: #212529;" href="<?= site_url('Admin/Acade/Registration/Repeat/Detail/') ?>' + (row.SubjectYear ? row.SubjectYear : '') + '/' + (row.SubjectID ? row.SubjectID : '') + '/' + (row.TeacherID ? row.TeacherID : '') +'"><i class="bx bx-user-plus"></i>มอบหมาย</a>';
+                }
+            },
+            {
+                data: 'SumPending',
+                className: 'text-center',
+                render: function(data, type, row) {
+                    return '<span class="badge bg-label-danger"><i class="bx bx-user-x me-1"></i>' + data + ' คน</span>';
+                }
+            }
+        ]
+    });
+}
+
+// Function to load Registered Table (Subjects already assigned for repeat)
 function TB_RegisRepeatSubject(Year) {
+    if ($.fn.DataTable.isDataTable('#tbRegisRepeatSubject')) {
+        $('#tbRegisRepeatSubject').DataTable().destroy();
+    }
+    
     tbRegisRepeatSubject = $('#tbRegisRepeatSubject').DataTable({
         destroy: true,
         "order": [[7, "desc"]],
@@ -549,7 +789,11 @@ function TB_RegisRepeatSubject(Year) {
         "ajax": {
             url: "<?= site_url('admin/academic/ConAdminRegisRepeat/AdminRegisRepeatShow') ?>",
             "type": "POST",
-            data: { "keyYear": Year }
+            data: { "keyYear": Year },
+            dataSrc: function(json) {
+                $('#registered-count').text(json.data.length);
+                return json.data;
+            }
         },
         "language": {
             "processing": '<div class="py-3"><div class="spinner-border text-success"></div><span class="ms-2">กำลังโหลด...</span></div>',
@@ -589,14 +833,24 @@ function TB_RegisRepeatSubject(Year) {
             {
                 data: 'TeacherName',
                 render: function(data, type, row) {
-                    return '<div class="d-flex align-items-center"><div class="rounded-circle bg-success bg-opacity-10 p-2 me-2"><i class="bx bx-user text-success"></i></div><span>' + data + '</span></div>';
+                    var html = '<div class="d-flex align-items-center"><div class="rounded-circle bg-success bg-opacity-10 p-2 me-2"><i class="bx bx-user text-success"></i></div>';
+                    html += '<div><span>' + data + '</span>';
+                    // ถ้าครูเรียนซ้ำ = ครูหลัก แสดง "ครูหลัก"
+                    if (row.MainTeacherName && row.TeacherName && row.MainTeacherName.trim() === row.TeacherName.trim()) {
+                        html += '<br><small class="text-success"><i class="bx bx-badge-check me-1"></i>ครูหลัก</small>';
+                    } else if (row.MainTeacherName && row.MainTeacherName.trim() !== '') {
+                        // ถ้าครูเรียนซ้ำ ≠ ครูหลัก แสดงชื่อครูหลักด้วย
+                        html += '<br><small class="text-muted"><i class="bx bx-user-pin me-1"></i>ครูหลัก: ' + row.MainTeacherName + '</small>';
+                    }
+                    html += '</div></div>';
+                    return html;
                 }
             },
             {
                 data: 'SubjectID',
                 className: 'text-center',
                 render: function(data, type, row) {
-                    return '<a class="btn-register" href="<?= site_url('Admin/Acade/Registration/Repeat/Detail/') ?>' + (row.SubjectYear ? row.SubjectYear : '') + '/' + (row.SubjectID ? row.SubjectID : '') + '/' + (row.TeacherID ? row.TeacherID : '') +'"><i class="bx bx-edit-alt"></i>ลงทะเบียน</a>';
+                    return '<a class="btn-register" href="<?= site_url('Admin/Acade/Registration/Repeat/Detail/') ?>' + (row.SubjectYear ? row.SubjectYear : '') + '/' + (row.SubjectID ? row.SubjectID : '') + '/' + (row.TeacherID ? row.TeacherID : '') +'"><i class="bx bx-edit-alt"></i>แก้ไข</a>';
                 }
             },
             {
