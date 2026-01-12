@@ -419,18 +419,16 @@ let tbErollSubject;
 // Initialize on page load
 TB_ErollSubject($('#CheckYearEnroll').val());
 
-// Year change handler
+// Year change handler (Local filter only - does not affect sidebar)
 $(document).on('change', '#CheckYearEnroll', function() {
     var selectedYear = $(this).val();
     
-    // Save selected year to session
-    $.post("<?= site_url('Admin/SetSelectedYear') ?>", { year: selectedYear });
-    
-    // Reload table with new year
+    // Reload table and update stats for this view only
     TB_ErollSubject(selectedYear);
-    
-    // Update dashboard stats
     updateDashboardStats(selectedYear);
+    
+    // Update local badge
+    $('#header-year-badge').html('<i class="bx bx-calendar"></i>ปีการศึกษา ' + selectedYear);
 });
 
 // Function to update dashboard statistics

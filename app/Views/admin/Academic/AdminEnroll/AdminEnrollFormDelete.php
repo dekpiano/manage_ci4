@@ -371,8 +371,8 @@
                 <?php
                 $roomList = [];
                 foreach ($Register as $r) {
-                    if (!empty($r->StudentClass) && !in_array($r->StudentClass, $roomList)) {
-                        $roomList[] = $r->StudentClass;
+                    if (!empty($r->RegisterClass) && !in_array($r->RegisterClass, $roomList)) {
+                        $roomList[] = $r->RegisterClass;
                     }
                 }
                 sort($roomList);

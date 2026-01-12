@@ -307,6 +307,7 @@ class ConAdminEnroll extends BaseController
                         tb_register.SubjectID,
                         tb_register.StudentID,
                         tb_register.TeacherID,
+                        tb_register.RegisterClass,
                         tb_students.StudentCode,
                         tb_students.StudentClass,
                         tb_students.StudentNumber,
@@ -630,25 +631,41 @@ class ConAdminEnroll extends BaseController
             $registerYear = $this->request->getPost('RegisterYear');
             $oldTeacherID = $this->request->getPost('OldTeacherID');
             $newTeacherID = $this->request->getPost('NewTeacherID');
-            $rooms = $this->request->getPost('Rooms'); // Array of rooms
+            $rooms = $this->request->getPost('Rooms');
 
             if (empty($newTeacherID) || empty($rooms)) {
-                return $this->response->setJSON(['status' => 'error', 'message' => 'กรุณาเลือกครูผู้สอนและห้องเรียน']);
+                return $this->response->setJSON([
+                    'status' => 'error',
+                    'message' => 'กรุณาเลือกครูคนใหม่และห้องเรียนที่ต้องการเปลี่ยน'
+                ]);
             }
 
-            $this->db->table('tb_register')
-                ->where('SubjectID', $subjectID)
-                ->where('RegisterYear', $registerYear)
-                ->where('TeacherID', $oldTeacherID)
-                ->whereIn('RegisterClass', $rooms)
-                ->update(['TeacherID' => $newTeacherID]);
+            $data = ['TeacherID' => $newTeacherID];
+            
+            $builder = $this->db->table('tb_register');
+            $builder->where('SubjectID', $subjectID);
+            $builder->where('RegisterYear', $registerYear);
+            $builder->where('TeacherID', $oldTeacherID);
+            $builder->whereIn('RegisterClass', $rooms);
+            $builder->update($data);
 
-            return $this->response->setJSON([
-                'status' => 'success',
-                'message' => 'เปลี่ยนครูผู้สอนประจำห้องเรียนสำเร็จ ' . count($rooms) . ' ห้อง',
-                'affected_rows' => $this->db->affectedRows(),
-                'csrf_hash'     => csrf_hash()
-            ]);
+            $affected = $this->db->affectedRows();
+
+            if ($affected > 0) {
+                return $this->response->setJSON([
+                    'status' => 'success',
+                    'message' => 'เปลี่ยนครูผู้สอนเรียบร้อยแล้ว (' . $affected . ' รายการ)',
+                    'affected_rows' => $affected,
+                    'csrf_hash' => csrf_hash()
+                ]);
+            } else {
+                return $this->response->setJSON([
+                    'status' => 'error',
+                    'message' => 'ไม่พบข้อมูลที่ต้องการอัปเดต (ตรวจสอบปีการศึกษาและห้องเรียนอีกครั้ง)',
+                    'affected_rows' => $affected,
+                    'csrf_hash' => csrf_hash()
+                ]);
+            }
         }
         return $this->response->setStatusCode(405, 'Method Not Allowed');
     }
