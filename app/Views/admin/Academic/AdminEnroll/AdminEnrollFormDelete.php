@@ -247,6 +247,57 @@
     border-color: var(--primary-red);
     box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.15);
 }
+
+/* ===== Room Selection Premium Design ===== */
+.room-selection-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px; /* Increased gap */
+    padding-top: 10px;
+}
+.room-item {
+    position: relative;
+    cursor: pointer;
+}
+.room-item input {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    height: 0; width: 0;
+}
+.room-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 18px; /* Increased padding */
+    background-color: #fff;
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: #495057;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    min-width: 90px;
+    user-select: none;
+    margin-bottom: 0;
+}
+.room-item:hover .room-label {
+    border-color: rgba(23, 162, 184, 0.5);
+    background-color: rgba(23, 162, 184, 0.05);
+    transform: translateY(-3px);
+}
+.room-item input:checked + .room-label {
+    background: linear-gradient(135deg, #17a2b8 0%, #117a8b 100%);
+    border-color: #17a2b8;
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(23, 162, 184, 0.4);
+}
+.room-item input:checked + .room-label::before {
+    content: '\eb31'; /* bx-check icon code for boxicons */
+    font-family: 'boxicons' !important;
+    margin-right: 6px;
+    font-size: 1.2rem;
+}
 </style>
 
 <div class="container-xxl flex-grow-1 container-p-y">
@@ -259,11 +310,11 @@
                     <h1><i class="bx bx-user-minus me-2"></i>ถอนรายชื่อการลงทะเบียน</h1>
                     <div class="subject-info">
                         <span class="subject-badge">
-                            <i class="bx bx-book-alt me-1"></i><?= (isset($Register[0]->SubjectCode) ? esc($Register[0]->SubjectCode) : '') ?>
+                            <i class="bx bx-book-alt me-1"></i><?= (isset($SubjectInfo->SubjectCode) ? esc($SubjectInfo->SubjectCode) : '') ?>
                         </span>
-                        <span class="teacher-text"><?= (isset($Register[0]->SubjectName) ? esc($Register[0]->SubjectName) : '') ?></span>
+                        <span class="teacher-text"><?= (isset($SubjectInfo->SubjectName) ? esc($SubjectInfo->SubjectName) : '') ?></span>
                         <span class="subject-badge">
-                            <i class="bx bx-calendar me-1"></i><?= isset($CheckYearSubject[0]->SubjectYear) ? esc($CheckYearSubject[0]->SubjectYear) : '' ?>
+                            <i class="bx bx-calendar me-1"></i><?= isset($SubjectInfo->SubjectYear) ? esc($SubjectInfo->SubjectYear) : '' ?>
                         </span>
                     </div>
                 </div>
@@ -286,24 +337,25 @@
         </div>
         <div class="card-body pt-4">
             <form id="FormEnrollDelete" class="needs-validation" method="post" novalidate>
+                <?= csrf_field() ?>
                 
                 <!-- Subject Info -->
                 <div class="row g-3 mb-4">
                     <div class="col-md-4">
                         <label class="form-label fw-semibold"><i class="bx bx-calendar text-danger me-1"></i>ปีการศึกษา</label>
-                        <input type="text" class="form-control" value="<?= isset($CheckYearSubject[0]->SubjectYear) ? esc($CheckYearSubject[0]->SubjectYear) : '' ?>" readonly>
-                        <input type="hidden" name="SubjectYearregisupdate" value="<?= isset($CheckYearSubject[0]->SubjectYear) ? esc($CheckYearSubject[0]->SubjectYear) : '' ?>">
+                        <input type="text" class="form-control" value="<?= isset($SubjectInfo->SubjectYear) ? esc($SubjectInfo->SubjectYear) : '' ?>" readonly>
+                        <input type="hidden" name="SubjectYearregisupdate" value="<?= isset($SubjectInfo->SubjectYear) ? esc($SubjectInfo->SubjectYear) : '' ?>">
                     </div>
                     <div class="col-md-4">
                         <label class="form-label fw-semibold"><i class="bx bx-book text-danger me-1"></i>วิชาเรียน</label>
-                        <input type="text" class="form-control" value="<?= (isset($Register[0]->SubjectCode) ? esc($Register[0]->SubjectCode) : '').' '.(isset($Register[0]->SubjectName) ? esc($Register[0]->SubjectName) : '') ?>" readonly>
-                        <input type="hidden" name="subjectregisupdate" value="<?= isset($Register[0]->SubjectID) ? esc($Register[0]->SubjectID) : '' ?>">
-                        <input type="hidden" name="SubjectCode" value="<?= isset($Register[0]->SubjectCode) ? esc($Register[0]->SubjectCode) : '' ?>">
+                        <input type="text" class="form-control" value="<?= (isset($SubjectInfo->SubjectCode) ? esc($SubjectInfo->SubjectCode) : '').' '.(isset($SubjectInfo->SubjectName) ? esc($SubjectInfo->SubjectName) : '') ?>" readonly>
+                        <input type="hidden" name="subjectregisupdate" value="<?= isset($SubjectInfo->SubjectID) ? esc($SubjectInfo->SubjectID) : '' ?>">
+                        <input type="hidden" name="SubjectCode" value="<?= isset($SubjectInfo->SubjectCode) ? esc($SubjectInfo->SubjectCode) : '' ?>">
                     </div>
                     <div class="col-md-4">
                         <label class="form-label fw-semibold"><i class="bx bx-user text-danger me-1"></i>ครูผู้สอน</label>
-                        <input type="text" class="form-control" value="<?php foreach($teacher as $t) { echo ($t->pers_id == $Register[0]->TeacherID) ? $t->pers_firstname.' '.$t->pers_lastname : ''; } ?>" readonly>
-                        <input type="hidden" name="teacherregis" value="<?= isset($Register[0]->TeacherID) ? esc($Register[0]->TeacherID) : '' ?>">
+                        <input type="text" class="form-control" value="<?= isset($CurrentTeacher) ? esc($CurrentTeacher->pers_prefix.$CurrentTeacher->pers_firstname.' '.$CurrentTeacher->pers_lastname) : '' ?>" readonly>
+                        <input type="hidden" name="teacherregis" value="<?= isset($CurrentTeacher->pers_id) ? esc($CurrentTeacher->pers_id) : '' ?>">
                     </div>
                 </div>
 
@@ -312,6 +364,66 @@
                     <i class="bx bx-error-circle bx-sm me-3"></i>
                     <div>
                         <strong class="text-warning">คำเตือน:</strong> การถอนรายชื่อนักเรียน จะทำให้คะแนนและข้อมูลที่เกี่ยวข้องหายไปทั้งหมด ไม่สามารถกู้คืนได้
+                    </div>
+                </div>
+
+                <!-- NEW: Change Teacher by Room Section -->
+                <?php
+                $roomList = [];
+                foreach ($Register as $r) {
+                    if (!empty($r->StudentClass) && !in_array($r->StudentClass, $roomList)) {
+                        $roomList[] = $r->StudentClass;
+                    }
+                }
+                sort($roomList);
+                ?>
+                <div class="card border border-info shadow-none mb-4" style="background: rgba(23, 162, 184, 0.03);">
+                    <div class="card-header d-flex align-items-center py-2 bg-info bg-opacity-10 border-info border-opacity-20">
+                        <h6 class="mb-0 text-info fw-bold"><i class="bx bx-transfer me-2"></i>เปลี่ยนครูผู้สอนแยกตามห้องเรียน (คะแนนยังคงอยู่)</h6>
+                    </div>
+                    <div class="card-body py-3">
+                        <?php if (empty($roomList)) : ?>
+                            <div class="text-center py-3">
+                                <i class="bx bx-info-circle bx-lg text-warning mb-2"></i>
+                                <h5 class="text-warning fw-bold">ไม่พบรายชื่อนักเรียนในรายวิชานี้</h5>
+                                <p class="text-muted mb-0">คุณครูท่านนี้ไม่มีรายชื่อนักเรียนที่ลงทะเบียนในรายวิชานี้แล้ว หรือนักเรียนถูกถอนชื่อออกทั้งหมดแล้ว</p>
+                            </div>
+                        <?php else : ?>
+                            <div class="row g-3 align-items-end">
+                                <div class="col-md-5">
+                                    <label class="form-label fw-semibold"><i class="bx bx-user-plus text-info me-1"></i>เลือกครูผู้สอนใหม่</label>
+                                    <select name="NewTeacherID" id="NewTeacherID" class="form-select select2-bs5">
+                                        <option value="">-- เลือกครูผู้สอนใหม่ --</option>
+                                        <?php foreach ($teacher as $t) : ?>
+                                            <?php if ($t->pers_id != (isset($CurrentTeacher->pers_id) ? $CurrentTeacher->pers_id : '')) : ?>
+                                                <option value="<?= esc($t->pers_id) ?>">
+                                                    <?= esc($t->pers_prefix . $t->pers_firstname . ' ' . $t->pers_lastname) ?>
+                                                </option>
+                                            <?php endif; ?>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+                                <div class="col-md-5">
+                                    <label class="form-label fw-semibold"><i class="bx bx-door-open text-info me-1"></i>เลือกห้องเรียนที่ต้องการเปลี่ยน</label>
+                                    <div class="room-selection-container">
+                                        <?php foreach ($roomList as $room) : ?>
+                                            <label class="room-item">
+                                                <input class="room-checkbox" type="checkbox" name="Rooms[]" value="<?= esc($room) ?>">
+                                                <span class="room-label">ม.<?= esc($room) ?></span>
+                                            </label>
+                                        <?php endforeach; ?>
+                                    </div>
+                                </div>
+                                <div class="col-md-2 text-end">
+                                    <button type="button" id="btnChangeTeacherByRoom" class="btn btn-info w-100 text-white fw-bold">
+                                        <i class="bx bx-check-double me-1"></i>ยืนยันเปลี่ยน
+                                    </button>
+                                </div>
+                            </div>
+                        <?php endif; ?>
+                        <div class="mt-2 small text-muted">
+                            <i class="bx bx-info-circle me-1"></i>ฟีเจอร์นี้จะย้ายนักเรียนทั้งห้องไปยังครูคนใหม่ โดยที่คะแนนเก็บและผลการเรียนเดิมจะไม่ถูกลบ
+                        </div>
                     </div>
                 </div>
 
@@ -386,6 +498,12 @@ $('#multiselect').multiselect({
     }
 });
 
+$('#NewTeacherID').select2({
+    theme: 'bootstrap-5',
+    width: '100%',
+    dropdownParent: $('body')
+});
+
 $(document).on("submit", "#FormEnrollDelete", function(e) {
     e.preventDefault();
     var form = $(this);
@@ -452,6 +570,79 @@ $(document).on("submit", "#FormEnrollDelete", function(e) {
                     }).then(() => {
                         window.location.href = '<?= site_url('Admin/Acade/Registration/Enroll') ?>';
                     });
+                }
+            });
+        }
+    });
+});
+
+$(document).on("click", "#btnChangeTeacherByRoom", function() {
+    const newTeacherID = $('#NewTeacherID').val();
+    const rooms = $('.room-checkbox:checked').map(function() { return $(this).val(); }).get();
+    const subjectID = $('input[name="subjectregisupdate"]').val();
+    const registerYear = $('input[name="SubjectYearregisupdate"]').val();
+    const oldTeacherID = $('input[name="teacherregis"]').val();
+    const csrfName = '<?= csrf_token() ?>';
+    const csrfHash = $('input[name="' + csrfName + '"]').val();
+
+    if (!newTeacherID) {
+        Swal.fire('แจ้งเตือน', 'กรุณาเลือกครูผู้สอนใหม่', 'warning');
+        return;
+    }
+    if (rooms.length === 0) {
+        Swal.fire('แจ้งเตือน', 'กรุณาเลือกห้องเรียนอย่างน้อย 1 ห้อง', 'warning');
+        return;
+    }
+
+    Swal.fire({
+        title: 'ยืนยันการเปลี่ยนครูผู้สอน?',
+        html: `คุณกำลังจะเปลี่ยนครูผู้สอนสำหรับห้อง <strong>${rooms.join(', ')}</strong><br>เป็นครูท่านใหม่ โดยที่ข้อมูลคะแนนเดิมจะยังคงอยู่`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#17a2b8',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'ยืนยันการเปลี่ยน',
+        cancelButtonText: 'ยกเลิก'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            let postData = {
+                SubjectID: subjectID,
+                RegisterYear: registerYear,
+                OldTeacherID: oldTeacherID,
+                NewTeacherID: newTeacherID,
+                Rooms: rooms
+            };
+            postData[csrfName] = csrfHash;
+
+            $.ajax({
+                url: '<?= site_url('admin/academic/ConAdminEnroll/AdminEnrollChangeTeacherByRoom') ?>',
+                type: 'POST',
+                data: postData,
+                beforeSend: function() {
+                    Swal.fire({
+                        title: 'กำลังบันทึกข้อมูล...',
+                        allowOutsideClick: false,
+                        showConfirmButton: false,
+                        didOpen: () => { Swal.showLoading(); }
+                    });
+                },
+                success: function(response) {
+                    if (response.status === 'success') {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'เปลี่ยนครูผู้สอนเรียบร้อย!',
+                            text: response.message,
+                            timer: 2000,
+                            showConfirmButton: false
+                        }).then(() => {
+                            window.location.reload();
+                        });
+                    } else {
+                        Swal.fire('เกิดข้อผิดพลาด', response.message, 'error');
+                    }
+                },
+                error: function() {
+                    Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้', 'error');
                 }
             });
         }

@@ -282,17 +282,24 @@ class ConAdminEnroll extends BaseController
         $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
         $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();
         
-        $CheckYear = $this->db->table('tb_schoolyear')->get()->getResult();
-        $data['teacher'] = $this->DBPers->table('tb_personnel') // Use the class property
+        $data['teacher'] = $this->DBPers->table('tb_personnel')
                                         ->select('pers_id,pers_img,pers_prefix,pers_firstname,pers_lastname')
                                         ->where('pers_learning !=', "")
                                         ->get()->getResult();
 
-        $data['CheckYearSubject'] = $this->db->table('tb_subjects')->select('SubjectYear')->where('SubjectID', $codeSub)->get()->getResult();
+        // Get Subject Information explicitly
+        $data['SubjectInfo'] = $this->db->table('tb_subjects')
+                                        ->where('SubjectID', $codeSub)
+                                        ->get()->getRow();
 
-        $registerYear = !empty($data['CheckYearSubject'][0]->SubjectYear) ? $data['CheckYearSubject'][0]->SubjectYear : null;
+        // Get Current Teacher Info
+        $data['CurrentTeacher'] = $this->DBPers->table('tb_personnel')
+                                            ->where('pers_id', $TeachID)
+                                            ->get()->getRow();
 
-    $data['Register'] = $this->db->table("tb_register")
+        $registerYear = !empty($data['SubjectInfo']->SubjectYear) ? $data['SubjectInfo']->SubjectYear : null;
+
+        $data['Register'] = $this->db->table("tb_register")
                     ->select("tb_register.RegisterYear,
                         tb_subjects.SubjectName,
                         tb_subjects.SubjectID,
@@ -316,9 +323,8 @@ class ConAdminEnroll extends BaseController
                     ->where('tb_register.TeacherID', $TeachID)
                     ->where('tb_students.StudentStatus', '1/ปกติ')
                     ->get()->getResult();
-    $data['classroom'] = new Classroom(); // Instantiate Classroom library
-    return view('admin/Academic/AdminEnroll/AdminEnrollFormDelete', $data);
-        
+        $data['classroom'] = new Classroom(); 
+        return view('admin/Academic/AdminEnroll/AdminEnrollFormDelete', $data);
     }
 
     public function AdminEnrollSelect()
@@ -614,6 +620,36 @@ class ConAdminEnroll extends BaseController
             return $this->response->setJSON($response);
         }
         // If it's not a POST request, return an error. This handles the GET case.
+        return $this->response->setStatusCode(405, 'Method Not Allowed');
+    }
+
+    public function AdminEnrollChangeTeacherByRoom()
+    {
+        if ($this->request->getMethod() === 'post') {
+            $subjectID = $this->request->getPost('SubjectID');
+            $registerYear = $this->request->getPost('RegisterYear');
+            $oldTeacherID = $this->request->getPost('OldTeacherID');
+            $newTeacherID = $this->request->getPost('NewTeacherID');
+            $rooms = $this->request->getPost('Rooms'); // Array of rooms
+
+            if (empty($newTeacherID) || empty($rooms)) {
+                return $this->response->setJSON(['status' => 'error', 'message' => 'กรุณาเลือกครูผู้สอนและห้องเรียน']);
+            }
+
+            $this->db->table('tb_register')
+                ->where('SubjectID', $subjectID)
+                ->where('RegisterYear', $registerYear)
+                ->where('TeacherID', $oldTeacherID)
+                ->whereIn('RegisterClass', $rooms)
+                ->update(['TeacherID' => $newTeacherID]);
+
+            return $this->response->setJSON([
+                'status' => 'success',
+                'message' => 'เปลี่ยนครูผู้สอนประจำห้องเรียนสำเร็จ ' . count($rooms) . ' ห้อง',
+                'affected_rows' => $this->db->affectedRows(),
+                'csrf_hash'     => csrf_hash()
+            ]);
+        }
         return $this->response->setStatusCode(405, 'Method Not Allowed');
     }
 
