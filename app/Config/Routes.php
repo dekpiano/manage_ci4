@@ -41,6 +41,7 @@ use App\Controllers\Session;
  */
 $routes->get('/', [Welcome::class, 'index']);
 $routes->get('welcome', [Welcome::class, 'index']);
+$routes->get('debug-db', 'Admin\Academic\ConDebug::index');
 
 // CI3 Routes Migration
 $routes->get('ClosePage', [Welcome::class, 'ClosePage']);
@@ -238,8 +239,12 @@ $routes->get('Admin/Acade/Executive/ReportTeacherSaveScore', [ConAdminReportResu
 $routes->get('Admin/Acade/Evaluate/ReportTeacherSaveScore', [ConAdminReportResult::class, 'AdminReportTeacherSaveScoreMain']);
 $routes->get('Admin/Acade/Executive/ReportTeacherSaveScoreCheck/(:segment)/(:segment)/(:segment)', [ConAdminReportResult::class, 'AdminReportTeacherSaveScoreCheck']);
 $routes->get('Admin/Acade/Evaluate/ReportTeacherSaveScoreCheck/(:segment)/(:segment)/(:segment)', [ConAdminReportResult::class, 'AdminReportTeacherSaveScoreCheck']);
+$routes->get('Admin/Acade/Executive/ReportScoreRoomMain', [ConAdminReportResult::class, 'ReportScoreRoomMain']);
 $routes->get('Admin/Acade/Executive/ReportScoreRoomMain/(:segment)/(:segment)/(:segment)/(:segment)', [ConAdminReportResult::class, 'ReportScoreRoomMain']);
+$routes->get('Admin/Acade/Evaluate/ReportScoreRoomMain', [ConAdminReportResult::class, 'ReportScoreRoomMain']);
 $routes->get('Admin/Acade/Evaluate/ReportScoreRoomMain/(:segment)/(:segment)/(:segment)/(:segment)', [ConAdminReportResult::class, 'ReportScoreRoomMain']);
+$routes->get('Admin/Acade/Evaluate/ExportScoreRoomToExcel/(:segment)/(:segment)/(:segment)/(:segment)', [ConAdminReportResult::class, 'exportScoreRoomToExcel']);
+$routes->get('Admin/Acade/Executive/ExportScoreRoomToExcel/(:segment)/(:segment)/(:segment)/(:segment)', [ConAdminReportResult::class, 'exportScoreRoomToExcel']);
 $routes->get('Admin/Acade/Executive/ReportEnroll/Main', [ConAdminReportResult::class, 'AdminReportEnrollMain']);
 $routes->get('Admin/Acade/Executive/ReportEnroll/ID/(:segment)', [ConAdminReportResult::class, 'AdminReportEnrollDetailStudent']);
 $routes->post('Admin/Acade/Executive/exportRoomReportToExcel', [ConAdminReportResult::class, 'exportRoomReportToExcel']);

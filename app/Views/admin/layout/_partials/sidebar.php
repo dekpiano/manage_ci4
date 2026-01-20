@@ -216,6 +216,11 @@
                         <div data-i18n="รายงานผลการบันทึกคะแนน (ครูผู้สอน)" style="white-space: normal;">รายงานผลการบันทึกคะแนน (ครูผู้สอน)</div>
                     </a>
                 </li>
+                <li class="menu-item <?= ($uri->getTotalSegments() >= 4 && $uri->getSegment(4) == 'ReportScoreRoomMain' ? 'active' : '') ?>">
+                    <a href="<?=base_url('Admin/Acade/Evaluate/ReportScoreRoomMain');?>" class="menu-link">
+                        <div data-i18n="รายงานผลการบันทึกคะแนน (รายห้องเรียน)" style="white-space: normal;">รายงานผลการบันทึกคะแนน (รายห้องเรียน)</div>
+                    </a>
+                </li>
                 <li class="menu-item <?= ($uri->getTotalSegments() >= 4 && $uri->getSegment(4) == 'ReportPerson' && $uri->getTotalSegments() >= 3 && $uri->getSegment(3) == 'Evaluate' ? 'active' : '') ?>">
                     <a href="<?=base_url('Admin/Acade/Evaluate/ReportPerson');?>" class="menu-link">
                         <div data-i18n="รายงานผลการเรียนรายบุคคล" style="white-space: normal;">รายงานผลการเรียนรายบุคคล</div>
@@ -252,12 +257,12 @@
                         <div data-i18n="ตั้งค่าบันทึกผลการเรียน" style="white-space: normal;">ตั้งค่าบันทึกผลการเรียน</div>
                     </a>
                 </li>
-                <li class="menu-item <?= ($uri->getSegment(2) == 'academic' && $uri->getSegment(3) == 'characteristics' ? 'active' : '') ?>">
+                <li class="menu-item <?= ($uri->getTotalSegments() >= 2 && $uri->getSegment(2) == 'academic' && $uri->getTotalSegments() >= 3 && $uri->getSegment(3) == 'characteristics' ? 'active' : '') ?>">
                     <a href="<?=base_url('admin/academic/characteristics/settings');?>" class="menu-link">
                         <div data-i18n="ตั้งค่าประเมินคุณลักษณะ" style="white-space: normal;">ตั้งค่าประเมินคุณลักษณะ</div>
                     </a>
                 </li>
-                <li class="menu-item <?= ($uri->getSegment(2) == 'academic' && $uri->getSegment(3) == 'rwl' ? 'active' : '') ?>">
+                <li class="menu-item <?= ($uri->getTotalSegments() >= 2 && $uri->getSegment(2) == 'academic' && $uri->getTotalSegments() >= 3 && $uri->getSegment(3) == 'rwl' ? 'active' : '') ?>">
                     <a href="<?=base_url('admin/academic/rwl/settings');?>" class="menu-link">
                         <div data-i18n="ตั้งค่าประเมินการอ่านฯ" style="white-space: normal;">ตั้งค่าประเมินการอ่านฯ</div>
                     </a>
@@ -289,12 +294,12 @@
                         <div data-i18n="ตั้งค่าส่งแผน">ตั้งค่าส่งแผน</div>
                     </a>
                 </li>
-                <li class="menu-item <?= ($uri->getSegment(3) == 'checkplan' ? 'active' : '') ?>">
+                <li class="menu-item <?= ($uri->getTotalSegments() >= 3 && $uri->getSegment(3) == 'checkplan' ? 'active' : '') ?>">
                     <a href="<?=base_url('admin/academic/checkplan');?>" class="menu-link">
                         <div data-i18n="ตรวจแผนการสอน">ตรวจแผนการสอน</div>
                     </a>
                 </li>
-                <li class="menu-item <?= ($uri->getSegment(3) == 'report' && $uri->getSegment(4) == 'checkplan' ? 'active' : '') ?>">
+                <li class="menu-item <?= ($uri->getTotalSegments() >= 3 && $uri->getSegment(3) == 'report' && $uri->getTotalSegments() >= 4 && $uri->getSegment(4) == 'checkplan' ? 'active' : '') ?>">
                     <a href="<?=base_url('admin/academic/report/checkplan');?>" class="menu-link">
                         <div data-i18n="รายงานการส่งแผนการสอน">รายงานการส่งแผนการสอน</div>
                     </a>

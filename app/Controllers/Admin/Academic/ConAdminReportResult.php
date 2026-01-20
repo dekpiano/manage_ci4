@@ -673,7 +673,7 @@ class ConAdminReportResult extends BaseController
 
     
 
-    public function ReportScoreRoomMain($Term, $year, $Class, $Room)
+    public function ReportScoreRoomMain($Term = 'All', $year = 'All', $Class = 'All', $Room = 'All')
     {
         $data['title'] = "รายงานผลการบันทึกคะแนน (รายห้องเรียน)";
         $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();
@@ -695,54 +695,235 @@ class ConAdminReportResult extends BaseController
         }
 
         $currentYear = $Term . '/' . $year;
-        $currentClass = 'ม.' . $Class . '/' . $Room;
+        
+        // Build class string with and without room
+        $classPrefix = (strpos($Class, 'ม.') === 0) ? '' : 'ม.';
+        $currentClassWithRoom = $classPrefix . $Class . '/' . $Room;  // e.g., ม.5/1
+        $currentClassNoRoom = $classPrefix . $Class;                   // e.g., ม.5
 
-        // 1. Get all students for the room
-        $students = $this->db->table('tb_students')
-            ->select('StudentID, StudentNumber, StudentCode, StudentPrefix, StudentFirstName, StudentLastName')
-            ->where('StudentStatus', '1/ปกติ')
-            ->where('StudentClass', $currentClass)
-            ->orderBy('StudentNumber', 'ASC')
+        // Strategy: First try to find records by RegisterClass WITH room number
+        // If not found, fall back to RegisterClass WITHOUT room number (old data)
+        
+        // Check if records exist with room number
+        $countWithRoom = $this->db->table('tb_register')
+            ->where('RegisterYear', $currentYear)
+            ->where('RegisterClass', $currentClassWithRoom)
+            ->countAllResults(false);
+        
+        $isOldDataFormat = ($countWithRoom == 0);
+        $registerClassToUse = $isOldDataFormat ? $currentClassNoRoom : $currentClassWithRoom;
+        
+        // Pass this info to view for warning display
+        $data['isOldDataFormat'] = $isOldDataFormat;
+        $data['registerClassUsed'] = $registerClassToUse;
+
+        // Get distinct StudentIDs from tb_register for the selected year and class
+        $registerStudentIDs = $this->db->table('tb_register')
+            ->distinct()
+            ->select('StudentID')
+            ->where('RegisterYear', $currentYear)
+            ->where('RegisterClass', $registerClassToUse)
             ->get()
-            ->getResult();
-        $data['stu'] = $students;
+            ->getResultArray();
+        
+        $studentIDs = array_column($registerStudentIDs, 'StudentID');
 
-        if (empty($students)) {
+        if (empty($studentIDs)) {
+            $data['stu'] = [];
             $data['RegisSubject'] = [];
             $data['scoresMap'] = [];
             echo view('admin/Academic/AdminReportResults/AdminReportScoreRoomMain', $data);
             return;
         }
 
-        // 2. Get all subjects for the room
+        // Get student info from tb_students
+        $students = $this->db->table('tb_students')
+            ->select('StudentID, StudentNumber, StudentCode, StudentPrefix, StudentFirstName, StudentLastName, StudentClass')
+            ->whereIn('StudentID', $studentIDs)
+            ->orderBy('StudentNumber', 'ASC')
+            ->get()
+            ->getResult();
+        $data['stu'] = $students;
+
+        // Get all subjects for these students in the selected year
         $data['RegisSubject'] = $this->db->table('tb_register')
             ->select('tb_register.SubjectID, tb_subjects.SubjectName, tb_subjects.SubjectCode')
-            ->join('tb_subjects', 'tb_subjects.SubjectID = tb_register.SubjectID')
+            ->join('tb_subjects', 'tb_subjects.SubjectID = tb_register.SubjectID', 'left')
             ->where('tb_register.RegisterYear', $currentYear)
-            ->where('tb_register.RegisterClass',$currentClass)
+            ->where('tb_register.RegisterClass', $registerClassToUse)
             ->groupBy('tb_register.SubjectID, tb_subjects.SubjectName, tb_subjects.SubjectCode')
-            ->orderBy('tb_register.SubjectID', 'ASC')
+            ->orderBy('tb_subjects.SubjectCode', 'ASC')
             ->get()
             ->getResult();
 
-        // 3. Get all scores for all students in one query
-        $studentIDs = array_column($students, 'StudentID');
+        // Get all scores for all students in this year and class
         $allScores = $this->db->table('tb_register')
             ->select('StudentID, SubjectID, Score100')
             ->where('RegisterYear', $currentYear)
-            ->where('RegisterClass', $currentClass)
-            ->whereIn('StudentID', $studentIDs)
+            ->where('RegisterClass', $registerClassToUse)
             ->get()
             ->getResult();
 
-        // 4. Process scores into a map for easy lookup in the view
+        // Process scores into a map for easy lookup in the view
         $scoresMap = [];
         foreach ($allScores as $score) {
-            $scoresMap[$score->StudentID][$score->SubjectID] = $score->Score100;
+            $sId = (string)$score->StudentID;
+            $subId = (string)$score->SubjectID;
+            $scoresMap[$sId][$subId] = $score->Score100;
         }
         $data['scoresMap'] = $scoresMap;
 
         echo view('admin/Academic/AdminReportResults/AdminReportScoreRoomMain', $data);
+    }
+
+    /**
+     * Export Score Room Report to Excel
+     */
+    public function exportScoreRoomToExcel($Term = 'All', $year = 'All', $Class = 'All', $Room = 'All')
+    {
+        if ($Term === 'All' || $year === 'All' || $Class === 'All' || $Room === 'All') {
+            return redirect()->back()->with('error', 'กรุณาเลือกปีการศึกษาและห้องเรียนก่อนส่งออก');
+        }
+
+        ob_start();
+        require SHARED_LIB_PATH . '/spreadsheet/vendor/autoload.php';
+
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+
+        $currentYear = $Term . '/' . $year;
+        $classPrefix = (strpos($Class, 'ม.') === 0) ? '' : 'ม.';
+        $currentClassWithRoom = $classPrefix . $Class . '/' . $Room;
+        $currentClassNoRoom = $classPrefix . $Class;
+
+        $countWithRoom = $this->db->table('tb_register')
+            ->where('RegisterYear', $currentYear)
+            ->where('RegisterClass', $currentClassWithRoom)
+            ->countAllResults(false);
+        
+        $registerClassToUse = ($countWithRoom > 0) ? $currentClassWithRoom : $currentClassNoRoom;
+
+        $registerStudentIDs = $this->db->table('tb_register')
+            ->distinct()
+            ->select('StudentID')
+            ->where('RegisterYear', $currentYear)
+            ->where('RegisterClass', $registerClassToUse)
+            ->get()
+            ->getResultArray();
+        
+        $studentIDs = array_column($registerStudentIDs, 'StudentID');
+
+        if (empty($studentIDs)) {
+            return redirect()->back()->with('error', 'ไม่พบข้อมูลนักเรียน');
+        }
+
+        $students = $this->db->table('tb_students')
+            ->select('StudentID, StudentNumber, StudentCode, StudentPrefix, StudentFirstName, StudentLastName')
+            ->whereIn('StudentID', $studentIDs)
+            ->orderBy('StudentNumber', 'ASC')
+            ->get()
+            ->getResult();
+
+        $subjects = $this->db->table('tb_register')
+            ->select('tb_register.SubjectID, tb_subjects.SubjectName, tb_subjects.SubjectCode')
+            ->join('tb_subjects', 'tb_subjects.SubjectID = tb_register.SubjectID', 'left')
+            ->where('tb_register.RegisterYear', $currentYear)
+            ->where('tb_register.RegisterClass', $registerClassToUse)
+            ->groupBy('tb_register.SubjectID, tb_subjects.SubjectName, tb_subjects.SubjectCode')
+            ->orderBy('tb_subjects.SubjectCode', 'ASC')
+            ->get()
+            ->getResult();
+
+        $allScores = $this->db->table('tb_register')
+            ->select('StudentID, SubjectID, Score100')
+            ->where('RegisterYear', $currentYear)
+            ->where('RegisterClass', $registerClassToUse)
+            ->get()
+            ->getResult();
+
+        $scoresMap = [];
+        foreach ($allScores as $score) {
+            $scoresMap[(string)$score->StudentID][(string)$score->SubjectID] = $score->Score100;
+        }
+
+        // Build headers - Row 1: Subject names (merged), Row 2: Score types
+        $headers1 = ['ลำดับ', 'รหัส', 'ชื่อ-นามสกุล'];
+        $headers2 = ['', '', ''];
+        
+        foreach ($subjects as $subject) {
+            $headers1[] = $subject->SubjectName . ' (' . $subject->SubjectCode . ')';
+            $headers1[] = '';
+            $headers1[] = '';
+            $headers1[] = '';
+            $headers2[] = 'ก่อน';
+            $headers2[] = 'กลาง';
+            $headers2[] = 'หลัง';
+            $headers2[] = 'ปลาย';
+        }
+
+        $sheet->fromArray($headers1, NULL, 'A1');
+        $sheet->fromArray($headers2, NULL, 'A2');
+
+        // Merge subject header cells
+        $col = 4; // Start from column D
+        foreach ($subjects as $subject) {
+            $startCol = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col);
+            $endCol = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col + 3);
+            $sheet->mergeCells($startCol . '1:' . $endCol . '1');
+            $col += 4;
+        }
+
+        // Add data rows
+        $row = 3;
+        $num = 1;
+        foreach ($students as $student) {
+            $rowData = [
+                $num++,
+                $student->StudentCode,
+                $student->StudentPrefix . $student->StudentFirstName . ' ' . $student->StudentLastName
+            ];
+
+            foreach ($subjects as $subject) {
+                $scoreString = $scoresMap[(string)$student->StudentID][(string)$subject->SubjectID] ?? '';
+                $scores = ['', '', '', ''];
+                if (!empty($scoreString)) {
+                    $parts = explode('|', $scoreString);
+                    $scores[0] = $parts[0] ?? '';
+                    $scores[1] = $parts[1] ?? '';
+                    $scores[2] = $parts[2] ?? '';
+                    $scores[3] = $parts[3] ?? '';
+                }
+                $rowData[] = $scores[0];
+                $rowData[] = $scores[1];
+                $rowData[] = $scores[2];
+                $rowData[] = $scores[3];
+            }
+
+            $sheet->fromArray($rowData, NULL, 'A' . $row);
+            $row++;
+        }
+
+        // Style
+        $sheet->getStyle('A1:' . $sheet->getHighestColumn() . '2')->getFont()->setBold(true);
+        $sheet->getStyle('A1:' . $sheet->getHighestColumn() . $sheet->getHighestRow())->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+
+        $filename = 'รายงานคะแนน_' . $registerClassToUse . '_' . $currentYear . '.xlsx';
+        $filename = str_replace('/', '-', $filename);
+
+        // Clear ALL output buffers
+        while (ob_get_level() > 0) {
+            ob_end_clean();
+        }
+
+        // Set headers
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment;filename="' . $filename . '"');
+        header('Cache-Control: max-age=0');
+        header('Pragma: public');
+
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+        $writer->save('php://output');
+        exit();
     }
 
     public function CheckData($Term,$year,$Class,$Room,$IDstu){
