@@ -236,7 +236,12 @@ $routes->get('Admin/Acade/Executive/ReportPerson/(:segment)', [ConAdminReportRes
 $routes->get('Admin/Acade/Executive/ReportRoom', [ConAdminReportResult::class, 'AdminReportRoomMain']);
 $routes->get('Admin/Acade/Executive/ReportSummaryTeacher', [ConAdminReportResult::class, 'AdminReportSummaryTeacher']);
 $routes->get('Admin/Acade/Executive/ReportTeacherSaveScore', [ConAdminReportResult::class, 'AdminReportTeacherSaveScoreMain']);
+$routes->get('Admin/Acade/Executive/ReportTeacherSaveScore/(:segment)', [ConAdminReportResult::class, 'AdminReportTeacherSaveScoreMain/$1']);
+$routes->get('Admin/Acade/Executive/ReportTeacherSaveScore/(:segment)/(:segment)', [ConAdminReportResult::class, 'AdminReportTeacherSaveScoreMain/$1/$2']);
+
 $routes->get('Admin/Acade/Evaluate/ReportTeacherSaveScore', [ConAdminReportResult::class, 'AdminReportTeacherSaveScoreMain']);
+$routes->get('Admin/Acade/Evaluate/ReportTeacherSaveScore/(:segment)', [ConAdminReportResult::class, 'AdminReportTeacherSaveScoreMain/$1']);
+$routes->get('Admin/Acade/Evaluate/ReportTeacherSaveScore/(:segment)/(:segment)', [ConAdminReportResult::class, 'AdminReportTeacherSaveScoreMain/$1/$2']);
 $routes->get('Admin/Acade/Executive/ReportTeacherSaveScoreCheck/(:segment)/(:segment)/(:segment)', [ConAdminReportResult::class, 'AdminReportTeacherSaveScoreCheck']);
 $routes->get('Admin/Acade/Evaluate/ReportTeacherSaveScoreCheck/(:segment)/(:segment)/(:segment)', [ConAdminReportResult::class, 'AdminReportTeacherSaveScoreCheck']);
 $routes->get('Admin/Acade/Executive/ReportScoreRoomMain', [ConAdminReportResult::class, 'ReportScoreRoomMain']);
@@ -261,6 +266,7 @@ $routes->get('LoginStudent', [Control_login::class, 'LoginStudent']);
 $routes->get('LoginTeacher', [Control_login::class, 'LoginTeacher']);
 $routes->get('LoginMenager', [Welcome::class, 'LoginMenager']);
 $routes->get('LoginMenager_callback', [Control_login::class, 'LoginMenager_callback']);
+$routes->get('LoginDev', [Control_login::class, 'LoginDev']);
 
 // Student
 $routes->get('Student/AcademicResult', [ConStudentHome::class, 'score']);

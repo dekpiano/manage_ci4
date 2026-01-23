@@ -14,8 +14,9 @@ class Welcome extends BaseController
 
     public function index()
     {
-		session()->remove('access_token');
-		session()->destroy();
+
+		// session()->remove('access_token');
+		// session()->destroy();
 	
   $data['title'] = "หน้าแรก";
   $data['description'] = "หน้าแรก";  
@@ -26,6 +27,9 @@ class Welcome extends BaseController
     }
 
     public function LoginMenager(){
+        if (session()->get('login_id')) {
+            return redirect()->to('Admin/Home');
+        }
         // Ensure the Google Client library's autoloader is included.
         // This path is based on the user's manual setup.
         require_once SHARED_LIB_PATH . '/google_sheet/vendor/autoload.php';

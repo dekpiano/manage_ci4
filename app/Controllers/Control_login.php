@@ -120,6 +120,9 @@ class Control_login extends BaseController
 			return view('user/Login/PageLoginTeacher', $data);
 	    }	
     function LoginTeacher(){
+        if (session()->get('login_id')) {
+            return redirect()->to('Teacher/Home');
+        }
         require_once SHARED_LIB_PATH . '/google_sheet/vendor/autoload.php';
 		$google_client = new Client();
 
