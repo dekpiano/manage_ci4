@@ -266,7 +266,7 @@ class ConAdminStudents extends BaseController
         {
             $service = $this->getClient();
             $spreadsheetId = '1Je4jmVm3l84xDMAJDqQtdrRB13wWwFl2Fy2b7FvX1Ec'; // Assuming this is correct
-            $range = 'stu1!A2:M1300';  // TODO: Update placeholder value.
+            $range = 'stu1!A2:L1300';  // Updated to L since StudentSex is removed
     
             $response = $service ? $service->spreadsheets_values->get($spreadsheetId, $range) : null;
             $values = $response ? $response->getValues() : [];
@@ -362,9 +362,9 @@ class ConAdminStudents extends BaseController
                     'StudentIDNumber'  => $studentIdNumberRaw, // Use the original version for DB
                     'StudentStatus'    => isset($row[8]) ? $row[8] : '',
                     'StudentBehavior'  => isset($row[9]) ? $row[9] : '',
-                    'StudentStudyLine' => isset($row[10]) ? $row[10] : '',
-                    'StudentSex' => isset($row[11]) ? $row[11] : '',
-                    'StudentDateEntrance' => isset($row[12]) ? $row[12] : '',
+                    'StudentStudyLine'    => isset($row[10]) ? $row[10] : '',
+                    'StudentDateEntrance' => isset($row[11]) ? $row[11] : '',
+                    'StudentSex'          => in_array(isset($row[3]) ? trim($row[3]) : '', ['เด็กชาย', 'นาย']) ? 'ชาย' : 'หญิง',
                 ];
     
                 if ($existingStudent) {
@@ -627,12 +627,13 @@ class ConAdminStudents extends BaseController
             'StudentClass' => $this->request->getPost('StudentClass'),
             'StudentNumber' => $this->request->getPost('StudentNumber'),
             'StudentCode' => $this->request->getPost('StudentCode'),
-            'StudentSex' => $this->request->getPost('StudentSex'),
+            'StudentSex' => in_array($this->request->getPost('StudentPrefix'), ['เด็กชาย', 'นาย']) ? 'ชาย' : 'หญิง',
             'StudentStudyLine' => $this->request->getPost('StudentStudyLine'),
             'StudentStatus' => $this->request->getPost('StudentStatus'),
             'StudentBehavior' => $this->request->getPost('StudentBehavior'),
             'StudentIDNumber' => $student_id_number,
-            'StudentDateBirth' => $student_date_birth_buddhist_main
+            'StudentDateBirth' => $student_date_birth_buddhist_main,
+            'StudentDateEntrance' => $this->request->getPost('StudentDateEntrance')
         ];
 
         $data_personnel = [

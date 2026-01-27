@@ -186,6 +186,8 @@ $routes->post('admin/academic/ConAdminSaveScore/CheckOnOffSaveScore', [ConAdminS
 $routes->get('Admin/Acade/Evaluate/ReportPerson', [ConAdminReportResult::class, 'AdminReportPersonMain']);
 
 $routes->get('Admin/Acade/Evaluate/ReportPerson/(:segment)', [ConAdminReportResult::class, 'AdminStudentsScore']);
+$routes->get('Admin/Acade/Evaluate/PrintTranscript/(:segment)', [ConAdminReportResult::class, 'PrintTranscript/$1']);
+$routes->get('Admin/Acade/Evaluate/PrintTranscript/(:segment)/(:segment)', [ConAdminReportResult::class, 'PrintTranscript/$1/$2']);
 $routes->get('Admin/Acade/Evaluate/ReportRoom', [ConAdminReportResult::class, 'AdminReportRoomMain']);
 $routes->post('Admin/Acade/Evaluate/ReportRoom', [ConAdminReportResult::class, 'AdminReportRoomMain']);
 $routes->post('Admin/Acade/Evaluate/exportRoomReportToExcel', [ConAdminReportResult::class, 'exportRoomReportToExcel']);

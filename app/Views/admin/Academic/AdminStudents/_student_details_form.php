@@ -4,6 +4,7 @@ $student = $student ?? (object)[];
 $fields = [
     'StudentID', 'StudentPrefix', 'StudentFirstName', 'StudentLastName', 'StudentCode', 'StudentIDNumber', 
     'StudentDateBirth', 'StudentClass', 'StudentNumber', 'StudentStudyLine', 'StudentStatus', 'StudentBehavior',
+    'StudentDateEntrance', 'StudentSex',
     'stu_nickName', 'stu_phone', 'stu_email', 'stu_bloodType', 'stu_diseaes', 'stu_nationality', 'stu_race', 
     'stu_religion', 'stu_wieght', 'stu_hieght', 'stu_hCode', 'stu_hNumber', 'stu_hMoo', 'stu_hRoad', 
     'stu_hTambon', 'stu_hDistrict', 'stu_hProvince', 'stu_hPostCode', 'stu_cNumber', 'stu_cMoo', 'stu_cRoad', 
@@ -367,12 +368,8 @@ foreach ($fields as $field) {
                 </div>
                 <div class="col-md-2">
                     <div class="form-floating">
-                        <select class="form-select" id="StudentSex" name="StudentSex">
-                            <option value="">เลือก</option>
-                            <option value="ชาย" <?= ($student->StudentSex ?? '') === 'ชาย' ? 'selected' : '' ?>>ชาย</option>
-                            <option value="หญิง" <?= ($student->StudentSex ?? '') === 'หญิง' ? 'selected' : '' ?>>หญิง</option>
-                        </select>
-                        <label for="StudentSex">เพศ</label>
+                        <input type="text" class="form-control" id="StudentSexDisplay" value="<?= $StudentSex ?>" readonly>
+                        <label for="StudentSexDisplay">เพศ (อัตโนมัติ)</label>
                     </div>
                 </div>
             </div>
@@ -398,6 +395,12 @@ foreach ($fields as $field) {
                             <?php endforeach; ?>
                         </select>
                         <label for="StudentBehavior">สถานะพฤติกรรม</label>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-floating">
+                        <input type="text" class="form-control" id="StudentDateEntrance" name="StudentDateEntrance" placeholder="วันที่เข้าเรียน" value="<?= $StudentDateEntrance ?>">
+                        <label for="StudentDateEntrance">วันที่เข้าเรียน</label>
                     </div>
                 </div>
             </div>
@@ -789,3 +792,23 @@ foreach ($fields as $field) {
         </div>
     </div>
 </div>
+
+<script>
+$(document).ready(function() {
+    $('#StudentPrefix').on('change', function() {
+        const prefix = $(this).val();
+        const malePrefixes = ['เด็กชาย', 'นาย'];
+        const sexField = $('#StudentSexDisplay');
+        
+        if (prefix) {
+            if (malePrefixes.includes(prefix)) {
+                sexField.val('ชาย');
+            } else {
+                sexField.val('หญิง');
+            }
+        } else {
+            sexField.val('');
+        }
+    });
+});
+</script>

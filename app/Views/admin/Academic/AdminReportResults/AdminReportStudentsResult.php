@@ -46,6 +46,44 @@ $overallGPA = ($AllUnit != 0) ? number_format($AllGrade/$AllUnit, 2) : 'N/A';
             </ol>
         </nav>
     </div>
+    <div class="d-flex align-items-center gap-2">
+        <?php 
+        $hasJunior = false;
+        $hasSenior = false;
+        foreach ($scoreYear as $yr) {
+            $class = (string)$yr->RegisterClass;
+            // ตรวจสอบ ม.ต้น (1, 2, 3 หรือ ม.1, ม.2, ม.3)
+            if (str_contains($class, '1') || str_contains($class, '2') || str_contains($class, '3')) {
+                // กันเหนียวกรณีเป็น ม.11, ม.12 (ถ้ามี) แต่ในระบบโรงเรียนน่าจะเป็น 1-6
+                if (!str_contains($class, '4') && !str_contains($class, '5') && !str_contains($class, '6')) {
+                    $hasJunior = true;
+                }
+            }
+            // ตรวจสอบ ม.ปลาย (4, 5, 6 หรือ ม.4, ม.5, ม.6)
+            if (str_contains($class, '4') || str_contains($class, '5') || str_contains($class, '6')) {
+                $hasSenior = true;
+            }
+        }
+        ?>
+        
+        <?php if ($hasJunior): ?>
+        <a href="<?= base_url('Admin/Acade/Evaluate/PrintTranscript/'.esc($stu->StudentID).'/junior') ?>" target="_blank" class="btn btn-primary d-flex align-items-center">
+            <i class='bx bx-printer me-2'></i> พิมพ์ ปพ.1 (ม.ต้น)
+        </a>
+        <?php endif; ?>
+
+        <?php if ($hasSenior): ?>
+        <a href="<?= base_url('Admin/Acade/Evaluate/PrintTranscript/'.esc($stu->StudentID).'/senior') ?>" target="_blank" class="btn btn-success d-flex align-items-center">
+            <i class='bx bx-printer me-2'></i> พิมพ์ ปพ.1 (ม.ปลาย)
+        </a>
+        <?php endif; ?>
+
+        <?php if (!$hasJunior && !$hasSenior): ?>
+        <a href="<?= base_url('Admin/Acade/Evaluate/PrintTranscript/'.esc($stu->StudentID)) ?>" target="_blank" class="btn btn-secondary d-flex align-items-center">
+            <i class='bx bx-printer me-2'></i> พิมพ์ใบ ปพ.1 (รวม)
+        </a>
+        <?php endif; ?>
+    </div>
 </div>
 
 <!-- Student Info Cards -->
