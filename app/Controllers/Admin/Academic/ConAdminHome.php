@@ -48,7 +48,9 @@ class ConAdminHome extends BaseController
         $data['total_students'] = $this->db->table('tb_students')->where('StudentStatus', '1/ปกติ')->countAllResults();
         $data['total_teachers'] = $this->DBpersonnel->table('tb_personnel')->whereIn('pers_position', ['posi_003', 'posi_004', 'posi_005','posi_006'])->countAllResults();
         $data['total_subjects'] = $this->db->table('tb_subjects')->where('SubjectYear', $data['selectedYear'])->countAllResults();
-        $data['total_classrooms'] = $this->db->table('tb_students')->where('StudentStatus', '1/ปกติ')->distinct()->select('StudentClass')->countAllResults();
+        // Optimizing distinct counts
+        $roomQuery = $this->db->query("SELECT COUNT(DISTINCT StudentClass) as count FROM tb_students WHERE StudentStatus = '1/ปกติ'")->getRow();
+        $data['total_classrooms'] = $roomQuery ? $roomQuery->count : 0;
 
         // --- 2. Lesson Plan Stats ---
         $data['plan_stats'] = $this->db->table('tb_send_plan')
@@ -77,15 +79,14 @@ class ConAdminHome extends BaseController
             ->countAllResults();
         
         // --- 4. Enrollment Stats (Normal) ---
-        $data['enrolled_students'] = $this->db->table('tb_register')
-            ->distinct()
-            ->select('StudentID')
-            ->where('RegisterYear', $data['selectedYear'])
-            ->countAllResults();
+        // Optimizing the query to avoid freezing the DB. Using explicit COUNT(DISTINCT)
+        $enrollQuery = $this->db->query("SELECT COUNT(DISTINCT StudentID) as count FROM tb_register WHERE RegisterYear = ?", [$data['selectedYear']])->getRow();
+        $data['enrolled_students'] = $enrollQuery ? $enrollQuery->count : 0;
 
         // --- 5. Research Stats ---
         $data['research_total'] = $this->db->table('tb_send_research')
-            ->where('seres_year', $year) // Research usually uses year and term separately too
+            ->select('seres_id')
+            ->where('seres_year', $year) 
             ->where('seres_term', $term)
             ->countAllResults();
 

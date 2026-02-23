@@ -202,6 +202,8 @@ $routes->post('Admin/Acade/Evaluate/update_repeat_settings', [ConAdminAcademicRe
 $routes->post('admin/academic/ConAdminRegisRepeat/AdminRegisRepeatAdd', [ConAdminRegisRepeat::class, 'AdminRegisRepeatAdd']);
 $routes->post('Admin/Academic/ConAdminRegisRepeat/getRepeatStudentDetails', [ConAdminRegisRepeat::class, 'getRepeatStudentDetails']);
 $routes->post('Admin/Academic/ConAdminRegisRepeat/getRepeatStudentDetailsBySubject', [ConAdminRegisRepeat::class, 'getRepeatStudentDetailsBySubject']); // New Route
+$routes->post('Admin/Academic/ConAdminRegisRepeat/updateRepeatGlobalSettings', [ConAdminRegisRepeat::class, 'updateRepeatGlobalSettings']);
+$routes->post('Admin/Academic/ConAdminRegisRepeat/getRepeatStudentsBySubjectGroup', [ConAdminRegisRepeat::class, 'getRepeatStudentsBySubjectGroup']);
 $routes->post('admin/academic/ConAdminRegisRepeat/AdminRegisRepeatCancel', [ConAdminRegisRepeat::class, 'AdminRegisRepeatCancel']);
 
 $routes->match(['get', 'post'], 'admin/academic/ConAdminRegisRepeat/AdminRegisRepeatShow', [ConAdminRegisRepeat::class, 'AdminRegisRepeatShow']);

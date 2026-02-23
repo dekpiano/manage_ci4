@@ -331,6 +331,11 @@
                 ?>
                     </select>
                 </div>
+                <!-- Search Box -->
+                 <div class="col-md-2">
+                    <label for="nameSearch" class="form-label fw-semibold"><i class="bx bx-search me-1"></i>ค้นหาชื่อ/รหัส:</label>
+                    <input type="text" id="nameSearch" class="form-control" placeholder="ค้นหา...">
+                </div>
                 
                 <!-- Vertical Divider -->
                 <div class="col-md-1 d-none d-md-flex justify-content-center align-items-center">
@@ -405,6 +410,7 @@
                             <th>เลขที่</th>
                             <th>รหัสประจำตัว</th>
                             <th class="text-start ps-4">ชื่อ - นามสกุล</th>
+                            <th>วิชาอื่น (ซ้ำ)</th>
                             <th>ผลการเรียนเดิม</th>
                             <th>สถานะ</th>
                             <th>ครูผู้สอน (เรียนซ้ำ)</th>
@@ -437,7 +443,9 @@
                             }
                         ?>
                         <tr class="<?= $rowClass ?>" data-status="<?= $statusText ?>"
-                            data-class="<?= isset($v_DataRepeat->StudentClass) ? esc($v_DataRepeat->StudentClass) : '' ?>">
+                            data-class="<?= isset($v_DataRepeat->StudentClass) ? esc($v_DataRepeat->StudentClass) : '' ?>"
+                            data-name="<?= (isset($v_DataRepeat->StudentFirstName) ? esc($v_DataRepeat->StudentFirstName) : '').' '.(isset($v_DataRepeat->StudentLastName) ? esc($v_DataRepeat->StudentLastName) : '') ?>"
+                            data-code="<?= isset($v_DataRepeat->StudentCode) ? esc($v_DataRepeat->StudentCode) : '' ?>">
                             <td class="text-center">
                                 <input type="checkbox" name="SelRepeat[]" 
                                     value="<?= isset($v_DataRepeat->StudentID) ? esc($v_DataRepeat->StudentID) : '' ?>"
@@ -453,6 +461,18 @@
                             </td>
                             <td class="fw-medium ps-4">
                                 <?= (isset($v_DataRepeat->StudentPrefix) ? esc($v_DataRepeat->StudentPrefix) : '').(isset($v_DataRepeat->StudentFirstName) ? esc($v_DataRepeat->StudentFirstName) : '').' '.(isset($v_DataRepeat->StudentLastName) ? esc($v_DataRepeat->StudentLastName) : '') ?>
+                                <?php if(isset($v_DataRepeat->Grade_Type) && !empty($v_DataRepeat->Grade_Type) && ($isRegisteredForRepeat || $hasPassedRepeat)) : ?>
+                                    <br><span class="badge bg-label-warning mt-1" style="font-size: 0.65rem;"><i class="bx bx-revision me-1"></i><?= esc($v_DataRepeat->Grade_Type) ?></span>
+                                <?php endif; ?>
+                            </td>
+                            <td class="text-center">
+                                <?php if(isset($v_DataRepeat->OtherRepeatCount) && $v_DataRepeat->OtherRepeatCount > 0) : ?>
+                                    <span class="badge bg-label-danger rounded-pill" title="ลงทะเบียนวิชาอื่นแล้ว <?= $v_DataRepeat->OtherRepeatCount ?> วิชา">
+                                        <i class="bx bx-layer me-1"></i><?= $v_DataRepeat->OtherRepeatCount ?>
+                                    </span>
+                                <?php else : ?>
+                                    -
+                                <?php endif; ?>
                             </td>
                             <td class="text-center">
                                 <span class="grade-badge <?= $gradeClass ?>"><?= isset($v_DataRepeat->Grade) ? esc($v_DataRepeat->Grade) : '' ?></span>
@@ -462,6 +482,9 @@
                                 <?php if (($hasPassedRepeat || $isRegisteredForRepeat) && isset($v_DataRepeat->RepeatYear) && !empty($v_DataRepeat->RepeatYear)): ?>
                                     <div class="small text-muted mt-1">
                                         <i class="bx bx-calendar-alt me-1"></i><?= esc($v_DataRepeat->RepeatYear) ?>
+                                        <?php if(isset($v_DataRepeat->Grade_Type) && !empty($v_DataRepeat->Grade_Type)) : ?>
+                                            <span class="ms-1 badge bg-label-info" style="font-size: 0.7rem;"><?= esc($v_DataRepeat->Grade_Type) ?></span>
+                                        <?php endif; ?>
                                     </div>
                                 <?php endif; ?>
                             </td>
@@ -565,7 +588,11 @@ function showSubjectStudentDetailsModal() {
             { 
                 data: null,
                 render: function(data, type, row) {
-                    return (data.StudentPrefix || '') + (data.StudentFirstName || '') + ' ' + (data.StudentLastName || '');
+                    var name = (data.StudentPrefix || '') + (data.StudentFirstName || '') + ' ' + (data.StudentLastName || '');
+                    if (data.Grade_Type) {
+                        name += ' <span class="badge bg-label-warning" style="font-size: 0.6rem;"><i class="bx bx-revision me-1"></i>' + data.Grade_Type + '</span>';
+                    }
+                    return name;
                 }
             },
             { 
@@ -618,15 +645,19 @@ $(document).ready(function() {
     function filterStudents() {
         const selectedStatus = $('#statusFilter').val();
         const selectedClass = $('#classFilter').val();
+        const searchTerm = $('#nameSearch').val().toLowerCase();
 
         $('#students-table tbody tr').each(function() {
             const rowStatus = $(this).data('status');
             const rowClass = $(this).data('class');
+            const rowName = String($(this).data('name') || '').toLowerCase();
+            const rowCode = String($(this).data('code') || '').toLowerCase();
 
             const statusMatch = (selectedStatus === 'ทั้งหมด' || rowStatus === selectedStatus);
             const classMatch = (selectedClass === 'ทั้งหมด' || rowClass === selectedClass);
+            const searchMatch = (searchTerm === '' || rowName.includes(searchTerm) || rowCode.includes(searchTerm));
 
-            if (statusMatch && classMatch) {
+            if (statusMatch && classMatch && searchMatch) {
                 $(this).show();
             } else {
                 $(this).hide();
@@ -635,7 +666,7 @@ $(document).ready(function() {
         updateSelectionState();
     }
 
-    $('#statusFilter, #classFilter').on('change', filterStudents);
+    $('#statusFilter, #classFilter, #nameSearch').on('change keyup', filterStudents);
     filterStudents();
 
     // --- 2. Selection Logic ---
