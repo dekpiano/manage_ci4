@@ -421,12 +421,12 @@
                         <?php
                             $isRegisteredForRepeat = (isset($v_DataRepeat->RepeatStatus) && $v_DataRepeat->RepeatStatus == "ไม่ผ่าน");
                             $hasPassedRepeat = (isset($v_DataRepeat->RepeatStatus) && $v_DataRepeat->RepeatStatus == "ผ่าน");
-                            $needsRepeat = (isset($v_DataRepeat->Grade) && ($v_DataRepeat->Grade == "มส" ||  $v_DataRepeat->Grade <= 0));
+                            $needsRepeat = (isset($v_DataRepeat->Grade) && ($v_DataRepeat->Grade == "มส" || $v_DataRepeat->Grade == "ร" || ($v_DataRepeat->Grade !== "" && $v_DataRepeat->Grade <= 0)));
 
                             $statusText = 'เรียนปกติ';
                             $statusClass = 'secondary';
                             $rowClass = '';
-                            $gradeClass = (isset($v_DataRepeat->Grade) && ($v_DataRepeat->Grade == "มส" || $v_DataRepeat->Grade <= 0)) ? 'fail' : 'pass';
+                            $gradeClass = (isset($v_DataRepeat->Grade) && ($v_DataRepeat->Grade == "มส" || $v_DataRepeat->Grade == "ร" || ($v_DataRepeat->Grade !== "" && $v_DataRepeat->Grade <= 0))) ? 'fail' : 'pass';
 
                             if ($hasPassedRepeat) {
                                 $statusText = 'ผ่านการเรียนซ้ำ'; 

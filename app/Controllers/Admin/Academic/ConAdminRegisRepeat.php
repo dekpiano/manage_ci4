@@ -333,10 +333,10 @@ class ConAdminRegisRepeat extends BaseController
         ->where('tb_register.RegisterYear',$Term.'/'.$Year)
         ->where('tb_subjects.SubjectYear',$Term.'/'.$Year)
         ->where('tb_subjects.SubjectID',urldecode($IDSubject))
-        // Filter only those who actually failed or need to repeat
+        // กรองเฉพาะนักเรียนที่ต้องเรียนซ้ำ หรือมีสถานะการเรียนซ้ำ (ผ่าน/ไม่ผ่าน)
         ->groupStart()
             ->whereIn('tb_register.Grade', ['0', 'ร', 'มส'])
-            ->orWhere('tb_register.RepeatStatus', 'ไม่ผ่าน')
+            ->orWhereIn('tb_register.RepeatStatus', ['ผ่าน', 'ไม่ผ่าน'])
         ->groupEnd()
         ->groupStart()
             // กรณีครูหลัก: แสดงเฉพาะนักเรียนที่ยังไม่ได้ลงทะเบียนซ้ำ หรือลงทะเบียนซ้ำกับตัวเอง
