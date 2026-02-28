@@ -850,4 +850,77 @@ class ConAdminRegisRepeat extends BaseController
 
         return $this->response->setJSON(['status' => 'success', 'data' => $students]);
     }
+
+    public function AdminRegisRepeatReport()
+    {
+        $data['admin'] = $this->DBPers->table('tb_personnel')->select('pers_id,pers_img')->where('pers_id', session()->get('login_id'))->get()->getRow();
+        $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
+        $data['selectedYear'] = get_selected_year();
+        $data['title'] = "รายงานการลงทะเบียนเรียนซ้ำ";
+        
+        $data['GroupYear'] = $this->db->table('tb_register')
+            ->select('RepeatYear')
+            ->where('RepeatYear !=', '')
+            ->groupBy('RepeatYear')
+            ->orderBy('RepeatYear', 'DESC')
+            ->get()->getResult();
+
+        return view('admin/Academic/AdminRegisRepeat/AdminRegisRepeatReport', $data);
+    }
+
+    /**
+     * AJAX endpoint for the repeat report table
+     */
+    public function getRepeatReportData()
+    {
+        $year = $this->request->getPost('year');
+        $status = $this->request->getPost('status');
+        $attempt = $this->request->getPost('attempt');
+
+        $builder = $this->db->table('tb_register')
+            ->select('
+                tb_students.StudentID,
+                tb_students.StudentCode, 
+                tb_students.StudentPrefix, 
+                tb_students.StudentFirstName, 
+                tb_students.StudentLastName, 
+                tb_students.StudentClass, 
+                tb_students.StudentNumber,
+                tb_subjects.SubjectCode,
+                tb_subjects.SubjectName,
+                tb_register.RegisterYear,
+                tb_register.RepeatYear,
+                tb_register.RepeatStatus,
+                tb_register.Grade_Type,
+                tb_register.Grade,
+                CONCAT(repeat_teacher.pers_prefix, repeat_teacher.pers_firstname, " ", repeat_teacher.pers_lastname) as RepeatTeacherName
+            ')
+            ->join('tb_students', 'tb_students.StudentID = tb_register.StudentID')
+            ->join('tb_subjects', 'tb_subjects.SubjectID = tb_register.SubjectID')
+            ->join($this->DBPers->database . '.tb_personnel AS repeat_teacher', 'repeat_teacher.pers_id = tb_register.RepeatTeacher', 'LEFT');
+
+        if (!empty($year)) {
+            $builder->where('tb_register.RepeatYear', $year);
+        } else {
+            // If no year specified, only show records that have repeat info
+            $builder->where('tb_register.RepeatYear !=', '');
+        }
+
+        if (!empty($status) && $status !== 'ทั้งหมด') {
+            $builder->where('tb_register.RepeatStatus', $status);
+        } else {
+            $builder->where('tb_register.RepeatStatus !=', '');
+        }
+
+        if (!empty($attempt)) {
+            $builder->where('tb_register.Grade_Type', $attempt);
+        }
+
+        $results = $builder->orderBy('tb_register.RepeatYear', 'DESC')
+                          ->orderBy('tb_students.StudentClass', 'ASC')
+                          ->orderBy('tb_students.StudentNumber', 'ASC')
+                          ->get()->getResult();
+
+        return $this->response->setJSON(['data' => $results]);
+    }
 }

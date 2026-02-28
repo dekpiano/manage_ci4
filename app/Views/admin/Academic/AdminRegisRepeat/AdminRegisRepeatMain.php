@@ -242,6 +242,9 @@
                     </div>
                 </div>
                 <div class="col-md-4 text-end d-none d-md-block">
+                    <a href="<?= site_url('Admin/Acade/Registration/Repeat/Report') ?>" class="btn btn-primary fw-semibold me-2">
+                        <i class="bx bx-bar-chart-alt-2 me-1"></i>ดูรายงานสรุป (ซ้ำ)
+                    </a>
                     <button class="btn btn-light fw-semibold" onclick="showStudentDetailsModal()">
                         <i class="bx bx-show me-1"></i>ดูรายชื่อนักเรียน (ซ้ำ)
                     </button>
