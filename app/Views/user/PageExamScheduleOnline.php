@@ -15,34 +15,39 @@
                     <!--//container-->
 
                 </section>
-                <div class="container text-center">
-                    <?php if (1): ?>
-                    <div id="28">
-                        <?php $this->load->view('user/ExamSchedule/28.php'); ?>
-                    </div>
-                   
-
-                    <div id="1">
-                        <?php $this->load->view('user/ExamSchedule/1.php'); ?>
-                    </div>
-                   
-                    <div id="2">
-                        <?php $this->load->view('user/ExamSchedule/2.php'); ?>
-                    </div>
+                <div class="row g-4">
+                    <?php if(!empty($Exam)): ?>
+                        <?php foreach ($Exam as $v_Exam) : ?>
+                        <div class="col-md-6 col-lg-4">
+                            <div class="card h-100 shadow-sm border-0">
+                                <div class="card-body text-center">
+                                    <div class="avatar avatar-lg bg-label-primary mx-auto mb-3">
+                                        <i class="bx bx-laptop fs-2"></i>
+                                    </div>
+                                    <h5 class="card-title mb-1">สอบ<?=$v_Exam->exam_type?></h5>
+                                    <p class="text-muted small mb-3">ปีการศึกษา <?=$v_Exam->exam_year?> ภาคเรียนที่ <?=$v_Exam->exam_term?></p>
                                     
-                    <div id="3">
-                        <?php $this->load->view('user/ExamSchedule/3.php'); ?>
-                    </div>
+                                    <?php 
+                                        $fileUrl = "https://skj.nsnpao.go.th/uploads/academic/ExamSchedule/" . $v_Exam->exam_filename;
+                                    ?>
+                                    <a href="<?= $fileUrl ?>" target="_blank" class="btn btn-primary w-100">
+                                        <i class="bx bx-show me-1"></i> เข้าชมตารางสอบ
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <?php endforeach; ?>
                     <?php else: ?>
-                  <div class="card mb-3">
-                        <!-- <div class="card-body">
-                            <h2>
-                                <div class="">การสอบออนไลน์ปลายภาคเรียน เทมอ 2 ปีการศึกษา 2564 สิ้นสุดลงแล้ว</div>
-                                <div class="">นักเรียนที่ยังไม่ได้สอบ กรุณาติดต่อครูประจำวิชา</div>
-                            </h2>
-                        </div> -->
-                    </div>
-                    <?php endif;?>
+                        <div class="col-12">
+                            <div class="card shadow-sm border-0">
+                                <div class="card-body text-center py-5">
+                                    <i class="bx bx-info-circle fs-1 text-muted mb-3"></i>
+                                    <h5>ไม่มีข้อมูลตารางสอบออนไลน์</h5>
+                                    <p class="text-muted">ขณะนี้ยังไม่มีการเปิดระบบตารางสอบออนไลน์</p>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>

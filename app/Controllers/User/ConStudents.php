@@ -166,7 +166,28 @@ class ConStudents extends BaseController
         $data['full_url'] = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
         $data['banner'] = base_url('assets/images/ExamSchedule/banner.jpg');
 
-        $data['Exam'] = $this->db->table('tb_exam_schedule')->orderBy('exam_id','DESC')->limit(6)->get()->getResult();
+        $exams = $this->db->table('tb_exam_schedule')
+                                ->where('exam_status', 'เปิด')
+                                ->orderBy('exam_year','DESC')
+                                ->orderBy('exam_term','DESC')
+                                ->get()->getResult();
+        
+        // Group by Year and Term
+        $groupedExams = [];
+        foreach ($exams as $exam) {
+            $key = $exam->exam_term . '/' . $exam->exam_year;
+            if (!isset($groupedExams[$key])) {
+                $groupedExams[$key] = [
+                    'exam_term' => $exam->exam_term,
+                    'exam_year' => $exam->exam_year,
+                    'exam_type' => $exam->exam_type, // Use the type from first entry or just show collectively
+                    'files' => []
+                ];
+            }
+            $groupedExams[$key]['files'][] = $exam->exam_filename;
+        }
+
+        $data['Exam'] = $groupedExams;
        
     return view('user/PageExamSchedule', $data);
     }
@@ -177,7 +198,10 @@ class ConStudents extends BaseController
         $data['full_url'] = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
         $data['banner'] = base_url("uploads/banner/ExamScheduleOnline/banner.png");
 
-        $data['Exam'] = $this->db->table('tb_exam_schedule')->orderBy('exam_id','DESC')->limit(6)->get()->getResult();
+        $data['Exam'] = $this->db->table('tb_exam_schedule')
+                                ->where('exam_status', 'เปิด')
+                                ->orderBy('exam_id','DESC')
+                                ->limit(6)->get()->getResult();
     return view('user/PageExamScheduleOnline', $data);
     }
 

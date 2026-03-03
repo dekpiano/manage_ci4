@@ -2,171 +2,162 @@
 
 <?= $this->section('content') ?>
 
-<div class="app-wrapper">
-    <div class="app-content pt-3 p-md-3 p-lg-4">
-        <div class="container-xl">
+<!-- Fancybox CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.css" />
+<style>
+    .search-card { border-radius: 20px; border: none; background: #fff; box-shadow: 0 10px 30px rgba(0,0,0,0.05); margin-top: -30px; position: relative; z-index: 10; }
+    .btn-search { border-radius: 50px; padding: 10px 30px; font-weight: 600; transition: all 0.3s; }
+    .btn-search:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(21, 163, 98, 0.3); }
+    .class-card { border-radius: 15px; border: none; transition: all 0.3s; cursor: pointer; height: 100%; border-bottom: 4px solid #15a362; }
+    .class-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+    .class-icon { width: 50px; height: 50px; background: #e8f5e9; color: #15a362; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin-bottom: 1rem; }
+    .hero-section { background: linear-gradient(135deg, #15a362 0%, #71dd37 100%); padding: 4rem 0 6rem 0; color: white; text-align: center; }
+    .page-title { font-weight: 800; letter-spacing: -1px; }
+    .ss-main { border-radius: 10px !important; padding: 5px !important; border: 1px solid #eee !important; }
+</style>
 
-            <div class="d-flex flex-column justify-content-center align-items-center">
-                <h2 id="schedule-title">ตารางเรียน <small>(ฉบับทดลอง)</small> </h2>
-                <div class="d-flex mt-3 align-items-center">
-                    <div style="margin-right: 10px;">
-                        <select class="w-auto countries" id="SearchYear">
-                            <option value="">เลือกปีการศึกษา...</option>
-                        </select>
-                    </div>
-                    <div style="margin-right: 10px;">
-                        <select class="w-auto countries" id="SearchTerm">
-                            <option value="">เลือกภาคเรียน...</option>
-                        </select>
-                    </div>
-                    <div>
-                        <select class="w-auto countries" id="SearchClassSchedule">
-                            <option value="">เลือกตารางเรียน...</option>
-                        </select>
+<div class="app-wrapper">
+    <div class="hero-section">
+        <div class="container">
+            <h1 class="page-title text-white mb-2">ตารางเรียน</h1>
+            <p class="opacity-75">ตรวจสอบตารางเรียนประจำภาคเรียนของคุณได้ที่นี่</p>
+        </div>
+    </div>
+
+    <div class="container-xl">
+        <!-- Search Controls -->
+        <div class="card search-card p-4 mb-5">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="small fw-bold text-muted mb-2">ปีการศึกษา</label>
+                    <select id="SearchYear" class="form-select">
+                        <option value="">กำลังโหลด...</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="small fw-bold text-muted mb-2">ภาคเรียน</label>
+                    <select id="SearchTerm" class="form-select" disabled>
+                        <option value="">เลือกปีการศึกษาก่อน</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="small fw-bold text-muted mb-2">ค้นหาห้องเรียน</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0"><i class="bx bx-search text-muted"></i></span>
+                        <input type="text" id="FilterClass" class="form-control border-start-0" placeholder="เช่น 1/1, 4/2..." disabled>
                     </div>
                 </div>
-
-                <img id="image" src="" alt="Selected Image" class="img-fluid mt-3" style="display:none;">
             </div>
+        </div>
 
+        <!-- Content Area -->
+        <div id="loading-state" class="text-center py-5" style="display: none;">
+            <div class="spinner-border text-success" role="status"></div>
+            <p class="mt-2 text-muted">กำลังค้นหาข้อมูล...</p>
+        </div>
+
+        <div id="results-container" class="row g-4 mb-5">
+            <!-- Dynamic Cards Here -->
+            <div class="col-12 text-center py-5 text-muted" id="initial-msg">
+                <i class="bx bx-info-circle fs-1 d-block mb-3 opacity-25"></i>
+                กรุณาเลือกปีการศึกษาและภาคเรียนเพื่อดูตารางเรียน
+            </div>
         </div>
     </div>
 </div>
 
-<style>
-    .countries.ss-main {
-        height: 50px;
-        font-size: 18px;
-        font-weight: bold;
-    }
-    .ss-main .ss-single-selected {
-        height: 50px;
-        width: 200px;
-    }
-</style>
-
+<script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.umd.js"></script>
 <script>
 $(document).ready(function() {
-    var uploadServerBaseUrl = '<?= env("upload.server.baseurl") ?>';
+    const uploadServerBaseUrl = '<?= env("upload.server.baseurl") ?>';
+    let allData = [];
 
-    var slimYear = new SlimSelect({
-        select: '#SearchYear'
-    });
-
-    var slimTerm = new SlimSelect({
-        select: '#SearchTerm'
-    });
-
-    var slimClass = new SlimSelect({
-        select: '#SearchClassSchedule'
-    });
-
-    // Initially disable term and class schedule selects
-    $('#SearchTerm').prop('disabled', true);
-    slimTerm.disable();
-    $('#SearchClassSchedule').prop('disabled', true);
-    slimClass.disable();
-
-    // Load years into #SearchYear
+    // Load available years
     $.ajax({
         url: '<?= site_url('user/getscheduleyears') ?>',
         method: 'GET',
-        dataType: 'json',
         success: function(years) {
-            var yearOptions = [{ text: 'เลือกปีการศึกษา...', value: '' }];
-            $.each(years, function(index, year) {
-                yearOptions.push({ text: 'ปีการศึกษา ' + year.schestu_year, value: year.schestu_year });
-            });
-            slimYear.setData(yearOptions);
-        },
-        error: function(xhr, status, error) {
-            console.error("Failed to load years:", error);
+            let html = '<option value="">เลือกปีการศึกษา...</option>';
+            years.forEach(y => html += `<option value="${y.schestu_year}">ครึ่งปี ${y.schestu_year}</option>`);
+            $('#SearchYear').html(html);
         }
     });
 
-    // Handle year selection change
     $('#SearchYear').change(function() {
-        var selectedYear = $(this).val();
-        
-        // Reset and disable term and class schedule selects
-        slimTerm.setData([{ text: 'เลือกภาคเรียน...', value: '' }]);
-        slimClass.setData([{ text: 'เลือกตารางเรียน...', value: '' }]);
-        $('#image').hide();
-        $('#SearchClassSchedule').prop('disabled', true);
-        slimClass.disable();
-        
-        if (selectedYear) {
-            $('#schedule-title').html('ตารางเรียน <small>(ฉบับทดลอง)</small>');
-            $('#SearchTerm').prop('disabled', false);
-            slimTerm.enable();
-            slimTerm.setData([
-                { text: 'เลือกภาคเรียน...', value: '' },
-                { text: 'ภาคเรียนที่ 1', value: '1' },
-                { text: 'ภาคเรียนที่ 2', value: '2' }
-            ]);
+        if ($(this).val()) {
+            $('#SearchTerm').prop('disabled', false).html(`
+                <option value="">เลือกภาคเรียน...</option>
+                <option value="1">ภาคเรียนที่ 1</option>
+                <option value="2">ภาคเรียนที่ 2</option>
+            `);
         } else {
-            $('#SearchTerm').prop('disabled', true);
-            slimTerm.disable();
+            $('#SearchTerm').prop('disabled', true).html('<option value="">เลือกปีการศึกษาก่อน</option>');
+            $('#FilterClass').prop('disabled', true);
         }
+        $('#results-container').html('<div class="col-12 text-center py-5 text-muted">กรุณาเลือกภาคเรียน</div>');
     });
 
-    // Handle term selection change
     $('#SearchTerm').change(function() {
-        var selectedYear = $('#SearchYear').val();
-        var selectedTerm = $(this).val();
-
-        // Reset class schedule select
-        slimClass.setData([{ text: 'เลือกตารางเรียน...', value: '' }]);
-        $('#image').hide();
-
-        if (selectedYear && selectedTerm) {
-            $('#schedule-title').html('ตารางเรียน ภาคเรียนที่ ' + selectedTerm + '/' + selectedYear + ' <small>(ฉบับทดลอง)</small>');
-            $('#SearchClassSchedule').prop('disabled', false);
-            slimClass.enable();
+        const year = $('#SearchYear').val();
+        const term = $(this).val();
+        if (year && term) {
+            $('#loading-state').show();
+            $('#results-container').hide();
             
-            // Load class schedules for the selected year and term
             $.ajax({
                 url: '<?= site_url('user/searchclassschedule') ?>',
                 method: 'GET',
-                data: { year: selectedYear, term: selectedTerm },
-                dataType: 'json',
+                data: { year: year, term: term },
                 success: function(data) {
-                    var classOptions = [{ text: 'เลือกตารางเรียน...', value: '' }];
-                    if(data.length > 0){
-                        $.each(data, function(index, image) {
-                            classOptions.push({ text: 'ม.' + image.schestu_classname +' ('+ image.schestu_name + ')', value: image.schestu_filename });
-                        });
-                    } else {
-                        classOptions.push({ text: 'ไม่พบข้อมูล', value: '', disabled: true });
-                    }
-                    slimClass.setData(classOptions);
-                },
-                error: function(xhr, status, error) {
-                    console.error("Failed to load class schedules:", error);
-                    slimClass.setData([{ text: 'เกิดข้อผิดพลาด', value: '', disabled: true }]);
+                    allData = data;
+                    $('#loading-state').hide();
+                    $('#results-container').show();
+                    $('#FilterClass').prop('disabled', false).val('');
+                    renderCards(data);
                 }
             });
-        } else {
-            $('#SearchClassSchedule').prop('disabled', true);
-            slimClass.disable();
         }
     });
 
-    // Handle class schedule selection change
-    $('#SearchClassSchedule').change(function() {
-        var selectedImage = $(this).val();
-        var selectedYear = $('#SearchYear').val();
-        var selectedTerm = $('#SearchTerm').val();
+    $('#FilterClass').on('input', function() {
+        const query = $(this).val().toLowerCase();
+        const filtered = allData.filter(item => 
+            item.schestu_classname.toLowerCase().includes(query) || 
+            item.schestu_name.toLowerCase().includes(query)
+        );
+        renderCards(filtered);
+    });
 
-        if (selectedImage && selectedYear && selectedTerm) {
-            // Path is now just the dynamic parts, as the base URL contains the static path
-            var imagePath = selectedYear + '/' + selectedTerm + '/' + selectedImage;
-            var imageUrl = uploadServerBaseUrl + imagePath;
-            var proxiedUrl = '<?= base_url('image_proxy.php?url=') ?>' + encodeURIComponent(imageUrl);
-            $('#image').attr('src', proxiedUrl).show();
-        } else {
-            $('#image').hide();
+    function renderCards(data) {
+        if (data.length === 0) {
+            $('#results-container').html('<div class="col-12 text-center py-5 text-muted">ไม่พบข้อมูลตารางเรียน</div>');
+            return;
         }
+
+        let html = '';
+        data.forEach(item => {
+            const imageUrl = uploadServerBaseUrl + $('#SearchYear').val() + '/' + $('#SearchTerm').val() + '/' + item.schestu_filename;
+            const proxiedUrl = '<?= base_url('image_proxy.php?url=') ?>' + encodeURIComponent(imageUrl);
+            
+            html += `
+                <div class="col-6 col-md-4 col-lg-3">
+                    <div class="card class-card shadow-sm p-3" data-fancybox="gallery" data-src="${proxiedUrl}" data-caption="ม.${item.schestu_classname} (${item.schestu_name})">
+                        <div class="class-icon">
+                            <i class="bx bx-book-open"></i>
+                        </div>
+                        <h6 class="fw-bold mb-1">ชั้น ม.${item.schestu_classname}</h6>
+                        <p class="text-muted small mb-0 text-truncate">${item.schestu_name}</p>
+                    </div>
+                </div>
+            `;
+        });
+        $('#results-container').html(html);
+    }
+
+    Fancybox.bind("[data-fancybox]", {
+        compact: false,
+        idle: false,
+        dragToClose: false
     });
 });
 </script>

@@ -97,8 +97,10 @@ $routes->get('Admin/Acade/Registration/ExamSchedule/add', [ConAdminExamSchedule:
 $routes->post('admin/academic/ConAdminExamSchedule/insert_exam_schedule', [ConAdminExamSchedule::class, 'insert_exam_schedule']);
 $routes->post('admin/academic/ConAdminClassSchedule/insert_class_schedule', [ConAdminClassSchedule::class, 'insert_class_schedule']);
 $routes->post('admin/academic/ConAdminClassSchedule/delete_class_schedule/(:segment)/(:segment)/(:segment)/(:segment)', [ConAdminClassSchedule::class, 'delete_class_schedule/$1/$2/$3/$4']);
-$routes->post('admin/academic/ConAdminClassSchedule/getDataByYear', [ConAdminClassSchedule::class, 'getDataByYear']);
+$routes->post('admin/academic/ConAdminExamSchedule/upload_proxy', [ConAdminExamSchedule::class, 'upload_proxy']);
+$routes->post('admin/academic/ConAdminExamSchedule/delete_proxy', [ConAdminExamSchedule::class, 'delete_proxy']);
 $routes->post('Admin/Acade/ConAdminExamSchedule/delete_exam_schedule/(:segment)', [ConAdminExamSchedule::class, 'delete_exam_schedule/$1']);
+$routes->post('admin/academic/ConAdminExamSchedule/update_status', [ConAdminExamSchedule::class, 'update_status']);
 $routes->get('Admin/Acade/Registration/ClassRoom', [ConAdminClassRoom::class, 'AdminClassMain']);
 $routes->get('Admin/Acade/Registration/ClassRoom/(:num)', [ConAdminClassRoom::class, 'AdminClassMain/$1']);
 $routes->get('admin/academic/ConAdminClassRoom/AddClassRoom', [ConAdminClassRoom::class, 'AddClassRoom']);
@@ -119,7 +121,12 @@ $routes->get('Admin/Acade/Registration/RoomOnline', [ConAdminRoomOnline::class, 
 $routes->post('admin/room-online/data', [ConAdminRoomOnline::class, 'getRoomOnlineData']);
 
 $routes->get('Admin/Acade/Course/ClassSchedule', [ConAdminClassSchedule::class, 'AdminClassScheduleMain']);
+$routes->post('admin/academic/ConAdminClassSchedule/getDataByYear', [ConAdminClassSchedule::class, 'getDataByYear']);
 $routes->get('Admin/Acade/Course/ClassSchedule/add', [ConAdminClassSchedule::class, 'add']);
+$routes->get('Admin/Acade/Course/ClassSchedule/edit/(:segment)', [ConAdminClassSchedule::class, 'edit/$1']);
+$routes->post('admin/academic/ConAdminClassSchedule/insert_class_schedule', [ConAdminClassSchedule::class, 'insert_class_schedule']);
+$routes->post('admin/academic/ConAdminClassSchedule/delete_class_schedule/(:any)/(:any)/(:any)/(:any)', [ConAdminClassSchedule::class, 'delete_class_schedule/$1/$2/$3/$4']);
+$routes->post('admin/academic/ConAdminClassSchedule/upload_proxy', [ConAdminClassSchedule::class, 'upload_proxy']);
 $routes->get('Admin/Acade/Course/RegisterSubject', [ConAdminRegisterSubject::class, 'AdminRegisterSubjectMain']);
 $routes->post('admin/academic/ConAdminRegisterSubject/AdminRegisterSubjectSelect', [ConAdminRegisterSubject::class, 'AdminRegisterSubjectSelect']);
 $routes->post('admin/academic/ConAdminRegisterSubject/AdminRegisterSubjectEdit', [ConAdminRegisterSubject::class, 'AdminRegisterSubjectEdit']);

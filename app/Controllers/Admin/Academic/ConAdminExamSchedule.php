@@ -116,6 +116,7 @@ class ConAdminExamSchedule extends BaseController
                 'exam_filename' => $remoteFileName, // Use the filename from the remote server
                 'exam_create'   => date('Y-m-d H:i:s'),
                 'exam_user'     => session()->get('login_id'),
+                'exam_status'   => 'เปิด'
             ];
 
         // Insert data into the database
@@ -127,6 +128,24 @@ class ConAdminExamSchedule extends BaseController
                 'message' => $result 
             ]);
         
+    }
+
+    public function update_status()
+    {
+        $id = $this->request->getPost('id');
+        $status = $this->request->getPost('status');
+
+        if (empty($id)) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Missing ID.'])->setStatusCode(400);
+        }
+
+        $result = $this->modAdminExamSchedule->update($id, ['exam_status' => $status]);
+
+        if ($result) {
+            return $this->response->setJSON(['success' => true]);
+        } else {
+            return $this->response->setJSON(['success' => false, 'message' => 'Could not update status.']);
+        }
     }
 
     public function delete_exam_schedule($id)
@@ -143,5 +162,62 @@ class ConAdminExamSchedule extends BaseController
         } else {
             return $this->response->setJSON(['success' => false, 'message' => 'Could not delete the record from the database.']);
         }
+    }
+
+    public function upload_proxy()
+    {
+        $file = $this->request->getFile('file');
+        $path = $this->request->getPost('path');
+
+        if (!$file || !$file->isValid()) {
+            return $this->response->setJSON(['status' => 'error', 'message' => 'No file uploaded or file is invalid.']);
+        }
+
+        $target_url = 'https://skj.nsnpao.go.th/upload.php';
+
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $target_url);
+        curl_setopt($ch, CURLOPT_POST, true);
+        
+        $post_data = $this->request->getPost();
+        if ($file) {
+            $post_data['file'] = new \CURLFile($file->getTempName(), $file->getClientMimeType(), $file->getClientName());
+        }
+        
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $post_data);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        
+        $response = curl_exec($ch);
+        $error = curl_error($ch);
+        curl_close($ch);
+
+        if ($error) {
+            return $this->response->setJSON(['status' => 'error', 'message' => 'Proxy Error: ' . $error]);
+        }
+
+        return $this->response->setBody($response)->setContentType('application/json');
+    }
+
+    public function delete_proxy()
+    {
+        $target_url = 'https://skj.nsnpao.go.th/delete.php';
+        $post_data = $this->request->getBody();
+
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $target_url);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $post_data);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        
+        $response = curl_exec($ch);
+        $error = curl_error($ch);
+        curl_close($ch);
+
+        if ($error) {
+            return $this->response->setJSON(['status' => 'error', 'message' => 'Proxy Error: ' . $error]);
+        }
+
+        return $this->response->setBody($response)->setContentType('application/json');
     }
 }

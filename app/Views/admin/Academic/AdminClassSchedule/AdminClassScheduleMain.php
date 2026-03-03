@@ -204,13 +204,24 @@
             responsive: true,
             processing: true,
             language: {
-                url: "https://cdn.datatables.net/plug-ins/1.13.7/i18n/Thai.json"
+                url: "//cdn.datatables.net/plug-ins/1.11.5/i18n/th.json"
             },
             ajax: {
                 url: '<?= site_url('admin/academic/ConAdminClassSchedule/getDataByYear') ?>',
                 type: 'POST',
                 data: { year: year },
                 dataSrc: function(json) {
+                    if (json.error) {
+                        Swal.fire({
+                            icon: 'info',
+                            title: 'ไม่พบข้อมูล',
+                            text: 'ยังไม่มีข้อมูลตารางเรียนสำหรับปีที่เลือก',
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
+                        updateStats([]);
+                        return [];
+                    }
                     let rows = (json.data) ? json.data : json;
                     updateStats(rows);
                     return rows;

@@ -740,12 +740,13 @@
                             <th><i class="bx bx-book me-1"></i>ภาคเรียน</th>
                             <th><i class="bx bx-file me-1"></i>ไฟล์ตารางสอบ</th>
                             <th><i class="bx bx-time me-1"></i>วันที่อัปโหลด</th>
+                            <th class="text-center"><i class="bx bx-show me-1"></i>สถานะ</th>
                             <th class="text-center"><i class="bx bx-cog me-1"></i>จัดการ</th>
                         </tr>
                     </thead>
                     <tbody>
                     <?php
-                    $remoteBaseUrl = "http://118.172.140.151:8000/uploads/academic/ExamSchedule/";
+                    $remoteBaseUrl = "https://skj.nsnpao.go.th/uploads/academic/ExamSchedule/";
                     foreach ($exam_schedule as $key => $v_exam_schedule) : 
                         $fileName = isset($v_exam_schedule->exam_filename) ? esc($v_exam_schedule->exam_filename) : '';
                         $fileUrl = $remoteBaseUrl . rawurlencode($fileName);
@@ -779,6 +780,14 @@
                                 <i class="bx bx-calendar-alt"></i>
                                 <?= date('d/m/Y', strtotime($v_exam_schedule->exam_create)) ?>
                                 <span class="time"><?= date('H:i', strtotime($v_exam_schedule->exam_create)) ?> น.</span>
+                            </div>
+                        </td>
+                        <td class="text-center">
+                            <div class="form-check form-switch d-flex justify-content-center">
+                                <input class="form-check-input" type="checkbox" role="switch" 
+                                    id="statusSwitch_<?= $v_exam_schedule->exam_id ?>" 
+                                    <?= ($v_exam_schedule->exam_status ?? 'เปิด') == 'เปิด' ? 'checked' : '' ?>
+                                    onchange="updateExamStatus('<?= $v_exam_schedule->exam_id ?>', this.checked ? 'เปิด' : 'ปิด')">
                             </div>
                         </td>
                         <td>
@@ -865,7 +874,13 @@
                                 </div>
                             </div>
                             <div class="text-muted mt-2" style="font-size: 0.8rem;">
-                                <i class="bx bx-info-circle me-1"></i>รองรับไฟล์: PDF, Excel, Word, รูปภาพ (ขนาดไม่เกิน 5MB)
+                                <i class="bx bx-info-circle me-1"></i>รองรับไฟล์: PDF (จะถูกแปลงเป็นรูป), รูปภาพ (ขนาดไม่เกิน 5MB)
+                            </div>
+                            <!-- Hidden canvas for PDF processing -->
+                            <canvas id="pdf-canvas" style="display: none;"></canvas>
+                            <div id="image-preview-container" class="mt-3 text-center" style="display: none;">
+                                <p class="small text-muted mb-1">ตัวอย่างรูปภาพที่จะถูกบันทึก:</p>
+                                <img id="image-preview" src="" class="img-thumbnail" style="max-height: 200px;">
                             </div>
                         </div>
                     </div>
@@ -887,12 +902,17 @@
 
 <?= $this->section('script') ?>
 <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
 <script src="https://cdn.datatables.net/responsive/2.2.9/js/dataTables.responsive.min.js"></script>
+<!-- PDF.js library for PDF to Image conversion -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+    // Initialize PDF.js worker
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+</script>
 
 <script>
-    const UPLOAD_URL = 'http://118.172.140.151:8000/upload.php';
-    const DELETE_URL = 'http://118.172.140.151:8000/delete.php';
+    const UPLOAD_URL = '<?= site_url('admin/academic/ConAdminExamSchedule/upload_proxy') ?>';
+    const DELETE_URL = '<?= site_url('admin/academic/ConAdminExamSchedule/delete_proxy') ?>';
     const UPLOAD_PATH = 'academic/ExamSchedule';
 
     // Initialize DataTable
@@ -979,12 +999,43 @@
         });
     }
 
+    function updateExamStatus(id, status) {
+        $.ajax({
+            url: '<?= site_url('admin/academic/ConAdminExamSchedule/update_status') ?>',
+            type: 'POST',
+            data: { id: id, status: status },
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    const Toast = Swal.mixin({
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 2000,
+                        timerProgressBar: true
+                    });
+                    Toast.fire({
+                        icon: 'success',
+                        title: 'อัปเดตสถานะการแสดงผลแล้ว'
+                    });
+                } else {
+                    Swal.fire({ icon: 'error', title: 'ผิดพลาด!', text: response.message || 'ไม่สามารถอัปเดตสถานะได้' });
+                }
+            },
+            error: function() {
+                Swal.fire({ icon: 'error', title: 'ผิดพลาด!', text: 'เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์' });
+            }
+        });
+    }
+
     // Form Submit Handler
     $('#examScheduleForm').on('submit', function(e) {
         e.preventDefault();
         
         const form = this;
         const fileInput = $('#exam_filename')[0];
+        const saveBtn = $('#saveButton');
+        const originalBtnHtml = saveBtn.html();
 
         if (fileInput.files.length === 0) {
             Swal.fire({ icon: 'error', title: 'ผิดพลาด!', text: 'กรุณาเลือกไฟล์ที่ต้องการอัปโหลด', confirmButtonColor: '#dc3545' });
@@ -992,72 +1043,168 @@
         }
 
         const file = fileInput.files[0];
-        const remoteUploadFormData = new FormData();
-        remoteUploadFormData.append('file', file);
-        remoteUploadFormData.append('path', UPLOAD_PATH);
+        const fileExt = file.name.split('.').pop().toLowerCase();
+
+        // Loading state on button
+        saveBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>กำลังประมวลผล...');
 
         Swal.fire({
-            title: 'กำลังอัปโหลดไฟล์...',
-            html: '<div class="py-3"><div class="spinner-border text-success" style="width: 3rem; height: 3rem;"></div></div>',
-            text: 'กรุณารอสักครู่',
+            title: 'กำลังประมวลผลไฟล์...',
+            html: '<div class="py-3"><div class="spinner-border text-success" style="width: 3rem; height: 3rem;"></div><p class="mt-2">หากเป็นไฟล์ PDF ระบบกำลังแปลงเป็นรูปภาพ...</p></div>',
             allowOutsideClick: false,
             showConfirmButton: false
         });
 
-        $.ajax({
-            url: UPLOAD_URL,
-            type: 'POST',
-            data: remoteUploadFormData,
-            processData: false,
-            contentType: false,
-            dataType: 'json', 
-            success: function(uploadResponse) {
-                if (uploadResponse.status === 'success' && uploadResponse.filename) {
-                    const remoteFileName = uploadResponse.filename;
+        // Function to trim whitespace from canvas
+        function trimCanvas(canvas) {
+            const context = canvas.getContext('2d');
+            const width = canvas.width;
+            const height = canvas.height;
+            const imgData = context.getImageData(0, 0, width, height);
+            const pixels = imgData.data;
 
-                    const localFormData = new FormData(form);
-                    localFormData.delete('exam_filename');
-                    localFormData.append('exam_filename', remoteFileName);
+            let minX = width, minY = height, maxX = 0, maxY = 0;
+            let found = false;
 
-                    $.ajax({
-                        url: $(form).attr('action'),
-                        type: 'POST',
-                        data: localFormData,
-                        processData: false,
-                        contentType: false,
-                        dataType: 'json', 
-                        success: function(localResponse) {
-                            if (localResponse.success) {
-                                $('#examScheduleModal').modal('hide');
-
-                                Swal.fire({
-                                    icon: 'success',
-                                    title: 'สำเร็จ!',
-                                    text: 'บันทึกข้อมูลเรียบร้อยแล้ว',
-                                    confirmButtonColor: '#15a362'
-                                }).then(() => location.reload());
-                            } else {
-                                Swal.fire({ icon: 'error', title: 'บันทึกข้อมูลไม่สำเร็จ!', html: localResponse.message || 'กรุณาลองใหม่อีกครั้ง', confirmButtonColor: '#dc3545' });
-                                deleteRemoteFile(remoteFileName, UPLOAD_PATH);
-                            }
-                        },
-                        error: function(jqXHR, textStatus, errorThrown) {
-                            let errorMessage = 'เกิดข้อผิดพลาดในการบันทึกข้อมูลลงฐานข้อมูล';
-                            if (jqXHR.responseJSON && jqXHR.responseJSON.message) {
-                                errorMessage = jqXHR.responseJSON.message;
-                            }
-                            Swal.fire({ icon: 'error', title: 'ผิดพลาด!', html: errorMessage, confirmButtonColor: '#dc3545' });
-                            deleteRemoteFile(remoteFileName, UPLOAD_PATH);
-                        }
-                    });
-                } else {
-                    Swal.fire({ icon: 'error', title: 'อัปโหลดไฟล์ไม่สำเร็จ!', text: uploadResponse.message || 'กรุณาตรวจสอบไฟล์และลองใหม่อีกครั้ง', confirmButtonColor: '#dc3545' });
+            // Process pixels to find content boundaries (non-white pixels)
+            for (let y = 0; y < height; y++) {
+                for (let x = 0; x < width; x++) {
+                    const index = (y * width + x) * 4;
+                    const r = pixels[index];
+                    const g = pixels[index + 1];
+                    const b = pixels[index + 2];
+                    // PDF renders on white (255,255,255). 
+                    // Threshold 253 to account for anti-aliasing.
+                    if (r < 253 || g < 253 || b < 253) {
+                        if (x < minX) minX = x;
+                        if (x > maxX) maxX = x;
+                        if (y < minY) minY = y;
+                        if (y > maxY) maxY = y;
+                        found = true;
+                    }
                 }
-            },
-            error: function() {
-                Swal.fire({ icon: 'error', title: 'ผิดพลาด!', text: 'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์อัปโหลดได้', confirmButtonColor: '#dc3545' });
             }
-        });
+
+            if (!found) return canvas;
+
+            // Add slight padding
+            const padding = 15;
+            minX = Math.max(0, minX - padding);
+            minY = Math.max(0, minY - padding);
+            maxX = Math.min(width, maxX + padding);
+            maxY = Math.min(height, maxY + padding);
+
+            const cropWidth = maxX - minX;
+            const cropHeight = maxY - minY;
+
+            const croppedCanvas = document.createElement('canvas');
+            croppedCanvas.width = cropWidth;
+            croppedCanvas.height = cropHeight;
+            const croppedContext = croppedCanvas.getContext('2d');
+            
+            // Fill background with white for the JPEG
+            croppedContext.fillStyle = '#FFFFFF';
+            croppedContext.fillRect(0, 0, cropWidth, cropHeight);
+            croppedContext.drawImage(canvas, minX, minY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
+            
+            return croppedCanvas;
+        }
+
+        // Function to perform the actual upload
+        const performUpload = (blob, fileName) => {
+            const remoteUploadFormData = new FormData();
+            remoteUploadFormData.append('file', blob, fileName);
+            remoteUploadFormData.append('path', UPLOAD_PATH);
+            remoteUploadFormData.append('filename', fileName);
+
+            $.ajax({
+                url: UPLOAD_URL,
+                type: 'POST',
+                data: remoteUploadFormData,
+                processData: false,
+                contentType: false,
+                dataType: 'json', 
+                success: function(uploadResponse) {
+                    if (uploadResponse.status === 'success' && uploadResponse.filename) {
+                        const remoteFileName = uploadResponse.filename;
+
+                        const localFormData = new FormData(form);
+                        localFormData.delete('exam_filename');
+                        localFormData.append('exam_filename', remoteFileName);
+
+                        $.ajax({
+                            url: $(form).attr('action'),
+                            type: 'POST',
+                            data: localFormData,
+                            processData: false,
+                            contentType: false,
+                            dataType: 'json', 
+                            success: function(localResponse) {
+                                if (localResponse.success) {
+                                    $('#examScheduleModal').modal('hide');
+                                    Swal.fire({ icon: 'success', title: 'สำเร็จ!', text: 'บันทึกข้อมูลเรียบร้อยแล้ว', confirmButtonColor: '#15a362' }).then(() => location.reload());
+                                } else {
+                                    Swal.fire({ icon: 'error', title: 'บันทึกข้อมูลไม่สำเร็จ!', html: localResponse.message || 'กรุณาลองใหม่อีกครั้ง', confirmButtonColor: '#dc3545' });
+                                    deleteRemoteFile(remoteFileName, UPLOAD_PATH);
+                                    saveBtn.prop('disabled', false).html(originalBtnHtml);
+                                }
+                            },
+                            error: function() {
+                                Swal.fire({ icon: 'error', title: 'ผิดพลาด!', text: 'เกิดข้อผิดพลาดในการบันทึกข้อมูลลงฐานข้อมูล', confirmButtonColor: '#dc3545' });
+                                deleteRemoteFile(remoteFileName, UPLOAD_PATH);
+                                saveBtn.prop('disabled', false).html(originalBtnHtml);
+                            }
+                        });
+                    } else {
+                        Swal.fire({ icon: 'error', title: 'อัปโหลดไฟล์ไม่สำเร็จ!', text: uploadResponse.message || 'กรุณาลองใหม่อีกครั้ง', confirmButtonColor: '#dc3545' });
+                        saveBtn.prop('disabled', false).html(originalBtnHtml);
+                    }
+                },
+                error: function() {
+                    Swal.fire({ icon: 'error', title: 'ผิดพลาด!', text: 'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์อัปโหลดได้', confirmButtonColor: '#dc3545' });
+                    saveBtn.prop('disabled', false).html(originalBtnHtml);
+                }
+            });
+        };
+
+        if (fileExt === 'pdf') {
+            // Convert PDF to Image
+            const reader = new FileReader();
+            reader.onload = function() {
+                const typedarray = new Uint8Array(this.result);
+                pdfjsLib.getDocument(typedarray).promise.then(function(pdf) {
+                    // Get first page
+                    pdf.getPage(1).then(function(page) {
+                        const viewport = page.getViewport({ scale: 2.0 }); // Higher scale for better quality
+                        const canvas = document.getElementById('pdf-canvas');
+                        const context = canvas.getContext('2d');
+                        canvas.height = viewport.height;
+                        canvas.width = viewport.width;
+
+                        const renderContext = {
+                            canvasContext: context,
+                            viewport: viewport
+                        };
+
+                        page.render(renderContext).promise.then(function() {
+                            const trimmedCanvas = trimCanvas(canvas);
+                            trimmedCanvas.toBlob(function(blob) {
+                                const newFileName = Date.now() + '-' + file.name.replace('.pdf', '.jpg');
+                                performUpload(blob, newFileName);
+                            }, 'image/jpeg', 0.9);
+                        });
+                    });
+                }).catch(function(error) {
+                    Swal.fire({ icon: 'error', title: 'ผิดพลาด!', text: 'ไม่สามารถอ่านไฟล์ PDF ได้: ' + error.message, confirmButtonColor: '#dc3545' });
+                    saveBtn.prop('disabled', false).html(originalBtnHtml);
+                });
+            };
+            reader.readAsArrayBuffer(file);
+        } else {
+            // Already an image
+            const uniqueFileName = Date.now() + '-' + file.name;
+            performUpload(file, uniqueFileName);
+        }
     });
 
     // File Input Validation

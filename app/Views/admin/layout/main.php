@@ -28,7 +28,7 @@
     <link rel="stylesheet" href="<?= base_url()?>/assets/vendor/fonts/iconify-icons.css" />
     <!-- Vendors CSS -->
     <link rel="stylesheet" href="<?= base_url()?>/assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.css" />
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/slim-select/2.12.1/slimselect.min.css" rel="stylesheet">
+    <link href="https://unpkg.com/slim-select@latest/dist/slimselect.css" rel="stylesheet">
     </link>
 
      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/css/select2.min.css" />
@@ -108,7 +108,7 @@
     <!-- endbuild -->
 
     
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/slim-select/2.12.1/slimselect.min.js"></script>
+    <script src="https://unpkg.com/slim-select@latest/dist/slimselect.min.js"></script>
 
 <!-- DataTable JS -->
 <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>

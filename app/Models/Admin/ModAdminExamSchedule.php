@@ -17,6 +17,7 @@ class ModAdminExamSchedule extends Model
         'exam_filename',
         'exam_create',
         'exam_user',
+        'exam_status',
     ]; // Fields that can be mass-assigned
 
     public function exam_schedule_insert($data)
