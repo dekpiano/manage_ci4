@@ -876,4 +876,300 @@ class ConAdminDevelopStudents extends BaseController
         sort($academicYears); // Sort years in ascending order
         return $this->response->setJSON($academicYears);
     }
+
+    // ===================== รายงานผลชุมนุม =====================
+
+    /**
+     * แสดงหน้ารายงานผลการประเมินชุมนุม (ผ่าน/ไม่ผ่าน)
+     */
+    public function ClubsReport()
+    {
+        $data['title'] = 'รายงานผลการประเมินชุมนุม';
+        $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
+        $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();
+
+        // ดึงปีการศึกษาจาก tb_clubs
+        $data['AcademicYears'] = $this->db->table('tb_clubs')
+            ->select('club_year')
+            ->where('club_year IS NOT NULL')
+            ->groupBy('club_year')
+            ->orderBy('club_year', 'DESC')
+            ->get()->getResult();
+
+        // ดึงปีปัจจุบันจาก club_onoff
+        $activeConfig = $this->db->table('tb_club_onoff')
+            ->select('c_onoff_year')
+            ->where('c_onoff_for', 'active_config')
+            ->get()->getRow();
+        $data['currentYear'] = $activeConfig->c_onoff_year ?? '';
+
+        // ดึงรายชื่อชุมนุมทั้งหมด
+        $data['Clubs'] = $this->db->table('tb_clubs')
+            ->select('club_id, club_name')
+            ->orderBy('club_name', 'ASC')
+            ->get()->getResult();
+
+        echo view('admin/Academic/AdminDevelopStudents/Clubs/AdminClubsReport', $data);
+    }
+
+    /**
+     * AJAX: ดึงข้อมูลรายงานผลชุมนุม
+     */
+    public function ClubReportData()
+    {
+        $year   = $this->request->getPost('year');
+        $term   = $this->request->getPost('term');
+        $clubId = $this->request->getPost('club_id');
+
+        // ดึงสมาชิกชุมนุม
+        $builder = $this->db->table('tb_club_members AS m')
+            ->select('
+                m.member_student_id,
+                s.StudentCode AS student_code,
+                s.StudentPrefix AS student_prefix,
+                s.StudentFirstName AS student_firstname,
+                s.StudentLastName AS student_lastname,
+                s.StudentClass AS student_class,
+                c.club_name,
+                c.club_faculty_advisor
+            ')
+            ->join('tb_students AS s', 'CAST(s.StudentID AS UNSIGNED) = m.member_student_id', 'left')
+            ->join('tb_clubs AS c', 'c.club_id = m.member_club_id', 'left')
+            ->where('c.club_year', $year)
+            ->where('c.club_trem', $term);
+
+        if ($clubId && $clubId !== 'all') {
+            $builder->where('m.member_club_id', $clubId);
+        }
+
+        $builder->orderBy('c.club_name', 'ASC')
+                ->orderBy('s.StudentClass', 'ASC')
+                ->orderBy('s.StudentNumber', 'ASC');
+
+        $members = $builder->get()->getResult();
+
+        // ดึงข้อมูลผลการประเมิน
+        $evalData = [];
+        
+        // 1. ดึงจาก tb_club_student_summary
+        $summaries = $this->db->table('tb_club_student_summary')
+            ->select('student_id, objective_result')
+            ->where('academic_year', $year)
+            ->where('academic_term', $term)
+            ->get()->getResult();
+        foreach ($summaries as $s) {
+            $evalData[trim($s->student_id)] = trim($s->objective_result);
+        }
+
+        // 2. ดึงจาก tb_club_student_progress (ถ้าใน summary ยังไม่มี)
+        $progresses = $this->db->table('tb_club_student_progress')
+            ->select('student_id, status')
+            ->where('status', 1)
+            ->get()->getResult();
+        foreach ($progresses as $p) {
+            $sid = trim($p->student_id);
+            if (!isset($evalData[$sid])) {
+                $evalData[$sid] = 'ผ'; // ถ้าผ่านจุดประสงค์ ให้ถือว่าผ่านเบื้องต้น
+            }
+        }
+
+        // ดึงข้อมูลครูที่ปรึกษา
+        $advisorMap = [];
+        $advisorIds = array_unique(array_filter(array_column($members, 'club_faculty_advisor')));
+        if (!empty($advisorIds)) {
+            $advisors = $this->DBpersonnel->table('tb_personnel')
+                ->select('pers_id, pers_prefix, pers_firstname, pers_lastname')
+                ->whereIn('pers_id', $advisorIds)
+                ->get()->getResult();
+            foreach ($advisors as $adv) {
+                $advisorMap[$adv->pers_id] = $adv->pers_prefix . $adv->pers_firstname . ' ' . $adv->pers_lastname;
+            }
+        }
+
+        // สรุปข้อมูล
+        $data = [];
+        $passCount = 0; $failCount = 0; $pendingCount = 0;
+
+        foreach ($members as $m) {
+            // เช็คผลประเมิน (ลองทั้ง ID และ Code)
+            $res = $evalData[$m->member_student_id] ?? ($evalData[$m->student_code] ?? '');
+            $resultCode = '';
+
+            if ($res !== '') {
+                if (preg_match('/ผ่าน|ผ|ดี|1/u', $res)) {
+                    $resultCode = 'ผ'; $passCount++;
+                } elseif (preg_match('/ไม่ผ่าน|มผ/u', $res)) {
+                    $resultCode = 'มผ'; $failCount++;
+                } else {
+                    $pendingCount++;
+                }
+            } else {
+                $pendingCount++;
+            }
+
+            $data[] = [
+                'student_code'      => $m->student_code,
+                'student_prefix'    => $m->student_prefix,
+                'student_firstname' => $m->student_firstname,
+                'student_lastname'  => $m->student_lastname,
+                'student_class'     => $m->student_class,
+                'club_name'         => $m->club_name,
+                'advisor_name'      => $advisorMap[$m->club_faculty_advisor] ?? '-',
+                'result'            => $resultCode
+            ];
+        }
+
+        return $this->response->setJSON([
+            'status'  => 'success',
+            'data'    => $data,
+            'summary' => [
+                'total' => count($data), 'pass' => $passCount, 'fail' => $failCount, 'pending' => $pendingCount
+            ]
+        ]);
+    }
+
+    /**
+     * AJAX: ดึงข้อมูลรายงานบันทึกการมาเรียนชุมนุม
+     * ข้อมูลจาก tb_club_recoed_activity (tcra_ma, tcra_khad, tcra_rapwy, tcra_rakic เก็บเป็น comma-separated StudentIDs)
+     */
+    public function ClubAttendanceReportData()
+    {
+        try {
+            $year   = $this->request->getPost('year');
+            $term   = $this->request->getPost('term');
+            $clubId = $this->request->getPost('club_id');
+
+            // ดึงสัปดาห์ทั้งหมดของปี/เทอมนี้
+            $weeks = $this->db->table('tb_club_settings_schedule')
+                ->select('tcs_schedule_id, tcs_week_number, tcs_start_date, tcs_week_status')
+                ->where('tcs_academic_year', $year)
+                ->where('tcs_academic_trem', $term)
+                ->orderBy('tcs_week_number', 'ASC')
+                ->get()->getResult();
+
+            // ดึงสมาชิกชุมนุม
+            $memberBuilder = $this->db->table('tb_club_members AS m')
+                ->select('m.member_student_id, s.StudentPrefix, s.StudentFirstName, s.StudentLastName, s.StudentClass, s.StudentNumber, c.club_name, c.club_id')
+                ->join('tb_students AS s', 'CAST(s.StudentID AS UNSIGNED) = m.member_student_id', 'left')
+                ->join('tb_clubs AS c', 'c.club_id = m.member_club_id', 'left')
+                ->where('c.club_year', $year)
+                ->where('c.club_trem', $term);
+
+            if ($clubId && $clubId !== 'all') {
+                $memberBuilder->where('m.member_club_id', $clubId);
+            }
+
+            $memberBuilder->orderBy('c.club_name', 'ASC')
+                          ->orderBy('s.StudentClass', 'ASC')
+                          ->orderBy('CAST(s.StudentNumber AS UNSIGNED)', 'ASC');
+
+            $members = $memberBuilder->get()->getResult();
+
+            // ดึงข้อมูลการเช็คชื่อ
+            $actBuilder = $this->db->table('tb_club_record_activity AS a')
+                ->select('a.tcra_club_id, a.trca_schedule_id, a.tcra_ma, a.tcra_khad, a.tcra_rapwy, a.tcra_rakic')
+                ->join('tb_club_settings_schedule AS ss', 'ss.tcs_schedule_id = a.trca_schedule_id', 'left')
+                ->where('ss.tcs_academic_year', $year)
+                ->where('ss.tcs_academic_trem', $term);
+
+            if ($clubId && $clubId !== 'all') {
+                $actBuilder->where('a.tcra_club_id', $clubId);
+            }
+
+            $activities = $actBuilder->get()->getResult();
+
+            // สร้าง map [club_id][schedule_id] => { ma:[], khad:[], ... }
+            $actMap = [];
+            $checkedSchedules = [];
+            foreach ($activities as $act) {
+                $cid = $act->tcra_club_id;
+                $sid = $act->trca_schedule_id;
+                $checkedSchedules[$sid] = true;
+
+                $actMap[$cid][$sid] = [
+                    'ma'    => array_map('trim', array_filter(explode(',', $act->tcra_ma ?? ''))),
+                    'khad'  => array_map('trim', array_filter(explode(',', $act->tcra_khad ?? ''))),
+                    'rapwy' => array_map('trim', array_filter(explode(',', $act->tcra_rapwy ?? ''))),
+                    'rakic' => array_map('trim', array_filter(explode(',', $act->tcra_rakic ?? ''))),
+                ];
+            }
+
+            // สร้างข้อมูลต่อนักเรียน
+            $data = [];
+            $highAbsent = 0;
+
+            foreach ($members as $m) {
+                $studentName = ($m->StudentPrefix ?? '') . ($m->StudentFirstName ?? '') . ' ' . ($m->StudentLastName ?? '');
+                $weekly = [];
+                $sumMa = 0; $sumKhad = 0; $sumPuay = 0; $sumKij = 0;
+
+                // cast เป็น string เพื่อเทียบกับ explode result
+                $studentIdStr = (string) $m->member_student_id;
+
+                foreach ($weeks as $w) {
+                    $schedId = $w->tcs_schedule_id;
+                    $weekNum = $w->tcs_week_number;
+                    $clubAct = $actMap[$m->club_id][$schedId] ?? null;
+
+                    $status = '';
+                    if ($clubAct) {
+                        if (in_array($studentIdStr, $clubAct['ma'])) {
+                            $status = 'มา'; $sumMa++;
+                        } elseif (in_array($studentIdStr, $clubAct['khad'])) {
+                            $status = 'ขาด'; $sumKhad++;
+                        } elseif (in_array($studentIdStr, $clubAct['rapwy'])) {
+                            $status = 'ลาป่วย'; $sumPuay++;
+                        } elseif (in_array($studentIdStr, $clubAct['rakic'])) {
+                            $status = 'ลากิจ'; $sumKij++;
+                        }
+                    }
+                    $weekly[$weekNum] = $status;
+                }
+
+                if ($sumKhad >= 3) { $highAbsent++; }
+
+                $data[] = [
+                    'student_name'  => trim($studentName),
+                    'student_class' => $m->StudentClass ?? '-',
+                    'club_name'     => $m->club_name ?? '-',
+                    'weekly'        => $weekly,
+                    'sum_ma'        => $sumMa,
+                    'sum_khad'      => $sumKhad,
+                    'sum_puay'      => $sumPuay,
+                    'sum_kij'       => $sumKij,
+                ];
+            }
+
+            // สร้าง weeks array สำหรับ header
+            $weeksForHeader = [];
+            foreach ($weeks as $w) {
+                $weeksForHeader[] = [
+                    'week_number' => $w->tcs_week_number,
+                    'date'        => $w->tcs_start_date,
+                ];
+            }
+
+            return $this->response->setJSON([
+                'status'  => 'success',
+                'data'    => $data,
+                'weeks'   => $weeksForHeader,
+                'summary' => [
+                    'total_students' => count($members),
+                    'weeks_total'    => count($weeks),
+                    'weeks_checked'  => count($checkedSchedules),
+                    'high_absent'    => $highAbsent,
+                ]
+            ]);
+
+        } catch (\Throwable $e) {
+            return $this->response->setJSON([
+                'status'  => 'error',
+                'message' => $e->getMessage(),
+                'file'    => $e->getFile() . ':' . $e->getLine(),
+                'data'    => [],
+                'weeks'   => [],
+                'summary' => ['total_students' => 0, 'weeks_total' => 0, 'weeks_checked' => 0, 'high_absent' => 0]
+            ]);
+        }
+    }
 }

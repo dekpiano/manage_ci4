@@ -51,6 +51,9 @@ $tchCfg = $getStatusConfig($teacherStatus);
                     <li><a class="dropdown-item py-2 text-danger fw-semibold" href="javascript:void(0)" data-bs-toggle="modal" data-bs-target="#modalClubSystemSettings"><i class="bx bx-toggle-right me-2"></i>เปิด/ปิด การใช้งานระบบ (ครู/นักเรียน)</a></li>
                 </ul>
             </div>
+            <a href="<?= site_url('Admin/Acade/DevelopStudents/Clubs/Report') ?>" class="btn btn-info shadow-sm px-4 py-2 fw-bold">
+                <i class="bx bx-bar-chart-alt-2 me-1"></i> รายงานผลชุมนุม
+            </a>
             <a href="<?= site_url('Admin/Acade/DevelopStudents/Clubs/All') ?>" class="btn btn-warning shadow-sm px-4 py-2 fw-bold">
                 <i class="bx bx-list-check me-1"></i> จัดการชุมนุมทั้งหมด
             </a>

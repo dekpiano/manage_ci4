@@ -84,6 +84,9 @@ $routes->get('admin/academic/ConAdminDevelopStudents/ClubGetWeeksToUpdate', [Con
 $routes->post('admin/academic/ConAdminDevelopStudents/ClubUpdateSchedule', [ConAdminDevelopStudents::class, 'ClubUpdateSchedule']);
 $routes->post('admin/academic/ConAdminDevelopStudents/ClubUpdateStatus', [ConAdminDevelopStudents::class, 'ClubUpdateStatus']);
 $routes->get('admin/academic/ConAdminDevelopStudents/ClubGetAcademicYears', [ConAdminDevelopStudents::class, 'ClubGetAcademicYears']);
+$routes->get('Admin/Acade/DevelopStudents/Clubs/Report', [ConAdminDevelopStudents::class, 'ClubsReport']);
+$routes->match(['get', 'post'], 'admin/academic/ConAdminDevelopStudents/ClubReportData', [ConAdminDevelopStudents::class, 'ClubReportData']);
+$routes->match(['get', 'post'], 'admin/academic/ConAdminDevelopStudents/ClubAttendanceReportData', [ConAdminDevelopStudents::class, 'ClubAttendanceReportData']);
 
 $routes->get('Admin/Acade/Registration/Enroll', [ConAdminEnroll::class, 'AdminEnrollMain']);
 $routes->get('Admin/Acade/Registration/Enroll/Add/(:segment)/(:segment)', [ConAdminEnroll::class, 'AdminEnrollAdd']);
