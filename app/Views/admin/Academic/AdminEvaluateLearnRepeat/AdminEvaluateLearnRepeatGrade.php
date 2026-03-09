@@ -101,6 +101,7 @@
                                 <input type="text" class="form-control study_time KeyEnter" id="study_time"
                                     check-time="<?=$TimeNum;?>" name="study_time[]"
                                     value="<?=$v_check_student->StudyTime == "" ? "" : $v_check_student->StudyTime?>"
+                                    <?=$system_is_open ? "" : "disabled"?>
                                     autocomplete="off">
                             </td>
                             <?php 
@@ -122,7 +123,7 @@
                                     check-score-key="<?=$v_set_score->regscore_score?>"
                                     id="<?=$v_check_student->StudentID?>" name="<?=$v_check_student->StudentID?>[]"
                                     value="<?=$v_check_student->Score100 == "" ? "0" : $s[$key]?>"
-                                    <?=$repeat_setting->onoff_status == "off" ? "readonly" : ""?> autocomplete="off">
+                                    <?=$system_is_open ? "" : "readonly"?> autocomplete="off">
                             </td>
                             <?php endforeach; ?>
                             <td class="align-middle">

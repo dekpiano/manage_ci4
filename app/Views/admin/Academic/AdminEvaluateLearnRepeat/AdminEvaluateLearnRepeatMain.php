@@ -27,20 +27,28 @@
     <!-- Status Overview Cards -->
     <div class="row mb-4 g-4">
         <div class="col-md-4">
-            <div class="card h-100 border-start border-<?= $onoff_status == 'on' ? 'success' : 'danger' ?> border-3 shadow-none bg-label-<?= $onoff_status == 'on' ? 'success' : 'danger' ?>">
+            <div class="card h-100 border-start border-<?= $system_is_open ? 'success' : 'danger' ?> border-3 shadow-none bg-label-<?= $system_is_open ? 'success' : 'danger' ?>">
                 <div class="card-body">
                     <div class="d-flex align-items-center mb-2">
                         <div class="avatar me-3">
-                            <span class="avatar-initial rounded bg-<?= $onoff_status == 'on' ? 'success' : 'danger' ?>">
-                                <i class="bx <?= $onoff_status == 'on' ? 'bx-check-circle' : 'bx-x-circle' ?> fs-4"></i>
+                            <span class="avatar-initial rounded bg-<?= $system_is_open ? 'success' : 'danger' ?>">
+                                <i class="bx <?= $system_is_open ? 'bx-check-circle' : 'bx-x-circle' ?> fs-4"></i>
                             </span>
                         </div>
-                        <h6 class="mb-0">สถานะระบบ</h6>
+                        <h6 class="mb-0">สถานะระบบ (ปัจจุบัน)</h6>
                     </div>
                     <div class="d-flex align-items-baseline gap-1">
-                        <h4 class="mb-0 text-<?= $onoff_status == 'on' ? 'success' : 'danger' ?>"><?= $onoff_status == 'on' ? 'เปิดใช้งาน' : 'ปิดใช้งาน' ?></h4>
+                        <h4 class="mb-0 text-<?= $system_is_open ? 'success' : 'danger' ?>"><?= $system_is_open ? 'เปิดให้บันทึก' : 'ปิดการบันทึก' ?></h4>
                     </div>
-                    <p class="mb-0 mt-1 text-muted small">ระบบบันทึกคะแนนเรียนซ้ำ</p>
+                    <p class="mb-0 mt-1 text-muted small">
+                        <?php if ($onoff_status == 'off'): ?>
+                            ปิดระบบโดยเจ้าหน้าที่
+                        <?php elseif (!$system_is_open): ?>
+                            ไม่อยู่ในช่วงเวลาที่กำหนด
+                        <?php else: ?>
+                            ระบบเปิดตามช่วงเวลาปกติ
+                        <?php endif; ?>
+                    </p>
                 </div>
             </div>
         </div>
@@ -129,6 +137,18 @@
                                     <label for="CheckTimeRepeat">เงื่อนไขการเรียนซ้ำ</label>
                                 </div>
                             </div>
+                            <div class="col-md-6">
+                                <div class="form-floating form-floating-outline">
+                                    <input type="datetime-local" name="onoff_start" id="onoff_start" class="form-control" value="<?= isset($repeat_setting->onoff_StartDate) ? date('Y-m-d\TH:i', strtotime($repeat_setting->onoff_StartDate)) : '' ?>">
+                                    <label for="onoff_start">วันที่เริ่มต้น (เปิดระบบอัตโนมัติ)</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating form-floating-outline">
+                                    <input type="datetime-local" name="onoff_end" id="onoff_end" class="form-control" value="<?= isset($repeat_setting->onoff_EndDate) ? date('Y-m-d\TH:i', strtotime($repeat_setting->onoff_EndDate)) : '' ?>">
+                                    <label for="onoff_end">วันที่สิ้นสุด (ปิดระบบอัตโนมัติ)</label>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="alert alert-primary d-flex align-items-center" role="alert">
@@ -138,6 +158,12 @@
                             <div>
                                 <strong>แจ้งเตือน:</strong> การเปลี่ยนการตั้งค่าจะมีผลต่อการแสดงผลรายชื่อนักเรียนและการบันทึกคะแนนในหน้ากรอกคะแนนเรียนซ้ำทันที
                             </div>
+                        </div>
+
+                        <div class="text-end">
+                            <button type="button" id="btnSaveSettings" class="btn btn-primary">
+                                <i class="bx bx-save me-1"></i> บันทึกการตั้งค่าทั้งหมด
+                            </button>
                         </div>
                     </form>
                 </div>
@@ -247,10 +273,12 @@
         });
 
         // Handle settings changes and save to database
-        $('#CheckOnoffRepeat, #onoff_year, #CheckTimeRepeat').on('change', function() {
+        $('#btnSaveSettings').on('click', function() {
             var status = $('#CheckOnoffRepeat').val();
             var year = $('#onoff_year').val();
             var time = $('#CheckTimeRepeat').val();
+            var start = $('#onoff_start').val();
+            var end = $('#onoff_end').val();
 
             // Show loading overlay
             Swal.fire({
@@ -267,7 +295,9 @@
                 data: {
                     setting_status: status,
                     setting_year: year,
-                    setting_time: time
+                    setting_time: time,
+                    setting_start: start,
+                    setting_end: end
                 },
                 success: function(response) {
                     Swal.fire({
@@ -284,7 +314,7 @@
                     Swal.fire({
                         icon: 'error',
                         title: 'เกิดข้อผิดพลาด!',
-                        text: 'ไม่สามารถเชื่อมต่อกับฐานข้อมูลได้ กรุณาลองใหม่ภายหลัง',
+                        text: xhr.responseJSON ? xhr.responseJSON.message : 'ไม่สามารถเชื่อมต่อกับฐานข้อมูลได้ กรุณาลองใหม่ภายหลัง',
                         confirmButtonColor: '#3085d6'
                     });
                     console.error('Error updating settings:', error);

@@ -62,17 +62,40 @@ class ConAdminAcademicRepeat extends BaseController
         return $grade;
     }
 
+    private function isSystemOpen($setting)
+    {
+        if (!$setting || $setting->onoff_status !== 'on') {
+            return false;
+        }
+
+        $now = date('Y-m-d H:i:s');
+        
+        // If start date is set, must be after it
+        if (!empty($setting->onoff_StartDate) && $now < $setting->onoff_StartDate) {
+            return false;
+        }
+
+        // If end date is set, must be before it
+        if (!empty($setting->onoff_EndDate) && $now > $setting->onoff_EndDate) {
+            return false;
+        }
+
+        return true;
+    }
+
     public function AdminAcademicRepeatMain()
     {
         $data['admin'] = $this->DBpersonnel->table('tb_personnel') // Use the class property
-                                    ->select('pers_id, pers_img')
-                                    ->where('pers_id', session()->get('login_id'))
-                                    ->get()->getResult();
+                                     ->select('pers_id, pers_img')
+                                     ->where('pers_id', session()->get('login_id'))
+                                     ->get()->getResult();
 
         $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
         $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();
         $data['title'] = "ตั้งค่าเรียนซ้ำ (มส)";
         $data['repeat_setting'] = $this->db->table('tb_register_onoff')->where('onoff_name', 'เรียนซ้ำ')->get()->getRow();
+        $data['system_is_open'] = $this->isSystemOpen($data['repeat_setting']);
+
         $data['CountYear'] = $this->db->table('tb_register')
                                     ->select('RegisterYear')
                                     ->groupBy('RegisterYear')
@@ -80,7 +103,7 @@ class ConAdminAcademicRepeat extends BaseController
                                     ->get()->getResult();
 
         // ดึงค่า Term/Year จาก tb_register_onoff (onoff_name = 'เรียนซ้ำ')
-        $repeat_setting = $this->db->table('tb_register_onoff')->where('onoff_name', 'เรียนซ้ำ')->get()->getRow();
+        $repeat_setting = $data['repeat_setting'];
         $onoff_year = $repeat_setting->onoff_year ?? ''; 
         $parts = explode('/', $onoff_year);
         $term = $parts[0] ?? '';
@@ -133,6 +156,7 @@ class ConAdminAcademicRepeat extends BaseController
         $repeat_setting = $this->db->table('tb_register_onoff')->where('onoff_name', 'เรียนซ้ำ')->get()->getRow();
         $onoff_repeat_year = $repeat_setting->onoff_year ?? '';
         $data['repeat_setting'] = $repeat_setting;
+        $data['system_is_open'] = $this->isSystemOpen($repeat_setting);
         $data['title'] = "กรอกคะแนนผลการเรียน (" . @$repeat_setting->onoff_detail . ")";
 
         $data['check_student'] = $this->db->table('tb_register')
@@ -198,6 +222,9 @@ class ConAdminAcademicRepeat extends BaseController
     public function insert_score()
     {
         $repeat_setting = $this->db->table('tb_register_onoff')->where('onoff_name', 'เรียนซ้ำ')->get()->getRow();
+        if (!$this->isSystemOpen($repeat_setting)) {
+            return $this->response->setJSON(['status' => 'error', 'message' => 'ระบบปิดการรับข้อมูล หรือไม่อยู่ในช่วงเวลาที่กำหนด']);
+        }
         $TimeNum = $this->request->getPost('TimeNum');
 
         foreach ($this->request->getPost('StudentID') as $num => $value) {
@@ -248,6 +275,10 @@ class ConAdminAcademicRepeat extends BaseController
     public function update_study_time()
     {
         if ($this->request->isAJAX()) {
+            $repeat_setting = $this->db->table('tb_register_onoff')->where('onoff_name', 'เรียนซ้ำ')->get()->getRow();
+            if (!$this->isSystemOpen($repeat_setting)) {
+                return $this->response->setJSON(['status' => 'error', 'message' => 'ระบบปิดการรับข้อมูล หรือไม่อยู่ในช่วงเวลาที่กำหนด']);
+            }
             $studentId = $this->request->getPost('student_id');
             $subjectId = $this->request->getPost('subject_id');
             $registerYear = $this->request->getPost('register_year');
@@ -281,6 +312,10 @@ class ConAdminAcademicRepeat extends BaseController
     public function update_score()
     {
         if ($this->request->isAJAX()) {
+            $repeat_setting = $this->db->table('tb_register_onoff')->where('onoff_name', 'เรียนซ้ำ')->get()->getRow();
+            if (!$this->isSystemOpen($repeat_setting)) {
+                return $this->response->setJSON(['status' => 'error', 'message' => 'ระบบปิดการรับข้อมูล หรือไม่อยู่ในช่วงเวลาที่กำหนด']);
+            }
             $studentId = $this->request->getPost('student_id');
             $subjectId = $this->request->getPost('subject_id');
             $registerYear = $this->request->getPost('register_year');
@@ -371,11 +406,15 @@ class ConAdminAcademicRepeat extends BaseController
             $status = $this->request->getPost('setting_status');
             $year = $this->request->getPost('setting_year');
             $time = $this->request->getPost('setting_time');
+            $start = $this->request->getPost('setting_start');
+            $end = $this->request->getPost('setting_end');
 
             $data = [
                 'onoff_status' => $status,
                 'onoff_year' => $year,
-                'onoff_detail' => $time
+                'onoff_detail' => $time,
+                'onoff_StartDate' => $start ?: null,
+                'onoff_EndDate' => $end ?: null
             ];
 
             $updated = $this->db->table('tb_register_onoff')->where('onoff_name', 'เรียนซ้ำ')->set($data)->update();
