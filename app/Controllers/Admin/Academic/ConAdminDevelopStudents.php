@@ -917,115 +917,177 @@ class ConAdminDevelopStudents extends BaseController
      */
     public function ClubReportData()
     {
-        $year   = $this->request->getPost('year');
-        $term   = $this->request->getPost('term');
-        $clubId = $this->request->getPost('club_id');
+        try {
+            $year   = $this->request->getPost('year');
+            $term   = $this->request->getPost('term');
+            $clubId = $this->request->getPost('club_id');
 
-        // ดึงสมาชิกชุมนุม
-        $builder = $this->db->table('tb_club_members AS m')
-            ->select('
-                m.member_student_id,
-                s.StudentCode AS student_code,
-                s.StudentPrefix AS student_prefix,
-                s.StudentFirstName AS student_firstname,
-                s.StudentLastName AS student_lastname,
-                s.StudentClass AS student_class,
-                c.club_name,
-                c.club_faculty_advisor
-            ')
-            ->join('tb_students AS s', 'CAST(s.StudentID AS UNSIGNED) = m.member_student_id', 'left')
-            ->join('tb_clubs AS c', 'c.club_id = m.member_club_id', 'left')
-            ->where('c.club_year', $year)
-            ->where('c.club_trem', $term);
+            // 1. ดึงสมาชิกชุมนุม
+            $builder = $this->db->table('tb_club_members AS m')
+                ->select('
+                    m.member_student_id,
+                    m.member_club_id,
+                    s.StudentCode AS student_code,
+                    s.StudentPrefix AS student_prefix,
+                    s.StudentFirstName AS student_firstname,
+                    s.StudentLastName AS student_lastname,
+                    s.StudentClass AS student_class,
+                    c.club_name,
+                    c.club_faculty_advisor
+                ')
+                ->join('tb_students AS s', 's.StudentID = m.member_student_id', 'left')
+                ->join('tb_clubs AS c', 'c.club_id = m.member_club_id', 'left')
+                ->where('c.club_year', $year)
+                ->where('c.club_trem', $term)
+                ->where('m.member_status', 'active');
 
-        if ($clubId && $clubId !== 'all') {
-            $builder->where('m.member_club_id', $clubId);
-        }
-
-        $builder->orderBy('c.club_name', 'ASC')
-                ->orderBy('s.StudentClass', 'ASC')
-                ->orderBy('s.StudentNumber', 'ASC');
-
-        $members = $builder->get()->getResult();
-
-        // ดึงข้อมูลผลการประเมิน
-        $evalData = [];
-        
-        // 1. ดึงจาก tb_club_student_summary
-        $summaries = $this->db->table('tb_club_student_summary')
-            ->select('student_id, objective_result')
-            ->where('academic_year', $year)
-            ->where('academic_term', $term)
-            ->get()->getResult();
-        foreach ($summaries as $s) {
-            $evalData[trim($s->student_id)] = trim($s->objective_result);
-        }
-
-        // 2. ดึงจาก tb_club_student_progress (ถ้าใน summary ยังไม่มี)
-        $progresses = $this->db->table('tb_club_student_progress')
-            ->select('student_id, status')
-            ->where('status', 1)
-            ->get()->getResult();
-        foreach ($progresses as $p) {
-            $sid = trim($p->student_id);
-            if (!isset($evalData[$sid])) {
-                $evalData[$sid] = 'ผ'; // ถ้าผ่านจุดประสงค์ ให้ถือว่าผ่านเบื้องต้น
+            if ($clubId && $clubId !== 'all') {
+                $builder->where('m.member_club_id', $clubId);
             }
-        }
 
-        // ดึงข้อมูลครูที่ปรึกษา
-        $advisorMap = [];
-        $advisorIds = array_unique(array_filter(array_column($members, 'club_faculty_advisor')));
-        if (!empty($advisorIds)) {
-            $advisors = $this->DBpersonnel->table('tb_personnel')
-                ->select('pers_id, pers_prefix, pers_firstname, pers_lastname')
-                ->whereIn('pers_id', $advisorIds)
-                ->get()->getResult();
-            foreach ($advisors as $adv) {
-                $advisorMap[$adv->pers_id] = $adv->pers_prefix . $adv->pers_firstname . ' ' . $adv->pers_lastname;
+            $builder->orderBy('c.club_name', 'ASC')
+                    ->orderBy('s.StudentClass', 'ASC')
+                    ->orderBy('s.StudentNumber', 'ASC');
+
+            $members = $builder->get()->getResult();
+
+            // 2. ดึงหน้าผลประเมินสรุป
+            $evalData = [];
+            $sumQuery = $this->db->table('tb_club_student_summary')
+                ->select('student_id, club_id, objective_result')
+                ->where('academic_year', $year)
+                ->where('academic_term', $term);
+            if ($clubId && $clubId !== 'all') {
+                $sumQuery->where('club_id', $clubId);
             }
-        }
+            $summaries = $sumQuery->get()->getResult();
 
-        // สรุปข้อมูล
-        $data = [];
-        $passCount = 0; $failCount = 0; $pendingCount = 0;
+            foreach ($summaries as $s) {
+                $key = trim($s->student_id) . '|' . $s->club_id;
+                $val = trim((string)$s->objective_result);
+                if ($val !== '') {
+                    $evalData[$key] = $val;
+                }
+            }
 
-        foreach ($members as $m) {
-            // เช็คผลประเมิน (ลองทั้ง ID และ Code)
-            $res = $evalData[$m->member_student_id] ?? ($evalData[$m->student_code] ?? '');
-            $resultCode = '';
+            // 3. ดึงความก้าวหน้า (เช็คเงื่อนไข: 0 แม้แต่ตัวเดียว คือ ไม่ผ่าน)
+            $progQuery = $this->db->table('tb_club_student_progress AS p')
+                ->select('p.student_id, p.club_id, p.status')
+                ->join('tb_clubs AS c', 'c.club_id = p.club_id')
+                ->where('c.club_year', $year)
+                ->where('c.club_trem', $term);
+            if ($clubId && $clubId !== 'all') {
+                $progQuery->where('p.club_id', $clubId);
+            }
+            $progresses = $progQuery->get()->getResult();
+            
+            // ประมวลผลความก้าวหน้า
+            $progFail = []; // เก็บคนที่ตก (มี 0)
+            $progPass = []; // เก็บคนที่ผ่านทุกตัว (หรืออย่างน้อยมี 1 แต่ไม่มี 0)
+            foreach ($progresses as $p) {
+                $key = trim($p->student_id) . '|' . $p->club_id;
+                if ($p->status == 0) {
+                    $progFail[$key] = true;
+                } else {
+                    $progPass[$key] = true;
+                }
+            }
+            
+            // อัปเดต evalData: ถ้าตกใน progress ให้บังคับเป็น มผ ทันที (Override Summary)
+            foreach ($progFail as $key => $ignore) {
+                $evalData[$key] = 'มผ';
+            }
+            // ถ้าไม่มีใน evalData และไม่มีใน progFail แต่มีใน progPass ให้ถือว่า ผ่าน
+            foreach ($progPass as $key => $ignore) {
+                if (!isset($evalData[$key])) {
+                    $evalData[$key] = 'ผ';
+                }
+            }
 
-            if ($res !== '') {
-                if (preg_match('/ผ่าน|ผ|ดี|1/u', $res)) {
-                    $resultCode = 'ผ'; $passCount++;
-                } elseif (preg_match('/ไม่ผ่าน|มผ/u', $res)) {
-                    $resultCode = 'มผ'; $failCount++;
+            // 4. ดึงข้อมูลครูที่ปรึกษา (แตก pipe แยกคน)
+            $advisorMap = [];
+            $allAdvisorIds = [];
+            foreach ($members as $m) {
+                if ($m->club_faculty_advisor) {
+                    $ids = explode('|', $m->club_faculty_advisor);
+                    $allAdvisorIds = array_merge($allAdvisorIds, $ids);
+                }
+            }
+            $allAdvisorIds = array_unique(array_filter($allAdvisorIds));
+            
+            if (!empty($allAdvisorIds)) {
+                $advisors = $this->DBpersonnel->table('tb_personnel')
+                    ->select('pers_id, pers_prefix, pers_firstname, pers_lastname')
+                    ->whereIn('pers_id', $allAdvisorIds)
+                    ->get()->getResult();
+                foreach ($advisors as $adv) {
+                    $advisorMap[$adv->pers_id] = $adv->pers_prefix . $adv->pers_firstname . ' ' . $adv->pers_lastname;
+                }
+            }
+
+            // 5. สรุปข้อมูลรายคน
+            $data = [];
+            $passCount = 0; $failCount = 0; $pendingCount = 0;
+
+            foreach ($members as $m) {
+                $cid = $m->member_club_id;
+                $keyID = trim($m->member_student_id) . '|' . $cid;
+                $keyCode = trim($m->student_code) . '|' . $cid;
+
+                $res = $evalData[$keyID] ?? ($evalData[$keyCode] ?? '');
+                $resultCode = '';
+
+                if ((string)$res !== '') {
+                    $resStr = trim((string)$res);
+                    // ตรวจสอบผลประเมิน (แก้ไขเพื่อไม่ให้ มผ ไปติดใน ผ)
+                    if ($resStr === 'มผ' || $resStr === '0' || $res === 0 || preg_match('/ไม่ผ่าน/u', $resStr)) {
+                        $resultCode = 'มผ'; $failCount++;
+                    } elseif ($resStr === 'ผ' || $resStr === '1' || preg_match('/ผ่าน|ดี/u', $resStr)) {
+                        $resultCode = 'ผ'; $passCount++;
+                    } else {
+                        $pendingCount++;
+                    }
                 } else {
                     $pendingCount++;
                 }
-            } else {
-                $pendingCount++;
+
+                // สรุปชื่อครูที่ปรึกษา
+                $advNames = [];
+                if ($m->club_faculty_advisor) {
+                    $ids = explode('|', $m->club_faculty_advisor);
+                    foreach ($ids as $id) {
+                        if (isset($advisorMap[$id])) {
+                            $advNames[] = $advisorMap[$id];
+                        }
+                    }
+                }
+
+                $data[] = [
+                    'student_code'      => $m->student_code,
+                    'student_prefix'    => $m->student_prefix,
+                    'student_firstname' => $m->student_firstname,
+                    'student_lastname'  => $m->student_lastname,
+                    'student_class'     => $m->student_class,
+                    'club_name'         => $m->club_name,
+                    'advisor_name'      => !empty($advNames) ? implode(', ', $advNames) : '-',
+                    'result'            => $resultCode
+                ];
             }
 
-            $data[] = [
-                'student_code'      => $m->student_code,
-                'student_prefix'    => $m->student_prefix,
-                'student_firstname' => $m->student_firstname,
-                'student_lastname'  => $m->student_lastname,
-                'student_class'     => $m->student_class,
-                'club_name'         => $m->club_name,
-                'advisor_name'      => $advisorMap[$m->club_faculty_advisor] ?? '-',
-                'result'            => $resultCode
-            ];
-        }
+            return $this->response->setJSON([
+                'status'  => 'success',
+                'data'    => $data,
+                'summary' => [
+                    'total' => count($data), 'pass' => $passCount, 'fail' => $failCount, 'pending' => $pendingCount
+                ]
+            ]);
 
-        return $this->response->setJSON([
-            'status'  => 'success',
-            'data'    => $data,
-            'summary' => [
-                'total' => count($data), 'pass' => $passCount, 'fail' => $failCount, 'pending' => $pendingCount
-            ]
-        ]);
+        } catch (\Exception $e) {
+            return $this->response->setJSON([
+                'status'  => 'error',
+                'message' => 'เกิดข้อผิดพลาด: ' . $e->getMessage()
+            ]);
+        }
     }
 
     /**
@@ -1053,7 +1115,8 @@ class ConAdminDevelopStudents extends BaseController
                 ->join('tb_students AS s', 'CAST(s.StudentID AS UNSIGNED) = m.member_student_id', 'left')
                 ->join('tb_clubs AS c', 'c.club_id = m.member_club_id', 'left')
                 ->where('c.club_year', $year)
-                ->where('c.club_trem', $term);
+                ->where('c.club_trem', $term)
+                ->where('m.member_status', 'active');
 
             if ($clubId && $clubId !== 'all') {
                 $memberBuilder->where('m.member_club_id', $clubId);

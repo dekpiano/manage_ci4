@@ -319,7 +319,10 @@ function renderActionButtons(planFile, fileId, status1, comment1, status2, comme
     
     return `
     <div class="d-flex flex-column gap-1">
-        <a href="${fullPath}" target="_blank" class="btn btn-label-info btn-sm w-100"><i class="bx bx-search-alt me-1"></i>ดูไฟล์</a>
+        <div class="d-flex gap-1">
+            <a href="${fullPath}" target="_blank" class="btn btn-label-info btn-sm flex-grow-1"><i class="bx bx-search-alt me-1"></i>ดูไฟล์</a>
+            <button type="button" class="btn btn-label-secondary btn-sm info-detail-btn" data-id="${fileId}"><i class="bx bx-info-circle"></i></button>
+        </div>
         <div class="btn-group btn-group-sm w-100" role="group">
             ${renderBtn(1, status1, comment1)}
             ${renderBtn(2, status2, comment2)}
@@ -379,6 +382,47 @@ $(document).ready(function() {
 
         const checkPlanModal = new bootstrap.Modal(document.getElementById('checkPlanModal'));
         checkPlanModal.show();
+    });
+
+    // Info Detail Button Handler
+    $(document).on('click', '.info-detail-btn', function() {
+        const planId = $(this).data('id');
+        $('#detail-plan-files').html('<li class="list-group-item text-center"><div class="spinner-border spinner-border-sm text-primary"></div> กำลังโหลด...</li>');
+        
+        const detailModal = new bootstrap.Modal(document.getElementById('planDetailsModal'));
+        detailModal.show();
+
+        $.ajax({
+            url: `<?= site_url("admin/academic/checkplan/plandetails/") ?>${planId}`,
+            type: 'GET',
+            dataType: 'json',
+            success: function(data) {
+                let html = `
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span><i class="bx bx-calendar me-2"></i>วันที่ส่ง:</span>
+                        <span class="fw-bold">${data.seplan_createdate}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span><i class="bx bx-book me-2"></i>ประเภท:</span>
+                        <span class="badge bg-label-info">${data.type_name}</span>
+                    </li>
+                    <li class="list-group-item">
+                        <div class="fw-bold mb-1"><i class="bx bx-comment-detail me-2"></i>ความเห็น หน.กลุ่มสาระ:</div>
+                        <div class="p-2 bg-light rounded small">${data.seplan_comment1 || 'ไม่มีความเห็น'}</div>
+                        <div class="mt-1 text-end"><span class="badge ${data.seplan_status1 === 'ผ่าน' ? 'bg-success' : (data.seplan_status1 === 'ไม่ผ่าน' ? 'bg-danger' : 'bg-warning')}">${data.seplan_status1 || 'รอตรวจ'}</span></div>
+                    </li>
+                    <li class="list-group-item">
+                        <div class="fw-bold mb-1"><i class="bx bx-comment-check me-2"></i>ความเห็น หน.งานหลักสูตร:</div>
+                        <div class="p-2 bg-light rounded small">${data.seplan_comment2 || 'ไม่มีความเห็น'}</div>
+                        <div class="mt-1 text-end"><span class="badge ${data.seplan_status2 === 'ผ่าน' ? 'bg-success' : (data.seplan_status2 === 'ไม่ผ่าน' ? 'bg-danger' : 'bg-warning')}">${data.seplan_status2 || 'รอตรวจ'}</span></div>
+                    </li>
+                `;
+                $('#detail-plan-files').html(html);
+            },
+            error: function() {
+                $('#detail-plan-files').html('<li class="list-group-item text-danger text-center">โหลดข้อมูลล้มเหลว</li>');
+            }
+        });
     });
     
     // Approval Flow (Logic same as before but UI refined)

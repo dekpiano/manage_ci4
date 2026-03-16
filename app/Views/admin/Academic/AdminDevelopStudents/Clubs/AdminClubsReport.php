@@ -59,7 +59,7 @@
                         </div>
                         <div class="col-md-3">
                             <label class="form-label fw-semibold">ชุมนุม</label>
-                            <select class="form-select" id="filterClub">
+                            <select class="form-select select2" id="filterClub">
                                 <option value="all">-- ทุกชุมนุม --</option>
                                 <?php if (!empty($Clubs)): ?>
                                     <?php foreach ($Clubs as $club): ?>
@@ -320,8 +320,18 @@
 <?= $this->endSection() ?>
 
 <?= $this->section('script') ?>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
 $(document).ready(function() {
+
+    // Initial Select2
+    $('#filterClub').select2({
+        theme: 'bootstrap-5',
+        width: '100%',
+        placeholder: '-- เลือกชุมนุม --',
+    });
 
     // ========== ค้นหา ==========
     $('#btnSearch').on('click', function() {
