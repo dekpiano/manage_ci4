@@ -23,7 +23,7 @@ foreach ($scoreYear as $key_year => $v_scoreYear) {
        
     }$AllGrade += $SubGrade; 
 }            
-$overallGPA = ($AllUnit != 0) ? number_format($AllGrade/$AllUnit, 2) : 'N/A';
+$overallGPA = ($AllUnit != 0) ? number_format(floor(($AllGrade/$AllUnit) * 100) / 100, 2, '.', '') : 'N/A';
 ?>
 
 <!-- Header Section -->
@@ -259,7 +259,7 @@ $overallGPA = ($AllUnit != 0) ? number_format($AllGrade/$AllUnit, 2) : 'N/A';
                                                     <td class="text-center"><?= number_format($SumUnit, 1) ?></td>
                                                     <td class="text-center">
                                                         <span class="badge bg-success fs-6">
-                                                            <?= ($SumUnit != 0) ? number_format($SumGrade/$SumUnit, 2) : 'N/A' ?>
+                                                            <?= ($SumUnit != 0) ? number_format(floor(($SumGrade/$SumUnit) * 100) / 100, 2, '.', '') : 'N/A' ?>
                                                         </span>
                                                     </td>
                                                 </tr>

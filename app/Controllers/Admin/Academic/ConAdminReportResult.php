@@ -301,7 +301,7 @@ class ConAdminReportResult extends BaseController
                                 }
                                 
                                 // Calculate GPA for the current student
-                                $studentGPA = ($studentTotalUnit != 0) ? round($studentTotalGradeValue / $studentTotalUnit, 2) : 0.00;
+                                $studentGPA = ($studentTotalUnit != 0) ? number_format(floor(($studentTotalGradeValue / $studentTotalUnit) * 100) / 100, 2, '.', '') : 0.00;
                                 $studentRow[] = $studentGPA; // Add GPA to the student's data array
                                 $CheckSub[] = $studentRow;
                             }
@@ -419,7 +419,7 @@ class ConAdminReportResult extends BaseController
                 }
             }
             
-            $studentGPA = ($studentTotalUnit != 0) ? round($studentTotalGradeValue / $studentTotalUnit, 2) : 0.00;
+            $studentGPA = ($studentTotalUnit != 0) ? number_format(floor(($studentTotalGradeValue / $studentTotalUnit) * 100) / 100, 2, '.', '') : 0.00;
             $studentRow[] = $studentGPA; 
             $CheckSub[] = $studentRow;
         }
@@ -911,7 +911,7 @@ class ConAdminReportResult extends BaseController
                 }
             }
         }
-        $gpax = $sum_credits > 0 ? number_format($sum_grade_points / $sum_credits, 2) : '0.00';
+        $gpax = $sum_credits > 0 ? number_format(floor(($sum_grade_points / $sum_credits) * 100) / 100, 2, '.', '') : '0.00';
 
         // วางคะแนนแยกกลุ่มสาระ (หน้า 2)
         $pdf->SetFont($fontname, '', 12);
@@ -922,7 +922,7 @@ class ConAdminReportResult extends BaseController
                 $area_avg = '-';
             } else {
                 $credits_display = number_format($area_val['c'], 1);
-                $area_avg = $area_val['c'] > 0 ? number_format($area_val['gp'] / $area_val['c'], 2) : '0.00';
+                $area_avg = $area_val['c'] > 0 ? number_format(floor(($area_val['gp'] / $area_val['c']) * 100) / 100, 2, '.', '') : '0.00';
             }
             
             $pdf->Text(187, $area_y, $credits_display); // หน่วยกิตสะสม
