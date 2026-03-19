@@ -69,9 +69,10 @@ class ConAdminResearch extends BaseController
             }
 
             $builder = $this->DBpersonnel->table('tb_personnel as p');
-            $builder->select('p.pers_id, p.pers_prefix, p.pers_firstname, p.pers_lastname, r.seres_ID, r.seres_research_name, r.seres_status, r.seres_file, r.seres_year, r.seres_term');
+            $builder->select('p.pers_id, p.pers_prefix, p.pers_firstname, p.pers_lastname, p.pers_img, r.seres_ID, r.seres_research_name, r.seres_status, r.seres_file, r.seres_year, r.seres_term');
             $builder->where('p.pers_learning', $learning_group);
             $builder->where('p.pers_status', 'กำลังใช้งาน'); // Filter for active teachers
+            $builder->whereIn('p.pers_position', ['posi_003', 'posi_004', 'posi_005', 'posi_006']); // Filter for teacher positions (posi_003 - posi_006)
 
             $join_condition = "r.seres_usersend = p.pers_id";
             if ($academic_year) {
@@ -85,18 +86,22 @@ class ConAdminResearch extends BaseController
             $data['submissions'] = $builder->orderBy('p.pers_firstname', 'ASC')->get()->getResult();
 
         } else {
-            // If no group is selected, show only submissions
-            $builder = $this->db->table('tb_send_research as r');
-            $builder->select('r.*, p.pers_prefix, p.pers_firstname, p.pers_lastname');
-            $builder->join($this->DBpersonnel->getDatabase().'.tb_personnel as p', 'p.pers_id = r.seres_usersend', 'left');
+            // Default: Show all active teachers and their research for the current/selected academic year/term
+            $builder = $this->DBpersonnel->table('tb_personnel as p');
+            $builder->select('p.pers_id, p.pers_prefix, p.pers_firstname, p.pers_lastname, p.pers_img, r.seres_ID, r.seres_research_name, r.seres_status, r.seres_file, r.seres_year, r.seres_term');
+            $builder->where('p.pers_status', 'กำลังใช้งาน');
+            $builder->whereIn('p.pers_position', ['posi_003', 'posi_004', 'posi_005', 'posi_006']); // Filter for teacher positions (posi_003 - posi_006)
 
+            $join_condition = "r.seres_usersend = p.pers_id";
             if ($academic_year) {
-                $builder->where('r.seres_year', $academic_year);
+                $join_condition .= " AND r.seres_year = " . $this->db->escape($academic_year);
             }
             if ($term) {
-                $builder->where('r.seres_term', $term);
+                $join_condition .= " AND r.seres_term = " . $this->db->escape($term);
             }
-            $data['submissions'] = $builder->get()->getResult();
+            $builder->join($this->db->getDatabase().'.tb_send_research as r', $join_condition, 'left');
+
+            $data['submissions'] = $builder->orderBy('p.pers_firstname', 'ASC')->get()->getResult();
         }
 
         echo view('admin/Academic/AdminResearch/AdminResearchReport', $data);

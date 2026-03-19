@@ -193,9 +193,11 @@
                                             </div>
                                         </div>
                                     </td>
-                                    <td>
+                                    <td style="max-width: 350px;">
                                         <?php if(isset($submission->seres_research_name)): ?>
-                                            <?= esc($submission->seres_research_name) ?>
+                                            <div class="text-truncate" data-bs-toggle="tooltip" data-bs-placement="top" title="<?= esc($submission->seres_research_name) ?>" style="cursor: pointer;">
+                                                <?= esc($submission->seres_research_name) ?>
+                                            </div>
                                         <?php else: ?>
                                             <span class="text-muted fst-italic">- ยังไม่ระบุ -</span>
                                         <?php endif; ?>
@@ -242,6 +244,13 @@
 <?= $this->section('script') ?>
 <script>
     $(document).ready(function() {
+        const initializeTooltips = () => {
+             var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+             var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl)
+             });
+        };
+
         $('#researchReportTable').DataTable({
             language: {
                 url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/th.json'
@@ -252,7 +261,10 @@
             lengthMenu: [
                 [10, 25, 50, -1],
                 [10, 25, 50, 'ทั้งหมด']
-            ]
+            ],
+            drawCallback: function() {
+                initializeTooltips();
+            }
         });
     });
 </script>
