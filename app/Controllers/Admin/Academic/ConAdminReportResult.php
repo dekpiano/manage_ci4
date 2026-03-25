@@ -1025,57 +1025,67 @@ class ConAdminReportResult extends BaseController
         
             }
         
-            public function AdminReportAcademicSummary(){
-                $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
-                $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();
-                $data['title'] = "รายงานสรุปผลสัมฤทธิ์ทางการเรียน"; // Placeholder title
-                $data['CheckYear'] = $this->db->table('tb_register')->select('RegisterYear')->groupBy('RegisterYear')->get()->getResult();
-                $data['lern'] = $this->DBSkj->table('tb_learning')->get()->getResult();
+    public function AdminReportAcademicSummary() {
+        $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
+        $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();
+        $data['title'] = "รายงานสรุปผลสัมฤทธิ์ทางการเรียน";
+        $data['CheckYear'] = $this->db->table('tb_register')->select('RegisterYear')->groupBy('RegisterYear')->get()->getResult();
+        $data['lern'] = $this->DBSkj->table('tb_learning')->get()->getResult();
 
-                $data['Keylern'] = $this->request->getGet('SelLern');
-                $data['KeyYear'] = urldecode($this->request->getGet('KeyYear'));
+        $data['Keylern'] = $this->request->getGet('SelLern');
+        $data['KeyYear'] = urldecode($this->request->getGet('KeyYear') ?? '');
 
-                $data['Showdata'] = $this->db->table('skjacth_academic.tb_register')
-                                    ->select('
-                                        COUNT(CASE WHEN tb_register.Grade = 4 then 1 else null end) AS G4_0,
-                                        COUNT(CASE WHEN tb_register.Grade = 3.5 then 1 else null end) AS G3_5,
-                                        COUNT(CASE WHEN tb_register.Grade = 3 then 1 else null end) AS G3_0,
-                                        COUNT(CASE WHEN tb_register.Grade = 2.5 then 1 else null end) AS G2_5,
-                                        COUNT(CASE WHEN tb_register.Grade = 2 then 1 else null end) AS G2_0,
-                                        COUNT(CASE WHEN tb_register.Grade = 1.5 then 1 else null end) AS G1_5,
-                                        COUNT(CASE WHEN tb_register.Grade = 1 then 1 else null end) AS G1_0,
-                                        COUNT(CASE WHEN tb_register.Grade = "0" then 1 else null end) AS G0,
-                                        COUNT(CASE WHEN tb_register.Grade = "ร" then 1 else null end) AS G_W,
-                                        COUNT(CASE WHEN tb_register.Grade = "มส" then 1 else null end) AS G_MS,
-                                        COUNT(skjacth_academic.tb_students.StudentClass) AS SumStu,
-                                        skjacth_academic.tb_students.StudentClass,
-                                        skjacth_academic.tb_students.StudentBehavior,
-                                        skjacth_academic.tb_register.RegisterYear,
-                                        skjacth_academic.tb_register.TeacherID,
-                                        skjacth_academic.tb_register.Grade,
-                                        skjacth_academic.tb_register.SubjectID,
-                                        skjacth_personnel.tb_personnel.pers_prefix,
-                                        skjacth_personnel.tb_personnel.pers_firstname,
-                                        skjacth_personnel.tb_personnel.pers_lastname,
-                                        skjacth_personnel.tb_personnel.pers_learning,
-                                        skjacth_academic.tb_subjects.SubjectName,
-                                        skjacth_academic.tb_subjects.SubjectCode,
-                                        skjacth_academic.tb_subjects.SubjectType,
-                                        skjacth_academic.tb_subjects.SubjectUnit,
-                                        skjacth_academic.tb_subjects.SubjectYear                                                   
-                                        ')
-                                    ->join('skjacth_academic.tb_students','skjacth_academic.tb_students.StudentID = skjacth_academic.tb_register.StudentID')
-                                    ->join('skjacth_personnel.tb_personnel','skjacth_personnel.tb_personnel.pers_id = skjacth_academic.tb_register.TeacherID')
-                                    ->join('skjacth_academic.tb_subjects','skjacth_academic.tb_subjects.SubjectID = skjacth_academic.tb_register.SubjectID')
-                                    ->where('tb_register.RegisterYear',$data['KeyYear'])
-                                    ->where('tb_subjects.SubjectYear',$data['KeyYear'])
-                                    ->where('tb_personnel.pers_learning',$data['Keylern'])
-                                    ->where('StudentBehavior','ปกติ')
-                                    ->groupBy('tb_students.StudentClass, tb_register.SubjectID, tb_register.RegisterYear, tb_register.TeacherID, tb_register.Grade, tb_students.StudentBehavior, tb_personnel.pers_prefix, tb_personnel.pers_firstname, tb_personnel.pers_lastname, tb_personnel.pers_learning, tb_subjects.SubjectName, tb_subjects.SubjectCode, tb_subjects.SubjectType, tb_subjects.SubjectUnit, tb_subjects.SubjectYear')
-                                    ->orderBy('TeacherID,SubjectID,StudentClass')
-                                    ->get()->getResult();
-                echo view('admin/Academic/AdminReportResults/AdminReportAcademicSummary', $data);
-            }
+        $builder = $this->db->table('skjacth_academic.tb_register');
+        $builder->select('
+            COUNT(CASE WHEN tb_register.Grade = "4" THEN 1 END) AS G4_0,
+            COUNT(CASE WHEN tb_register.Grade = "3.5" THEN 1 END) AS G3_5,
+            COUNT(CASE WHEN tb_register.Grade = "3" THEN 1 END) AS G3_0,
+            COUNT(CASE WHEN tb_register.Grade = "2.5" THEN 1 END) AS G2_5,
+            COUNT(CASE WHEN tb_register.Grade = "2" THEN 1 END) AS G2_0,
+            COUNT(CASE WHEN tb_register.Grade = "1.5" THEN 1 END) AS G1_5,
+            COUNT(CASE WHEN tb_register.Grade = "1" THEN 1 END) AS G1_0,
+            COUNT(CASE WHEN tb_register.Grade = "0" THEN 1 END) AS G0,
+            COUNT(CASE WHEN tb_register.Grade = "ร" THEN 1 END) AS G_W,
+            COUNT(CASE WHEN tb_register.Grade = "มส" THEN 1 END) AS G_MS,
+            COUNT(skjacth_academic.tb_register.StudentID) AS SumStu,
+            COUNT(CASE WHEN tb_register.Grade IN ("0","1","1.5","2","2.5","3","3.5","4") THEN 1 END) AS TotalNumeric,
+            AVG(CASE WHEN tb_register.Grade IN ("0","1","1.5","2","2.5","3","3.5","4") THEN CAST(tb_register.Grade AS DECIMAL(3,2)) END) AS MeanGrade,
+            STDDEV_POP(CASE WHEN tb_register.Grade IN ("0","1","1.5","2","2.5","3","3.5","4") THEN CAST(tb_register.Grade AS DECIMAL(3,2)) END) AS SDGrade,
+            
+            skjacth_academic.tb_register.RegisterClass AS StudentClass,
+            skjacth_academic.tb_register.RegisterYear,
+            skjacth_academic.tb_register.TeacherID,
+            skjacth_academic.tb_register.SubjectID,
+            skjacth_personnel.tb_personnel.pers_prefix,
+            skjacth_personnel.tb_personnel.pers_firstname,
+            skjacth_personnel.tb_personnel.pers_lastname,
+            skjacth_personnel.tb_personnel.pers_learning,
+            skjacth_academic.tb_subjects.SubjectName,
+            skjacth_academic.tb_subjects.SubjectCode,
+            skjacth_academic.tb_subjects.SubjectType,
+            skjacth_academic.tb_subjects.SubjectUnit,
+            skjacth_academic.tb_subjects.SubjectYear
+        ');
+        $builder->join('skjacth_academic.tb_students', 'skjacth_academic.tb_students.StudentID = skjacth_academic.tb_register.StudentID');
+        $builder->join('skjacth_personnel.tb_personnel', 'skjacth_personnel.tb_personnel.pers_id = skjacth_academic.tb_register.TeacherID');
+        $builder->join('skjacth_academic.tb_subjects', 'skjacth_academic.tb_subjects.SubjectID = skjacth_academic.tb_register.SubjectID');
+        
+        $builder->where('tb_register.RegisterYear', $data['KeyYear']);
+        $builder->where('tb_subjects.SubjectYear', $data['KeyYear']);
+        
+        if ($data['Keylern'] && $data['Keylern'] != '0') {
+            $builder->where('tb_personnel.pers_learning', $data['Keylern']);
+        }
+        
+        $builder->where('skjacth_academic.tb_students.StudentBehavior', 'ปกติ');
+        
+        $builder->groupBy('skjacth_academic.tb_register.RegisterClass, skjacth_academic.tb_register.SubjectID, skjacth_academic.tb_register.RegisterYear, skjacth_academic.tb_register.TeacherID, skjacth_personnel.tb_personnel.pers_prefix, skjacth_personnel.tb_personnel.pers_firstname, skjacth_personnel.tb_personnel.pers_lastname, skjacth_personnel.tb_personnel.pers_learning, skjacth_academic.tb_subjects.SubjectName, skjacth_academic.tb_subjects.SubjectCode, skjacth_academic.tb_subjects.SubjectType, skjacth_academic.tb_subjects.SubjectUnit, skjacth_academic.tb_subjects.SubjectYear');
+        $builder->orderBy('TeacherID, SubjectID, StudentClass');
+        
+        $data['Showdata'] = $builder->get()->getResult();
+
+        echo view('admin/Academic/AdminReportResults/AdminReportAcademicSummary', $data);
+    }
         
             public function AdminReportAcademicSummaryRoyalRoseStandard(){
                 $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
