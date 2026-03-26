@@ -1087,45 +1087,71 @@ class ConAdminReportResult extends BaseController
         echo view('admin/Academic/AdminReportResults/AdminReportAcademicSummary', $data);
     }
         
-            public function AdminReportAcademicSummaryRoyalRoseStandard(){
-                $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
-                $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();
-                $data['title'] = "รายงานสรุปผลสัมฤทธิ์ทางการเรียนตามมาตรฐานกุหลาบหลวง";        
-                $data['CheckYear'] = $this->db->table('tb_register')->select('RegisterYear')->groupBy('RegisterYear')->get()->getResult();
+    public function AdminReportAcademicSummaryRoyalRoseStandard()
+    {
+        $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
+        $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();
+        $data['title'] = "รายงานสรุปผลสัมฤทธิ์ทางการเรียนตามมาตรฐานกุหลาบหลวง";
+        $data['CheckYear'] = $this->db->table('tb_register')->select('RegisterYear')->groupBy('RegisterYear')->orderBy('SUBSTRING_INDEX(RegisterYear, "/", -1) DESC, SUBSTRING_INDEX(RegisterYear, "/", 1) DESC', '', false)->get()->getResult();
         $data['lern'] = $this->DBSkj->table('tb_learning')->get()->getResult();
 
-        $data['KeyLevel'] = $this->request->getGet('SelLevel');
-        $data['KeyYear'] = urldecode($this->request->getGet('KeyYear'));
-       // echo  $data['KeyYear']; exit();      
-       
+        $data['KeyLevel'] = $this->request->getGet('SelLevel') ?? '0';
+        $data['KeyYear'] = urldecode($this->request->getGet('KeyYear') ?? '0');
+
+        $data['SubjectsList'] = [];
+        if (!empty($data['KeyLevel']) && !empty($data['KeyYear']) && $data['KeyLevel'] !== '0' && $data['KeyYear'] !== '0') {
+            $data['SubjectsList'] = $this->db->table('tb_register')
+                ->select('tb_subjects.SubjectID, tb_subjects.SubjectCode, tb_subjects.SubjectName, tb_subjects.FirstGroup, tb_subjects.SubjectType')
+                ->join('tb_subjects', 'tb_subjects.SubjectID = tb_register.SubjectID')
+                ->join('tb_students', 'tb_students.StudentID = tb_register.StudentID')
+                ->where('tb_register.RegisterYear', $data['KeyYear'])
+                ->like('tb_subjects.SubjectType', 'พื้นฐาน')
+                ->like('tb_students.StudentClass', $data['KeyLevel'] . '%')
+                ->groupBy('tb_subjects.SubjectID, tb_subjects.SubjectCode, tb_subjects.SubjectName, tb_subjects.FirstGroup, tb_subjects.SubjectType')
+                ->orderBy('tb_subjects.FirstGroup', 'ASC')
+                ->orderBy('tb_subjects.SubjectCode', 'ASC')
+                ->get()->getResult();
+        }
+
+        echo view('admin/Academic/AdminReportResults/AdminReportAcademicSummaryRoyalRoseStandard', $data);
+    }
+
+    public function AdminReportRoyalRoseResult()
+    {
+        $data['title'] = "ผลการคำนวณมาตรฐานกุหลาบหลวง";
+        $data['KeyLevel'] = $this->request->getPost('SelLevel');
+        $data['KeyYear'] = $this->request->getPost('KeyYear');
+        $selectedSubjectIds = $this->request->getPost('selected_subjects');
+
+        if (empty($selectedSubjectIds)) {
+            return redirect()->back()->with('error', 'กรุณาเลือกวิชาอย่างน้อย 1 วิชา');
+        }
+
         $data['Showdata'] = $this->db->table('tb_register')
-                            ->select('
-                                tb_subjects.FirstGroup,
-                                tb_register.RegisterYear,
-                                tb_register.RegisterClass,
-                                tb_subjects.SubjectCode,
-                                tb_subjects.SubjectName,
-                                SUM(CASE WHEN tb_register.Grade = 4 THEN 1 ELSE 0 END) AS G4_0,
-                                SUM(CASE WHEN tb_register.Grade = 3.5 THEN 1 ELSE 0 END) AS G3_5,
-                                SUM(CASE WHEN tb_register.Grade = 3 THEN 1 ELSE 0 END) AS G3_0,
-                                SUM(CASE WHEN tb_register.Grade = 2.5 THEN 1 ELSE 0 END) AS G2_5,
-                                SUM(CASE WHEN tb_register.Grade = 2 THEN 1 ELSE 0 END) AS G2_0,
-                                SUM(CASE WHEN tb_register.Grade = 1.5 THEN 1 ELSE 0 END) AS G1_5,
-                                SUM(CASE WHEN tb_register.Grade = 1 THEN 1 ELSE 0 END) AS G1_0,
-                                SUM(CASE WHEN tb_register.Grade = 0 or tb_register.Grade = "มส" or tb_register.Grade = "ร" THEN 1 ELSE 0 END) AS G0                                 
-                                ')
-                            ->join('tb_subjects','tb_subjects.SubjectID = tb_register.SubjectID')
-                            ->join('tb_students','tb_students.StudentID = tb_register.StudentID')
-                            ->where('tb_subjects.SubjectYear',$data['KeyYear'])
-                            ->where('tb_register.RegisterYear',$data['KeyYear'])
-                            ->like('tb_register.RegisterClass',$data['KeyLevel'] . '%')
-                            ->groupBy('tb_subjects.FirstGroup, tb_subjects.SubjectCode, tb_register.RegisterYear, tb_register.RegisterClass, tb_subjects.SubjectName')
-                            ->get()->getResult();        
+            ->select('
+                tb_subjects.FirstGroup,
+                tb_register.RegisterYear,
+                SUM(CASE WHEN tb_register.Grade = "4" THEN 1 ELSE 0 END) AS G4_0,
+                SUM(CASE WHEN tb_register.Grade = "3.5" THEN 1 ELSE 0 END) AS G3_5,
+                SUM(CASE WHEN tb_register.Grade = "3" THEN 1 ELSE 0 END) AS G3_0,
+                SUM(CASE WHEN tb_register.Grade = "2.5" THEN 1 ELSE 0 END) AS G2_5,
+                SUM(CASE WHEN tb_register.Grade = "2" THEN 1 ELSE 0 END) AS G2_0,
+                SUM(CASE WHEN tb_register.Grade = "1.5" THEN 1 ELSE 0 END) AS G1_5,
+                SUM(CASE WHEN tb_register.Grade = "1" THEN 1 ELSE 0 END) AS G1_0,
+                SUM(CASE WHEN tb_register.Grade IN ("0", "มส", "ร") THEN 1 ELSE 0 END) AS G0,
+                COUNT(tb_register.StudentID) AS TotalStu
+            ')
+            ->join('tb_subjects', 'tb_subjects.SubjectID = tb_register.SubjectID')
+            ->join('tb_students', 'tb_students.StudentID = tb_register.StudentID')
+            ->where('tb_register.RegisterYear', $data['KeyYear'])
+            ->whereIn('tb_subjects.SubjectID', $selectedSubjectIds)
+            ->where('tb_students.StudentStatus', '1/ปกติ')
+            ->like('tb_students.StudentClass', $data['KeyLevel'] . '%')
+            ->groupBy('tb_subjects.FirstGroup, tb_register.RegisterYear')
+            ->orderBy('tb_subjects.FirstGroup', 'ASC')
+            ->get()->getResult();
 
-        
-        echo view('admin/Academic/AdminReportResults/AdminReportAcademicSummaryRoyalRoseStandard',$data);
-        
-
+        echo view('admin/Academic/AdminReportResults/AdminReportAcademicSummaryRoyalRoseStandardResult', $data);
     }
 
     

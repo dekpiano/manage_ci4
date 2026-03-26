@@ -1,240 +1,209 @@
-<?php // Note: Sorting logic should be handled in the controller.
-/*
-usort($CheckYear, function($a, $b) {
-    list($termA, $yearA) = explode('/', $a->RegisterYear);
-    list($termB, $yearB) = explode('/', $b->RegisterYear);
-
-    if ($yearA == $yearB) {
-        return $termA <=> $termB; // Sort by term
-    }
-    return $yearA <=> $yearB; // Sort by year
-});
-*/
-?>
-
 <?= $this->extend('admin/layout/main') ?>
 
 <?= $this->section('content') ?>
-<div class="">
-    <div class="">
-        <div class="row g-3 mb-4 align-items-center justify-content-between">
-            <div class="col-auto">
-                <h3 class="page-title mb-0"><?= isset($title) ? esc($title) : '' ?></h3>
-            </div>
-            <div class="col-auto">
-                <div class="page-utilities">
-                    <div class="card p-2">
-                        <div class="row g-2 justify-content-start justify-content-md-end align-items-center">
-                            <div class="col-auto">
-                                    <form class="docs-search-form row gx-1 align-items-center" method="get"
-                                        action="<?= site_url('Admin/Acade/Evaluate/ReportAcademicSummaryRoyalRoseStandard') ?>">
-                                        <div class="col-auto">
-                                            <?php $Level = array('ม.1','ม.2','ม.3','ม.4','ม.5','ม.6') ?>
-                                            <select class="form-select w-auto" name="SelLevel" id="SelLevel">
-                                                <option value="0">เลือกระดับชั้น...</option>
-                                                <?php foreach ($Level as $key => $v_Level) : ?>
-                                                <option
-                                                    <?= service('request')->getGet('SelLevel') == $v_Level ? "selected" : "" ?>
-                                                    value="<?= esc($v_Level) ?>"><?= esc($v_Level) ?></option>
-                                                <?php endforeach; ?>
-                                            </select>
-                                        </div>
-                                        <div class="col-auto">
-                                            <select class="form-select w-auto" name="KeyYear" id="KeyYear">
-                                                <option value="0">เลือกปีการศึกษา...</option>
-                                                <?php foreach ($CheckYear as $key => $v_CheckYear) : ?>
-                                                <option
-                                                    <?= isset($KeyYear) && $KeyYear == (isset($v_CheckYear->RegisterYear) ? $v_CheckYear->RegisterYear : '') ? 'selected' : '' ?>
-                                                    value="<?= isset($v_CheckYear->RegisterYear) ? esc($v_CheckYear->RegisterYear) : '' ?>">
-                                                    <?= isset($v_CheckYear->RegisterYear) ? esc($v_CheckYear->RegisterYear) : '' ?>
-                                                </option>
-                                                <?php endforeach; ?>
-                                            </select>
-                                        </div>
-                                        <div class="col-auto">
-                                            <button class="btn btn-primary clickLoder" type="submit">ค้นหา</button>
-                                        </div>
-                                    </form>
-                            </div>
-                            <!--//col-->
-
-                        </div>
-                    </div>
-
-                    <!--//row-->
-                </div>
-                <!--//table-utilities-->
-            </div>
-            <!--//col-auto-->
+<div class="container-xxl flex-grow-1 container-p-y">
+    <div class="row align-items-center mb-4">
+        <div class="col-12 col-md-6">
+            <h4 class="fw-bold py-3 mb-0">
+                <span class="text-muted fw-light">วิชาการ /</span> รายงานมาตรฐานกุหลาบหลวง
+            </h4>
         </div>
-        <!--//row-->
-
-        <style>
-        .fixTableHead {
-            overflow-y: auto;
-            height: 550px;
-        }
-
-        .fixTableHead thead th {
-            position: sticky;
-            top: 0;
-        }
-
-        table {
-            border-collapse: collapse;
-            width: 100%;
-        }
-
-        th,
-        td {
-            padding: 8px 15px;
-            border: 2px solid #529432;
-            white-space: nowrap; /* เพิ่ม CSS นี้เพื่อป้องกันการขึ้นบรรทัดใหม่ */
-        }
-
-        th {
-            background: #ABDD93;
-        }
-
-        </style>
-        <?php if(service('request')->getGet('SelLevel') === '0' || service('request')->getGet('KeyYear') === '0'):?>
-        <div class="card alert alert-dismissible shadow-sm mb-4 border-left-decoration" role="alert">
-            <div class="inner">
-                <div class="card-body p-3 p-lg-4">
-                    <h3 class="text-center"><i class="bi bi-arrow-right-circle-fill"></i> กรุณาเลือกรายการ
-                        ทางปุ่มขวาบน</h3>
-
-                </div>
-                <!--//card-body-->
-
+        <div class="col-12 col-md-6 text-md-end">
+            <div class="badge bg-label-success fs-6 py-2 px-3">
+                <i class='bx bx-info-circle me-1'></i> ขั้นตอนที่ 1: เลือกวิชาพื้นฐานที่ต้องการสรุป
             </div>
-            <!--//inner-->
         </div>
-        <?php else: ?>
-        <div class="card  shadow-sm mb-5 p-2 " style="width: 100%;">
-            <div class="card-body">
-                <div class="table-responsive fixTableHead">
-                    <table class="table table-hover mb-0 text-left table-bordered scrollit"
-                        id="ReportSummaryRoyalRoseStandard" style="">
-                        <!--ReportSummaryTeacher-->
-                        <thead>
-                            <tr class="text-center table-success">
-                                <th class="cell text-center">กลุ่มสาระฯ</th>
-                                <th class="cell text-center">วิชา</th>
-                                <th class="cell text-center">จำนวนนักเรียน</th>
-                                <th class="cell text-center">4</th>
-                                <th class="cell text-center">3.5</th>
-                                <th class="cell text-center">3</th>
-                                <th class="cell text-center">2.5</th>
-                                <th class="cell text-center">2</th>
-                                <th class="cell text-center">1.5</th>
-                                <th class="cell text-center">1</th>
-                                <th class="cell text-center">0,ร,มส</th>
+    </div>
+
+    <!-- ส่วนค้นหา (Filter Bar) - ดีไซน์ใหม่แบบ Clean -->
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center py-3 border-bottom">
+            <h5 class="mb-0 fw-bold"><i class='bx bx-filter-alt me-2 text-success'></i> ค้นหารายวิชาตามระดับชั้น</h5>
+            <span class="badge bg-label-success"><?= !empty($SubjectsList) ? 'พบทั้งหมด '.count($SubjectsList).' รายวิชา' : 'กรุณาเลือกเงื่อนไข' ?></span>
+        </div>
+        <div class="card-body py-4">
+            <form id="filterForm" method="get" action="<?= site_url('Admin/Acade/Evaluate/ReportAcademicSummaryRoyalRoseStandard') ?>" class="row g-3 justify-content-center">
+                <div class="col-12 col-md-4">
+                    <label class="form-label fw-semibold">ปีการศึกษา / ภาคเรียน</label>
+                    <select name="KeyYear" class="form-select select2" required>
+                        <option value="0">--- เลือกปีการศึกษา ---</option>
+                        <?php foreach ($CheckYear as $year): ?>
+                            <option value="<?= esc($year->RegisterYear) ?>" <?= $KeyYear == $year->RegisterYear ? 'selected' : '' ?>>
+                                ปีการศึกษา <?= esc($year->RegisterYear) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="col-12 col-md-3">
+                    <label class="form-label fw-semibold">ระดับชั้น</label>
+                    <select name="SelLevel" class="form-select" required>
+                        <option value="0">--- ระดับชั้น ---</option>
+                        <?php 
+                        $levels = ['ม.1', 'ม.2', 'ม.3', 'ม.4', 'ม.5', 'ม.6'];
+                        foreach ($levels as $lv): ?>
+                            <option value="<?= $lv ?>" <?= $KeyLevel == $lv ? 'selected' : '' ?>><?= $lv ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="col-12 col-md-2">
+                    <label class="form-label d-none d-md-block">&nbsp;</label>
+                    <button type="submit" class="btn btn-success d-block w-100 py-2 shadow-none btn-submit">
+                        <i class='bx bx-search-alt me-1'></i> ดึงรายชื่อวิชา
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <?php if(empty($SubjectsList)):?>
+    <!-- Empty State -->
+    <div class="card shadow-none bg-transparent border-dashed border-2 border-secondary mb-4 py-5">
+        <div class="card-body text-center py-5">
+            <div class="avatar avatar-xl mx-auto mb-4 bg-label-success">
+                <span class="avatar-initial rounded-circle"><i class='bx bx-spreadsheet fs-1'></i></span>
+            </div>
+            <h5 class="fw-bold">ยังไม่มีข้อมูลวิชาแสดงผล</h5>
+            <p class="text-muted mx-auto" style="max-width: 400px;">
+                กรุณาเลือก <strong>ปีการศึกษา</strong> และ <strong>ระดับชั้น</strong> ที่ต้องการด้านบน จากนั้นกดปุ่มดึงรายชื่อวิชาเพื่อเริ่มขั้นตอนการคำนวณ
+            </p>
+        </div>
+    </div>
+    <?php else: ?>
+
+    <!-- ส่วนเลือกวิชาแบบเต็มจอ (Table Selection) -->
+    <div class="card shadow-sm border-0 mb-4">
+        <form id="calculationForm" method="post" action="<?= site_url('Admin/Acade/Evaluate/ReportAcademicSummaryRoyalRoseStandard') ?>">
+            <?= csrf_field() ?>
+            <input type="hidden" name="SelLevel" value="<?= esc($KeyLevel) ?>">
+            <input type="hidden" name="KeyYear" value="<?= esc($KeyYear) ?>">
+
+            <div class="card-header d-flex flex-wrap justify-content-between align-items-center bg-label-success py-3 border-bottom">
+                <div class="mb-2 mb-sm-0">
+                    <h5 class="mb-1 text-success fw-bold d-flex align-items-center">
+                        <i class='bx bx-check-double me-2 fs-4'></i> รายชื่อวิชาพื้นฐาน
+                    </h5>
+                    <small class="text-muted"><?= esc($KeyLevel) ?> | ปีการศึกษา <?= esc($KeyYear) ?> (พบทั้งหมด <?= count($SubjectsList) ?> วิชา)</small>
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="button" id="btnSelectAll" class="btn btn-outline-success btn-sm">เลือกทั้งหมด</button>
+                    <button type="button" id="btnDeselectAll" class="btn btn-outline-secondary btn-sm">ยกเลิกทั้งหมด</button>
+                    <button type="submit" class="btn btn-success shadow-sm ms-2 btn-submit">
+                        <i class='bx bx-calculator me-1'></i> เริ่มคำนวณสถิติ
+                    </button>
+                </div>
+            </div>
+            
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0" id="subjectSelectionTable">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="text-center" style="width: 60px;">เลือก</th>
+                                <th style="min-width: 250px;">กลุ่มสาระการเรียนรู้</th>
+                                <th style="width: 150px;">รหัสวิชา</th>
+                                <th>ชื่อวิชา</th>
+                                <th style="width: 150px;">ประเภทวิชา</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <?php foreach ($Showdata as $key => $v_data):?>
-                            <tr>
-                                <td class="cell">
-                                    <?= isset($v_data->FirstGroup) ? esc($v_data->FirstGroup) : '' ?>
+                            <?php 
+                            $currentGroup = '';
+                            foreach ($SubjectsList as $v_subject): 
+                                $isNewGroup = ($currentGroup !== $v_subject->FirstGroup);
+                                if ($isNewGroup) $currentGroup = $v_subject->FirstGroup;
+                            ?>
+                            <tr class="<?= $isNewGroup ? 'border-top border-success border-2 table-active-success' : '' ?>">
+                                <td class="text-center">
+                                    <div class="form-check d-flex justify-content-center">
+                                        <input class="form-check-input subject-checkbox" type="checkbox" name="selected_subjects[]" 
+                                               value="<?= esc($v_subject->SubjectID) ?>" id="sub<?= esc($v_subject->SubjectID) ?>" checked>
+                                    </div>
                                 </td>
-                                <td class="cell">
-                                    <?= (isset($v_data->SubjectCode) ? esc($v_data->SubjectCode) : '').' '.(isset($v_data->SubjectName) ? esc($v_data->SubjectName) : '') ?>
+                                <td>
+                                    <?php if($isNewGroup): ?>
+                                        <span class="badge bg-success rounded-pill mb-1"><?= esc($v_subject->FirstGroup) ?></span>
+                                    <?php else: ?>
+                                        <span class="text-muted opacity-50 ms-3"><i class='bx bx-subdirectory-right small me-1'></i><?= esc($v_subject->FirstGroup) ?></span>
+                                    <?php endif; ?>
                                 </td>
-                                <td class="cell row-total text-center">
-
-                                </td>
-                                <td class="cell text-center sum-cell PC_Good">
-                                    <?= isset($v_data->G4_0) ? esc($v_data->G4_0) : '' ?></td>
-                                <td class="cell text-center sum-cell PC_Good">
-                                    <?= isset($v_data->G3_5) ? esc($v_data->G3_5) : '' ?></td>
-                                <td class="cell text-center sum-cell PC_Good">
-                                    <?= isset($v_data->G3_0) ? esc($v_data->G3_0) : '' ?></td>
-                                <td class="cell text-center sum-cell">
-                                    <?= isset($v_data->G2_5) ? esc($v_data->G2_5) : '' ?></td>
-                                <td class="cell text-center sum-cell">
-                                    <?= isset($v_data->G2_0) ? esc($v_data->G2_0) : '' ?></td>
-                                <td class="cell text-center sum-cell">
-                                    <?= isset($v_data->G1_5) ? esc($v_data->G1_5) : '' ?></td>
-                                <td class="cell text-center sum-cell">
-                                    <?= isset($v_data->G1_0) ? esc($v_data->G1_0) : '' ?></td>
-                                <td class="cell text-center sum-cell"><?= isset($v_data->G0) ? esc($v_data->G0) : '' ?>
-                                </td>
+                                <td><code class="fw-bold text-dark fs-6"><?= esc($v_subject->SubjectCode) ?></code></td>
+                                <td class="fw-semibold text-secondary"><?= esc($v_subject->SubjectName) ?></td>
+                                <td><span class="badge bg-label-success"><?= esc($v_subject->SubjectType) ?></span></td>
                             </tr>
                             <?php endforeach; ?>
-
                         </tbody>
                     </table>
                 </div>
-                <!--//table-responsive-->
-
             </div>
-            <!--//card-body-->
-        </div>
-        <?php endif; ?>
-
+            
+            <div class="card-footer bg-label-secondary py-4 border-top">
+                <div class="row align-items-center">
+                    <div class="col-lg-8 mb-3 mb-lg-0">
+                        <div class="d-flex align-items-center text-secondary">
+                            <i class='bx bx-help-circle fs-3 me-2 text-success'></i>
+                            <span>ระบบจะนำคะแนนจากวิชาที่ท่านเลือก มาประยุกต์รวมกันตามกลุ่มสาระการเรียนรู้ เพื่อสรุปผลสัมฤทธิ์ทางการเรียนตามมาตรฐานกุหลาบหลวง</span>
+                        </div>
+                    </div>
+                    <div class="col-lg-4 text-lg-end">
+                        <button type="submit" class="btn btn-success btn-lg w-100 w-md-auto shadow-md btn-submit">
+                            <i class='bx bx-calculator me-2'></i> ประมวลผลและดูสรุปสถิติ
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
     </div>
-    <!--//container-fluid-->
+    <?php endif; ?>
 </div>
-<!--//content-->
+
+<style>
+    #subjectSelectionTable tr:hover { cursor: pointer; }
+    .border-dashed { border-style: dashed !important; }
+    .table-active { --bs-table-accent-bg: rgba(105, 108, 255, 0.05) !important; }
+</style>
+
 <?= $this->endSection() ?>
 
 <?= $this->section('script') ?>
 <script>
-$(document).ready(function() {
-    // Sort the dropdown
-    var select = $('#KeyYear');
-    var options = select.find('option');
-    var selectedValue = select.val();
-    var placeholder = options.filter('[value="0"]'); // Placeholder has value "0"
-    options = options.not('[value="0"]');
-
-    options.sort(function(a, b) {
-        var aVal = a.value.split('/');
-        var bVal = b.value.split('/');
-        if (aVal.length < 2 || bVal.length < 2) return 0;
-        var aYear = parseInt(aVal[1], 10);
-        var bYear = parseInt(bVal[1], 10);
-        var aTerm = parseInt(aVal[0], 10);
-        var bTerm = parseInt(bVal[0], 10);
-
-        if (aYear !== bYear) {
-            return bYear - aYear; // Sort by year descending
+    $(document).ready(function() {
+        // ฟังก์ชันสำหรับแสดง Loading ที่ปุ่ม
+        function showLoading(btn) {
+            btn.addClass('disabled').prop('disabled', true);
+            btn.html('<i class="bx bx-loader-alt bx-spin me-1"></i> กำลังประมวลผล...');
         }
-        return bTerm - aTerm; // Then by term descending
-    });
 
-    select.empty().append(placeholder).append(options);
-    select.val(selectedValue);
-
-    // Initialize DataTable
-    $('#ReportSummaryRoyalRoseStandard').DataTable({
-        dom: '<"top"B>rt<"bottom"ip>',
-        buttons: [
-            { extend: 'copy', className: 'btn btn-secondary me-1' },
-            { extend: 'excelHtml5', className: 'btn btn-success me-1' },
-            { extend: 'pdf', className: 'btn btn-danger me-1' },
-            { extend: 'print', className: 'btn btn-info me-1' }
-        ],
-        autoWidth: false,
-        lengthMenu: [ [10, 25, 50, -1], [10, 25, 50, "All"] ],
-        pageLength: -1,
-        language: {
-            url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/th.json' // Thai language pack
-        }
-    });
-
-    // Calculate row totals
-    $("#ReportSummaryRoyalRoseStandard tbody tr").each(function() {
-        let rowTotal = 0;
-        $(this).find(".sum-cell").each(function() {
-            let value = parseInt($(this).text(), 10);
-            if (!isNaN(value)) {
-                rowTotal += value;
-            }
+        // จัดการฟอร์มตัวกรอง (ดึงรายชื่อวิชา)
+        $('#filterForm').on('submit', function() {
+            showLoading($(this).find('.btn-submit'));
         });
-        $(this).find(".row-total").text(rowTotal);
+
+        // จัดการฟอร์มคำนวณ (เริ่มคำนวณ)
+        $('#calculationForm').on('submit', function(e) {
+            if ($('.subject-checkbox:checked').length === 0) {
+                e.preventDefault();
+                alert('กรุณาเลือกอย่างน้อย 1 วิชาเพื่อคำนวณครับ');
+                return false;
+            }
+            showLoading($(this).find('.btn-submit'));
+        });
+
+        // จัดการคลิกที่แถวเพื่อให้ติ๊ก Checkbox ได้ง่ายขึ้น
+        $('#subjectSelectionTable tbody tr').on('click', function(e) {
+            if ($(e.target).is('input')) return;
+            var chk = $(this).find('.subject-checkbox');
+            chk.prop('checked', !chk.prop('checked'));
+        });
+
+        // ปุ่มเลือกทั้งหมด
+        $('#btnSelectAll').on('click', function() {
+            $('.subject-checkbox').prop('checked', true);
+        });
+
+        // ปุ่มยกเลิกทั้งหมด
+        $('#btnDeselectAll').on('click', function() {
+            $('.subject-checkbox').prop('checked', false);
+        });
     });
-});
 </script>
 <?= $this->endSection() ?>

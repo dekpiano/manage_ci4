@@ -270,6 +270,7 @@ $routes->get('Admin/Acade/Executive/ReportEnroll/Main', [ConAdminReportResult::c
 $routes->get('Admin/Acade/Executive/ReportEnroll/ID/(:segment)', [ConAdminReportResult::class, 'AdminReportEnrollDetailStudent']);
 $routes->post('Admin/Acade/Executive/exportRoomReportToExcel', [ConAdminReportResult::class, 'exportRoomReportToExcel']);
 $routes->get('Admin/Acade/Evaluate/ReportAcademicSummaryRoyalRoseStandard', [ConAdminReportResult::class, 'AdminReportAcademicSummaryRoyalRoseStandard']);
+$routes->post('Admin/Acade/Evaluate/ReportAcademicSummaryRoyalRoseStandard', [ConAdminReportResult::class, 'AdminReportRoyalRoseResult']);
 $routes->get('Admin/Acade/Evaluate/ReportAcademicSummary', [ConAdminReportResult::class, 'AdminReportAcademicSummary']);
 
 // Session check for auto-logout
