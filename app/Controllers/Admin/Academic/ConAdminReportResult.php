@@ -253,7 +253,7 @@ class ConAdminReportResult extends BaseController
     public function AdminReportRoomMain(){   
         $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();
         $keyroom = $this->request->getPost("keyroom");
-        $KeyCheckYear = $this->request->getPost("KeyCheckYear");
+        $KeyCheckYear = $this->request->getPost("KeyCheckYear") ?? get_selected_year();
 
         // Optimized Year retrieval: latest first
         $data['CheckYear'] = $this->db->table('tb_register')
@@ -280,12 +280,17 @@ class ConAdminReportResult extends BaseController
             $data["Nodata"] = 1;
             $data['keyroom'] = $keyroom;
             $data['KeyCheckYear'] = $KeyCheckYear;
-            $data['totip'] = "ระดับชั้น ".$keyroom;
+            $roomShort = !empty($SubRoom1[1]) ? $SubRoom1[1] : $keyroom;
+            $data['keyroom_short'] = $roomShort;
+            $data['totip'] = "ชั้น ม." . $roomShort . " ประจำปีการศึกษา " . $KeyCheckYear;
             
-            $data['stu'] = $this->db->table('tb_students')
-                                    ->select("StudentID, StudentNumber, StudentClass, StudentCode, StudentPrefix, StudentFirstName, StudentLastName")
+            $data['stu'] = $this->db->table('tb_register')
+                                    ->select("tb_students.StudentID, tb_students.StudentNumber, tb_students.StudentCode, tb_students.StudentPrefix, tb_students.StudentFirstName, tb_students.StudentLastName, tb_register.RegisterClass")
+                                    ->join('tb_students','tb_students.StudentID = tb_register.StudentID')
+                                    ->where('tb_register.RegisterYear',$KeyCheckYear)
+                                    ->where('tb_register.RegisterClass',$keyroom)
                                     ->where('StudentStatus','1/ปกติ')
-                                    ->where('StudentClass',$keyroom)     
+                                    ->distinct()
                                     ->orderBy('tb_students.StudentNumber','ASC')
                                     ->get()->getResult();
 
@@ -293,9 +298,9 @@ class ConAdminReportResult extends BaseController
                             ->select("tb_register.SubjectID, tb_subjects.SubjectName, tb_subjects.SubjectCode, tb_subjects.SubjectUnit")
                             ->join('tb_students','tb_students.StudentID = tb_register.StudentID')
                             ->join('tb_subjects','tb_subjects.SubjectID = tb_register.SubjectID')
-                            ->where('RegisterYear',$KeyCheckYear)
-                            ->where('StudentStatus','1/ปกติ')
-                            ->where('StudentClass',$keyroom)                                
+                            ->where('tb_register.RegisterYear',$KeyCheckYear)
+                            ->where('tb_register.RegisterClass',$keyroom)
+                            ->where('StudentStatus','1/ปกติ')                                
                             ->where('tb_subjects.SubjectCode !=','I30301')
                             ->where('tb_subjects.SubjectCode !=','I20201')
                             ->groupBy('tb_register.SubjectID, tb_subjects.SubjectName, tb_subjects.SubjectCode, tb_subjects.SubjectUnit')  
@@ -376,7 +381,40 @@ class ConAdminReportResult extends BaseController
         
         $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
         $data['title'] = "รายงานผลการเรียนรายห้องเรียน";
-        $data['room'] = $this->classroom->ListRoom(); // Fixed: Use lowercase 'room' to match view
+
+        // Fetch available rooms for the school year if selected, otherwise fetch all unique rooms
+        $roomBuilder = $this->db->table('tb_register')
+                                ->select('RegisterClass')
+                                ->distinct()
+                                ->orderBy('RegisterClass', 'ASC');
+        
+        if (!empty($KeyCheckYear)) {
+            $roomBuilder->where('RegisterYear', $KeyCheckYear);
+        }
+        
+        $roomsRaw = $roomBuilder->get()->getResult();
+        $dbRooms = array_column($roomsRaw, 'RegisterClass');
+
+        // Combine with standard rooms from library to ensure 1/1, 1/2, etc. are always available
+        $standardRooms = $this->classroom->ListRoom();
+        $formattedStandard = array_map(function($r) { return "ม." . $r; }, $standardRooms);
+        
+        // Merge and clean up
+        $allRooms = array_unique(array_merge($dbRooms, $formattedStandard));
+        
+        // Custom sort to handle "ม.1/1", "ม.10/1" correctly
+        usort($allRooms, function($a, $b) {
+            preg_match('/ม\.(\d+)\/(\d+)/', $a, $matchA);
+            preg_match('/ม\.(\d+)\/(\d+)/', $b, $matchB);
+            
+            if (!empty($matchA) && !empty($matchB)) {
+                if ($matchA[1] != $matchB[1]) return $matchA[1] - $matchB[1];
+                return $matchA[2] - $matchB[2];
+            }
+            return strcmp($a, $b);
+        });
+
+        $data['room'] = $allRooms;
 
         
         echo view('admin/Academic/AdminReportResults/AdminReportRoomMain',$data);
@@ -413,10 +451,13 @@ class ConAdminReportResult extends BaseController
             return redirect()->back()->with('error', 'กรุณาเลือกปีการศึกษาและห้องเรียนก่อน');
         }
 
-        $data['stu'] = $this->db->table('tb_students')
-                                ->select("StudentID, StudentNumber, StudentClass, StudentCode, StudentPrefix, StudentFirstName, StudentLastName")
+        $data['stu'] = $this->db->table('tb_register')
+                                ->select("tb_students.StudentID, tb_students.StudentNumber, tb_students.StudentCode, tb_students.StudentPrefix, tb_students.StudentFirstName, tb_students.StudentLastName, tb_register.RegisterClass")
+                                ->join('tb_students','tb_students.StudentID = tb_register.StudentID')
+                                ->where('tb_register.RegisterYear',$KeyCheckYear)
+                                ->where('tb_register.RegisterClass',$keyroom)
                                 ->where('StudentStatus','1/ปกติ')
-                                ->where('StudentClass',$keyroom)     
+                                ->distinct()
                                 ->orderBy('tb_students.StudentNumber','ASC')
                                 ->get()->getResult();
 
@@ -424,9 +465,9 @@ class ConAdminReportResult extends BaseController
                         ->select("tb_register.SubjectID, tb_subjects.SubjectName, tb_subjects.SubjectCode, tb_subjects.SubjectUnit")
                         ->join('tb_students','tb_students.StudentID = tb_register.StudentID')
                         ->join('tb_subjects','tb_subjects.SubjectID = tb_register.SubjectID')
-                        ->where('RegisterYear',$KeyCheckYear)
-                        ->where('StudentStatus','1/ปกติ')
-                        ->where('StudentClass',$keyroom)                                
+                        ->where('tb_register.RegisterYear',$KeyCheckYear)
+                        ->where('tb_register.RegisterClass',$keyroom)
+                        ->where('StudentStatus','1/ปกติ')                                
                         ->where('tb_subjects.SubjectCode !=','I30301')
                         ->where('tb_subjects.SubjectCode !=','I20201')
                         ->groupBy('tb_register.SubjectID, tb_subjects.SubjectName, tb_subjects.SubjectCode, tb_subjects.SubjectUnit')  
@@ -487,8 +528,11 @@ class ConAdminReportResult extends BaseController
             $CheckSub[] = $studentRow;
         }
 
-        // Set headers
-        $filename = 'รายงานผลการเรียนรายห้องเรียน_' . $keyroom . '_' . $KeyCheckYear . '.xlsx';
+        // Set headers with shortened room and year for cleaner filename
+        $roomShort = !empty($SubRoom1[1]) ? $SubRoom1[1] : $keyroom;
+        $cleanRoom = str_replace(['/', '.'], '_', $roomShort);
+        $cleanYear = str_replace('/', '_', $KeyCheckYear);
+        $filename = 'รายงานผลการเรียนรายห้อง_' . $cleanRoom . '_' . $cleanYear . '.xlsx';
         ob_clean(); // Clean any previous output that might corrupt the Excel file
         header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         header('Content-Disposition: attachment;filename="' . $filename . '"');

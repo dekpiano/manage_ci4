@@ -76,7 +76,7 @@ class ConAdminDevelopStudents extends BaseController
                         $message = $status == 1 ? 'ระบบถูกปิดปรับปรุงเรียบร้อยแล้ว' : 'ระบบเปิดใช้งานออนไลน์เรียบร้อยแล้ว';
                     } else {
                         $statusText = $status == 1 ? 'เปิด' : 'ปิด';
-                        $message = "อัปเดตสถานะสำหรับ ${targetThai} เป็น '${statusText}' เรียบร้อยแล้ว";
+                        $message = "อัปเดตสถานะสำหรับ {$targetThai} เป็น '{$statusText}' เรียบร้อยแล้ว";
                     }
 
                     return $this->response->setJSON(['success' => true, 'message' => $message]);

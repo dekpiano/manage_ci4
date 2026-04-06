@@ -161,10 +161,10 @@
         <div class="row align-items-center g-3">
             <div class="col-md-9">
                 <h2 class="text-white fw-bold mb-1">
-                    <i class='bx bx-table me-2'></i>รายงานผลการเรียนรายห้อง
+                    <i class='bx bx-table me-2'></i>รายงานผลการเรียนรายห้อง <?= esc($keyroom_short ?? "") ?>
                 </h2>
                 <p class="mb-0 text-white opacity-75">
-                    ตรวจสอบข้อมูลการเรียนรายวิชาและเกรดเฉลี่ยรายบุคคล
+                    <?= esc($totip ?? "ตรวจสอบข้อมูลการเรียนรายวิชาและเกรดเฉลี่ยรายบุคคล") ?>
                 </p>
             </div>
         </div>
@@ -195,10 +195,10 @@
                 <div class="col-md-5">
                     <label class="form-label fw-bold text-dark mb-1 small"><i class='bx bx-door-open me-1'></i>ระดับห้องเรียน</label>
                     <select class="form-select select2" name="keyroom" id="keyroom">
-                        <option value="0">-- เลือกทุกห้องเรียน --</option>
+                        <option value="">-- เลือกห้องเรียน --</option>
                         <?php foreach ($room as $v_room) : ?>
                             <option <?= (isset($keyroom) && $keyroom == $v_room) ? "selected" : "" ?> value="<?= esc($v_room) ?>">
-                                ชั้นมัธยมศึกษาปีที่ <?= esc($v_room) ?>
+                                <?= esc($v_room) ?>
                             </option>
                         <?php endforeach; ?>
                     </select>
@@ -208,7 +208,7 @@
                         <i class='bx bx-search-alt me-1'></i> ค้นข้อมูล
                     </button>
                 </div>
-                <div class="col-lg-4 text-end pt-lg-4">
+                <div class="col-lg-12 text-end">
                     <div class="d-inline-flex gap-2">
                         <span class="badge bg-success p-2 small"><i class='bx bx-user me-1'></i><?= count($stu ?? []) ?> คน</span>
                         <span class="badge bg-primary p-2 small"><i class='bx bx-book me-1'></i><?= count($subject ?? []) ?> วิชา</span>
@@ -280,7 +280,6 @@
     </div>
 </div>
 
-</div>
 <?= $this->endSection() ?>
 
 <?= $this->section('script') ?>
@@ -292,6 +291,14 @@ $(document).ready(function() {
             theme: 'bootstrap-5',
             width: '100%'
         });
+    });
+
+    // เมื่อเปลี่ยนปีการศึกษา ให้ส่งฟอร์มอัตโนมัติเพื่อดึงรายการห้องใหม่
+    $('#KeyCheckYear').on('change', function() {
+        if ($(this).val()) {
+            // ส่งฟอร์มโดยไม่ผ่าน Validation ของ jQuery เพื่อให้โหลดห้องใหม่ได้ทันที
+            $('#formSearchRoom')[0].submit();
+        }
     });
 
     // Handle Form Filter Logic
@@ -317,42 +324,22 @@ $(document).ready(function() {
         return true;
     });
 
-    // Sort the dropdown
-    var select = $('#KeyCheckYear');
-    var options = select.find('option');
-    var selectedValue = select.val();
-    var placeholder = options.filter('[value=""]');
-    options = options.not('[value=""]');
-
-    options.sort(function(a, b) {
-        var aVal = a.value.split('/');
-        var bVal = b.value.split('/');
-        if (aVal.length < 2 || bVal.length < 2) return 0;
-        var aYear = parseInt(aVal[1], 10);
-        var bYear = parseInt(bVal[1], 10);
-        var aTerm = parseInt(aVal[0], 10);
-        var bTerm = parseInt(bVal[0], 10);
-
-        if (aYear !== bYear) {
-            return bYear - aYear; // Sort by year descending
-        }
-        return bTerm - aTerm; // Then by term descending
-    });
-
-    select.empty().append(placeholder).append(options);
-    select.val(selectedValue);
-    // Initialize DataTable with specific 'Plain' config
-    if ($('#tblGradeSumRoom').length && !$.fn.DataTable.isDataTable('#tblGradeSumRoom')) {
+    // Initialize DataTable
+    if ($('#tblGradeSumRoom').length) {
         let table = $('#tblGradeSumRoom').DataTable({
-            "order": [], // No initial sort
-            "ordering": false, // Disable all sorting
-            dom: 'rt', 
+            paging: false,
+            searching: false,
+            info: false,
+            autoWidth: false,
+            scrollX: true,
+            ordering: false,
+            dom: 'rtB', 
             buttons: [
                 { 
                     extend: 'excelHtml5', 
                     text: '<i class="bx bx-file me-1"></i> ดาวน์โหลด Excel',
                     className: 'btn btn-success p-2 px-3 border-0 shadow-sm me-2',
-                    title: 'รายงานผลการเรียนรายห้อง_<?= esc($keyroom ?? "") ?>_<?= esc($KeyCheckYear ?? "") ?>',
+                    title: 'รายงานผลการเรียนรายห้อง_<?= esc($keyroom_short ?? "") ?>_<?= esc($KeyCheckYear ?? "") ?>',
                     exportOptions: { columns: ':visible' }
                 },
                 { 
@@ -362,14 +349,12 @@ $(document).ready(function() {
                     exportOptions: { columns: ':visible' }
                 }
             ],
-            paging: false,
-            searching: false,
-            info: false,
-            autoWidth: false,
-            responsive: false
+            columnDefs: [
+                { width: "50px", targets: 0 },
+                { width: "250px", targets: 1 }
+            ]
         });
 
-        // Move to external container (Right side)
         table.buttons().container().appendTo('#tableButtons');
     }
 });
