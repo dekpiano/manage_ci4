@@ -19,7 +19,7 @@
                     <select name="onoff_year" id="onoff_year" class="form-select form-select-sm">
                         <?php foreach ($CheckYearRegis as $key => $value) : ?>
                         <?php // NOTE: This logic should be in the controller
-                        $currentYear = (service('request')->uri->getSegment(5) ?? '').'/'.(service('request')->uri->getSegment(6) ?? '');
+                        $currentYear = (service('request')->getUri()->getSegment(5) ?? '').'/'.(service('request')->getUri()->getSegment(6) ?? '');
                         ?>
                         <option <?= isset($value->RegisterYear) && $currentYear == $value->RegisterYear ?"selected":"" ?>
                             value="<?= isset($value->RegisterYear) ? esc($value->RegisterYear) : '' ?>"><?= isset($value->RegisterYear) ? esc($value->RegisterYear) : '' ?></option>

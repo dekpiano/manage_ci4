@@ -2,7 +2,7 @@
 
 <?= $this->section('content') ?>
 <?php 
-$ExYearClub = $CheckOnoffClubParsed ?? [date('Y'), '1'];
+$ExYearClub = $CheckOnoffClubParsed ?? [(date('Y')+543), '1'];
 $studentStatus = $StatusOnoffClubStudent ?? 'ปิด';
 $teacherStatus = $StatusOnoffClubTeacher ?? 'ปิด';
 
@@ -463,6 +463,33 @@ $(document).ready(function() {
         });
     }
     loadWeeksData();
+
+    // Save week dates when changed
+    $(document).on('change', '.tcs_academic_year', function() {
+        const id = $(this).data('id');
+        const date = $(this).val();
+        
+        if (!date) return;
+
+        $.ajax({
+            url: '<?= site_url('admin/academic/developstudents/update_schedule') ?>',
+            type: 'POST',
+            data: {
+                '<?= csrf_token() ?>': '<?= csrf_hash() ?>',
+                id: id,
+                date: date
+            },
+            dataType: 'json',
+            success: function(response) {
+                if (response.status === 'success') {
+                    const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 1500, timerProgressBar: true });
+                    Toast.fire({ icon: 'success', title: 'บันทึกวันที่แล้ว' });
+                } else {
+                    Swal.fire({ icon: 'error', title: 'ผิดพลาด!', text: response.message || 'ไม่สามารถบันทึกได้' });
+                }
+            }
+        });
+    });
 });
 </script>
 <?= $this->endSection() ?>

@@ -24,6 +24,17 @@ class Autoload extends AutoloadConfig
 {
     /**
      * -------------------------------------------------------------------
+     * Composer Autoload
+     * -------------------------------------------------------------------
+     *
+     * Enables or disables the autoloader from loading Composer files.
+     *
+     * @var bool
+     */
+    public $composerAutoload = true;
+
+    /**
+     * -------------------------------------------------------------------
      * Namespaces
      * -------------------------------------------------------------------
      * This maps the locations of any namespaces in your application to

@@ -137,25 +137,16 @@
     transform: scale(1.1) rotate(-5deg);
 }
 
-.stat-icon-wrapper.bg-success-gradient {
-    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-    color: #fff;
-}
+/* Global Gradient Backgrounds */
+.bg-success-gradient { background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important; color: #fff !important; }
+.bg-danger-gradient { background: linear-gradient(135deg, #dc3545 0%, #ff6b6b 100%) !important; color: #fff !important; }
+.bg-warning-gradient { background: linear-gradient(135deg, #ffc107 0%, #ffda44 100%) !important; color: #fff !important; }
+.bg-primary-gradient { background: linear-gradient(135deg, #007bff 0%, #17a2b8 100%) !important; color: #fff !important; }
 
-.stat-icon-wrapper.bg-danger-gradient {
-    background: linear-gradient(135deg, #dc3545 0%, #ff6b6b 100%);
-    color: #fff;
-}
-
-.stat-icon-wrapper.bg-warning-gradient {
-    background: linear-gradient(135deg, #ffc107 0%, #ffda44 100%);
-    color: #fff;
-}
-
-.stat-icon-wrapper.bg-primary-gradient {
-    background: linear-gradient(135deg, #007bff 0%, #17a2b8 100%);
-    color: #fff;
-}
+.stat-icon-wrapper.bg-success-gradient { color: #fff; }
+.stat-icon-wrapper.bg-danger-gradient { color: #fff; }
+.stat-icon-wrapper.bg-warning-gradient { color: #fff; }
+.stat-icon-wrapper.bg-primary-gradient { color: #fff; }
 
 .stat-value {
     font-size: 2.5rem;
@@ -205,77 +196,21 @@
 
 .chart-card .card-header {
     background: transparent;
-    border-bottom: 1px solid rgba(0,0,0,0.05);
     padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid #f0f0f0;
 }
 
 .chart-card .card-header h5 {
-    font-weight: 600;
-    color: #212529;
+    font-weight: 700;
+    color: #2c3e50;
     margin: 0;
-}
-
-.chart-card .card-header h5 i {
-    color: var(--primary-green);
-}
-
-.chart-card .card-body {
-    padding: 1.5rem;
 }
 
 .chart-container {
     position: relative;
-    height: 280px;
-    width: 100%;
 }
 
-/* Gender Stats Cards */
-.gender-stat {
-    background: #f8f9fa;
-    border-radius: 12px;
-    padding: 1rem;
-    text-align: center;
-    transition: all 0.3s ease;
-}
-
-.gender-stat:hover {
-    background: #e9ecef;
-    transform: scale(1.02);
-}
-
-.gender-stat .icon {
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.25rem;
-    margin-bottom: 0.5rem;
-}
-
-.gender-stat .icon.male {
-    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-    color: #fff;
-}
-
-.gender-stat .icon.female {
-    background: linear-gradient(135deg, #fd7e14 0%, #ffc107 100%);
-    color: #fff;
-}
-
-.gender-stat .count {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: #212529;
-}
-
-.gender-stat .label {
-    font-size: 0.85rem;
-    color: #6c757d;
-}
-
-/* ===== Recent Students Table ===== */
+/* ===== Recent Card ===== */
 .recent-card {
     background: #fff;
     border-radius: 16px;
@@ -286,119 +221,55 @@
 
 .recent-card .card-header {
     background: transparent;
-    border-bottom: 1px solid rgba(0,0,0,0.05);
     padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid #f0f0f0;
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
 .recent-card .card-header h5 {
-    font-weight: 600;
-    color: #212529;
+    font-weight: 700;
+    color: #2c3e50;
     margin: 0;
 }
 
-.recent-card .card-header h5 i {
-    color: var(--primary-green);
-}
-
-.recent-table {
-    margin-bottom: 0;
-}
-
-.recent-table thead th {
-    background: #f8f9fa;
-    font-weight: 600;
-    font-size: 0.8rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: #6c757d;
-    border-bottom: none;
-    padding: 1rem 1.25rem;
-}
-
-.recent-table tbody td {
-    padding: 1rem 1.25rem;
-    vertical-align: middle;
-    border-color: rgba(0,0,0,0.03);
-}
-
-.recent-table tbody tr {
-    transition: background 0.2s ease;
-}
-
-.recent-table tbody tr:hover {
-    background: rgba(40, 167, 69, 0.03);
-}
-
-.student-badge {
-    display: inline-flex;
-    align-items: center;
-    padding: 0.35rem 0.75rem;
-    border-radius: 20px;
-    font-size: 0.8rem;
-    font-weight: 500;
-}
-
-.student-badge.badge-code {
-    background: #e9ecef;
-    color: #495057;
-}
-
-.student-badge.badge-class {
-    background: #e3f2fd;
-    color: #1976d2;
-}
-
-.student-badge.badge-status {
-    background: #d4edda;
+.recent-card .table thead th {
+    background: #f8fdf9;
     color: #28a745;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.5px;
+    padding: 1rem 1.5rem;
+    border-top: none;
+}
+
+.recent-card .table tbody td {
+    padding: 1rem 1.5rem;
+    vertical-align: middle;
+    color: #4a5568;
+    border-bottom: 1px solid #f7fafc;
 }
 
 /* ===== Quick Actions ===== */
-.quick-actions-card {
+.quick-action-btn {
     background: #fff;
     border-radius: 16px;
-    border: none;
-    box-shadow: var(--card-shadow);
-    height: 100%;
-}
-
-.quick-actions-card .card-header {
-    background: transparent;
-    border-bottom: 1px solid rgba(0,0,0,0.05);
-    padding: 1.25rem 1.5rem;
-}
-
-.quick-actions-card .card-header h5 {
-    font-weight: 600;
-    color: #212529;
-    margin: 0;
-}
-
-.quick-actions-card .card-header h5 i {
-    color: var(--primary-green);
-}
-
-.quick-action-btn {
+    padding: 1.25rem 1rem;
     display: flex;
     align-items: center;
-    width: 100%;
-    padding: 1rem;
-    border: 2px solid transparent;
-    border-radius: 12px;
-    background: #f8f9fa;
-    transition: all 0.3s ease;
     text-decoration: none;
-    color: inherit;
+    transition: all 0.3s ease;
+    border: 1px solid #f0f0f0;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.02);
 }
 
 .quick-action-btn:hover {
-    background: #fff;
-    border-color: var(--primary-green);
-    transform: translateX(5px);
-    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.15);
+    transform: translateX(8px);
+    background: #f8fdf9;
+    border-color: var(--primary-green-light);
+    box-shadow: 0 8px 15px rgba(40, 167, 69, 0.1);
 }
 
 .quick-action-btn .action-icon {
@@ -408,22 +279,23 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.25rem;
-    margin-right: 1rem;
-    transition: transform 0.3s ease;
+    font-size: 1.5rem;
+    margin-right: 1.25rem;
+    transition: all 0.3s ease;
 }
 
 .quick-action-btn:hover .action-icon {
-    transform: scale(1.1);
+    transform: rotate(-10deg);
 }
 
-.quick-action-btn .action-content {
-    flex: 1;
-}
+.quick-action-btn .action-icon.bg-success { background: var(--primary-green-light) !important; color: var(--primary-green) !important; }
+.quick-action-btn .action-icon.bg-info { background: #e0f2ff !important; color: #007bff !important; }
+.quick-action-btn .action-icon.bg-warning { background: #fff8e1 !important; color: #ffc107 !important; }
 
 .quick-action-btn .action-title {
-    font-weight: 600;
-    color: #212529;
+    font-weight: 700;
+    color: #2d3748;
+    display: block;
     margin-bottom: 0.15rem;
 }
 
@@ -442,6 +314,30 @@
     transform: translateX(5px);
     color: var(--primary-green);
 }
+
+/* ===== Topbar Utilities ===== */
+.btn-white {
+    background: #fff;
+    color: #333;
+    transition: all 0.3s ease;
+}
+
+.btn-white:hover {
+    background: #f8f9fa;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
+}
+
+.bg-light-success { background-color: #f1fbf3 !important; }
+.bg-light-info { background-color: #f0f7ff !important; }
+.bg-light-warning { background-color: #fffaf0 !important; }
+.bg-light-primary { background-color: #f0f4ff !important; }
+.bg-light-secondary { background-color: #f8f9fa !important; }
+
+.behavior-card { border-width: 2px !important; border-style: dashed !important; }
+
+.transition-all { transition: all 0.3s ease; }
+.transition-all:hover { transform: translateY(-5px); box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
 
 /* ===== Loading Spinner ===== */
 .loading-wrapper {
@@ -478,17 +374,44 @@
 </style>
 
 <div class="students-dashboard">
+    <!-- Top Filter Bar -->
+    <div class="row mb-3">
+        <div class="col-12 d-flex justify-content-between align-items-center">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="<?= base_url('admin/academic/home') ?>">วิชาการ</a></li>
+                    <li class="breadcrumb-item active">จัดการนักเรียน</li>
+                </ol>
+            </nav>
+            <div class="dropdown">
+                <button class="btn btn-white shadow-sm border-0 dropdown-toggle rounded-pill px-4" type="button" id="yearSelector" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class='bx bx-calendar-event me-2 text-primary'></i>ปีการศึกษา <?= explode('/', get_selected_year())[0] ?>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-3" aria-labelledby="yearSelector">
+                    <li class="dropdown-header">เลือกปีการศึกษา</li>
+                    <?php foreach($school_years as $year): ?>
+                        <li>
+                            <a class="dropdown-item <?= $year->schyear_year == get_selected_year() ? 'active bg-success text-white' : '' ?>" 
+                               href="<?= base_url('Admin/Acade/Registration/Students/ChangeYear/'.$year->schyear_year) ?>">
+                                ปีการศึกษา <?= $year->schyear_year ?>
+                            </a>
+                        </li>
+                    <?php endforeach; ?>
+                </ul>
+            </div>
+        </div>
+    </div>
     <!-- Welcome Banner -->
     <div class="welcome-banner mb-4">
         <div class="content">
             <div class="row align-items-center">
-                <div class="col-md-8">
+                <div class="col-md-9">
                     <h1>
                         <i class="bx bx-book-reader me-2"></i>จัดการข้อมูลนักเรียน
                     </h1>
                     <p>ระบบจัดการข้อมูลนักเรียนในสถานศึกษา สำหรับตรวจสอบ แก้ไข และบริหารจัดการนักเรียนทั้งหมด</p>
                 </div>
-                <div class="col-md-4 text-end d-none d-md-block">
+                <div class="col-md-3 text-end d-none d-md-block">
                     <div class="icon-wrapper">
                         <i class="bx bxs-graduation"></i>
                     </div>
@@ -500,7 +423,7 @@
     <!-- Dashboard Stats -->
     <div class="row g-4 mb-4">
         <!-- Normal Students -->
-        <div class="col-sm-6 col-xl-3">
+        <div class="col-sm-6 col-xl-4">
             <a href="<?=base_url('Admin/Acade/Registration/Students/normal')?>" class="text-decoration-none">
                 <div class="card stat-card card-success h-100">
                     <div class="card-body">
@@ -522,7 +445,7 @@
         </div>
 
         <!-- Absent Students -->
-        <div class="col-sm-6 col-xl-3">
+        <div class="col-sm-6 col-xl-4">
             <a href="<?=base_url('Admin/Acade/Registration/Students/absent_long')?>" class="text-decoration-none">
                 <div class="card stat-card card-danger h-100">
                     <div class="card-body">
@@ -543,30 +466,9 @@
             </a>
         </div>
 
-        <!-- Dismissed Students -->
-        <div class="col-sm-6 col-xl-3">
-            <a href="<?=base_url('Admin/Acade/Registration/Students/dismissed')?>" class="text-decoration-none">
-                <div class="card stat-card card-warning h-100">
-                    <div class="card-body">
-                        <div class="d-flex align-items-start justify-content-between">
-                            <div>
-                                <div class="stat-value text-warning" id="stat-dismissed">--</div>
-                                <div class="stat-label">นักเรียนจำหน่าย</div>
-                                <div class="stat-trend">
-                                    <i class="bx bx-info-circle me-1"></i>พ้นสภาพ
-                                </div>
-                            </div>
-                            <div class="stat-icon-wrapper bg-warning-gradient">
-                                <i class="bx bx-user-minus"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </a>
-        </div>
 
         <!-- All Students -->
-        <div class="col-sm-6 col-xl-3">
+        <div class="col-sm-6 col-xl-4">
             <a href="<?=base_url('Admin/Acade/Registration/Students/studying')?>" class="text-decoration-none">
                 <div class="card stat-card card-primary h-100">
                     <div class="card-body">
@@ -635,15 +537,68 @@
                             </div>
                         </div>
                     </div>
+        </div>
+    </div>
+</div>
+</div>
+    <!-- Quick Actions Horizontal -->
+    <div class="row g-3 mb-4">
+        <!-- Export Students -->
+        <div class="col-lg col-md-4 col-sm-6">
+            <a href="<?= site_url('admin/academic/students/export/all') ?>" class="quick-action-btn h-100">
+                <div class="action-icon rounded-3 me-3" style="width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; background: linear-gradient(135deg, #17a2b8 0%, #20c997 100%);">
+                    <i class="bx bx-export text-white"></i>
                 </div>
-            </div>
+                <div class="action-content">
+                    <div class="action-title mb-0" style="font-weight: 700; color: #2d3748; font-size: 0.9rem;">ส่งออกข้อมูล</div>
+                    <div class="small text-muted" style="font-size: 0.75rem;">Excel Report</div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Student Lifecycle Management -->
+        <div class="col-lg col-md-4 col-sm-6">
+            <a href="<?=base_url('Admin/Acade/Registration/Students/Lifecycle')?>" class="quick-action-btn h-100">
+                <div class="action-icon rounded-3 me-3" style="width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);">
+                    <i class="bx bx-recycle text-white"></i>
+                </div>
+                <div class="action-content">
+                    <div class="action-title mb-0" style="font-weight: 700; color: #2d3748; font-size: 0.9rem;">จัดประเภท</div>
+                    <div class="small text-muted" style="font-size: 0.75rem;">เลื่อนชั้น/จบ</div>
+                </div>
+            </a>
+        </div>
+
+        <!-- View Normal Students -->
+        <div class="col-lg col-md-4 col-sm-6">
+            <a href="<?=base_url('Admin/Acade/Registration/Students/normal')?>" class="quick-action-btn h-100">
+                <div class="action-icon rounded-3 me-3" style="width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; background: linear-gradient(135deg, #6c757d 0%, #adb5bd 100%);">
+                    <i class="bx bx-search-alt text-white"></i>
+                </div>
+                <div class="action-content">
+                    <div class="action-title mb-0" style="font-weight: 700; color: #2d3748; font-size: 0.9rem;">ค้นหานักเรียน</div>
+                    <div class="small text-muted" style="font-size: 0.75rem;">รายชื่อทั้งหมด</div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Adjust Student Numbers -->
+        <div class="col-lg col-md-4 col-sm-6">
+            <a href="<?=base_url('Admin/Acade/Registration/Students/AdjustNumber')?>" class="quick-action-btn h-100">
+                <div class="action-icon rounded-3 me-3" style="width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; background: linear-gradient(135deg, #3f51b5 0%, #2196f3 100%);">
+                    <i class="bx bx-list-ol text-white"></i>
+                </div>
+                <div class="action-content">
+                    <div class="action-title mb-0" style="font-weight: 700; color: #2d3748; font-size: 0.9rem;">ปรับเลขที่</div>
+                    <div class="small text-muted" style="font-size: 0.75rem;">จัดการเลขที่ห้อง</div>
+                </div>
+            </a>
         </div>
     </div>
 
-    <!-- Quick Actions & Recent Students -->
-    <div class="row g-4">
-        <!-- Recent Students Table -->
-        <div class="col-xl-8 col-12">
+    <!-- Recent Students Table Section -->
+    <div class="row">
+        <div class="col-12">
             <div class="card recent-card">
                 <div class="card-header">
                     <h5><i class="bx bx-time-five me-2"></i>นักเรียนที่เพิ่มล่าสุด</h5>
@@ -680,61 +635,46 @@
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- Quick Actions -->
-        <div class="col-xl-4 col-12">
-            <div class="card quick-actions-card">
-                <div class="card-header">
-                    <h5><i class="bx bx-rocket me-2"></i>เมนูลัด</h5>
-                </div>
-                <div class="card-body d-flex flex-column gap-3">
-                    <!-- Add Student -->
-                    <a href="https://docs.google.com/spreadsheets/d/1Je4jmVm3l84xDMAJDqQtdrRB13wWwFl2Fy2b7FvX1Ec/edit?gid=0#gid=0" target="_blank" class="quick-action-btn">
-                        <div class="action-icon" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
-                            <i class="bx bx-user-plus text-white"></i>
+    <!-- Global Search & Direct Edit Section -->
+    <div class="row mt-4 mb-5">
+        <div class="col-12">
+            <div class="card premium-card border-0 shadow-sm" style="background: rgba(108, 117, 125, 0.05); border-left: 5px solid #6c757d !important;">
+                <div class="card-body p-4">
+                    <div class="row align-items-center mb-3">
+                        <div class="col-md-7">
+                            <h5 class="fw-bold mb-1 text-dark"><i class="bx bx-search-alt-2 me-2"></i>🔍 ค้นหาข้อมูลนักเรียนเพื่อแก้ไขรายบุคคล</h5>
+                            <p class="text-muted small mb-0">กรณีต้องการแก้ไขข้อมูลที่อยู่นอกเหนือกราฟสถิติด้านบน หรือต้องการแก้ไขรายบุคคลแบบเร่งด่วน ค้นหาได้ที่นี่</p>
                         </div>
-                        <div class="action-content">
-                            <div class="action-title">เพิ่มข้อมูลนักเรียน</div>
-                            <div class="action-subtitle">Google Sheet</div>
+                        <div class="col-md-5">
+                            <div class="input-group">
+                                <input type="text" id="globalSearchInput" class="form-control border-secondary bg-white" placeholder="พิมพ์ชื่อ-นามสกุล หรือ รหัสประจำตัว...">
+                                <button class="btn btn-secondary" type="button" id="globalSearchBtn">
+                                    <i class="bx bx-search me-1"></i> ค้นหา
+                                </button>
+                            </div>
                         </div>
-                        <i class="bx bx-chevron-right action-arrow"></i>
-                    </a>
+                    </div>
 
-                    <!-- Import Students -->
-                    <a href="<?=base_url('Admin/Acade/Registration/StudentsUpdate')?>" id="importStudentsBtn" class="quick-action-btn">
-                        <div class="action-icon" style="background: linear-gradient(135deg, #6f42c1 0%, #e83e8c 100%);">
-                            <i class="bx bx-import text-white"></i>
+                    <div id="globalSearchResult" class="d-none">
+                        <div class="table-responsive bg-white rounded-3 shadow-sm mt-3 border">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead style="background-color: #f8f9fa;">
+                                    <tr>
+                                        <th class="ps-3 py-3" width="15%">รหัสประจำตัว</th>
+                                        <th width="35%">ชื่อ - นามสกุล</th>
+                                        <th width="15%">ระดับห้องเรียน</th>
+                                        <th width="15%">สถานะ</th>
+                                        <th class="pe-3 text-center" width="20%">จัดการ</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="globalSearchBody">
+                                    <!-- Loaded via AJAX -->
+                                </tbody>
+                            </table>
                         </div>
-                        <div class="action-content">
-                            <div class="action-title">นำเข้าข้อมูลนักเรียน</div>
-                            <div class="action-subtitle">จาก Google Sheet</div>
-                        </div>
-                        <i class="bx bx-chevron-right action-arrow"></i>
-                    </a>
-
-                    <!-- Export Students -->
-                    <a href="<?= site_url('admin/academic/students/export/all') ?>" class="quick-action-btn">
-                        <div class="action-icon" style="background: linear-gradient(135deg, #17a2b8 0%, #20c997 100%);">
-                            <i class="bx bx-export text-white"></i>
-                        </div>
-                        <div class="action-content">
-                            <div class="action-title">ส่งออกข้อมูลทั้งหมด</div>
-                            <div class="action-subtitle">ดาวน์โหลด Excel</div>
-                        </div>
-                        <i class="bx bx-chevron-right action-arrow"></i>
-                    </a>
-
-                    <!-- View Normal Students -->
-                    <a href="<?=base_url('Admin/Acade/Registration/Students/normal')?>" class="quick-action-btn">
-                        <div class="action-icon" style="background: linear-gradient(135deg, #6c757d 0%, #adb5bd 100%);">
-                            <i class="bx bx-search-alt text-white"></i>
-                        </div>
-                        <div class="action-content">
-                            <div class="action-title">ค้นหานักเรียน</div>
-                            <div class="action-subtitle">รายชื่อนักเรียนปกติ</div>
-                        </div>
-                        <i class="bx bx-chevron-right action-arrow"></i>
-                    </a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -939,6 +879,90 @@ document.addEventListener("DOMContentLoaded", function() {
             window.location.href = updateUrl;
         });
     }
+
+    // --- Global Search Logic for Dashboard ---
+    const globalSearchBtn = document.getElementById('globalSearchBtn');
+    const globalSearchInput = document.getElementById('globalSearchInput');
+    const globalSearchResult = document.getElementById('globalSearchResult');
+    const globalSearchBody = document.getElementById('globalSearchBody');
+
+    if (globalSearchBtn) {
+        globalSearchBtn.addEventListener('click', performGlobalSearch);
+        globalSearchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') performGlobalSearch();
+        });
+    }
+
+    function performGlobalSearch() {
+        const query = globalSearchInput.value.trim();
+        if (query.length < 2) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'โปรดระบุคำค้นหา',
+                text: 'กรุณาพิมพ์อย่างน้อย 2 ตัวอักษร',
+                timer: 2000,
+                showConfirmButton: false
+            });
+            return;
+        }
+
+        Swal.fire({
+            title: 'กำลังค้นหา...',
+            allowOutsideClick: false,
+            didOpen: () => { Swal.showLoading(); }
+        });
+
+        // Use FormData for POST
+        const formData = new FormData();
+        formData.append('search', query);
+
+        // เปลี่ยนมาใช้ $.post เพื่อให้ใช้งานร่วมกับ Global CSRF Setup ได้ครับ 💎
+        $.post("<?= base_url('Admin/Acade/Registration/Students/AdjustNumberGlobalSearch') ?>", { search: query })
+        .done(function(data) {
+            globalSearchBody.innerHTML = '';
+            
+            // ตรวจสอบว่า data เป็น Array หรือไม่ป้องกัน Error .forEach
+            if (!Array.isArray(data) || data.length === 0) {
+                globalSearchBody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-muted">ไม่พบข้อมูลนักเรียนที่ค้นหา</td></tr>';
+            } else {
+                data.forEach(s => {
+                    const statusClass = (s.StudentStatus && s.StudentStatus.includes('ปกติ')) ? 'bg-label-success' : 'bg-label-danger';
+                    const editUrl = "<?= base_url('Admin/Acade/Registration/Students/Edit') ?>/" + s.StudentID;
+                    
+                    globalSearchBody.innerHTML += `
+                        <tr>
+                            <td class="ps-3"><span class="fw-bold text-primary font-monospace">${s.StudentCode || ''}</span></td>
+                            <td><span class="fw-medium">${s.StudentPrefix || ''}${s.StudentFirstName || ''} ${s.StudentLastName || ''}</span></td>
+                            <td><span class="badge bg-label-info">${s.StudentClass || 'N/A'}</span></td>
+                            <td><span class="badge ${statusClass}">${s.StudentStatus || '-'}</span></td>
+                            <td class="pe-3 text-center">
+                                <button type="button" class="btn btn-sm btn-icon btn-outline-secondary edit-student" data-id="${s.StudentID}">
+                                    <i class="bx bx-edit-alt"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
+            
+            globalSearchResult.classList.remove('d-none');
+            Swal.close();
+
+            // Scroll down to see results
+            globalSearchResult.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        })
+        .fail(function(xhr, status, error) {
+            console.error('Error:', error);
+            Swal.fire('ผิดพลาด', 'ไม่สามารถค้นหาข้อมูลได้: ' + (xhr.responseJSON ? xhr.responseJSON.message : error), 'error');
+        });
+    }
+
+    // เพิ่มตัวดักฟังสำหรับปุ่มแก้ไขในผลการค้นหา (เพราะมันโหลดมาใหม่แบบ Dynamic)
+    $(document).on('click', '.edit-student', function() {
+        const studentId = $(this).data('id');
+        // เรียกใช้ Modal แก้ไขตัวเดียวกับที่หน้าหลักใช้ครับ (ถ้ามี)
+        window.location.href = "<?= base_url('Admin/Acade/Registration/Students/normal') ?>?edit=" + studentId;
+    });
 });
 </script>
 <?= $this->endSection() ?>

@@ -72,4 +72,13 @@ class Paths
      * is used when no value is provided to `Services::renderer()`.
      */
     public string $viewDirectory = __DIR__ . '/../Views';
+
+    /**
+     * ---------------------------------------------------------------
+     * COMPOSER DIRECTORY NAME
+     * ---------------------------------------------------------------
+     *
+     * This variable must contain the name of your "vendor" directory.
+     */
+    public string $composerDirectory = __DIR__ . '/../../vendor';
 }

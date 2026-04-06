@@ -1,7 +1,7 @@
 <?= $this->extend('admin/layout/main') ?>
 
 <?= $this->section('content') ?>
-<input type="hidden" id="KeyStatus" value="<?= esc(service('request')->uri->getSegment(5) ?? '') ?>">
+<input type="hidden" id="KeyStatus" value="<?= esc(service('request')->getUri()->getSegment(5) ?? '') ?>">
 
 <style>
 /* ===== Custom CSS Variables - Green Theme ===== */
@@ -676,6 +676,9 @@ function updateFloatingLabels() {
     }, 50);
 }
 
+    // Handle floating labels for typeahead inputs globally
+    $(document).on('keyup change typeahead:change typeahead:select', '.twitter-typeahead .tt-input', updateFloatingLabels);
+
 // Helper functions for status badges
 function getStatusBadge(status) {
     if (status && status.includes('ปกติ')) {
@@ -853,7 +856,7 @@ $(document).ready(function() {
 
                 // Initialize Thailand Address Autocomplete
                 $.Thailand({
-                    database: 'https://earthchie.github.io/jquery.Thailand.js/jquery.Thailand.js/database/db.json',
+                    database: '<?= base_url('assets/database/db.json') ?>',
                     $district: $('#stu_hTambon'),
                     $amphoe: $('#stu_hDistrict'),
                     $province: $('#stu_hProvince'),
@@ -862,16 +865,23 @@ $(document).ready(function() {
 
                 // Current Address
                 $.Thailand({
-                    database: 'https://earthchie.github.io/jquery.Thailand.js/jquery.Thailand.js/database/db.json',
+                    database: '<?= base_url('assets/database/db.json') ?>',
                     $district: $('#stu_cTumbao'),
                     $amphoe: $('#stu_cDistrict'),
                     $province: $('#stu_cProvince'),
                     $zipcode: $('#stu_cPostcode'),
                 });
 
+                // School Address
+                $.Thailand({
+                    database: '<?= base_url('assets/database/db.json') ?>',
+                    $district: $('#stu_schoolTambao'),
+                    $amphoe: $('#stu_schoolDistrict'),
+                    $province: $('#stu_schoolProvince'),
+                });
+
                 // Fix floating labels
                 updateFloatingLabels();
-                $('#studentDetailContent').on('keyup change typeahead:change typeahead:select', '.twitter-typeahead .tt-input', updateFloatingLabels);
             },
             error: function(xhr, status, error) {
                 $('#studentDetailContent').html(`
@@ -938,13 +948,16 @@ $(document).ready(function() {
     $(document).on('click', '.delete-student', function() {
         const studentId = $(this).data('id');
         Swal.fire({
-            title: 'ยืนยันการลบ',
-            text: "คุณต้องการลบข้อมูลนักเรียนนี้หรือไม่?",
+            title: 'ยืนยันการลบนักเรียน?',
+            html: `คุณแน่ใจว่าต้องการลบข้อมูลนักเรียนนี้หรือไม่?<br><br>
+                   <div class="alert alert-danger px-1 py-1" role="alert" style="font-size: 0.9rem;">
+                     <i class="bx bx-error-circle me-1"></i> <strong>คำเตือน:</strong> ข้อมูลทางวิชาการและประวัตินักเรียนทั้งหมดจะถูกลบออกจากฐานข้อมูลและไม่สามารถกู้คืนได้
+                   </div>`,
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#dc3545',
             cancelButtonColor: '#6c757d',
-            confirmButtonText: '<i class="bx bx-trash me-1"></i>ใช่, ลบเลย!',
+            confirmButtonText: '<i class="bx bx-trash me-1"></i>ใช่, ลบข้อมูลทั้งหมด!',
             cancelButtonText: '<i class="bx bx-x me-1"></i>ยกเลิก'
         }).then((result) => {
             if (result.isConfirmed) {

@@ -3,6 +3,9 @@
 namespace App\Controllers\User;
 
 use App\Controllers\BaseController;
+use Mpdf\Mpdf;
+use Mpdf\Config\ConfigVariables;
+use Mpdf\Config\FontVariables;
 
 class ConStudents extends BaseController
 {
@@ -95,10 +98,16 @@ class ConStudents extends BaseController
 
     public function StudentsPrintRoom($Class,$Room,$StudyLine = 0){
    
-        $path = dirname(dirname(dirname(dirname(dirname(dirname(__FILE__))))));
-		require $path . '/librarie_skj/mpdf/vendor/autoload.php';
+        // Use composer-installed mPDF
 
-        $live_mpdf = new \Mpdf\Mpdf(
+
+        $defaultConfig = (new ConfigVariables())->getDefaults();
+        $fontDirs = $defaultConfig['fontDir'];
+
+        $defaultFontConfig = (new FontVariables())->getDefaults();
+        $fontData = $defaultFontConfig['fontdata'];
+
+        $live_mpdf = new Mpdf(
             array(
                 'format' => 'A4',
                 'mode' => 'utf-8',
@@ -107,7 +116,19 @@ class ConStudents extends BaseController
                 'margin_top' => 5,
 	            'margin_left' => 5,
 	            'margin_right' => 5,
-	            'mirrorMargins' => 0
+	            'mirrorMargins' => 0,
+                'tempDir' => WRITEPATH . 'mpdf',
+                'fontDir' => array_merge($fontDirs, [FCPATH . 'assets/fonts']),
+                'fontdata' => $fontData + [
+                    'thsarabun' => [
+                        'R' => 'THSarabunNew.ttf',
+                        'B' => 'THSarabunNew Bold.ttf',
+                        'I' => 'THSarabunNew Italic.ttf',
+                        'BI' => 'THSarabunNew BoldItalic.ttf'
+                    ]
+                ],
+                'autoScriptToLang' => true,
+                'autoLangToFont' => true,
             )
         );
 

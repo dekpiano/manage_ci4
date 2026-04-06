@@ -34,7 +34,7 @@ class Database extends Config
         'database'     => 'skjacth_academic',
         'DBDriver'     => 'MySQLi',
         'DBPrefix'     => '',
-        'pConnect'     => false,
+        'pConnect'     => true,
         'DBDebug'      => true,
         'charset'      => 'utf8',
         'DBCollat'     => 'utf8_general_ci',
@@ -59,7 +59,7 @@ class Database extends Config
         'database'     => 'skjacth_personnel',
         'DBDriver'     => 'MySQLi',
         'DBPrefix'     => '',
-        'pConnect'     => false,
+        'pConnect'     => true,
         'DBDebug'      => true,
         'charset'      => 'utf8',
         'DBCollat'     => 'utf8_general_ci',
@@ -84,7 +84,7 @@ class Database extends Config
         'database'     => 'skjacth_skj',
         'DBDriver'     => 'MySQLi',
         'DBPrefix'     => '',
-        'pConnect'     => false,
+        'pConnect'     => true,
         'DBDebug'      => true,
         'charset'      => 'utf8',
         'DBCollat'     => 'utf8_general_ci',
@@ -105,11 +105,11 @@ class Database extends Config
         'DSN'          => '',
         'hostname'     => 'localhost',
         'username'     => "root",
-        'password'     => "",
+        'password'     => "rootpassword",
         'database'     => 'skjacth_affairs',
         'DBDriver'     => 'MySQLi',
         'DBPrefix'     => '',
-        'pConnect'     => false,
+        'pConnect'     => true,
         'DBDebug'      => (ENVIRONMENT !== 'production'),
         'charset'      => 'utf8',
         'DBCollat'     => 'utf8_general_ci',
@@ -131,11 +131,11 @@ class Database extends Config
         'DSN'          => '',
         'hostname'     => 'localhost',
         'username'     => "root",
-        'password'     => "",
+        'password'     => "rootpassword",
         'database'     => 'skjacth_general',
         'DBDriver'     => 'MySQLi',
         'DBPrefix'     => '',
-        'pConnect'     => false,
+        'pConnect'     => true,
         'DBDebug'      => (ENVIRONMENT !== 'production'),
         'charset'      => 'utf8',
         'DBCollat'     => 'utf8_general_ci',
@@ -157,11 +157,11 @@ class Database extends Config
         'DSN'          => '',
         'hostname'     => 'localhost',
         'username'     => "root",
-        'password'     => "",
+        'password'     => "rootpassword",
         'database'     => 'skjacth_admission',
         'DBDriver'     => 'MySQLi',
         'DBPrefix'     => '',
-        'pConnect'     => false,
+        'pConnect'     => true,
         'DBDebug'      => (ENVIRONMENT !== 'production'),
         'charset'      => 'utf8',
         'DBCollat'     => 'utf8_general_ci',
@@ -206,43 +206,41 @@ class Database extends Config
     {
         parent::__construct();
 
-        // Get database host from environment (for Docker: host.docker.internal)
-        $dbHost = getenv('DB_HOST') ?: 'localhost';
+        // Get database settings from environment (DB_HOST, DB_USERNAME, DB_PASSWORD from Docker)
+        $dbHost = getenv('DB_HOST') ?: $this->default['hostname'];
+        $dbUser = getenv('DB_USERNAME') ?: $this->default['username'];
+        $dbPass = (getenv('DB_PASSWORD') !== false) ? getenv('DB_PASSWORD') : $this->default['password'];
         
-        // Apply hostname to all database connections
+        // Apply to default connection
         $this->default['hostname'] = $dbHost;
-        $this->personnel['hostname'] = $dbHost;
-        $this->skj['hostname'] = $dbHost;
-        $this->affairs['hostname'] = $dbHost;
-        $this->general['hostname'] = $dbHost;
-        $this->admission['hostname'] = $dbHost;
-
-        // Get username/password from environment (Docker vars)
-        $dbUser = getenv('DB_USERNAME') ?: 'root';
-        $dbPass = getenv('DB_PASSWORD') ?: '';
-
-        // Apply credentials to all database connections
         $this->default['username'] = $dbUser;
         $this->default['password'] = $dbPass;
 
+        // Apply to personnel connection
+        $this->personnel['hostname'] = $dbHost;
         $this->personnel['username'] = $dbUser;
         $this->personnel['password'] = $dbPass;
 
+        // Apply to skj connection
+        $this->skj['hostname'] = $dbHost;
         $this->skj['username'] = $dbUser;
         $this->skj['password'] = $dbPass;
 
+        // Apply to other connections
+        $this->affairs['hostname'] = $dbHost;
         $this->affairs['username'] = $dbUser;
         $this->affairs['password'] = $dbPass;
 
+        $this->general['hostname'] = $dbHost;
         $this->general['username'] = $dbUser;
         $this->general['password'] = $dbPass;
 
+        $this->admission['hostname'] = $dbHost;
         $this->admission['username'] = $dbUser;
         $this->admission['password'] = $dbPass;
 
         // Ensure that we always set the database group to 'tests' if
-        // we are currently running an automated test suite, so that
-        // we don't overwrite live data on accident.
+        // we are currently running an automated test suite.
         if (ENVIRONMENT === 'testing') {
             $this->defaultGroup = 'tests';
         }

@@ -3,12 +3,13 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: academic2025_app # Renamed to avoid conflict with existing skj2025_app
+    container_name: academic2025_app
     ports:
       - "8082:443"
     volumes:
       - .:/var/www/html:delegated
       - /var/www/html/writable
+      - vendor_data:/var/www/html/vendor
       - D:/librarie_skj:/home/skjacth/domains/skj.ac.th/public_html/librarie_skj:cached
     environment:
       # Database connection settings for CodeIgniter
@@ -22,3 +23,6 @@ services:
 networks:
   skj2025_default:
     external: true
+
+volumes:
+  vendor_data:

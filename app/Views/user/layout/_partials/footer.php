@@ -11,7 +11,7 @@
                                     <a href="" target="_blank" class="footer-link">Dekpiano</a>
                                 </div>
                                 <div>
-                                    <a href="<?=base_url('LoginMenager')?>" class="me-4 btn btn-primary">สำหรับเจ้าหน้าที่</a>
+                                    <a href="<?=base_url('Auth/login')?>" class="me-4 btn btn-primary">สำหรับเจ้าหน้าที่</a>
                                 </div>
                             </div>
                         </div>

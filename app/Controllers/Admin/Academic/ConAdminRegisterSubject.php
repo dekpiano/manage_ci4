@@ -84,7 +84,6 @@ class ConAdminRegisterSubject extends BaseController
 
     public function AdminRegisterSubjectSelect(){ 
       
-        $CheckYear = $this->db->table('tb_schoolyear')->get()->getRow();
         $data = [];
         $keyYear = $this->request->getPost('keyYear');
         $subject = [];
@@ -92,8 +91,11 @@ class ConAdminRegisterSubject extends BaseController
         if(!empty($keyYear)){
             $subject = $this->db->table('tb_subjects')->where('SubjectYear',$keyYear)->get()->getResult();
         }else{
-            $subject = $this->db->table('tb_subjects')->where('SubjectYear',!empty($CheckYear->schyear_year) ? $CheckYear->schyear_year : null)->get()->getResult();
+            // ใช้ปีการศึกษาจากระบบกลาง
+            $currentYear = get_selected_year();
+            $subject = $this->db->table('tb_subjects')->where('SubjectYear', !empty($currentYear) ? $currentYear : null)->get()->getResult();
         }
+
        
         foreach($subject as $record){
             $data[] = array( 
@@ -174,6 +176,8 @@ class ConAdminRegisterSubject extends BaseController
         //$this->update_data_with_foreach(); exit();
        
         $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
+        // ใช้ปีการศึกษาจากระบบกลาง (session หรือ tb_schoolyear)
+        $data['selectedYear'] = get_selected_year();
         $data['title'] = "วิชาเรียน";	
         $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();
         $data['classroom'] = new \App\Libraries\Classroom();

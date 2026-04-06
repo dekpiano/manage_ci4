@@ -514,7 +514,10 @@ $(document).on("change", "#Room", function() {
         showConfirmButton: false
     });
 
-    $.post("<?= site_url('Admin/Academic/ConAdminEnroll/AdminEnrollSelect') ?>", { KeyRoom: val }, function(data, status) {
+    $.post("<?= site_url('Admin/Academic/ConAdminEnroll/AdminEnrollSelect') ?>", { 
+        KeyRoom: val,
+        "<?= csrf_token() ?>": "<?= csrf_hash() ?>"
+    }, function(data, status) {
         Swal.close();
         $.each(data, function(index, value) {
             var studyLine = value.StudentStudyLine ? '[' + value.StudentStudyLine + '] ' : '';

@@ -22,6 +22,10 @@ class ModAdminStudents extends Model
         'StudentDateEntrance',
         'StudentStatus',
         'StudentBehavior',
+        'StudentDateApprove',
+        'StudentDateFinish',
+        'StudentLeave',
+        'YearFinish',
         'StudentStudyLine',
         'StudentSchoolYear',
     ]; // Fields that can be mass-assigned

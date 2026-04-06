@@ -38,10 +38,14 @@ class ConAdminCheckPlan extends BaseController
         if (!empty($yearTerm)) {
             list($year, $term) = explode('/', $yearTerm);
         } else {
-            // Use the latest year/term as default if not selected
-            $latestYearTerm = $data['year_terms'][0] ?? null;
-            $year = $latestYearTerm ? $latestYearTerm->seplan_year : date('Y') + 543;
-            $term = $latestYearTerm ? $latestYearTerm->seplan_term : '1';
+            // Use the system's selected year from helper as default
+            $selectedYearStr = get_selected_year(); // e.g. "1/2568"
+            if (strpos($selectedYearStr, '/') !== false) {
+                list($term, $year) = explode('/', $selectedYearStr);
+            } else {
+                $year = $selectedYearStr ?: date('Y') + 543;
+                $term = '1';
+            }
         }
 
         $data['selected_year_term'] = $year . '/' . $term;
@@ -120,10 +124,16 @@ class ConAdminCheckPlan extends BaseController
         $data['groups'] = $this->ModAdminCheckPlan->getLearningGroups();
         $data['year_terms'] = $this->ModAdminCheckPlan->getYearsTerms();
 
-        // Default Selection
-        $latest = $data['year_terms'][0] ?? null;
-        $data['sel_year'] = $this->request->getGet('year') ?? ($latest->seplan_year ?? date('Y')+543);
-        $data['sel_term'] = $this->request->getGet('term') ?? ($latest->seplan_term ?? 1);
+        // Default Selection from Helper
+        $selectedYearStr = get_selected_year();
+        $defaultTerm = '1';
+        $defaultYear = date('Y') + 543;
+        if (strpos($selectedYearStr, '/') !== false) {
+            list($defaultTerm, $defaultYear) = explode('/', $selectedYearStr);
+        }
+
+        $data['sel_year'] = $this->request->getGet('year') ?? $defaultYear;
+        $data['sel_term'] = $this->request->getGet('term') ?? $defaultTerm;
         $data['sel_group'] = $this->request->getGet('group') ?? ''; // Empty means none selected or 'all'
         $data['sel_type'] = $this->request->getGet('type') ?? '';
 

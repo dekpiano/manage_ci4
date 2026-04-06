@@ -36,7 +36,7 @@
         href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
     
     <!-- Jquery Thailand CSS -->
-    <link rel="stylesheet" type="text/css" href="https://earthchie.github.io/jquery.Thailand.js/jquery.Thailand.js/dist/jquery.Thailand.min.css">
+    <link rel="stylesheet" href="https://earthchie.github.io/jquery.Thailand.js/jquery.Thailand.js/dist/jquery.Thailand.min.css">
     <?= $this->renderSection('extra_css') ?>
     <!-- SweetAlert2 CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
@@ -180,9 +180,9 @@ $.extend(true, $.fn.dataTable.defaults, {
     <script async defer src="https://buttons.github.io/buttons.js"></script>
 
     <!-- Jquery Thailand JS -->
-     <script type="text/javascript" src="https://earthchie.github.io/jquery.Thailand.js/jquery.Thailand.js/dependencies/JQL.min.js"></script>
-<script type="text/javascript" src="https://earthchie.github.io/jquery.Thailand.js/jquery.Thailand.js/dependencies/typeahead.bundle.js"></script>  
-    <script type="text/javascript" src="https://earthchie.github.io/jquery.Thailand.js/jquery.Thailand.js/dist/jquery.Thailand.min.js"></script>
+    <script src="https://earthchie.github.io/jquery.Thailand.js/jquery.Thailand.js/dependencies/JQL.min.js"></script>
+    <script src="https://earthchie.github.io/jquery.Thailand.js/jquery.Thailand.js/dependencies/typeahead.bundle.js"></script>
+    <script src="https://earthchie.github.io/jquery.Thailand.js/jquery.Thailand.js/dist/jquery.Thailand.min.js"></script>
 
 
 <script>
@@ -242,12 +242,26 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
             window.location.href = '<?= base_url('LogoutTeacher') ?>';
         });
     }
-    // The previous check for responseText.includes('<title>Login Admin</title>') is now redundant
-    // because the backend will send a 401 status for AJAX requests.
-    // However, if there are other scenarios where the backend might still redirect to login
-    // without a 401 (e.g., non-AJAX requests that are then handled by AJAX),
-    // you might keep it as a fallback, but it's generally better to standardize on 401.
 });
+
+    /**
+     * Global CSRF Auto-Injection for HTML Forms
+     * Automatically adds CSRF hidden field to all POST forms that don't have one
+     */
+    $(document).on('submit', 'form[method="post"]', function() {
+        if ($(this).find('input[name="<?= csrf_token() ?>"]').length === 0) {
+            $(this).prepend('<?= csrf_field() ?>');
+        }
+    });
+
+    /**
+     * Global AJAX Setup for CSRF Protection
+     */
+    $.ajaxSetup({
+        headers: {
+            '<?= config('Security')->headerName ?>': '<?= csrf_hash() ?>'
+        }
+    });
 
 /**
  * Global Year Selection Handler
@@ -256,7 +270,10 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
 $(document).on('change', '#onoff_year, [name="keyYear"], #CheckYearMain, #selectYear, #schyear_year_sidebar', function() {
     var selectedYear = $(this).val();
     if (selectedYear) {
-        $.post("<?= site_url('Admin/SetSelectedYear') ?>", { year: selectedYear }, function() {
+        $.post("<?= site_url('Admin/SetSelectedYear') ?>", { 
+            year: selectedYear,
+            "<?= csrf_token() ?>": "<?= csrf_hash() ?>"
+        }, function() {
             location.reload();
         });
     }

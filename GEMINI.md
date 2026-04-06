@@ -1,4 +1,5 @@
 ## Gemini Added Memories
+- **Rule:** การแสดงผล "วันที่" บนหน้าเว็บทั้งหมด (View) ให้แสดงเป็นปี **"พ.ศ."** เสมอครับ 📅✨
 - Database `skjacth_personnel` is for school personnel/teachers. The table name is `tb_personnel`. Columns are: `pers_id`, `login_oauth_uid`, `updated_at`, `pers_prefix`, `pers_firstname`, `pers_lastname`, `pers_id_card`, `pers_nickname`, `ชื่อเล่น`, `pers_britday`, `pers_address`, `pers_phone`, `pers_nationality`, `สัญชาติ`, `pers_race`, `เชื้อชาติ`, `pers_religion`, `ศาสนา`, `pers_marital_status`, `สถานภาพสมรส`, `pers_blood_type`, `pers_department`, `pers_position`, `pers_groupleade`, `pers_numberGroup`, `pers_learning`, `pers_workother_id`, `pers_academic`, `pers_facebook`, `pers_instagram`, `pers_youtube`, `pers_line`, `pers_twitter`, `pers_username`, `pers_password`, `pers_changepassword`, `pers_status`, `pers_img`, `pers_dataUpdate`, `pers_userEdit`.
 - Table tb_register has columns: StudentID, รหัสนักเรียน17หลัก, SubjectID, รหัสวิชา, Score100, คะแนนเต็ม100, Grade, ผลการเรียน, RegisterYear, ภาคเรียน/ปีการศึกษา, RegisterClass, TeacherID, StudyTime, Grade_Type, RepeatStatus, RepeatYear, RepeatTeacher, RepeatConfirm, Grade_UpdateTime.
 - Table tb_subjects has columns: SubjectID, SubjectCode, รหัสวิชา, SubjectName, ชื่อวิชา, SubjectUnit, หน่วยกิต, SubjectHour, จำนวนชั่วโมง, SubjectType, ประเภทวิชา พื้นฐาน/เพิ่มเติม, FirstGroup, สาระหลัก, SecondGroup, สาระย่อย, SubjectClass, ชั้นปีที่เปิดสอน, SubjectYear, ปีการศึกษา.
@@ -28,6 +29,7 @@
 - When making changes, always prioritize preserving the user's manual modifications. Do not overwrite any code that the user has explicitly stated they have fixed or adjusted.
 - The correct layout to extend in teacher views is 'admin/layout/main'.
 - Table `tb_learning` is located in the `skjacth_skj` database, accessed via the `skj` database group in CodeIgniter.
+- **Rule (Design Theme):** ใช้โทนสีเขียว **`#15a362`** เป็นสีหลัก (Primary/Success) ของเว็บเสมอครับ 🟢✨
 ---
 
 # 🌟 GEMINI.MD: PROJECT CONTEXT & DESIGN STANDARD
@@ -143,6 +145,8 @@
         - Added route `/admin/academic/checkplan/teacherplans/(:segment)` and fixed `(:num)` to `(:segment)`.
         - Modified `ChekPresGroup.php` to include a table in the modal for displaying teacher's plans via AJAX.
         - Corrected column `seplan_subject_code` to `seplan_coursecode` in model and view (JavaScript).
+        - Created `DEVELOPMENT_LOG.md` to track project history and modifications as a memory for the user and AI.
+        - Created `DEVELOPMENT_LOG.md` to track project history and implementations.
     </recent_actions>
 
     <current_plan>
@@ -150,6 +154,7 @@
         2. [DONE] Rename view file `index.php` to `ChekPresGroup.php` and update controller.
         3. [DONE] Modify the main view to display teachers grouped by learning groups.
         4. [DONE] Implement functionality for "ตรวจสอบแผน" button to open a modal displaying a table of all plans for that specific teacher.
-        5. [TODO] Implement the "ดูรายละเอียด" button within the teacher's plan table to show detailed information for an individual plan (e.g., in a separate modal).
+        5. [DONE] Create `DEVELOPMENT_LOG.md` and record implementation history.
+        6. [TODO] Implement the "ดูรายละเอียด" button within the teacher's plan table to show detailed information for an individual plan (e.g., in a separate modal).
     </current_plan>
 </state_snapshot>

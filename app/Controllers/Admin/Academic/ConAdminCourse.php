@@ -55,12 +55,20 @@ class ConAdminCourse extends BaseController
         $data['CheckYear'] = $this->db->table('tb_send_plan_setup')->get()->getResult();
 
         if ($this->request->getGet('onoff_year')) {
+            // ผู้ใช้เลือกปีการศึกษาเองจาก Dropdown
             $SubYear = explode('/', $this->request->getGet('onoff_year'));
             $data['year'] = $SubYear[1];
             $data['term'] = $SubYear[0];
         } else {
-            $data['year'] = ! empty($data['CheckYear'][0]->seplanset_year) ? $data['CheckYear'][0]->seplanset_year : null;
-            $data['term'] = ! empty($data['CheckYear'][0]->seplanset_term) ? $data['CheckYear'][0]->seplanset_term : null;
+            // ใช้ปีการศึกษาหลักของระบบ (admin_selected_year session)
+            $selectedYearStr = get_selected_year(); // e.g. "1/2568"
+            if (strpos($selectedYearStr, '/') !== false) {
+                list($data['term'], $data['year']) = explode('/', $selectedYearStr);
+            } else {
+                // fallback ไป tb_send_plan_setup ถ้า session ยังว่าง
+                $data['year'] = ! empty($data['CheckYear'][0]->seplanset_year) ? $data['CheckYear'][0]->seplanset_year : null;
+                $data['term'] = ! empty($data['CheckYear'][0]->seplanset_term) ? $data['CheckYear'][0]->seplanset_term : null;
+            }
         }
 
         $data['Subject'] = $this->db->table('tb_subjects')
@@ -333,20 +341,25 @@ class ConAdminCourse extends BaseController
         $year = null;
 
         if (empty($termYear) || strpos($termYear, '/') === false) {
-            // If not provided, get default from setup table
-            $checkYear = $this->db->table('tb_send_plan_setup')->get()->getRow();
-            if ($checkYear) {
-                $year = $checkYear->seplanset_year;
-                $term = $checkYear->seplanset_term;
+            // ใช้ปีการศึกษาหลักของระบบ (admin_selected_year session)
+            $selectedYearStr = get_selected_year();
+            if (strpos($selectedYearStr, '/') !== false) {
+                list($term, $year) = explode('/', $selectedYearStr);
             } else {
-                // No default is set, so return empty
-                $response = [
-                    'draw' => intval($draw),
-                    'recordsTotal' => 0,
-                    'recordsFiltered' => 0,
-                    'data' => [],
-                ];
-                return $this->response->setJSON($response);
+                // fallback สุดท้ายไปดู tb_send_plan_setup
+                $checkYear = $this->db->table('tb_send_plan_setup')->get()->getRow();
+                if ($checkYear) {
+                    $year = $checkYear->seplanset_year;
+                    $term = $checkYear->seplanset_term;
+                } else {
+                    $response = [
+                        'draw' => intval($draw),
+                        'recordsTotal' => 0,
+                        'recordsFiltered' => 0,
+                        'data' => [],
+                    ];
+                    return $this->response->setJSON($response);
+                }
             }
         } else {
             list($term, $year) = explode('/', $termYear);

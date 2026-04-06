@@ -280,7 +280,7 @@
                     </div>
                 </div>
                 <div class="col-md-4 text-end d-none d-md-block">
-                    <a class="btn-add-new" href="<?= site_url('Admin/Acade/Registration/Enroll/Add/'). (isset($SchoolYear->schyear_year) ? $SchoolYear->schyear_year : '') ?>">
+                    <a class="btn-add-new" href="<?= site_url('Admin/Acade/Registration/Enroll/Add/'). (isset($selectedYear) ? $selectedYear : '') ?>">
                         <i class="bx bx-plus-circle"></i>ลงทะเบียนเรียน
                     </a>
                 </div>
@@ -436,7 +436,10 @@ function updateDashboardStats(year) {
     $.ajax({
         url: "<?= site_url('Admin/Academic/ConAdminEnroll/getDashboardStats') ?>",
         type: "POST",
-        data: { year: year },
+        data: { 
+            year: year,
+            "<?= csrf_token() ?>": "<?= csrf_hash() ?>"
+        },
         dataType: "json",
         beforeSend: function() {
             $('.stat-value').html('<i class="bx bx-loader-alt bx-spin"></i>');
@@ -477,7 +480,10 @@ function TB_ErollSubject(Year) {
         "ajax": {
             url: "<?= site_url('Admin/Academic/ConAdminEnroll/AdminEnrollSubject') ?>",
             "type": "POST",
-            data: { "keyYear": Year }
+            data: { 
+                "keyYear": Year,
+                "<?= csrf_token() ?>": "<?= csrf_hash() ?>"
+            }
         },
         "language": {
             "processing": '<div class="py-3"><div class="spinner-border text-success"></div><span class="ms-2">กำลังโหลด...</span></div>',
@@ -557,7 +563,8 @@ $(document).on("click", ".ShowEnroll", function() {
     $.post("<?= site_url('admin/academic/ConAdminEnroll/AdminEnrollShow') ?>", {
         subid: subId,
         teachid: teachId,
-        yearid: yearId
+        yearid: yearId,
+        "<?= csrf_token() ?>": "<?= csrf_hash() ?>"
     }, function(data, status) {
         if (data && data.length > 0) {
             const subjectName = data[0].SubjectName;
@@ -680,7 +687,8 @@ $(document).on("click", ".CancelEnroll", function() {
                 type: 'POST',
                 data: {
                     KeyTeacher: keyTeacher,
-                    KeySubject: keySubject
+                    KeySubject: keySubject,
+                    "<?= csrf_token() ?>": "<?= csrf_hash() ?>"
                 },
                 beforeSend: function() {
                     Swal.fire({

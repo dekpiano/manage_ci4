@@ -168,6 +168,7 @@
     $s2 = $totalSegments >= 2 ? $uri->getSegment(2) : '';
     $s3 = $totalSegments >= 3 ? $uri->getSegment(3) : '';
     $s4 = $totalSegments >= 4 ? $uri->getSegment(4) : '';
+    $s5 = $totalSegments >= 5 ? $uri->getSegment(5) : '';
     ?>
     <ul class="menu-inner py-1">
         <!-- Dashboard -->
@@ -207,11 +208,38 @@
                 </li>
             </ul>
         </li>
-        <li class="menu-item <?= ($totalSegments >= 4 && $s4 == 'Students' ? 'active' : '') ?>">
-            <a href="<?=base_url('Admin/Acade/Registration/Students');?>" class="menu-link">
+        <li class="menu-item <?= ($totalSegments >= 4 && $s4 == 'Students' ? 'active open' : '') ?>">
+            <a href="javascript:void(0);" class="menu-link menu-toggle">
                 <i class="menu-icon tf-icons bx bx-user-pin"></i>
                 <div data-i18n="จัดการนักเรียน">จัดการนักเรียน</div>
             </a>
+            <ul class="menu-sub">
+                <li class="menu-item <?= ($s4 == 'Students' && $s5 == '' ? 'active' : '') ?>">
+                    <a href="<?=base_url('Admin/Acade/Registration/Students');?>" class="menu-link">
+                        <div data-i18n="ภาพรวมจัดการนักเรียน">ภาพรวมจัดการนักเรียน</div>
+                    </a>
+                </li>
+                <li class="menu-item <?= ($s4 == 'Students' && $s5 == 'Add' ? 'active' : '') ?>">
+                    <a href="<?=base_url('Admin/Acade/Registration/Students/Add');?>" class="menu-link">
+                        <div data-i18n="เพิ่มนักเรียนใหม่">เพิ่มนักเรียนใหม่</div>
+                    </a>
+                </li>
+                <li class="menu-item <?= ($s4 == 'Students' && $s5 == 'Edit' ? 'active' : '') ?>">
+                    <a href="<?=base_url('Admin/Acade/Registration/Students/Edit');?>" class="menu-link">
+                        <div data-i18n="ค้นหา/แก้ไขรายบุคคล">ค้นหา/แก้ไขรายบุคคล</div>
+                    </a>
+                </li>
+                <li class="menu-item <?= ($s4 == 'Students' && $s5 == 'AdjustNumber' ? 'active' : '') ?>">
+                    <a href="<?=base_url('Admin/Acade/Registration/Students/AdjustNumber');?>" class="menu-link">
+                        <div data-i18n="จัดเลขที่ห้องเรียน">จัดเลขที่ห้องเรียน</div>
+                    </a>
+                </li>
+                <li class="menu-item <?= ($s4 == 'Students' && $s5 == 'Lifecycle' ? 'active' : '') ?>">
+                    <a href="<?=base_url('Admin/Acade/Registration/Students/Lifecycle');?>" class="menu-link">
+                        <div data-i18n="เลื่อนชั้น/จบการศึกษา">เลื่อนชั้น/จบการศึกษา</div>
+                    </a>
+                </li>
+            </ul>
         </li>
         <li class="menu-item <?= ($totalSegments >= 4 && $s4 == 'ClassRoom' ? 'active' : '') ?>">
             <a href="<?=base_url('Admin/Acade/Registration/ClassRoom');?>" class="menu-link">

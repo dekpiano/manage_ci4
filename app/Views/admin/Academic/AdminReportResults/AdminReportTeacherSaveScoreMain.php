@@ -176,7 +176,7 @@
                             </span>
                         </td>
                         <td class="text-center">
-                            <?php $level = service('request')->uri->getSegment(3) ?? ''; ?>
+                            <?php $level = service('request')->getUri()->getSegment(3) ?? ''; ?>
                             <a class="btn btn-primary btn-sm rounded-pill px-3 clickLoad-spin"
                                 href="<?= site_url('Admin/Acade/'.esc($level, 'url').'/ReportTeacherSaveScoreCheck/'.(isset($Term) ? esc($Term, 'url') : '').'/'.(isset($Year) ? esc($Year, 'url') : '').'/'.(isset($v_Teacher->pers_id) ? esc($v_Teacher->pers_id, 'url') : ''));?>">
                                 <i class='bx bx-show me-1'></i> ดูคะแนน

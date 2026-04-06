@@ -778,7 +778,7 @@
                         <td>
                             <div class="date-display">
                                 <i class="bx bx-calendar-alt"></i>
-                                <?= date('d/m/Y', strtotime($v_exam_schedule->exam_create)) ?>
+                                <?= date('d/m/', strtotime($v_exam_schedule->exam_create)) . (date('Y', strtotime($v_exam_schedule->exam_create)) + 543) ?>
                                 <span class="time"><?= date('H:i', strtotime($v_exam_schedule->exam_create)) ?> น.</span>
                             </div>
                         </td>

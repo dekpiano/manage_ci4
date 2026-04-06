@@ -4,6 +4,9 @@
 
 <div class="container-xxl flex-grow-1 container-p-y">
     <!-- Sophisticated Header -->
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <div class="row mb-5 mt-3">
         <div class="col-12 text-center text-md-start">
             <h5 class="text-uppercase ls-1 fw-semibold mb-1" style="color: #15a362;">Academic Services</h5>
@@ -69,18 +72,42 @@
             </a>
         </div>
 
-        <!-- System 8: ดาวน์โหลดไฟล์ -->
+        <!-- System 8: สำหรับเจ้าหน้าที่ -->
         <div class="col-6 col-md-4 col-lg-3">
-            <a href="https://documentcenter.skj.ac.th/" target="_blank" class="sys-card p-4 transition-all">
-                <div class="sys-icon bg-label-info mb-3">
-                    <i class='bx bx-download fs-2'></i>
-                </div>
-                <h6 class="fw-bold mb-1 mt-2">ดาวน์โหลดไฟล์</h6>
-                <p class="small text-muted mb-0">คลังเอกสารและแบบฟอร์มวิชาการ</p>
-            </a>
+            <?php if (session()->get('login_id')): ?>
+                <a href="<?= base_url('Admin/Home') ?>" class="sys-card p-4 transition-all" style="background: linear-gradient(rgba(255,255,255,0.9), rgba(255,255,255,0.9)), white; border: 2px solid #4361ee30;">
+                    <div class="sys-icon bg-label-primary mb-3" style="background-color: #4361ee10; color: #4361ee;">
+                        <i class='bx bx-dashboard fs-2'></i>
+                    </div>
+                    <h6 class="fw-bold mb-1 mt-2 text-primary">เข้าสู่ระบบหลังบ้าน</h6>
+                    <p class="small text-muted mb-0">คุณเข้าสู่ระบบอยู่แล้ว กดเพื่อจัดการระบบ</p>
+                </a>
+            <?php else: ?>
+                <a href="<?= base_url('Auth/login') ?>" class="sys-card p-4 transition-all" style="background: linear-gradient(rgba(255,255,255,0.9), rgba(255,255,255,0.9)), white; border: 2px solid rgba(67, 97, 238, 0.1);">
+                    <div class="sys-icon bg-label-primary mb-3" style="background-color: rgba(67, 97, 238, 0.1); color: #4361ee;">
+                        <i class='bx bx-user-circle fs-2' style="color: #4361ee;"></i>
+                    </div>
+                    <h6 class="fw-bold mb-1 mt-2" style="color: #4361ee;">สำหรับเจ้าหน้าที่</h6>
+                    <p class="small text-muted mb-0">คลิกเพื่อเข้าสู่ระบบบริหารจัดการ</p>
+                </a>
+            <?php endif; ?>
         </div>
     </div>
 </div>
+
+<script>
+    // Auto show error alert if there's an error from redirect
+    <?php if (session()->getFlashdata('error')): ?>
+    document.addEventListener('DOMContentLoaded', function() {
+        Swal.fire({
+            icon: 'error',
+            title: 'แจ้งเตือน',
+            text: '<?= session()->getFlashdata('error') ?>',
+            confirmButtonColor: '#4361ee'
+        });
+    });
+    <?php endif; ?>
+</script>
 
 <!-- SVG Wave Decoration -->
 <div class="footer-wave">

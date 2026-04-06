@@ -341,6 +341,9 @@ class ConAdminDevelopStudents extends BaseController
             return $this->response->setJSON(['status' => 'error', 'message' => ['advisors' => 'กรุณาเลือกครูที่ปรึกษาอย่างน้อยหนึ่งคน']]);
         }
 
+        $d_est = new \DateTime();
+        $date_est = $d_est->format('d/m/') . ((int)$d_est->format('Y') + 543);
+        
         $data = [
             'club_name'             => $this->request->getPost('club_name'),
             'club_description'      => $this->request->getPost('club_description'),
@@ -349,7 +352,7 @@ class ConAdminDevelopStudents extends BaseController
             'club_trem'             => $this->request->getPost('club_trem'),
             'club_max_participants' => $this->request->getPost('club_max_participants'),
             'club_status'           => 'open',
-            'club_established_date' => date('Y-m-d'),
+            'club_established_date' => $date_est,
         ];
 
         if ($this->db->table('tb_clubs')->insert($data)) {
@@ -511,12 +514,15 @@ class ConAdminDevelopStudents extends BaseController
             ]);
         }
 
+        $d_join = new \DateTime();
+        $date_join = $d_join->format('d/m/') . ((int)$d_join->format('Y') + 543);
+
         $data = [];
         foreach ($student_ids as $student_id) {
             $data[] = [
                 'member_club_id'    => $club_id,
                 'member_student_id' => $student_id,
-                'member_join_date'  => date('Y-m-d'),
+                'member_join_date'  => $date_join,
                 'member_role'       => 'Member',
             ];
         }
@@ -751,7 +757,21 @@ class ConAdminDevelopStudents extends BaseController
         
         if (! empty($weeks)) {
             log_message('debug', 'ClubGetWeeksToUpdate: Found ' . count($weeks) . ' weeks.');
-            return $this->response->setJSON(['status' => 'success', 'data' => $weeks]);
+            
+            // Map weeks and convert B.E. back to A.D. for HTML5 date inputs
+            $formattedWeeks = array_map(function($week) {
+                if (!empty($week['tcs_start_date']) && strpos($week['tcs_start_date'], '/') !== false) {
+                    $parts = explode('/', $week['tcs_start_date']);
+                    if (count($parts) === 3) {
+                        // dd/mm/yyyy (B.E.) -> yyyy-mm-dd (A.D.)
+                        $ad_year = (int)$parts[2] - 543;
+                        $week['tcs_start_date'] = $ad_year . '-' . $parts[1] . '-' . $parts[0];
+                    }
+                }
+                return $week;
+            }, $weeks);
+
+            return $this->response->setJSON(['status' => 'success', 'data' => $formattedWeeks]);
         } else {
             log_message('debug', 'ClubGetWeeksToUpdate: No weeks found for academic year ' . $academicYear . ' term ' . $academicTerm);
             return $this->response->setJSON(['status' => 'error', 'message' => 'ไม่มีข้อมูล']);
@@ -834,11 +854,18 @@ class ConAdminDevelopStudents extends BaseController
         $id = $this->request->getPost('id'); // รับค่า ID
         $date = $this->request->getPost('date'); // รับค่าวันที่ใหม่ในรูปแบบ Y-m-d
 
+        // Convert incoming Gregorian date (from input type="date") to B.E. (dd/mm/yyyy)
+        $formatted_date = $date;
+        if (!empty($date)) {
+            $d = new \DateTime($date);
+            $formatted_date = $d->format('d/m/') . ((int)$d->format('Y') + 543);
+        }
+
         $result = $this->db->table('tb_club_settings_schedule')
                             ->where('tcs_academic_year', $academicYear)
                             ->where('tcs_academic_trem', $CheckYear->c_onoff_term)
                             ->where('tcs_schedule_id', $id)
-                            ->update(['tcs_start_date' => $date]); // อัปเดตวันที่
+                            ->update(['tcs_start_date' => $formatted_date]); // อัปเดตวันที่เป็น พ.ศ.
 
             if ($result) {
                 return $this->response->setJSON(['status' => 'success']);

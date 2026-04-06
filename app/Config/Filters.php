@@ -38,7 +38,7 @@ class Filters extends BaseConfig
         'before' => [
             'maintenance',
             // 'honeypot',
-            // 'csrf',
+            'csrf' => ['except' => ['Auth/googleLogin']],
             // 'invalidchars',
         ],
         'after' => [

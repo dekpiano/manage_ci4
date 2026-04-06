@@ -45,19 +45,31 @@ class ConAdminReportResult extends BaseController
         $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();
         $data['title'] = "รายงานผลการเรียนรายบุคคล";
 
+        // Read room filter from POST or GET query parameter
+        $RoomFilter = $this->request->getPost('SelectRoom') ?? $this->request->getGet('room');
+
         // FIX: Always fetch SchoolYear for the layout
         $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
         
         // Use session-stored selected year
         $data['selectedYear'] = get_selected_year();
 
-        // Get available years for dropdown
-        $data['CheckYearSaveScore'] = $this->db->table('tb_register')->select('RegisterYear')->groupBy('RegisterYear')->get()->getResult();
+        // Get available years for dropdown (Sorted NEWEST first)
+        $data['CheckYearSaveScore'] = $this->db->table('tb_register')
+            ->select('RegisterYear')
+            ->groupBy('RegisterYear')
+            ->orderBy('SUBSTRING_INDEX(RegisterYear, "/", -1) DESC, SUBSTRING_INDEX(RegisterYear, "/", 1) DESC', '', false)
+            ->get()->getResult();
 
-        // Determine current year
+        // Determine current year — ใช้ get_selected_year() เป็นหลัก
         if ($Term === null || $Year === null) {
-            // Use the already fetched SchoolYear object
-            if ($data['SchoolYear'] && property_exists($data['SchoolYear'], 'schyear_year')) {
+            $selectedYearStr = get_selected_year(); // e.g. "1/2568"
+            if (!empty($selectedYearStr) && strpos($selectedYearStr, '/') !== false) {
+                $parts = explode('/', $selectedYearStr);
+                $Term = $parts[0] ?? null;
+                $Year = $parts[1] ?? null;
+            } elseif ($data['SchoolYear'] && property_exists($data['SchoolYear'], 'schyear_year')) {
+                // fallback
                 $parts = explode('/', $data['SchoolYear']->schyear_year);
                 $Term = $parts[0] ?? null;
                 $Year = $parts[1] ?? null;
@@ -68,17 +80,44 @@ class ConAdminReportResult extends BaseController
         $data['Year'] = $Year;
         $currentYear = ($Term && $Year) ? $Term . '/' . $Year : null;
 
-        // Get students for the selected year
+        // Get available rooms for the selected year (RAW values from DB)
         if ($currentYear) {
-            $data['stu'] = $this->db->table('tb_students')
-                                ->select("tb_students.StudentID, tb_students.StudentNumber, tb_students.StudentClass, tb_students.StudentCode, tb_students.StudentPrefix, tb_students.StudentFirstName, tb_students.StudentLastName, tb_students.StudentStatus")
+            $roomsRaw = $this->db->table('tb_register')
+                ->select('RegisterClass')
+                ->where('RegisterYear', $currentYear)
+                ->groupBy('RegisterClass')
+                ->orderBy('RegisterClass', 'ASC')
+                ->get()->getResult();
+            
+            $data['RoomList'] = [];
+            foreach ($roomsRaw as $r) {
+                if (!empty($r->RegisterClass)) {
+                    $data['RoomList'][] = $r->RegisterClass; // Keep RAW value from DB
+                }
+            }
+        } else {
+            $data['RoomList'] = [];
+        }
+
+        $data['SelRoom'] = $RoomFilter;
+
+        // Get students for the selected year and room
+        if ($currentYear) {
+            $builder = $this->db->table('tb_students')
+                                ->select("tb_students.StudentID, tb_students.StudentNumber, tb_students.StudentClass, tb_students.StudentCode, tb_students.StudentPrefix, tb_students.StudentFirstName, tb_students.StudentLastName, tb_students.StudentStatus, tb_students.StudentIDNumber")
                                 ->distinct()
                                 ->join('tb_register', 'tb_register.StudentID = tb_students.StudentID')
                                 ->where('tb_students.StudentStatus','1/ปกติ')
-                                ->where('tb_register.RegisterYear', $currentYear)
-                                ->get()->getResult();
+                                ->where('tb_register.RegisterYear', $currentYear);
+
+            if ($RoomFilter !== null && $RoomFilter !== '') {
+                // Use the EXACT RegisterClass value from the DB
+                $builder->where('tb_register.RegisterClass', $RoomFilter);
+            }
+
+            $data['stu'] = $builder->get()->getResult();
         } else {
-            $data['stu'] = []; // No year sei^cted or found, return empty list
+            $data['stu'] = []; 
         }
 
         echo view('admin/Academic/AdminReportResults/AdminReportPersonMain',$data);
@@ -88,55 +127,68 @@ class ConAdminReportResult extends BaseController
         $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();        
         $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow(); // Fetch SchoolYear
 
+        // ดึงรายการปีการศึกษาที่มีการบันทึกคะแนน เรียงจากล่าสุดก่อนเสมอ (แก้ไข SQL Syntax Error)
+        $data['CheckYearSaveScore'] = $this->db->table('tb_register')
+            ->select('RegisterYear')
+            ->groupBy('RegisterYear')
+            ->orderBy('SUBSTRING_INDEX(RegisterYear, "/", -1) DESC, SUBSTRING_INDEX(RegisterYear, "/", 1) DESC')
+            ->get()->getResult();
+
         if ($Term === null || $year === null) {
-            // Use SchoolYear as default
-            if ($data['SchoolYear'] && property_exists($data['SchoolYear'], 'schyear_year')) {
-                $parts = explode('/', $data['SchoolYear']->schyear_year);
-                $Term = $parts[0] ?? '2';
-                $year = $parts[1] ?? '2567';
+            if (!empty($data['CheckYearSaveScore'])) {
+                // ถ้าไม่ได้ระบุปีมา ให้ใช้ปีล่าสุดที่มีข้อมูลใน tb_register เสมอ
+                $latest = $data['CheckYearSaveScore'][0]->RegisterYear;
+                $parts = explode('/', $latest);
+                $Term = $parts[0] ?? '1';
+                $year = $parts[1] ?? '2568';
             } else {
-                $Term = '2';
-                $year = '2567';
+                // Fallback กรณีไม่มีข้อมูลเลย
+                $selectedYearStr = get_selected_year();
+                if (!empty($selectedYearStr) && strpos($selectedYearStr, '/') !== false) {
+                    $parts = explode('/', $selectedYearStr);
+                    $Term = $parts[0] ?? '1';
+                    $year = $parts[1] ?? '2568';
+                } else {
+                    $Term = '1';
+                    $year = '2568';
+                }
             }
         }
-        
-        $data['Term'] = $Term;
-        $data['Year'] = $year;
-
-        // Get teacher IDs that have records in the selected term/year
-    $teacherIdsWithScores = $this->db->table('tb_register')
-        ->select('TeacherID')
-        ->where('RegisterYear', $Term . '/' . $year)
-        ->distinct()
-        ->get()
-        ->getResultArray();
-
-    $teacherIds = array_column($teacherIdsWithScores, 'TeacherID');
-
-    if (!empty($teacherIds)) {
-        $data['Teacher'] = $this->DBpersonnel->table('tb_personnel')
-            ->select('skjacth_personnel.tb_personnel.pers_prefix,
-                      skjacth_personnel.tb_personnel.pers_firstname,
-                      skjacth_personnel.tb_personnel.pers_lastname,
-                      skjacth_personnel.tb_personnel.pers_id,
-                      skjacth_personnel.tb_personnel.pers_learning,
-                      skjacth_personnel.tb_personnel.pers_position,
-                      skjacth_skj.tb_position.posi_name,
-                      skjacth_skj.tb_learning.lear_namethai,
-                      skjacth_personnel.tb_personnel.pers_status')
-            ->join('skjacth_skj.tb_position', 'skjacth_skj.tb_position.posi_id = skjacth_personnel.tb_personnel.pers_position', 'left')
-            ->join('skjacth_skj.tb_learning', 'skjacth_skj.tb_learning.lear_id = skjacth_personnel.tb_personnel.pers_learning', 'left')
-            ->whereIn('skjacth_personnel.tb_personnel.pers_id', $teacherIds)
-            ->orderBy('skjacth_personnel.tb_personnel.pers_learning', 'ASC')
-            ->get()
-            ->getResult();
-            } else {
-                $data['Teacher'] = []; // No teachers found, so pass an empty array to the view
-            }
-            $data['CheckYearSaveScore'] = $this->db->table('tb_register')->select('RegisterYear')->groupBy('RegisterYear')->get()->getResult();        
             $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
         $data['Term'] = $Term;
         $data['Year'] = $year;       
+
+        // กู้คืนระบบการดึงรายชื่อครูที่หายไป
+        $teacherIdsWithScores = $this->db->table('tb_register')
+            ->select('TeacherID')
+            ->where('RegisterYear', $Term . '/' . $year)
+            ->distinct()
+            ->get()
+            ->getResultArray();
+
+        $teacherIds = array_column($teacherIdsWithScores, 'TeacherID');
+
+        if (!empty($teacherIds)) {
+            $data['Teacher'] = $this->DBpersonnel->table('tb_personnel')
+                ->select('skjacth_personnel.tb_personnel.pers_prefix,
+                          skjacth_personnel.tb_personnel.pers_firstname,
+                          skjacth_personnel.tb_personnel.pers_lastname,
+                          skjacth_personnel.tb_personnel.pers_id,
+                          skjacth_personnel.tb_personnel.pers_learning,
+                          skjacth_personnel.tb_personnel.pers_position,
+                          skjacth_skj.tb_position.posi_name,
+                          skjacth_skj.tb_learning.lear_namethai,
+                          skjacth_personnel.tb_personnel.pers_status')
+                ->join('skjacth_skj.tb_position', 'skjacth_skj.tb_position.posi_id = skjacth_personnel.tb_personnel.pers_position', 'left')
+                ->join('skjacth_skj.tb_learning', 'skjacth_skj.tb_learning.lear_id = skjacth_personnel.tb_personnel.pers_learning', 'left')
+                ->whereIn('skjacth_personnel.tb_personnel.pers_id', $teacherIds)
+                ->orderBy('skjacth_personnel.tb_personnel.pers_learning', 'ASC')
+                ->get()
+                ->getResult();
+        } else {
+            $data['Teacher'] = []; 
+        }
+
         $data['title'] = "รายงานผลการบันทึกคะแนนครูผู้สอน";
 
         
@@ -200,12 +252,20 @@ class ConAdminReportResult extends BaseController
 
     public function AdminReportRoomMain(){   
         $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();
-        $data['admin'] = $this->DBpersonnel->table('tb_personnel')->select('pers_id,pers_img')->where('pers_id',session()->get('login_id'))->get()->getRow();
-        $data['CheckYear'] = $this->db->table('tb_register')->select('RegisterYear')->groupBy('RegisterYear')->get()->getResult();
         $keyroom = $this->request->getPost("keyroom");
+        $KeyCheckYear = $this->request->getPost("KeyCheckYear");
+
+        // Optimized Year retrieval: latest first
+        $data['CheckYear'] = $this->db->table('tb_register')
+                                     ->select('RegisterYear')
+                                     ->distinct()
+                                     ->orderBy('SUBSTRING_INDEX(RegisterYear, "/", -1) DESC', '', false)
+                                     ->orderBy('SUBSTRING_INDEX(RegisterYear, "/", 1) DESC', '', false)
+                                     ->get()
+                                     ->getResult();
+
         $SubRoom1 = explode('.',$keyroom);
         $SubRoom2 = explode('/',!empty($SubRoom1[1]) ? $SubRoom1[1] : '' );        
-        $KeyCheckYear = $this->request->getPost("KeyCheckYear");
         $SubKeyCheckYear = explode('/',$KeyCheckYear);
         $Term = !empty($SubKeyCheckYear[0]) ? $SubKeyCheckYear[0] : null;
         $year = !empty($SubKeyCheckYear[1]) ? $SubKeyCheckYear[1] : null;
@@ -316,7 +376,7 @@ class ConAdminReportResult extends BaseController
         
         $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
         $data['title'] = "รายงานผลการเรียนรายห้องเรียน";
-        $data['Room'] = $this->classroom->ListRoom(); // Added this line
+        $data['room'] = $this->classroom->ListRoom(); // Fixed: Use lowercase 'room' to match view
 
         
         echo view('admin/Academic/AdminReportResults/AdminReportRoomMain',$data);
@@ -328,9 +388,12 @@ class ConAdminReportResult extends BaseController
     {
         ob_start(); // Explicitly start output buffering
 
-         $path = dirname(dirname(dirname(dirname(dirname(dirname(dirname(__FILE__)))))));
-		require $path . '/librarie_skj/spreadsheet/vendor/autoload.php';
-        //require_once APPPATH . '../vendor/autoload.php';
+        $autoloadPath = SHARED_LIB_PATH . '/spreadsheet/vendor/autoload.php';
+        if (file_exists($autoloadPath)) {
+            require $autoloadPath;
+        } else {
+            throw new \Exception("ไม่พบไฟล์ Autoload ของ Spreadsheet Library ในเส้นทาง: " . $autoloadPath);
+        }
         
         $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
@@ -1029,7 +1092,13 @@ class ConAdminReportResult extends BaseController
         $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
         $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();
         $data['title'] = "รายงานสรุปผลสัมฤทธิ์ทางการเรียน";
-        $data['CheckYear'] = $this->db->table('tb_register')->select('RegisterYear')->groupBy('RegisterYear')->get()->getResult();
+        $data['CheckYear'] = $this->db->table('tb_register')
+                                     ->select('RegisterYear')
+                                     ->distinct()
+                                     ->orderBy('SUBSTRING_INDEX(RegisterYear, "/", -1) DESC', '', false)
+                                     ->orderBy('SUBSTRING_INDEX(RegisterYear, "/", 1) DESC', '', false)
+                                     ->get()
+                                     ->getResult();
         $data['lern'] = $this->DBSkj->table('tb_learning')->get()->getResult();
 
         $data['Keylern'] = $this->request->getGet('SelLern');
@@ -1121,9 +1190,9 @@ class ConAdminReportResult extends BaseController
         $data['title'] = "ผลการคำนวณมาตรฐานกุหลาบหลวง";
         $data['KeyLevel'] = $this->request->getPost('SelLevel');
         $data['KeyYear'] = $this->request->getPost('KeyYear');
-        $selectedSubjectIds = $this->request->getPost('selected_subjects');
+        $data['selected_subjects'] = $this->request->getPost('selected_subjects');
 
-        if (empty($selectedSubjectIds)) {
+        if (empty($data['selected_subjects'])) {
             return redirect()->back()->with('error', 'กรุณาเลือกวิชาอย่างน้อย 1 วิชา');
         }
 
@@ -1144,7 +1213,7 @@ class ConAdminReportResult extends BaseController
             ->join('tb_subjects', 'tb_subjects.SubjectID = tb_register.SubjectID')
             ->join('tb_students', 'tb_students.StudentID = tb_register.StudentID')
             ->where('tb_register.RegisterYear', $data['KeyYear'])
-            ->whereIn('tb_subjects.SubjectID', $selectedSubjectIds)
+            ->whereIn('tb_subjects.SubjectID', $data['selected_subjects'])
             ->where('tb_students.StudentStatus', '1/ปกติ')
             ->like('tb_students.StudentClass', $data['KeyLevel'] . '%')
             ->groupBy('tb_subjects.FirstGroup, tb_register.RegisterYear')
@@ -1152,6 +1221,150 @@ class ConAdminReportResult extends BaseController
             ->get()->getResult();
 
         echo view('admin/Academic/AdminReportResults/AdminReportAcademicSummaryRoyalRoseStandardResult', $data);
+    }
+
+    public function exportRoyalRoseToExcel()
+    {
+        $selectedSubjectIds = $this->request->getPost('selected_subjects');
+        $KeyYear = $this->request->getPost('KeyYear');
+        $KeyLevel = $this->request->getPost('SelLevel');
+
+        if (empty($selectedSubjectIds)) {
+            return redirect()->back()->with('error', 'กรุณากลับไปเลือกรายวิชาก่อน');
+        }
+
+        $query = $this->db->table('tb_register')
+            ->select('
+                tb_subjects.FirstGroup,
+                tb_register.RegisterYear,
+                SUM(CASE WHEN tb_register.Grade = "4" THEN 1 ELSE 0 END) AS G4_0,
+                SUM(CASE WHEN tb_register.Grade = "3.5" THEN 1 ELSE 0 END) AS G3_5,
+                SUM(CASE WHEN tb_register.Grade = "3" THEN 1 ELSE 0 END) AS G3_0,
+                SUM(CASE WHEN tb_register.Grade = "2.5" THEN 1 ELSE 0 END) AS G2_5,
+                SUM(CASE WHEN tb_register.Grade = "2" THEN 1 ELSE 0 END) AS G2_0,
+                SUM(CASE WHEN tb_register.Grade = "1.5" THEN 1 ELSE 0 END) AS G1_5,
+                SUM(CASE WHEN tb_register.Grade = "1" THEN 1 ELSE 0 END) AS G1_0,
+                SUM(CASE WHEN tb_register.Grade IN ("0", "มส", "ร") THEN 1 ELSE 0 END) AS G0,
+                COUNT(tb_register.StudentID) AS TotalStu
+            ')
+            ->join('tb_subjects', 'tb_subjects.SubjectID = tb_register.SubjectID')
+            ->join('tb_students', 'tb_students.StudentID = tb_register.StudentID')
+            ->where('tb_register.RegisterYear', $KeyYear)
+            ->whereIn('tb_subjects.SubjectID', $selectedSubjectIds)
+            ->where('tb_students.StudentStatus', '1/ปกติ')
+            ->like('tb_students.StudentClass', $KeyLevel . '%')
+            ->groupBy('tb_subjects.FirstGroup, tb_register.RegisterYear')
+            ->orderBy('tb_subjects.FirstGroup', 'ASC');
+
+        $showData = $query->get()->getResult();
+
+        ob_start();
+        require SHARED_LIB_PATH . '/spreadsheet/vendor/autoload.php';
+
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+
+        // Header Title
+        $sheet->setCellValue('A1', 'รายงานสรุปผลสัมฤทธิ์ทางการเรียนตามมาตรฐานกุหลาบหลวง');
+        $sheet->mergeCells('A1:L1');
+        $sheet->setCellValue('A2', 'ปีการศึกษา: ' . $KeyYear . ' | ระดับชั้น: ' . $KeyLevel);
+        $sheet->mergeCells('A2:L2');
+
+        // Table Header
+        $headers = [
+            ['กลุ่มสาระการเรียนรู้', 'นักเรียนเข้าสอบ', 'เกรด 4', 'เกรด 3.5', 'เกรด 3', 'เกรด 2.5', 'เกรด 2', 'เกรด 1.5', 'เกรด 1', '0/ร/มส', 'รวม 3 ขึ้นไป', 'ร้อยละ 3 ขึ้นไป']
+        ];
+        $sheet->fromArray($headers, NULL, 'A4');
+
+        // Data Entry
+        $rowIdx = 5;
+        $grandTotalStu = 0; $grandG4 = 0; $grandG35 = 0; $grandG3 = 0; $grandG25 = 0; 
+        $grandG2 = 0; $grandG15 = 0; $grandG1 = 0; $grandG0 = 0;
+
+        foreach ($showData as $v) {
+            $rowGoodTotal = (int)$v->G4_0 + (int)$v->G3_5 + (int)$v->G3_0;
+            $rowPercent = $v->TotalStu > 0 ? ($rowGoodTotal / $v->TotalStu) * 100 : 0;
+
+            $dataRow = [
+                $v->FirstGroup,
+                (int)$v->TotalStu,
+                (int)$v->G4_0,
+                (int)$v->G3_5,
+                (int)$v->G3_0,
+                (int)$v->G2_5,
+                (int)$v->G2_0,
+                (int)$v->G1_5,
+                (int)$v->G1_0,
+                (int)$v->G0,
+                $rowGoodTotal,
+                round($rowPercent, 2)
+            ];
+            $sheet->fromArray($dataRow, NULL, 'A' . $rowIdx);
+
+            $grandTotalStu += (int)$v->TotalStu; $grandG4 += (int)$v->G4_0; $grandG35 += (int)$v->G3_5; 
+            $grandG3 += (int)$v->G3_0; $grandG25 += (int)$v->G2_5; $grandG2 += (int)$v->G2_0; 
+            $grandG15 += (int)$v->G1_5; $grandG1 += (int)$v->G1_0; $grandG0 += (int)$v->G0;
+            $rowIdx++;
+        }
+
+        // Summary Row 1: Totals
+        $grandGoodTotal = $grandG4 + $grandG35 + $grandG3;
+        $overallPercent = $grandTotalStu > 0 ? ($grandGoodTotal / $grandTotalStu) * 100 : 0;
+        
+        $summaryRow = [
+            'รวมทุกกลุ่มสาระการเรียนรู้', $grandTotalStu, 
+            $grandG4, $grandG35, $grandG3, $grandG25, $grandG2, $grandG15, $grandG1, $grandG0,
+            $grandGoodTotal, round($overallPercent, 2)
+        ];
+        $sheet->fromArray($summaryRow, NULL, 'A' . $rowIdx);
+        $rowIdx++;
+
+        // Summary Row 2: Average Percentages
+        $percentG4  = $grandTotalStu > 0 ? round(($grandG4 / $grandTotalStu) * 100, 2) : 0;
+        $percentG35 = $grandTotalStu > 0 ? round(($grandG35 / $grandTotalStu) * 100, 2) : 0;
+        $percentG3  = $grandTotalStu > 0 ? round(($grandG3 / $grandTotalStu) * 100, 2) : 0;
+        $percentG25 = $grandTotalStu > 0 ? round(($grandG25 / $grandTotalStu) * 100, 2) : 0;
+        $percentG2  = $grandTotalStu > 0 ? round(($grandG2 / $grandTotalStu) * 100, 2) : 0;
+        $percentG15 = $grandTotalStu > 0 ? round(($grandG15 / $grandTotalStu) * 100, 2) : 0;
+        $percentG1  = $grandTotalStu > 0 ? round(($grandG1 / $grandTotalStu) * 100, 2) : 0;
+        $percentG0  = $grandTotalStu > 0 ? round(($grandG0 / $grandTotalStu) * 100, 2) : 0;
+
+        $averagePercentRow = [
+            'ร้อยละเฉลี่ยแยกตามเกรด', '-', 
+            $percentG4, $percentG35, $percentG3, $percentG25, $percentG2, $percentG15, $percentG1, $percentG0,
+            'ความสำเร็จตามเป้าหมาย (3 ขึ้นไป):', round($overallPercent, 2)
+        ];
+        $sheet->fromArray($averagePercentRow, NULL, 'A' . $rowIdx);
+        $sheet->mergeCells('K' . $rowIdx . ':L' . $rowIdx);
+
+        // Styling
+        $lastCol = 'L';
+        $sheet->getStyle('A1:A2')->getFont()->setBold(true)->setSize(14);
+        $sheet->getStyle('A1:A2')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+        $sheet->getStyle('A4:' . $lastCol . '4')->getFont()->setBold(true);
+        $sheet->getStyle('A4:' . $lastCol . $rowIdx)->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+        
+        $sheet->getStyle('A' . ($rowIdx-1) . ':' . $lastCol . $rowIdx)->getFont()->setBold(true);
+        $sheet->getStyle('B4:' . $lastCol . $rowIdx)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+        $sheet->getStyle('A' . $rowIdx)->getFont()->setItalic(true);
+
+        // Auto column width
+        foreach(range('A','L') as $columnID) {
+            $sheet->getColumnDimension($columnID)->setAutoSize(true);
+        }
+
+        $filename = 'สรุปมาตรฐานกุหลาบหลวง_' . $KeyLevel . '_' . str_replace('/', '-', $KeyYear) . '.xlsx';
+
+        // Clean out buffers
+        while (ob_get_level() > 0) ob_end_clean();
+
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment;filename="' . $filename . '"');
+        header('Cache-Control: max-age=0');
+
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+        $writer->save('php://output');
+        exit();
     }
 
     

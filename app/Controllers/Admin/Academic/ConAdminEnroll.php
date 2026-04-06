@@ -103,17 +103,12 @@ class ConAdminEnroll extends BaseController
             return $yearB <=> $yearA; // Sort by year descending
         });
 
-        // 3. Determine selectedYear (Session -> Fallback to First Option -> Fallback to System Year)
-        $sessionYear = session()->get('admin_selected_year');
-        
-        if (!empty($sessionYear)) {
-             $data['selectedYear'] = $sessionYear;
-        } elseif (!empty($data['GroupYear'])) {
-             // Fallback to the most recent year (first in sorted list) to match UI dropdown
-             $data['selectedYear'] = $data['GroupYear'][0]->SubjectYear;
-        } else {
-             // Fallback to system school year if list is empty
-             $data['selectedYear'] = $data['SchoolYear']->schyear_year ?? '';
+        // 3. Determine selectedYear โดยใช้ get_selected_year() เป็นหลัก
+        $data['selectedYear'] = get_selected_year();
+
+        // ถ้า session/db ยังว่าง ให้ fallback ไป latest record
+        if (empty($data['selectedYear']) && !empty($data['GroupYear'])) {
+            $data['selectedYear'] = $data['GroupYear'][0]->SubjectYear;
         }
 
         // Dashboard Statistics for the selected year
@@ -219,22 +214,37 @@ class ConAdminEnroll extends BaseController
         ]);
     }
 
-    public function AdminEnrollAdd($Term, $Year)
+    public function AdminEnrollAdd($Term = null, $Year = null)
     {
         $data['title'] = "เพิ่มรายชื่อการลงทะเบียนเรียน";
         $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
         $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();
         
-    $CheckYear = $this->db->table('tb_schoolyear')->get()->getResult();
-    $data['teacher'] = $this->DBPers->table('tb_personnel')
-                    ->select('pers_id,pers_img,pers_prefix,pers_firstname,pers_lastname')
-                    ->where('pers_learning !=', "")
-                    ->get()->getResult();
+        // ถ้าไม่ได้รับ Term/Year มาจาก URL ให้ใช้ get_selected_year()
+        if ($Term === null || $Year === null) {
+            $selected = get_selected_year();
+            if (!empty($selected) && strpos($selected, '/') !== false) {
+                $parts = explode('/', $selected);
+                $Term = $parts[0] ?? null;
+                $Year = $parts[1] ?? null;
+            } else if ($data['SchoolYear']) {
+                $parts = explode('/', $data['SchoolYear']->schyear_year);
+                $Term = $parts[0] ?? null;
+                $Year = $parts[1] ?? null;
+            }
+        }
+
+        $data['selectedYear'] = ($Term && $Year) ? $Term . '/' . $Year : '';
+        
+        $data['teacher'] = $this->DBPers->table('tb_personnel')
+                        ->select('pers_id,pers_img,pers_prefix,pers_firstname,pers_lastname')
+                        ->where('pers_learning !=', "")
+                        ->get()->getResult();
+        
         $data['subject'] = $this->db->table('tb_subjects')->where('SubjectYear', $Term . '/' . $Year)->get()->getResult();
-    $data['classroom'] = new Classroom(); // Instantiate Classroom library
+        $data['classroom'] = new Classroom(); // Instantiate Classroom library
         
         echo view('admin/Academic/AdminEnroll/AdminEnrollFormAdd', $data);
-        
     }
 
     public function AdminEnrollEdit($codeSub, $TeachID)
@@ -330,7 +340,7 @@ class ConAdminEnroll extends BaseController
 
     public function AdminEnrollSelect()
     {
-        $keyRoom = $this->request->getPost('KeyRoom');
+        $keyRoom = $this->request->getPost('KeyRoom') ?? $this->request->getGet('KeyRoom');
 
         if (empty($keyRoom)) {
             return $this->response->setJSON([]); // Return empty array if KeyRoom is not provided
@@ -549,24 +559,16 @@ class ConAdminEnroll extends BaseController
         // }
 
         try {
-            // ใช้ GROUP_CONCAT เพื่อรวมชั้นเรียนทั้งหมดเป็นค่าเดียว (ชื่อวิชาจะไม่ซ้ำ)
-            $Register = $this->db->table("tb_register")
-                                    ->select("skjacth_academic.tb_register.SubjectID,
-                                            skjacth_academic.tb_subjects.SubjectCode,
-                                            skjacth_academic.tb_subjects.SubjectName,
-                                            skjacth_academic.tb_subjects.FirstGroup,
-                                            GROUP_CONCAT(DISTINCT skjacth_academic.tb_register.RegisterClass ORDER BY skjacth_academic.tb_register.RegisterClass ASC SEPARATOR ', ') as RegisterClasses,
-                                            skjacth_academic.tb_register.TeacherID,
-                                            skjacth_academic.tb_subjects.SubjectYear,
-                                            skjacth_personnel.tb_personnel.pers_firstname,
-                                            skjacth_personnel.tb_personnel.pers_prefix,
-                                            skjacth_personnel.tb_personnel.pers_lastname")
-                                    ->join('tb_subjects', 'tb_subjects.SubjectID = tb_register.SubjectID')
-                                    ->join('skjacth_personnel.tb_personnel', "skjacth_personnel.tb_personnel.pers_id = skjacth_academic.tb_register.TeacherID")
-                                    ->where('tb_subjects.SubjectYear', $keyYear)
-                                    ->where('tb_register.RegisterYear', $keyYear)
-                                    ->groupBy('tb_register.SubjectID, tb_register.TeacherID, tb_subjects.SubjectCode, tb_subjects.SubjectName, tb_subjects.FirstGroup, tb_subjects.SubjectYear, tb_personnel.pers_firstname, tb_personnel.pers_prefix, tb_personnel.pers_lastname')
-                                    ->get()->getResult();
+            $builder = $this->db->table('tb_register r');
+            $builder->select('r.SubjectID, s.SubjectCode, s.SubjectName, s.FirstGroup, s.SubjectYear, p.pers_firstname, p.pers_prefix, p.pers_lastname, r.TeacherID');
+            $builder->select("GROUP_CONCAT(DISTINCT r.RegisterClass ORDER BY r.RegisterClass ASC SEPARATOR ', ') as RegisterClasses", false);
+            $builder->join('tb_subjects s', 's.SubjectID = r.SubjectID');
+            $builder->join($this->DBPers->database . '.tb_personnel p', 'p.pers_id = r.TeacherID');
+            $builder->where('s.SubjectYear', $keyYear);
+            $builder->where('r.RegisterYear', $keyYear);
+            $builder->groupBy('r.SubjectID, r.TeacherID, s.SubjectCode, s.SubjectName, s.FirstGroup, s.SubjectYear, p.pers_firstname, p.pers_prefix, p.pers_lastname');
+            
+            $Register = $builder->get()->getResult();
 
             foreach ($Register as $record) {
                 $data[] = [
@@ -574,7 +576,7 @@ class ConAdminEnroll extends BaseController
                     "SubjectCode"  => $record->SubjectCode,
                     "SubjectName"  => $record->SubjectName,
                     "FirstGroup"   => $record->FirstGroup,
-                    "SubjectClass" => $record->RegisterClasses, // ชั้นที่รวมกันแล้ว (เช่น "ม.1/1, ม.1/2, ม.2/1")
+                    "SubjectClass" => $record->RegisterClasses, 
                     "SubjectID"    => $record->SubjectID,
                     "TeacherName"  => $record->pers_prefix . $record->pers_firstname . ' ' . $record->pers_lastname,
                     "TeacherID"    => $record->TeacherID,

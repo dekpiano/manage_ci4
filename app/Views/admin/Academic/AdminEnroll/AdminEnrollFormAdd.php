@@ -315,10 +315,7 @@
                                 for ($i=$d-2; $i<=$d; $i++):
                                     for($j=1; $j<=4; $j++):
                                 ?>
-                            <?php 
-                            $currentSegment = (service('request')->uri->getSegment(6) ?? '').'/'.(service('request')->uri->getSegment(7) ?? '');
-                            ?>
-                            <option <?= $currentSegment == $j.'/'.$i ? "selected" : ""?> value="<?= esc($j.'/'.$i) ?>"><?= esc($j.'/'.$i) ?></option>
+                            <option <?= (isset($selectedYear) && $selectedYear == $j.'/'.$i) ? "selected" : ""?> value="<?= esc($j.'/'.$i) ?>"><?= esc($j.'/'.$i) ?></option>
                             <?php endfor; endfor; ?>
                         </select>
                     </div>
@@ -459,7 +456,8 @@ $(document).on("change", "#subjectregis", function() {
 
     $.post('<?= site_url('admin/academic/ConAdminEnroll/AdminEnrollChangeSubjectToTeacher') ?>',{
         Keysubjectregis:IDsubjectregis,
-        KeySelectYearRegister:IDSelectYearRegister
+        KeySelectYearRegister:IDSelectYearRegister,
+        "<?= csrf_token() ?>": "<?= csrf_hash() ?>"
     },function(data, status){
         if(data && data.teacherId) {
             $('#teacherregis').val(data.teacherId).trigger('change');
@@ -485,7 +483,10 @@ $(document).on("change", "#Room", function() {
         showConfirmButton: false
     });
 
-    $.post("<?= site_url('Admin/Academic/ConAdminEnroll/AdminEnrollSelect') ?>", { KeyRoom: val }, function(data, status) {
+    $.post("<?= site_url('Admin/Academic/ConAdminEnroll/AdminEnrollSelect') ?>", { 
+        KeyRoom: val,
+        "<?= csrf_token() ?>": "<?= csrf_hash() ?>"
+    }, function(data, status) {
         Swal.close();
         $.each(data, function(index, value) {
             var studyLine = value.StudentStudyLine ? '[' + value.StudentStudyLine + '] ' : '';

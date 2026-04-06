@@ -1,32 +1,132 @@
 <?= $this->extend('admin/layout/main') ?>
 
 <?= $this->section('content') ?>
-<div class="container-xxl flex-grow-1 container-p-y">
-    <div class="row align-items-center mb-4">
-        <div class="col-12 col-md-6">
-            <h4 class="fw-bold py-3 mb-0">
-                <span class="text-muted fw-light">วิชาการ /</span> รายงานมาตรฐานกุหลาบหลวง
-            </h4>
-        </div>
-        <div class="col-12 col-md-6 text-md-end">
-            <div class="badge bg-label-success fs-6 py-2 px-3">
-                <i class='bx bx-info-circle me-1'></i> ขั้นตอนที่ 1: เลือกวิชาพื้นฐานที่ต้องการสรุป
+<style>
+    :root {
+        --primary-green: #15a362;
+        --dark-green: #1d4310;
+        --light-green: #ABDD93;
+        --glass-bg: rgba(255, 255, 255, 0.9);
+    }
+
+    /* Hero Section - The Standard Theme */
+    .hero-header {
+        background: #15a362;
+        background: linear-gradient(135deg, #15a362 0%, #0d6d41 100%);
+        border-radius: 20px;
+        padding: 2.5rem;
+        margin-bottom: 2rem;
+        color: white;
+        box-shadow: 0 10px 30px rgba(21, 163, 98, 0.2);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .hero-header::after {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 300px;
+        height: 300px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+    }
+
+    /* Search Container */
+    .search-container {
+        background: #fff;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        border: 1px solid #edf2f9;
+        margin-bottom: 2rem;
+    }
+
+    /* Table Styles - Traditional & Strong */
+    #subjectSelectionTable {
+        border-collapse: collapse !important;
+        border: 2px solid var(--primary-green);
+        border-radius: 15px;
+        overflow: hidden;
+    }
+
+    #subjectSelectionTable thead th {
+        background-color: var(--light-green) !important;
+        border: 1px solid var(--primary-green) !important;
+        color: #000 !important;
+        font-weight: 700;
+        vertical-align: middle !important;
+        padding: 15px 10px !important;
+        font-size: 0.9rem;
+    }
+
+    #subjectSelectionTable tbody td {
+        border: 1px solid #e9ecef;
+        vertical-align: middle;
+        padding: 12px 10px !important;
+    }
+
+    .group-row {
+        background-color: rgba(21, 163, 98, 0.08) !important;
+        font-weight: bold;
+        color: var(--dark-green);
+    }
+
+    .fade-in-up {
+        animation: fadeInUp 0.5s ease-out forwards;
+        opacity: 0;
+    }
+
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .sticky-submit {
+        position: sticky;
+        bottom: 20px;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        padding: 1.5rem;
+        border-radius: 15px;
+        box-shadow: 0 -10px 25px rgba(0,0,0,0.05);
+        border: 1px solid #eee;
+        z-index: 100;
+    }
+</style>
+
+<div class="container-fluid flex-grow-1 container-p-y">
+    <!-- Hero Section -->
+    <div class="hero-header fade-in-up">
+        <div class="row align-items-center">
+            <div class="col-md-7">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb breadcrumb-style1 mb-1">
+                        <li class="breadcrumb-item"><a href="javascript:void(0);" class="text-white-50">วิชาการ</a></li>
+                        <li class="breadcrumb-item active text-white">มาตรฐานกุหลาบหลวง</li>
+                    </ol>
+                </nav>
+                <h2 class="display-6 fw-bold mb-0 text-white">โครงการกุหลาบหลวง</h2>
+                <p class="text-white-50 mt-2 mb-0">ขั้นตอนที่ 1: ค้นหาและเลือกรายวิชาพื้นฐานเพื่อสรุปสถิติทางการเรียน</p>
+            </div>
+            <div class="col-md-5 text-md-end mt-3 mt-md-0">
+                <div class="badge bg-white bg-opacity-20 p-3 rounded-3 text-start d-inline-block shadow-sm">
+                    <i class='bx bx-check-double fs-3 mb-1'></i>
+                    <div class="small text-white-50">ระบบประมวลผลอัตโนมัติ</div>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- ส่วนค้นหา (Filter Bar) - ดีไซน์ใหม่แบบ Clean -->
-    <div class="card shadow-sm border-0 mb-4">
-        <div class="card-header d-flex justify-content-between align-items-center py-3 border-bottom">
-            <h5 class="mb-0 fw-bold"><i class='bx bx-filter-alt me-2 text-success'></i> ค้นหารายวิชาตามระดับชั้น</h5>
-            <span class="badge bg-label-success"><?= !empty($SubjectsList) ? 'พบทั้งหมด '.count($SubjectsList).' รายวิชา' : 'กรุณาเลือกเงื่อนไข' ?></span>
-        </div>
-        <div class="card-body py-4">
-            <form id="filterForm" method="get" action="<?= site_url('Admin/Acade/Evaluate/ReportAcademicSummaryRoyalRoseStandard') ?>" class="row g-3 justify-content-center">
-                <div class="col-12 col-md-4">
-                    <label class="form-label fw-semibold">ปีการศึกษา / ภาคเรียน</label>
+    <!-- Filter Bar -->
+    <form id="filterForm" method="get" action="<?= site_url('Admin/Acade/Evaluate/ReportAcademicSummaryRoyalRoseStandard') ?>">
+        <div class="search-container fade-in-up" style="animation-delay: 0.1s;">
+            <div class="row align-items-end g-3">
+                <div class="col-lg-4">
+                    <label class="small fw-bold text-muted mb-1"><i class='bx bx-calendar me-1'></i>ปีการศึกษา</label>
                     <select name="KeyYear" class="form-select select2" required>
-                        <option value="0">--- เลือกปีการศึกษา ---</option>
+                        <option value="0">-- เลือกปีการศึกษา --</option>
                         <?php foreach ($CheckYear as $year): ?>
                             <option value="<?= esc($year->RegisterYear) ?>" <?= $KeyYear == $year->RegisterYear ? 'selected' : '' ?>>
                                 ปีการศึกษา <?= esc($year->RegisterYear) ?>
@@ -34,10 +134,10 @@
                         <?php endforeach; ?>
                     </select>
                 </div>
-                <div class="col-12 col-md-3">
-                    <label class="form-label fw-semibold">ระดับชั้น</label>
-                    <select name="SelLevel" class="form-select" required>
-                        <option value="0">--- ระดับชั้น ---</option>
+                <div class="col-lg-3">
+                    <label class="small fw-bold text-muted mb-1"><i class='bx bx-layer me-1'></i>ระดับชั้น</label>
+                    <select name="SelLevel" class="form-select select2" required>
+                        <option value="0">-- เลือกระดับชั้น --</option>
                         <?php 
                         $levels = ['ม.1', 'ม.2', 'ม.3', 'ม.4', 'ม.5', 'ม.6'];
                         foreach ($levels as $lv): ?>
@@ -45,165 +145,159 @@
                         <?php endforeach; ?>
                     </select>
                 </div>
-                <div class="col-12 col-md-2">
-                    <label class="form-label d-none d-md-block">&nbsp;</label>
-                    <button type="submit" class="btn btn-success d-block w-100 py-2 shadow-none btn-submit">
-                        <i class='bx bx-search-alt me-1'></i> ดึงรายชื่อวิชา
+                <div class="col-lg-2">
+                    <button type="submit" class="btn btn-success w-100 shadow-sm btn-submit" style="height: 40px; border-radius: 10px;">
+                        <i class='bx bx-list-ol me-1'></i> ดึงรายวิชา
                     </button>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <?php if(empty($SubjectsList)):?>
+        <div class="fade-in-up" style="animation-delay: 0.2s;">
+            <div class="card border-0 shadow-sm text-center py-5" style="border-radius: 20px;">
+                <div class="bg-label-success d-inline-flex p-4 rounded-circle mb-3 mx-auto">
+                    <i class='bx bx-spreadsheet fs-1'></i>
+                </div>
+                <h4 class="fw-bold">เริ่มต้นใช้งานกุหลาบหลวง</h4>
+                <p class="text-muted px-5">กรุณาเลือกปีการศึกษาและระดับชั้นที่ต้องการดึงข้อมูลวิชาเพื่อเริ่มการคำนวณสถิติ</p>
+            </div>
+        </div>
+    <?php else: ?>
+        <!-- Selection Section -->
+        <div class="fade-in-up" style="animation-delay: 0.2s;">
+            <form id="calculationForm" method="post" action="<?= site_url('Admin/Acade/Evaluate/ReportAcademicSummaryRoyalRoseStandard') ?>">
+                <?= csrf_field() ?>
+                <input type="hidden" name="SelLevel" value="<?= esc($KeyLevel) ?>">
+                <input type="hidden" name="KeyYear" value="<?= esc($KeyYear) ?>">
+
+                <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 px-2">
+                    <h5 class="mb-2 mb-md-0 fw-bold"><i class='bx bx-check-circle text-success me-1'></i> ติ๊กเลือกวิชาพื้นฐานที่ต้องการ</h5>
+                    <div class="btn-group shadow-sm rounded-3">
+                        <button type="button" id="btnSelectAll" class="btn btn-sm btn-outline-success">เลือกทั้งหมด</button>
+                        <button type="button" id="btnDeselectAll" class="btn btn-sm btn-outline-secondary">ยกเลิกทั้งหมด</button>
+                    </div>
+                </div>
+
+                <div class="card border-0 shadow-sm overflow-hidden mb-5" style="border-radius: 15px; border: 2px solid var(--primary-green) !important;">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0" id="subjectSelectionTable">
+                            <thead>
+                                <tr class="text-center">
+                                    <th style="width: 70px;">เลือก</th>
+                                    <th class="text-start">กลุ่มสาระการเรียนรู้ / รายชื่อวิชา</th>
+                                    <th style="width: 150px;">รหัสวิชา</th>
+                                    <th style="width: 150px;">ประเภท</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php 
+                                $currentGroup = '';
+                                foreach ($SubjectsList as $v_subject): 
+                                    $isNewGroup = ($currentGroup !== $v_subject->FirstGroup);
+                                    if ($isNewGroup):
+                                        $currentGroup = $v_subject->FirstGroup;
+                                ?>
+                                    <tr class="group-row">
+                                        <td colspan="4">
+                                            <i class='bx bxs-folder-open me-2 text-success'></i>กลุ่มสาระ<?= esc($currentGroup) ?>
+                                        </td>
+                                    </tr>
+                                <?php endif; ?>
+                                <tr class="subject-row">
+                                    <td class="text-center border-end">
+                                        <div class="form-check d-flex justify-content-center m-0">
+                                            <input class="form-check-input subject-checkbox" type="checkbox" name="selected_subjects[]" 
+                                                   value="<?= esc($v_subject->SubjectID) ?>" id="sub<?= esc($v_subject->SubjectID) ?>" checked>
+                                        </div>
+                                    </td>
+                                    <td class="border-end">
+                                        <label for="sub<?= esc($v_subject->SubjectID) ?>" class="d-block cursor-pointer">
+                                            <span class="text-dark fw-bold"><?= esc($v_subject->SubjectName) ?></span>
+                                        </label>
+                                    </td>
+                                    <td class="text-center border-end fw-bold text-muted"><?= esc($v_subject->SubjectCode) ?></td>
+                                    <td class="text-center">
+                                        <span class="badge bg-label-success rounded-pill"><?= esc($v_subject->SubjectType) ?></span>
+                                    </td>
+                                </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="sticky-submit fade-in-up">
+                    <div class="row align-items-center">
+                        <div class="col-md-8 mb-3 mb-md-0">
+                            <h5 class="mb-1 fw-bold text-dark"><i class='bx bx-info-circle me-1 text-success'></i> พร้อมประมวลผลแล้วหรือยัง?</h5>
+                            <p class="text-muted small mb-0">โปรดตรวจสอบรายวิชาที่ติ๊กเลือกให้ถูกต้อง ระบบจะนำเกรดจากวิชาเหล่านี้มาประมวลผลรวมกันรายกลุ่มสาระครับ</p>
+                        </div>
+                        <div class="col-md-4 text-md-end">
+                            <button type="submit" class="btn btn-success btn-lg px-5 shadow-success btn-submit w-100 w-md-auto" style="border-radius: 12px;">
+                                <i class='bx bx-calculator me-2'></i> ประมวลผลสถิติ
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </form>
         </div>
-    </div>
-
-    <?php if(empty($SubjectsList)):?>
-    <!-- Empty State -->
-    <div class="card shadow-none bg-transparent border-dashed border-2 border-secondary mb-4 py-5">
-        <div class="card-body text-center py-5">
-            <div class="avatar avatar-xl mx-auto mb-4 bg-label-success">
-                <span class="avatar-initial rounded-circle"><i class='bx bx-spreadsheet fs-1'></i></span>
-            </div>
-            <h5 class="fw-bold">ยังไม่มีข้อมูลวิชาแสดงผล</h5>
-            <p class="text-muted mx-auto" style="max-width: 400px;">
-                กรุณาเลือก <strong>ปีการศึกษา</strong> และ <strong>ระดับชั้น</strong> ที่ต้องการด้านบน จากนั้นกดปุ่มดึงรายชื่อวิชาเพื่อเริ่มขั้นตอนการคำนวณ
-            </p>
-        </div>
-    </div>
-    <?php else: ?>
-
-    <!-- ส่วนเลือกวิชาแบบเต็มจอ (Table Selection) -->
-    <div class="card shadow-sm border-0 mb-4">
-        <form id="calculationForm" method="post" action="<?= site_url('Admin/Acade/Evaluate/ReportAcademicSummaryRoyalRoseStandard') ?>">
-            <?= csrf_field() ?>
-            <input type="hidden" name="SelLevel" value="<?= esc($KeyLevel) ?>">
-            <input type="hidden" name="KeyYear" value="<?= esc($KeyYear) ?>">
-
-            <div class="card-header d-flex flex-wrap justify-content-between align-items-center bg-label-success py-3 border-bottom">
-                <div class="mb-2 mb-sm-0">
-                    <h5 class="mb-1 text-success fw-bold d-flex align-items-center">
-                        <i class='bx bx-check-double me-2 fs-4'></i> รายชื่อวิชาพื้นฐาน
-                    </h5>
-                    <small class="text-muted"><?= esc($KeyLevel) ?> | ปีการศึกษา <?= esc($KeyYear) ?> (พบทั้งหมด <?= count($SubjectsList) ?> วิชา)</small>
-                </div>
-                <div class="d-flex gap-2">
-                    <button type="button" id="btnSelectAll" class="btn btn-outline-success btn-sm">เลือกทั้งหมด</button>
-                    <button type="button" id="btnDeselectAll" class="btn btn-outline-secondary btn-sm">ยกเลิกทั้งหมด</button>
-                    <button type="submit" class="btn btn-success shadow-sm ms-2 btn-submit">
-                        <i class='bx bx-calculator me-1'></i> เริ่มคำนวณสถิติ
-                    </button>
-                </div>
-            </div>
-            
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover mb-0" id="subjectSelectionTable">
-                        <thead class="table-light">
-                            <tr>
-                                <th class="text-center" style="width: 60px;">เลือก</th>
-                                <th style="min-width: 250px;">กลุ่มสาระการเรียนรู้</th>
-                                <th style="width: 150px;">รหัสวิชา</th>
-                                <th>ชื่อวิชา</th>
-                                <th style="width: 150px;">ประเภทวิชา</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php 
-                            $currentGroup = '';
-                            foreach ($SubjectsList as $v_subject): 
-                                $isNewGroup = ($currentGroup !== $v_subject->FirstGroup);
-                                if ($isNewGroup) $currentGroup = $v_subject->FirstGroup;
-                            ?>
-                            <tr class="<?= $isNewGroup ? 'border-top border-success border-2 table-active-success' : '' ?>">
-                                <td class="text-center">
-                                    <div class="form-check d-flex justify-content-center">
-                                        <input class="form-check-input subject-checkbox" type="checkbox" name="selected_subjects[]" 
-                                               value="<?= esc($v_subject->SubjectID) ?>" id="sub<?= esc($v_subject->SubjectID) ?>" checked>
-                                    </div>
-                                </td>
-                                <td>
-                                    <?php if($isNewGroup): ?>
-                                        <span class="badge bg-success rounded-pill mb-1"><?= esc($v_subject->FirstGroup) ?></span>
-                                    <?php else: ?>
-                                        <span class="text-muted opacity-50 ms-3"><i class='bx bx-subdirectory-right small me-1'></i><?= esc($v_subject->FirstGroup) ?></span>
-                                    <?php endif; ?>
-                                </td>
-                                <td><code class="fw-bold text-dark fs-6"><?= esc($v_subject->SubjectCode) ?></code></td>
-                                <td class="fw-semibold text-secondary"><?= esc($v_subject->SubjectName) ?></td>
-                                <td><span class="badge bg-label-success"><?= esc($v_subject->SubjectType) ?></span></td>
-                            </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            
-            <div class="card-footer bg-label-secondary py-4 border-top">
-                <div class="row align-items-center">
-                    <div class="col-lg-8 mb-3 mb-lg-0">
-                        <div class="d-flex align-items-center text-secondary">
-                            <i class='bx bx-help-circle fs-3 me-2 text-success'></i>
-                            <span>ระบบจะนำคะแนนจากวิชาที่ท่านเลือก มาประยุกต์รวมกันตามกลุ่มสาระการเรียนรู้ เพื่อสรุปผลสัมฤทธิ์ทางการเรียนตามมาตรฐานกุหลาบหลวง</span>
-                        </div>
-                    </div>
-                    <div class="col-lg-4 text-lg-end">
-                        <button type="submit" class="btn btn-success btn-lg w-100 w-md-auto shadow-md btn-submit">
-                            <i class='bx bx-calculator me-2'></i> ประมวลผลและดูสรุปสถิติ
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </form>
-    </div>
     <?php endif; ?>
 </div>
-
-<style>
-    #subjectSelectionTable tr:hover { cursor: pointer; }
-    .border-dashed { border-style: dashed !important; }
-    .table-active { --bs-table-accent-bg: rgba(105, 108, 255, 0.05) !important; }
-</style>
-
 <?= $this->endSection() ?>
 
 <?= $this->section('script') ?>
 <script>
-    $(document).ready(function() {
-        // ฟังก์ชันสำหรับแสดง Loading ที่ปุ่ม
-        function showLoading(btn) {
-            btn.addClass('disabled').prop('disabled', true);
-            btn.html('<i class="bx bx-loader-alt bx-spin me-1"></i> กำลังประมวลผล...');
-        }
-
-        // จัดการฟอร์มตัวกรอง (ดึงรายชื่อวิชา)
-        $('#filterForm').on('submit', function() {
-            showLoading($(this).find('.btn-submit'));
-        });
-
-        // จัดการฟอร์มคำนวณ (เริ่มคำนวณ)
-        $('#calculationForm').on('submit', function(e) {
-            if ($('.subject-checkbox:checked').length === 0) {
-                e.preventDefault();
-                alert('กรุณาเลือกอย่างน้อย 1 วิชาเพื่อคำนวณครับ');
-                return false;
-            }
-            showLoading($(this).find('.btn-submit'));
-        });
-
-        // จัดการคลิกที่แถวเพื่อให้ติ๊ก Checkbox ได้ง่ายขึ้น
-        $('#subjectSelectionTable tbody tr').on('click', function(e) {
-            if ($(e.target).is('input')) return;
-            var chk = $(this).find('.subject-checkbox');
-            chk.prop('checked', !chk.prop('checked'));
-        });
-
-        // ปุ่มเลือกทั้งหมด
-        $('#btnSelectAll').on('click', function() {
-            $('.subject-checkbox').prop('checked', true);
-        });
-
-        // ปุ่มยกเลิกทั้งหมด
-        $('#btnDeselectAll').on('click', function() {
-            $('.subject-checkbox').prop('checked', false);
+$(document).ready(function() {
+    // Initialize Select2 - Fixed Version
+    $('.select2').each(function() {
+        $(this).select2({ 
+            theme: 'bootstrap-5',
+            width: '100%'
         });
     });
+
+    // Loading State with SweetAlert2
+    const startLoading = () => {
+        Swal.fire({
+            title: 'กำลังดึงข้อมูลวิชา...',
+            text: 'ระบบกำลังดำเนินการค้นหา กรุณารอสักครู่',
+            allowOutsideClick: false,
+            didOpen: () => { Swal.showLoading(); }
+        });
+    };
+
+    $('#filterForm').on('submit', function() {
+        startLoading();
+        return true;
+    });
+
+    $('#calculationForm').on('submit', function(e) {
+        if ($('.subject-checkbox:checked').length === 0) {
+            e.preventDefault();
+            Swal.fire({ icon: 'error', title: 'ไม่พบวิชาที่เลือก', text: 'กรุณาเลือกวิชาอย่างน้อย 1 วิชาเพื่อคำนวณครับ' });
+            return false;
+        }
+        Swal.fire({
+            title: 'กำลังประมวลผลสถิติ...',
+            text: 'ระบบกำลังวิเคราะห์เกรดมาตรฐานกุหลาบหลวง กรุณารอสักครู่',
+            allowOutsideClick: false,
+            didOpen: () => { Swal.showLoading(); }
+        });
+        return true;
+    });
+
+    // Multi-select helpers
+    $('#btnSelectAll').on('click', () => $('.subject-checkbox').prop('checked', true));
+    $('#btnDeselectAll').on('click', () => $('.subject-checkbox').prop('checked', false));
+
+    // Row-click helper
+    $('.subject-row').on('click', function(e) {
+        if ($(e.target).is('input')) return;
+        let ck = $(this).find('.subject-checkbox');
+        ck.prop('checked', !ck.prop('checked'));
+    });
+});
 </script>
 <?= $this->endSection() ?>

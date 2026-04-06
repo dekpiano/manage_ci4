@@ -1,95 +1,189 @@
 <?= $this->extend('admin/layout/main') ?>
 
 <?= $this->section('content') ?>
-<div class="container-xxl flex-grow-1 container-p-y">
-    <div class="row align-items-center mb-4">
-        <div class="col-md-6">
-            <h4 class="fw-bold py-3 mb-0">
-                <span class="text-muted fw-light">วิชาการ /</span> <?= isset($title) ? esc($title) : 'สรุปผลสัมฤทธิ์ทางการเรียน' ?>
-            </h4>
-        </div>
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-body p-2">
-                    <form method="get" action="<?= site_url('Admin/Acade/Evaluate/ReportAcademicSummary'); ?>" class="row g-2">
-                        <div class="col-md-5">
-                            <select class="form-select" name="KeyYear" id="KeyYear">
-                                <option value="0">เลือกปีการศึกษา...</option>
-                                <?php foreach ($CheckYear as $v_CheckYear) : ?>
-                                    <option <?= (isset($KeyYear) && $KeyYear == $v_CheckYear->RegisterYear) ? 'selected' : '' ?> value="<?= esc($v_CheckYear->RegisterYear) ?>">
-                                        <?= esc($v_CheckYear->RegisterYear) ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-                        <div class="col-md-5">
-                            <select class="form-select" name="SelLern">
-                                <option value="0">เลือกกลุ่มสาระ...</option>
-                                <?php foreach ($lern as $v_lern) : ?>
-                                    <option <?= (service('request')->getGet('SelLern') == $v_lern->lear_id) ? "selected" : "" ?> value="<?= esc($v_lern->lear_id) ?>">
-                                        <?= esc($v_lern->lear_namethai) ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-                        <div class="col-md-2">
-                            <button class="btn btn-primary w-100" type="submit">
-                                <i class="bx bx-search"></i>
-                            </button>
-                        </div>
-                    </form>
-                </div>
+<style>
+    :root {
+        --primary-green: #15a362;
+        --dark-green: #1d4310;
+        --light-green: #ABDD93;
+    }
+
+    /* Hero Section */
+    .hero-header {
+        background: #15a362;
+        background: linear-gradient(135deg, #15a362 0%, #0d6d41 100%);
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        color: white;
+        box-shadow: 0 8px 25px rgba(40, 167, 69, 0.15);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .hero-header::after {
+        content: '';
+        position: absolute;
+        bottom: -20px;
+        right: -20px;
+        width: 150px;
+        height: 150px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+    }
+
+    /* Search Container */
+    .search-container {
+        background: #fff;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        border: 1px solid #edf2f9;
+        margin-bottom: 1.5rem;
+    }
+
+    /* Table Styles */
+    #ReportSummaryTeacher {
+        border-collapse: collapse !important;
+        width: 100%;
+    }
+
+    #ReportSummaryTeacher thead th {
+        background-color: #ABDD93 !important;
+        border: 1px solid #529432 !important;
+        color: #000 !important;
+        font-weight: 700;
+        vertical-align: middle !important;
+        position: sticky;
+        top: 0;
+        z-index: 40;
+        padding: 10px 5px !important;
+        font-size: 0.85rem;
+    }
+
+    #ReportSummaryTeacher tbody td {
+        border: 1px solid #e9ecef;
+        vertical-align: middle;
+        padding: 8px 5px !important;
+        font-size: 0.85rem;
+    }
+
+    .bg-grade-high { background-color: #f1f8e9 !important; }
+    .bg-grade-low { background-color: #fffde7 !important; }
+    .bg-status-danger { background-color: #ffebee !important; }
+
+    .fade-in-up {
+        animation: fadeInUp 0.4s ease-out forwards;
+    }
+
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(15px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    /* Select2 Bootstrap 5 Fixes */
+    .select2-container--bootstrap-5 .select2-selection {
+        height: 40px !important;
+        display: flex !important;
+        align-items: center !important;
+    }
+</style>
+
+<div class="container-fluid flex-grow-1 container-p-y">
+    <!-- Hero Header -->
+    <div class="hero-header fade-in-up">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h3 class="fw-bold mb-1 text-white"><i class='bx bx-bar-chart-alt-2 me-2'></i>สรุปผลสัมฤทธิ์ทางการเรียน</h3>
+                <p class="mb-0 text-white-50 opacity-75">รายงานสถิติการตัดเกรด ค่าเฉลี่ย และผลการเรียนรายวิชา แยกตามกลุ่มสาระการเรียนรู้</p>
+            </div>
+            <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                <?php if (!empty($KeyYear) && $KeyYear != '0'): ?>
+                    <span class="badge bg-white bg-opacity-20 fs-6 p-2 px-3 rounded-pill text-white shadow-sm">
+                        <i class='bx bx-calendar-check me-1 text-white'></i> ปีการศึกษา <?= esc($KeyYear) ?>
+                    </span>
+                <?php endif; ?>
             </div>
         </div>
     </div>
 
-    <?php if (service('request')->getGet('SelLern') === '0' || empty(service('request')->getGet('SelLern'))) : ?>
-        <div class="card shadow-none bg-transparent border border-primary mb-4">
-            <div class="card-body text-center">
-                <h5 class="card-title text-primary mb-1"><i class="bx bx-info-circle me-1"></i> กรุณาเลือกรายการ</h5>
-                <p class="card-text">เลือกปีการศึกษาและกลุ่มสาระการเรียนรู้เพื่อดูรายงานสรุปผลสัมฤทธิ์</p>
-            </div>
-        </div>
-    <?php else : ?>
-        <div class="card shadow-sm">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">ตารางสรุปผลสัมฤทธิ์ทางการเรียน</h5>
-                <div class="dt-buttons btn-group flex-wrap">
-                    <!-- DataTables buttons will be injected here if used, or custom buttons -->
+    <!-- Modern Search Control -->
+    <form method="get" action="<?= site_url('Admin/Acade/Evaluate/ReportAcademicSummary'); ?>" id="formFilterSummary">
+        <div class="search-container fade-in-up">
+            <div class="row align-items-end g-3">
+                <div class="col-lg-3">
+                    <label class="form-label fw-bold text-dark small">ปีการศึกษา</label>
+                    <select class="form-select select2" name="KeyYear" id="KeyYear">
+                        <option value="0">-- เลือกปีการศึกษา --</option>
+                        <?php foreach ($CheckYear as $v_CheckYear) : ?>
+                            <option <?= (isset($KeyYear) && $KeyYear == $v_CheckYear->RegisterYear) ? 'selected' : '' ?> value="<?= esc($v_CheckYear->RegisterYear) ?>">
+                                ปีการศึกษา <?= esc($v_CheckYear->RegisterYear) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="col-lg-4">
+                    <label class="form-label fw-bold text-dark small">กลุ่มสาระการเรียนรู้</label>
+                    <select class="form-select select2" name="SelLern" id="SelLern">
+                        <option value="0">-- ทั้งหมด / ไม่ระบุ --</option>
+                        <?php foreach ($lern as $v_lern) : ?>
+                            <option <?= (service('request')->getGet('SelLern') == $v_lern->lear_id) ? "selected" : "" ?> value="<?= esc($v_lern->lear_id) ?>">
+                                <?= esc($v_lern->lear_namethai) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="col-lg-2">
+                    <button class="btn btn-success w-100 shadow-sm fw-bold" style="height: 40px;" type="submit">
+                        <i class="bx bx-search-alt me-1"></i> ค้นหา
+                    </button>
+                </div>
+                <div class="col-lg-3 text-end" id="exportSummaryButtons">
                 </div>
             </div>
-            <div class="card-body">
-                <div class="table-responsive text-nowrap">
-                    <table class="table table-hover table-bordered table-sm" id="ReportSummaryTeacher">
+        </div>
+    </form>
+
+    <?php if (empty($Showdata)) : ?>
+        <div class="card border-0 shadow-none bg-transparent text-center py-5 fade-in-up">
+            <div class="avatar avatar-xl mx-auto mb-3" style="width: 100px; height: 100px;">
+                <span class="avatar-initial rounded-circle bg-label-success"><i class="bx bx-search-alt" style="font-size: 3rem;"></i></span>
+            </div>
+            <h4 class="text-dark fw-bold">กรุณาเลือกข้อมูลเพื่อแสดงรายงาน</h4>
+            <p class="text-muted">เลือกปีการศึกษาและกลุ่มสาระด้านบนเพื่อเริ่มต้น</p>
+        </div>
+    <?php else : ?>
+        <!-- Data Table -->
+        <div class="fade-in-up" style="animation-delay: 0.1s;">
+            <div class="bg-white" style="border-radius: 12px; border: 2px solid #529432; overflow: hidden;">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0" id="ReportSummaryTeacher">
                         <thead>
-                            <tr class="table-light text-center">
-                                <th rowspan="2" class="align-middle">ครูผู้สอน</th>
-                                <th rowspan="2" class="align-middle">วิชา</th>
-                                <th rowspan="2" class="align-middle">ชั้น</th>
-                                <th rowspan="2" class="align-middle">นก.</th>
-                                <th rowspan="2" class="align-middle bg-primary text-white">นักเรียน</th>
-                                <th colspan="8" class="bg-success text-white">ระดับคะแนน (จำนวนคน)</th>
-                                <th colspan="2" class="bg-warning text-dark">สถานะ</th>
-                                <th colspan="4" class="bg-info text-dark">สรุปสถิติ</th>
+                            <tr class="text-center">
+                                <th rowspan="2" style="width: 180px;">ครูผู้สอน</th>
+                                <th rowspan="2" style="min-width: 250px;">รายวิชา / รหัสวิชา</th>
+                                <th rowspan="2" style="width: 60px;">ชั้น</th>
+                                <th rowspan="2" style="width: 50px;">นก.</th>
+                                <th rowspan="2" class="bg-primary text-white" style="width: 60px;">นร.</th>
+                                <th colspan="8" class="bg-success text-white">ผลการเรียน (จำนวนคน)</th>
+                                <th colspan="2" class="bg-warning text-dark text-nowrap">สถานะ</th>
+                                <th colspan="4" class="bg-info text-white">สถิติรวม</th>
                             </tr>
-                            <tr class="table-light text-center">
-                                <!-- Grades -->
-                                <th class="px-2">4</th>
-                                <th class="px-2">3.5</th>
-                                <th class="px-2">3</th>
-                                <th class="px-2">2.5</th>
-                                <th class="px-2">2</th>
-                                <th class="px-2">1.5</th>
-                                <th class="px-2">1</th>
-                                <th class="px-2">0</th>
-                                <!-- Status -->
-                                <th class="px-2">ร</th>
-                                <th class="px-2">มส</th>
-                                <!-- New Stats -->
-                                <th class="bg-label-info">รวม(0-4)</th>
-                                <th class="bg-label-info">ร้อยละ 3+</th>
-                                <th class="bg-label-info">เฉลี่ย</th>
-                                <th class="bg-label-info">SD</th>
+                            <tr class="text-center">
+                                <th class="bg-grade-high text-dark">4</th>
+                                <th class="bg-grade-high text-dark">3.5</th>
+                                <th class="bg-grade-high text-dark">3</th>
+                                <th>2.5</th>
+                                <th>2</th>
+                                <th>1.5</th>
+                                <th>1</th>
+                                <th class="text-danger bg-grade-low">0</th>
+                                <th class="bg-status-danger text-dark">ร</th>
+                                <th class="bg-status-danger text-dark">มส</th>
+                                <th class="bg-info text-white border-white">3+</th>
+                                <th class="bg-info text-white border-white">% 3+</th>
+                                <th class="bg-info text-white border-white">เฉลี่ย</th>
+                                <th class="bg-info text-white border-white">SD</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -99,34 +193,35 @@
                                 $goodPercent = ($totalNumeric > 0) ? ($goodCount / $totalNumeric) * 100 : 0;
                             ?>
                                 <tr>
-                                    <td>
-                                        <small><?= esc($v_data->pers_prefix . $v_data->pers_firstname . ' ' . $v_data->pers_lastname) ?></small>
+                                    <td class="border-end">
+                                        <div class="fw-medium text-dark small"><?= esc($v_data->pers_prefix . $v_data->pers_firstname . ' ' . $v_data->pers_lastname) ?></div>
                                     </td>
-                                    <td>
-                                        <small><strong><?= esc($v_data->SubjectCode) ?></strong> <?= esc($v_data->SubjectName) ?></small>
+                                    <td class="border-end">
+                                        <div class="small"><span class="badge bg-label-success me-1"><?= esc($v_data->SubjectCode) ?></span> <?= esc($v_data->SubjectName) ?></div>
                                     </td>
-                                    <td class="text-center"><?= esc($v_data->StudentClass) ?></td>
-                                    <td class="text-center"><?= esc($v_data->SubjectUnit) ?></td>
-                                    <td class="text-center fw-bold text-primary"><?= esc($v_data->SumStu) ?></td>
-                                    <!-- Grades -->
-                                    <td class="text-center"><?= $v_data->G4_0 ?: '-' ?></td>
-                                    <td class="text-center"><?= $v_data->G3_5 ?: '-' ?></td>
-                                    <td class="text-center"><?= $v_data->G3_0 ?: '-' ?></td>
-                                    <td class="text-center"><?= $v_data->G2_5 ?: '-' ?></td>
-                                    <td class="text-center"><?= $v_data->G2_0 ?: '-' ?></td>
-                                    <td class="text-center"><?= $v_data->G1_5 ?: '-' ?></td>
-                                    <td class="text-center"><?= $v_data->G1_0 ?: '-' ?></td>
-                                    <td class="text-center text-danger"><?= $v_data->G0 ?: '-' ?></td>
-                                    <!-- Status -->
-                                    <td class="text-center text-warning fw-bold"><?= $v_data->G_W ?: '-' ?></td>
-                                    <td class="text-center text-warning fw-bold"><?= $v_data->G_MS ?: '-' ?></td>
-                                    <!-- Stats -->
-                                    <td class="text-center fw-bold"><?= $totalNumeric ?></td>
-                                    <td class="text-center <?= $goodPercent >= 50 ? 'text-success' : 'text-danger' ?> fw-bold">
-                                        <?= number_format($goodPercent, 2) ?>%
+                                    <td class="text-center border-end fw-bold"><?= esc($v_data->StudentClass) ?></td>
+                                    <td class="text-center border-end"><?= number_format((float)$v_data->SubjectUnit, 1) ?></td>
+                                    <td class="text-center border-end fw-bold text-primary bg-light"><?= esc($v_data->SumStu) ?></td>
+                                    
+                                    <td class="text-center border-end bg-grade-high"><?= $v_data->G4_0 ?: '0' ?></td>
+                                    <td class="text-center border-end bg-grade-high"><?= $v_data->G3_5 ?: '0' ?></td>
+                                    <td class="text-center border-end bg-grade-high"><?= $v_data->G3_0 ?: '0' ?></td>
+                                    
+                                    <td class="text-center border-end"><?= $v_data->G2_5 ?: '0' ?></td>
+                                    <td class="text-center border-end"><?= $v_data->G2_0 ?: '0' ?></td>
+                                    <td class="text-center border-end"><?= $v_data->G1_5 ?: '0' ?></td>
+                                    <td class="text-center border-end"><?= $v_data->G1_0 ?: '0' ?></td>
+                                    <td class="text-center border-end text-danger fw-bold bg-grade-low"><?= $v_data->G0 ?: '0' ?></td>
+                                    
+                                    <td class="text-center border-end bg-status-danger"><?= $v_data->G_W ?: '0' ?></td>
+                                    <td class="text-center border-end bg-status-danger"><?= $v_data->G_MS ?: '0' ?></td>
+                                    
+                                    <td class="text-center border-end fw-bold bg-light text-success"><?= $goodCount ?></td>
+                                    <td class="text-center border-end fw-bold <?= $goodPercent >= 50 ? 'text-success' : 'text-danger' ?> bg-light">
+                                        <?= number_format($goodPercent, 1) ?>%
                                     </td>
-                                    <td class="text-center fw-bold"><?= number_format((float)$v_data->MeanGrade, 2) ?></td>
-                                    <td class="text-center"><?= number_format((float)$v_data->SDGrade, 2) ?></td>
+                                    <td class="text-center border-end fw-bold bg-light table-info"><?= number_format((float)$v_data->MeanGrade, 2) ?></td>
+                                    <td class="text-center fw-bold bg-light"><?= number_format((float)$v_data->SDGrade, 2) ?></td>
                                 </tr>
                             <?php endforeach; ?>
                         </tbody>
@@ -136,62 +231,58 @@
         </div>
     <?php endif; ?>
 </div>
-
 <?= $this->endSection() ?>
 
 <?= $this->section('script') ?>
 <script>
 $(document).ready(function() {
-    // Sort the dropdown
-    var select = $('#KeyYear');
-    var options = select.find('option');
-    var selectedValue = select.val();
-    var placeholder = options.filter('[value="0"]');
-    options = options.not('[value="0"]');
-
-    options.sort(function(a, b) {
-        var aVal = a.value.split('/');
-        var bVal = b.value.split('/');
-        if (aVal.length < 2 || bVal.length < 2) return 0;
-        var aYear = parseInt(aVal[1], 10);
-        var bYear = parseInt(bVal[1], 10);
-        var aTerm = parseInt(aVal[0], 10);
-        var bTerm = parseInt(bVal[0], 10);
-
-        if (aYear !== bYear) return bYear - aYear;
-        return bTerm - aTerm;
+    // Correct Initialization of Select2
+    $('.select2').each(function() {
+        $(this).select2({ 
+            theme: 'bootstrap-5',
+            width: '100%'
+        });
     });
 
-    select.empty().append(placeholder).append(options);
-    select.val(selectedValue);
-
-    // Initialize DataTable
-    if ($('#ReportSummaryTeacher').length) {
-        $('#ReportSummaryTeacher').DataTable({
-            dom: '<"row mx-2"<"col-md-auto d-flex align-items-center justify-content-center justify-content-md-start"l><"col-md-auto ms-auto mt-2 mt-md-0 d-flex align-items-center justify-content-center justify-content-md-end"Bf>>t<"row mx-2"<"col-md-6"i><"col-md-6"p>>',
-            buttons: [
-                { extend: 'excelHtml5', className: 'btn btn-outline-success btn-sm me-1', text: '<i class="bx bxs-file-export me-1"></i> Excel' },
-                { extend: 'pdfHtml5', className: 'btn btn-outline-danger btn-sm me-1', text: '<i class="bx bxs-file-pdf me-1"></i> PDF', orientation: 'landscape', pageSize: 'A4' },
-                { extend: 'print', className: 'btn btn-outline-info btn-sm', text: '<i class="bx bx-printer me-1"></i> Print' }
-            ],
-            autoWidth: false,
-            pageLength: -1,
-            lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
-            language: {
-                url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/th.json'
-            }
+    // Loading Spinner with SweetAlert2
+    $('#formFilterSummary').on('submit', function() {
+        if ($('#KeyYear').val() === '0') {
+            Swal.fire({ icon: 'warning', title: 'กรุณาเลือกปีการศึกษา', confirmButtonColor: '#28a745' });
+            return false;
+        }
+        Swal.fire({
+            title: 'กำลังดึงข้อมูลสรุป...',
+            text: 'ระบบกำลังวิเคราะห์สถิติทางการเรียนให้คุณ กรุณารอสักครู่',
+            allowOutsideClick: false,
+            didOpen: () => { Swal.showLoading(); }
         });
+        return true;
+    });
+
+    // DataTable for Export Buttons
+    if ($('#ReportSummaryTeacher').length && !$.fn.DataTable.isDataTable('#ReportSummaryTeacher')) {
+        let table = $('#ReportSummaryTeacher').DataTable({
+            dom: 'rt',
+            buttons: [
+                { 
+                    extend: 'excelHtml5', 
+                    text: '<i class="bx bxs-file-export me-1"></i> Excel',
+                    className: 'btn btn-success btn-sm border-0 shadow-sm me-1',
+                    title: 'สรุปผลสัมฤทธิ์ทางการเรียน_<?= esc($KeyYear ?? "") ?>'
+                },
+                { 
+                    extend: 'print', 
+                    text: '<i class="bx bx-printer me-1"></i> พิมพ์รายงาน',
+                    className: 'btn btn-outline-secondary btn-sm border-0 shadow-sm'
+                }
+            ],
+            ordering: false,
+            paging: false,
+            info: false,
+            autoWidth: false
+        });
+        table.buttons().container().appendTo('#exportSummaryButtons');
     }
 });
 </script>
-<style>
-    .table-sm th, .table-sm td {
-        padding: 0.3rem 0.6rem !important;
-        font-size: 0.85rem;
-    }
-    .bg-label-info {
-        background-color: #e7f7ff !important;
-        color: #03c3ec !important;
-    }
-</style>
 <?= $this->endSection() ?>

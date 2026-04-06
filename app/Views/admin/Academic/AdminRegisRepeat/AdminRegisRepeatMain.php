@@ -579,7 +579,10 @@ updateRepeatDashboardStats($('#CheckYearRegisRepeat').val());
 // Year change handler
 $(document).on('change', '#CheckYearRegisRepeat', function() {
     var selectedYear = $(this).val();
-    $.post("<?= site_url('Admin/SetSelectedYear') ?>", { year: selectedYear });
+    $.post("<?= site_url('Admin/SetSelectedYear') ?>", { 
+        year: selectedYear,
+        "<?= csrf_token() ?>": "<?= csrf_hash() ?>"
+    });
     
     // Clear initialized flags so they reload when opened
     $('.accordion-collapse').each(function() {

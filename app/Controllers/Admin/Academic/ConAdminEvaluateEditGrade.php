@@ -77,19 +77,27 @@ class ConAdminEvaluateEditGrade extends BaseController
 
         // ถ้าไม่ได้ส่ง Term/Year มา ให้ดึงจาก DB
         if ($Term === null || $Year === null) {
+            // 1. ลองดู onoff_year ก่อน (ค่าที่ตั้งในระบบเปิด-ปิดการบันทึกคะแนน)
             $onoff_year = $data['OnOffSaveScoreSystem'][0]->onoff_year ?? '';
             $parts = explode('/', $onoff_year);
             $Term = $parts[0] ?? '';
             $Year = $parts[1] ?? '';
 
             if (empty($Term) || empty($Year)) {
-                if ($data['SchoolYear'] && property_exists($data['SchoolYear'], 'schyear_year')) {
+                // 2. ใช้ get_selected_year() จากระบบกลาง
+                $selectedYearStr = get_selected_year();
+                if (!empty($selectedYearStr) && strpos($selectedYearStr, '/') !== false) {
+                    $parts = explode('/', $selectedYearStr);
+                    $Term = $parts[0] ?? '1';
+                    $Year = $parts[1] ?? '2568';
+                } elseif ($data['SchoolYear'] && property_exists($data['SchoolYear'], 'schyear_year')) {
+                    // 3. fallback สุดท้าย: SchoolYear จาก DB
                     $parts = explode('/', $data['SchoolYear']->schyear_year);
-                    $Term = $parts[0] ?? '2';
-                    $Year = $parts[1] ?? '2567';
+                    $Term = $parts[0] ?? '1';
+                    $Year = $parts[1] ?? '2568';
                 } else {
-                    $Term = '2';
-                    $Year = '2567';
+                    $Term = '1';
+                    $Year = '2568';
                 }
             }
         }

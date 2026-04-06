@@ -129,7 +129,7 @@
         </div>
     </div>
 
-    <input type="hidden" name="CheckYearNow" id="CheckYearNow" value="<?= isset($SchoolYear->schyear_year) ? esc($SchoolYear->schyear_year) : '' ?>">
+    <input type="hidden" name="CheckYearNow" id="CheckYearNow" value="<?= isset($selectedYear) ? esc($selectedYear) : (isset($SchoolYear->schyear_year) ? esc($SchoolYear->schyear_year) : '') ?>">
 
     <!-- Add Form (Collapse) -->
     <div class="collapse mb-4" id="collapseAddSubject">
@@ -147,7 +147,7 @@
                                 <?php $d = date('Y')+541; 
                                 for($j=1; $j<=3; $j++):
                                     for ($i=$d; $i <= $d+2 ; $i++) :?>
-                                <option <?= (isset($SchoolYear->schyear_year) && $SchoolYear->schyear_year == $j.'/'.$i) ? "selected" : ""?>
+                                <option <?= (isset($selectedYear) && $selectedYear == $j.'/'.$i) ? "selected" : ""?>
                                     value="<?= esc($j.'/'.$i) ?>"><?= esc($j.'/'.$i) ?></option>
                                 <?php endfor; endfor; ?>
                             </select>
@@ -244,7 +244,7 @@
                         <select class="form-select form-select-sm SelectSubject" id="SelectSubject" style="width: auto; min-width: 140px;">
                             <option selected value="">เลือกปีการศึกษา</option>
                             <?php foreach ($GroupYear as $key => $v_GroupYear): ?>
-                            <option <?= (isset($v_GroupYear->SubjectYear) && isset($SchoolYear->schyear_year) && $v_GroupYear->SubjectYear == $SchoolYear->schyear_year) ? "selected" : ""?>
+                            <option <?= (isset($v_GroupYear->SubjectYear) && isset($selectedYear) && $v_GroupYear->SubjectYear == $selectedYear) ? "selected" : ""?>
                                 value="<?= isset($v_GroupYear->SubjectYear) ? esc($v_GroupYear->SubjectYear) : '' ?>">
                                 <?= isset($v_GroupYear->SubjectYear) ? esc($v_GroupYear->SubjectYear) : '' ?>
                             </option>

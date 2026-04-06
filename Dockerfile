@@ -1,4 +1,4 @@
-FROM php:8.0-apache
+FROM php:8.3-apache
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -22,16 +22,21 @@ RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 # Install PHP extensions
 RUN docker-php-ext-install pdo_mysql mysqli mbstring exif pcntl bcmath gd intl zip opcache
 
-# Configure Opcache
+# Configure Opcache with JIT for high performance
 RUN { \
     echo 'opcache.memory_consumption=256'; \
-    echo 'opcache.interned_strings_buffer=16'; \
-    echo 'opcache.max_accelerated_files=20000'; \
+    echo 'opcache.interned_strings_buffer=32'; \
+    echo 'opcache.max_accelerated_files=60000'; \
     echo 'opcache.revalidate_freq=0'; \
     echo 'opcache.validate_timestamps=1'; \
     echo 'opcache.fast_shutdown=1'; \
     echo 'opcache.enable_cli=1'; \
+    echo 'opcache.jit_buffer_size=128M'; \
+    echo 'opcache.jit=1255'; \
     } > /usr/local/etc/php/conf.d/opcache-recommended.ini
+
+# Increase memory limit
+RUN echo "memory_limit=256M" > /usr/local/etc/php/conf.d/memory-limit.ini
 
 # Enable Apache mod_rewrite and mod_ssl
 RUN a2enmod rewrite ssl

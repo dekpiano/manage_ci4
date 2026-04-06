@@ -39,9 +39,9 @@
             </h4>
             <p class="text-muted mb-0">ปีการศึกษา: <strong id="headerYear"><?= isset($CheckYear[0]->seplanset_term) ? $CheckYear[0]->seplanset_term.'/'.$CheckYear[0]->seplanset_year : '-' ?></strong></p>
             <small class="text-primary"><i class="bx bx-calendar-event me-1"></i> 
-                <?= isset($CheckYear[0]->seplanset_startdate) ? date('d/m/Y H:i', strtotime($CheckYear[0]->seplanset_startdate)) : '-' ?> 
+                <?= isset($CheckYear[0]->seplanset_startdate) ? date('d/m/', strtotime($CheckYear[0]->seplanset_startdate)) . (date('Y', strtotime($CheckYear[0]->seplanset_startdate)) + 543) . date(' H:i', strtotime($CheckYear[0]->seplanset_startdate)) : '-' ?> 
                 ถึง 
-                <?= isset($CheckYear[0]->seplanset_enddate) ? date('d/m/Y H:i', strtotime($CheckYear[0]->seplanset_enddate)) : '-' ?>
+                <?= isset($CheckYear[0]->seplanset_enddate) ? date('d/m/', strtotime($CheckYear[0]->seplanset_enddate)) . (date('Y', strtotime($CheckYear[0]->seplanset_enddate)) + 543) . date(' H:i', strtotime($CheckYear[0]->seplanset_enddate)) : '-' ?>
             </small>
         </div>
         <div class="col-auto">

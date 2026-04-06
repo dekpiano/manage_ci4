@@ -3,7 +3,7 @@
 
 use CodeIgniter\Router\RouteCollection;
 use App\Controllers\Welcome;
-use App\Controllers\Control_login;
+use App\Controllers\Auth;
 use App\Controllers\Admin\Academic\ConAdminAcademicRepeat;
 use App\Controllers\Admin\Academic\ConAdminAcademinResult;
 use App\Controllers\Admin\Academic\ConAdminClassRoom;
@@ -30,8 +30,6 @@ use App\Controllers\Admin\Affairs\ConAdminStudentHomeRoom;
 use App\Controllers\Admin\Affairs\ConAdminStudentSupport;
 use App\Controllers\Admin\General\ConAdminGeneralPersonnel;
 use App\Controllers\Admin\General\ConAdminSettingAdminRoles as GeneralConAdminSettingAdminRoles; // Alias to avoid conflict
-use App\Controllers\Student\ConStudentExtraSubject;
-use App\Controllers\Student\ConStudentHome;
 use App\Controllers\User\ConStudents;
 use App\Controllers\User\ConUser_Home;
 use App\Controllers\Session;
@@ -45,11 +43,12 @@ $routes->get('debug-db', 'Admin\Academic\ConDebug::index');
 
 // CI3 Routes Migration
 $routes->get('ClosePage', [Welcome::class, 'ClosePage']);
-$routes->get('LoginAdmin', [Control_login::class, 'LoginAdmin']);
+
+// Unify Login/Logout Routes - See Auth block below
 
 // งานวิชาการ
 $routes->get('Admin/Home', [ConAdminHome::class, 'AdminHome']);
-$routes->post('Admin/SetSelectedYear', [ConAdminHome::class, 'setSelectedYear']);
+$routes->match(['get', 'post'], 'Admin/SetSelectedYear', [ConAdminHome::class, 'setSelectedYear']);
 $routes->get('Admin/GetSelectedYear', [ConAdminHome::class, 'getSelectedYear']);
 
 // Enrollment Dashboard Stats API
@@ -62,6 +61,7 @@ $routes->post('Admin/Academic/ConAdminRegisRepeat/getDashboardStats', [\App\Cont
 $routes->get('Admin/Acade/DevelopStudents/Clubs/Main', [ConAdminDevelopStudents::class, 'ClubsMain']);
 $routes->post('admin/academic/developstudents/update_onoff_status', [ConAdminDevelopStudents::class, 'updateClubOnoffStatus']);
 $routes->post('admin/academic/developstudents/update_onoff_dates', [ConAdminDevelopStudents::class, 'updateClubOnoffDates']);
+$routes->post('admin/academic/developstudents/update_schedule', [ConAdminDevelopStudents::class, 'ClubUpdateSchedule']);
 $routes->get('Admin/Acade/DevelopStudents/Clubs/All', [ConAdminDevelopStudents::class, 'ClubsAll']);
 $routes->get('admin/academic/ConAdminDevelopStudents/ClubsShow', [ConAdminDevelopStudents::class, 'ClubsShow']);
 $routes->post('admin/academic/ConAdminDevelopStudents/ClubsInsert', [ConAdminDevelopStudents::class, 'ClubsInsert']);
@@ -89,7 +89,8 @@ $routes->match(['get', 'post'], 'admin/academic/ConAdminDevelopStudents/ClubRepo
 $routes->match(['get', 'post'], 'admin/academic/ConAdminDevelopStudents/ClubAttendanceReportData', [ConAdminDevelopStudents::class, 'ClubAttendanceReportData']);
 
 $routes->get('Admin/Acade/Registration/Enroll', [ConAdminEnroll::class, 'AdminEnrollMain']);
-$routes->get('Admin/Acade/Registration/Enroll/Add/(:segment)/(:segment)', [ConAdminEnroll::class, 'AdminEnrollAdd']);
+$routes->get('Admin/Acade/Registration/Enroll/Add', [ConAdminEnroll::class, 'AdminEnrollAdd']);
+$routes->get('Admin/Acade/Registration/Enroll/Add/(:segment)/(:segment)', [ConAdminEnroll::class, 'AdminEnrollAdd/$1/$2']);
 $routes->get('Admin/Acade/Registration/Enroll/Edit/(:segment)/(:segment)', [ConAdminEnroll::class, 'AdminEnrollEdit']);
 $routes->get('Admin/Acade/Registration/Enroll/Delete/(:segment)/(:segment)', [ConAdminEnroll::class, 'AdminEnrollDelete']);
 $routes->get('Admin/Acade/Registration/Repeat', [ConAdminRegisRepeat::class, 'AdminRegisRepeatMain']);
@@ -111,8 +112,25 @@ $routes->post('admin/academic/ConAdminClassRoom/AddClassRoom', [ConAdminClassRoo
 $routes->post('admin/academic/ConAdminClassRoom/DeleteClassRoom/(:segment)', [ConAdminClassRoom::class, 'DeleteClassRoom']);
 $routes->get('Admin/Acade/Registration/Students', [ConAdminStudents::class, 'AdminStudentsMain']);
 $routes->get('Admin/Acade/Registration/Students/Data', [ConAdminStudents::class, 'AdminStudentsData']);
+$routes->get('Admin/Acade/Registration/Students/Lifecycle', [ConAdminStudents::class, 'AdminStudentsLifecycle']);
+$routes->get('Admin/Acade/Registration/Students/Add', [ConAdminStudents::class, 'AdminStudentsAdd']);
+$routes->post('Admin/Acade/Registration/Students/CheckDuplicate', [ConAdminStudents::class, 'checkDuplicate']);
+$routes->post('Admin/Acade/Registration/Students/Insert', [ConAdminStudents::class, 'processStudentAdd']);
+$routes->post('Admin/Acade/Registration/Students/ImportGoogle', [ConAdminStudents::class, 'processGoogleSheetImport']);
+    $routes->get('Admin/Acade/Registration/Students/ChangeYear/(:segment)', [ConAdminStudents::class, 'changeYear']);
+    $routes->get('Admin/Acade/Registration/Students/DataFilters', [ConAdminStudents::class, 'getStudentsByFilters']);
+$routes->post('Admin/Acade/Registration/Students/StatusUpdateBulk', [ConAdminStudents::class, 'processStatusUpdateBulk']);
+$routes->post('Admin/Acade/Registration/Students/PromotionBulk', [ConAdminStudents::class, 'processPromotionBulk']);
+$routes->get('Admin/Acade/Registration/Students/AdjustNumber', [ConAdminStudents::class, 'AdminStudentsAdjustNumber']);
+$routes->get('Admin/Acade/Registration/Students/Edit', [ConAdminStudents::class, 'AdminStudentsEditSearch']);
+$routes->get('Admin/Acade/Registration/Students/Edit/(:segment)', [ConAdminStudents::class, 'AdminStudentsEdit/$1']);
+$routes->post('Admin/Acade/Registration/Students/AdjustNumberData', [ConAdminStudents::class, 'getStudentsByClassForNumbering']);
+$routes->post('Admin/Acade/Registration/Students/AdjustNumberUpdate', [ConAdminStudents::class, 'updateStudentNumbers']);
+$routes->post('Admin/Acade/Registration/Students/AdjustNumberGlobalSearch', [ConAdminStudents::class, 'getGlobalSearchStudents']);
+
 $routes->get('Admin/Acade/Registration/Students/(:segment)', [ConAdminStudents::class, 'AdminStudentsNormal']);
 $routes->match(['get', 'post'],'Admin/Acade/Registration/StudentsUpdate', [ConAdminStudents::class, 'AdminStudentsUpdate']);
+$routes->match(['get', 'post'],'Admin/Acade/Registration/StudentsUpdate/(:segment)', [ConAdminStudents::class, 'AdminStudentsUpdate/$1']);
 
 $routes->get('Admin/Academic/ConAdminStudents/get_student_details/(:num)', [ConAdminStudents::class, 'get_student_details/$1']);
 $routes->post('Admin/Academic/ConAdminStudents/update_student_details', [ConAdminStudents::class, 'update_student_details']);
@@ -194,7 +212,8 @@ $routes->get('Admin/Acade/Evaluate/SaveScore', [ConAdminSaveScore::class, 'Admin
 $routes->get('Admin/Acade/Evaluate/SaveScoreGrade/(:segment)/(:segment)/(:segment)', [ConAdminSaveScore::class, 'AdminSaveScoreGrade']);
 $routes->post('admin/academic/ConAdminSaveScore/CheckOnOffSaveScore', [ConAdminSaveScore::class, 'CheckOnOffSaveScore']);
 $routes->get('Admin/Acade/Evaluate/ReportPerson', [ConAdminReportResult::class, 'AdminReportPersonMain']);
-
+$routes->get('Admin/Acade/Evaluate/ReportPerson/(:segment)/(:segment)', [ConAdminReportResult::class, 'AdminReportPersonMain/$1/$2']);
+$routes->post('Admin/Acade/Evaluate/ReportPerson/(:segment)/(:segment)', [ConAdminReportResult::class, 'AdminReportPersonMain/$1/$2']);
 $routes->get('Admin/Acade/Evaluate/ReportPerson/(:segment)', [ConAdminReportResult::class, 'AdminStudentsScore']);
 $routes->get('Admin/Acade/Evaluate/PrintTranscript/(:segment)', [ConAdminReportResult::class, 'PrintTranscript/$1']);
 $routes->get('Admin/Acade/Evaluate/PrintTranscript/(:segment)/(:segment)', [ConAdminReportResult::class, 'PrintTranscript/$1/$2']);
@@ -224,16 +243,16 @@ $routes->post('Admin/Academic/ConAdminRegisRepeat/getRepeatReportData', [ConAdmi
 
 $routes->match(['get', 'post'], 'Admin/Academic/ConAdminStudents/AdminStudentsNormalShow/(:segment)', [ConAdminStudents::class, 'AdminStudentsNormalShow/$1']);
 
-$routes->post('Admin/Academic/ConAdminEnroll/AdminEnrollSelect', [ConAdminEnroll::class, 'AdminEnrollSelect']);
-$routes->post('admin/academic/ConAdminEnroll/AdminEnrollUpdate', [ConAdminEnroll::class, 'AdminEnrollUpdate']); // Added route
-$routes->post('admin/academic/ConAdminEnroll/AdminEnrollShow', [ConAdminEnroll::class, 'AdminEnrollShow']); // Added route for AJAX call
-$routes->post('admin/academic/ConAdminEnroll/AdminEnrollCancel', [ConAdminEnroll::class, 'AdminEnrollCancel']); // Added route for AJAX call
-$routes->post('admin/academic/ConAdminEnroll/AdminEnrollChangeSubjectToTeacher', [ConAdminEnroll::class, 'AdminEnrollChangeSubjectToTeacher']); // Added route for AJAX call
-$routes->post('admin/academic/ConAdminEnroll/checkRepeatHistory', [ConAdminEnroll::class, 'checkRepeatHistory']);
-$routes->post('admin/academic/ConAdminEnroll/AdminEnrollInsert', [ConAdminEnroll::class, 'AdminEnrollInsert']); // Added route for AJAX call
-$routes->post('admin/academic/ConAdminEnroll/AdminEnrollDel', [ConAdminEnroll::class, 'AdminEnrollDel']); // Added route for AJAX call
-$routes->post('admin/academic/ConAdminEnroll/AdminEnrollChangeTeacherByRoom', [ConAdminEnroll::class, 'AdminEnrollChangeTeacherByRoom']);
-$routes->post('admin/academic/ConAdminEnroll/AdminEnrollChangeTeacher', [ConAdminEnroll::class, 'AdminEnrollChangeTeacher']);
+$routes->match(['get', 'post'], 'Admin/Academic/ConAdminEnroll/AdminEnrollSelect', [ConAdminEnroll::class, 'AdminEnrollSelect']);
+$routes->match(['get', 'post'], 'admin/academic/ConAdminEnroll/AdminEnrollUpdate', [ConAdminEnroll::class, 'AdminEnrollUpdate']);
+$routes->match(['get', 'post'], 'admin/academic/ConAdminEnroll/AdminEnrollShow', [ConAdminEnroll::class, 'AdminEnrollShow']);
+$routes->match(['get', 'post'], 'admin/academic/ConAdminEnroll/AdminEnrollCancel', [ConAdminEnroll::class, 'AdminEnrollCancel']);
+$routes->match(['get', 'post'], 'admin/academic/ConAdminEnroll/AdminEnrollChangeSubjectToTeacher', [ConAdminEnroll::class, 'AdminEnrollChangeSubjectToTeacher']);
+$routes->match(['get', 'post'], 'admin/academic/ConAdminEnroll/checkRepeatHistory', [ConAdminEnroll::class, 'checkRepeatHistory']);
+$routes->match(['get', 'post'], 'admin/academic/ConAdminEnroll/AdminEnrollInsert', [ConAdminEnroll::class, 'AdminEnrollInsert']);
+$routes->match(['get', 'post'], 'admin/academic/ConAdminEnroll/AdminEnrollDel', [ConAdminEnroll::class, 'AdminEnrollDel']);
+$routes->match(['get', 'post'], 'admin/academic/ConAdminEnroll/AdminEnrollChangeTeacherByRoom', [ConAdminEnroll::class, 'AdminEnrollChangeTeacherByRoom']);
+$routes->match(['get', 'post'], 'admin/academic/ConAdminEnroll/AdminEnrollChangeTeacher', [ConAdminEnroll::class, 'AdminEnrollChangeTeacher']);
 
 // Route สำหรับ AdminEnrollSubject
 $routes->get('Admin/Academic/ConAdminEnroll/AdminEnrollSubject', [ConAdminEnroll::class, 'AdminEnrollSubject']);
@@ -247,7 +266,8 @@ $routes->get('Admin/Acade/DevelopStudents/Clubs/All', [ConAdminDevelopStudents::
 
 // ผู้บริหารสถานศึกษา
 $routes->get('Admin/Acade/Executive/ReportPerson', [ConAdminReportResult::class, 'AdminReportPersonMain']);
-
+$routes->get('Admin/Acade/Executive/ReportPerson/(:segment)/(:segment)', [ConAdminReportResult::class, 'AdminReportPersonMain/$1/$2']);
+$routes->post('Admin/Acade/Executive/ReportPerson/(:segment)/(:segment)', [ConAdminReportResult::class, 'AdminReportPersonMain/$1/$2']);
 $routes->get('Admin/Acade/Executive/ReportPerson/(:segment)', [ConAdminReportResult::class, 'AdminStudentsScore']);
 $routes->get('Admin/Acade/Executive/ReportRoom', [ConAdminReportResult::class, 'AdminReportRoomMain']);
 $routes->get('Admin/Acade/Executive/ReportSummaryTeacher', [ConAdminReportResult::class, 'AdminReportSummaryTeacher']);
@@ -271,26 +291,27 @@ $routes->get('Admin/Acade/Executive/ReportEnroll/ID/(:segment)', [ConAdminReport
 $routes->post('Admin/Acade/Executive/exportRoomReportToExcel', [ConAdminReportResult::class, 'exportRoomReportToExcel']);
 $routes->get('Admin/Acade/Evaluate/ReportAcademicSummaryRoyalRoseStandard', [ConAdminReportResult::class, 'AdminReportAcademicSummaryRoyalRoseStandard']);
 $routes->post('Admin/Acade/Evaluate/ReportAcademicSummaryRoyalRoseStandard', [ConAdminReportResult::class, 'AdminReportRoyalRoseResult']);
+$routes->post('Admin/Acade/Evaluate/ReportAcademicSummaryRoyalRoseStandard/Export', [ConAdminReportResult::class, 'exportRoyalRoseToExcel']);
 $routes->get('Admin/Acade/Evaluate/ReportAcademicSummary', [ConAdminReportResult::class, 'AdminReportAcademicSummary']);
 
 // Session check for auto-logout
 $routes->get('session/check', [Session::class, 'check']);
 
-// Login
-$routes->get('Logout', [Control_login::class, 'logout']);
-$routes->get('LogoutTeacher', [Control_login::class, 'logoutGoogle']);
-$routes->get('LoginStudent', [Control_login::class, 'LoginStudent']);
-$routes->get('LoginTeacher', [Control_login::class, 'LoginTeacher']);
-$routes->get('LoginMenager', [Welcome::class, 'LoginMenager']);
-$routes->get('LoginMenager_callback', [Control_login::class, 'LoginMenager_callback']);
-$routes->get('LoginDev', [Control_login::class, 'LoginDev']);
+// Auth Routes (Login / Logout / Google)
+$routes->group('Auth', function ($routes) {
+    $routes->get('login', [Auth::class, 'login']);
+    $routes->post('doLogin', [Auth::class, 'doLogin']);
+    $routes->match(['get', 'post'], 'googleLogin', [Auth::class, 'googleLogin']);
+    $routes->get('logout', [Auth::class, 'logout']);
+});
 
-// Student
-$routes->get('Student/AcademicResult', [ConStudentHome::class, 'score']);
-$routes->get('Student/Home', [ConStudentHome::class, 'Home']);
-$routes->get('Student/Extra/Subject', [ConStudentExtraSubject::class, 'ExtraSubject']);
-$routes->get('Student/Extra/ReadMe', [ConStudentExtraSubject::class, 'ReadMe']);
-$routes->get('Student/Extra/CheckRegister', [ConStudentExtraSubject::class, 'CheckRegister']);
+// Redirect the old routes to the new Auth controller
+$routes->addRedirect('LoginAdmin', 'Auth/login');
+$routes->addRedirect('Logout', 'Auth/logout');
+$routes->addRedirect('LoginMenager', 'Auth/login');
+$routes->addRedirect('LogoutTeacher', 'Auth/logout');
+$routes->addRedirect('LoginTeacher', 'Auth/login');
+$routes->addRedirect('LoginMenager_callback', 'Auth/googleLogin');
 
 // User
 $routes->get('ExamSchedule', [ConStudents::class, 'ExamSchedule']);
