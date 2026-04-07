@@ -101,8 +101,11 @@ class ConAdminReportResult extends BaseController
 
         $data['SelRoom'] = $RoomFilter;
 
+        // Determine if we should show results (Strictly require Search button click)
+        $data['hasResults'] = ($this->request->getGet('search') === 'true');
+
         // Get students for the selected year and room
-        if ($currentYear) {
+        if ($currentYear && $data['hasResults']) {
             $builder = $this->db->table('tb_students')
                                 ->select("tb_students.StudentID, tb_students.StudentNumber, tb_students.StudentClass, tb_students.StudentCode, tb_students.StudentPrefix, tb_students.StudentFirstName, tb_students.StudentLastName, tb_students.StudentStatus, tb_students.StudentIDNumber")
                                 ->distinct()
@@ -200,9 +203,16 @@ class ConAdminReportResult extends BaseController
     public function AdminReportTeacherSaveScoreCheck($Term,$year,$TeacID){  
         $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();
         $data['Teacher'] = $this->DBpersonnel->table('tb_personnel')
-        ->select('pers_prefix,pers_firstname,pers_lastname')
+        ->select('pers_prefix,pers_firstname,pers_lastname,pers_id')
         ->where('pers_id',$TeacID)
         ->get()->getRow();
+
+        // Fetch available academic years for the filter dropdown
+        $data['CheckYearSaveScore'] = $this->db->table('tb_register')
+            ->select('RegisterYear')
+            ->groupBy('RegisterYear')
+            ->orderBy('SUBSTRING_INDEX(RegisterYear, "/", -1) DESC, SUBSTRING_INDEX(RegisterYear, "/", 1) DESC')
+            ->get()->getResult();
 
         $data['title'] = "รายงานผลการบันทึกคะแนนของ".( !empty($data['Teacher']) ? $data['Teacher']->pers_prefix.$data['Teacher']->pers_firstname.' '.$data['Teacher']->pers_lastname : '' ).' ปีการศึกษา '.$Term.'/'.$year; 
 
@@ -243,6 +253,7 @@ class ConAdminReportResult extends BaseController
         $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
         $data['Term'] = $Term;
         $data['Year'] = $year;
+        $data['TeacID'] = $TeacID;
         
         
         echo view('admin/Academic/AdminReportResults/AdminReportTeacherSaveScoreCheck',$data);

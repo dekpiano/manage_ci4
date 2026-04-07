@@ -270,13 +270,13 @@
         <li class="menu-header small text-uppercase">
             <span class="menu-header-text">งานวัดผลและประเมินผล</span>
         </li>
-        <li class="menu-item <?= ($totalSegments >= 4 && ($s4 == 'ReportTeacherSaveScore' || $s4 == 'ReportScoreRoomMain') ? 'active open' : '' ) ?>">
+        <li class="menu-item <?= ($totalSegments >= 4 && ($s4 == 'ReportTeacherSaveScore' || $s4 == 'ReportTeacherSaveScoreCheck' || $s4 == 'ReportScoreRoomMain') ? 'active open' : '' ) ?>">
             <a href="javascript:void(0);" class="menu-link menu-toggle">
                 <i class="menu-icon tf-icons bx bx-bar-chart-alt-2"></i>
                 <div data-i18n="รายงานผลคะแนน">รายงานผลคะแนน</div>
             </a>
             <ul class="menu-sub">
-                <li class="menu-item <?= ($s4 == 'ReportTeacherSaveScore' ? 'active' : '') ?>">
+                <li class="menu-item <?= ($s4 == 'ReportTeacherSaveScore' || $s4 == 'ReportTeacherSaveScoreCheck' ? 'active' : '') ?>">
                     <a href="<?=base_url('Admin/Acade/Evaluate/ReportTeacherSaveScore');?>" class="menu-link">
                         <div data-i18n="บันทึกคะแนน (ครู)">บันทึกคะแนน (ครู)</div>
                     </a>

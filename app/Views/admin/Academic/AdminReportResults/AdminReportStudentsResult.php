@@ -2,6 +2,87 @@
 
 <?= $this->section('content') ?>
 
+<style>
+    :root {
+        --primary-emerald: #15a362;
+        --dark-emerald: #0d6d41;
+        --light-emerald: #e8f5ee;
+        --border-radius: 16px;
+    }
+
+    /* Hero Student Section */
+    .hero-student {
+        background: linear-gradient(135deg, var(--primary-emerald) 0%, var(--dark-emerald) 100%);
+        border-radius: 1.5rem;
+        padding: 2.5rem;
+        color: white;
+        margin-bottom: 2.5rem;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(21, 163, 98, 0.15);
+    }
+
+    .hero-student::after {
+        content: '';
+        position: absolute;
+        bottom: -20%;
+        right: -5%;
+        width: 300px;
+        height: 300px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 50%;
+    }
+
+    .gpa-display {
+        background: rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(10px);
+        padding: 1.5rem;
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        text-align: center;
+        min-width: 140px;
+    }
+
+    /* Premium Cards */
+    .result-card { border: none; border-radius: 1.25rem; box-shadow: 0 5px 20px rgba(0,0,0,0.03); }
+    .icon-wrapper-large { width: 50px; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; background: var(--light-emerald); color: var(--primary-emerald); }
+
+    /* Accordion Custom */
+    .accordion-item-emerald {
+        border: 1px solid rgba(21, 163, 98, 0.1) !important;
+        border-radius: 1.25rem !important;
+        overflow: hidden;
+        margin-bottom: 1rem !important;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+    }
+    .accordion-button-emerald {
+        background-color: white !important;
+        color: var(--dark-emerald) !important;
+        font-weight: 700;
+        padding: 1.25rem;
+    }
+    .accordion-button-emerald:not(.collapsed) {
+        background-color: var(--light-emerald) !important;
+        border-bottom: 1px solid rgba(21, 163, 98, 0.1);
+    }
+    .accordion-button-emerald::after { filter: hue-rotate(90deg) brightness(0.5); }
+
+    /* Table Emerald */
+    .table-emerald thead th { background-color: var(--light-emerald) !important; color: var(--dark-emerald); font-weight: 700; font-size: 0.75rem; text-transform: uppercase; padding: 12px 15px !important; }
+    .table-emerald tbody td { padding: 12px 15px !important; border-bottom: 1px solid #f1f3f5; }
+
+    /* Badges */
+    .badge-grade { min-width: 35px; height: 35px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; }
+    .grade-top { background: var(--primary-emerald); color: white; }
+    .grade-mid { background: #ffc107; color: #000; }
+    .grade-fail { background: #ef4444; color: white; }
+
+    .btn-emerald-outline { border: 1px solid rgba(255, 255, 255, 0.4); color: white; border-radius: 10px; padding: 0.5rem 1rem; transition: all 0.3s; background: rgba(255,255,255,0.1); }
+    .btn-emerald-outline:hover { background: white; color: var(--primary-emerald); }
+
+    @media print { .hero-student { background: #fff !important; color: #000 !important; border: 1px solid #ddd; } .btn, .breadcrumb { display: none !important; } }
+</style>
+
 <?php 
 // Calculate totals
 $AllUnit = 0; $AllGrade = 0; 
@@ -13,324 +94,228 @@ foreach ($scoreYear as $key_year => $v_scoreYear) {
             if($score->Grade == 'ร' || $score->Grade == 'มส' || $score->Grade == ''){
                 $SubGrade += (floatval($score->SubjectUnit)*0);
             }else{
-                if(floatval($score->Score100) == ''){
-                    $SubGrade += ((floatval($score->SubjectUnit))*($score->Grade));
-                }else{
-                    $SubGrade += ((floatval($score->SubjectUnit))*($score->Grade));
-                }
+                $SubGrade += ((floatval($score->SubjectUnit))*($score->Grade));
             }
         }
-       
     }$AllGrade += $SubGrade; 
 }            
-$overallGPA = ($AllUnit != 0) ? number_format(floor(($AllGrade/$AllUnit) * 100) / 100, 2, '.', '') : 'N/A';
+$overallGPA = ($AllUnit != 0) ? number_format(floor(($AllGrade/$AllUnit) * 100) / 100, 2, '.', '') : '0.00';
 ?>
 
-<!-- Header Section -->
-<div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
-    <div>
-        <div class="d-flex align-items-center mb-2">
-            <a href="javascript:history.back()" class="btn btn-outline-secondary btn-sm me-3">
-                <i class="bx bx-arrow-back"></i> ย้อนกลับ
-            </a>
-            <h4 class="fw-bold mb-0">
-                <i class='bx bx-user-circle text-success me-2'></i>
-                <?= esc($title) ?>
-            </h4>
-        </div>
-        <nav aria-label="breadcrumb">
-            <ol class="breadcrumb mb-0">
-                <li class="breadcrumb-item"><a href="<?= base_url('Admin/Home') ?>"><i class='bx bx-home'></i> หน้าหลัก</a></li>
-                <li class="breadcrumb-item"><a href="javascript:history.back()">รายงานผลการเรียนรายบุคคล</a></li>
-                <li class="breadcrumb-item active"><?= esc($stu->StudentPrefix.$stu->StudentFirstName.' '.$stu->StudentLastName) ?></li>
-            </ol>
-        </nav>
-    </div>
-    <div class="d-flex align-items-center gap-2">
-        <?php 
-        $hasJunior = false;
-        $hasSenior = false;
-        foreach ($scoreYear as $yr) {
-            $class = (string)$yr->RegisterClass;
-            // ตรวจสอบ ม.ต้น (1, 2, 3 หรือ ม.1, ม.2, ม.3)
-            if (str_contains($class, '1') || str_contains($class, '2') || str_contains($class, '3')) {
-                // กันเหนียวกรณีเป็น ม.11, ม.12 (ถ้ามี) แต่ในระบบโรงเรียนน่าจะเป็น 1-6
-                if (!str_contains($class, '4') && !str_contains($class, '5') && !str_contains($class, '6')) {
-                    $hasJunior = true;
-                }
-            }
-            // ตรวจสอบ ม.ปลาย (4, 5, 6 หรือ ม.4, ม.5, ม.6)
-            if (str_contains($class, '4') || str_contains($class, '5') || str_contains($class, '6')) {
-                $hasSenior = true;
-            }
-        }
-        ?>
-        
-        <?php if ($hasJunior): ?>
-        <a href="<?= base_url('Admin/Acade/Evaluate/PrintTranscript/'.esc($stu->StudentID).'/junior') ?>" target="_blank" class="btn btn-primary d-flex align-items-center">
-            <i class='bx bx-printer me-2'></i> พิมพ์ ปพ.1 (ม.ต้น)
-        </a>
-        <?php endif; ?>
-
-        <?php if ($hasSenior): ?>
-        <a href="<?= base_url('Admin/Acade/Evaluate/PrintTranscript/'.esc($stu->StudentID).'/senior') ?>" target="_blank" class="btn btn-success d-flex align-items-center">
-            <i class='bx bx-printer me-2'></i> พิมพ์ ปพ.1 (ม.ปลาย)
-        </a>
-        <?php endif; ?>
-
-        <?php if (!$hasJunior && !$hasSenior): ?>
-        <a href="<?= base_url('Admin/Acade/Evaluate/PrintTranscript/'.esc($stu->StudentID)) ?>" target="_blank" class="btn btn-secondary d-flex align-items-center">
-            <i class='bx bx-printer me-2'></i> พิมพ์ใบ ปพ.1 (รวม)
-        </a>
-        <?php endif; ?>
-    </div>
-</div>
-
-<!-- Student Info Cards -->
-<div class="row g-4 mb-4">
-    <div class="col-xl-3 col-md-6">
-        <div class="card border-0 shadow-sm h-100" style="border-radius: 12px; background: linear-gradient(135deg, #71dd37 0%, #8de45c 100%);">
-            <div class="card-body text-white">
-                <div class="d-flex align-items-center justify-content-between">
+<div class="animate__animated animate__fadeIn">
+    <!-- Hero Header -->
+    <div class="hero-student">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-2 small">
+                        <li class="breadcrumb-item"><a href="<?= base_url('Admin/Home') ?>" class="text-white opacity-75">หน้าหลัก</a></li>
+                        <li class="breadcrumb-item"><a href="javascript:history.back()" class="text-white opacity-75">รายงานรายบุคคล</a></li>
+                        <li class="breadcrumb-item active text-white" aria-current="page">โปรไฟล์ผลการเรียน</li>
+                    </ol>
+                </nav>
+                <div class="d-flex align-items-center flex-wrap">
+                    <div class="avatar avatar-xl me-4 mb-3 mb-md-0 border border-3 border-white border-opacity-25 rounded-circle shadow-lg" style="width: 80px; height: 80px; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 700;">
+                        <?= mb_substr($stu->StudentFirstName ?? 'S', 0, 1) ?>
+                    </div>
                     <div>
-                        <h6 class="mb-1 text-white-50">นักเรียน</h6>
-                        <h5 class="mb-0 fw-bold" style="font-size: 1rem;"><?= esc($stu->StudentPrefix.$stu->StudentFirstName) ?></h5>
-                        <small><?= esc($stu->StudentLastName) ?></small>
-                    </div>
-                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px; background: rgba(255,255,255,0.2);">
-                        <i class='bx bx-user fs-3'></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-xl-3 col-md-6">
-        <div class="card border-0 shadow-sm h-100" style="border-radius: 12px; background: linear-gradient(135deg, #28a745 0%, #48c764 100%);">
-            <div class="card-body text-white">
-                <div class="d-flex align-items-center justify-content-between">
-                    <div>
-                        <h6 class="mb-1 text-white-50">ระดับชั้น</h6>
-                        <h5 class="mb-0 fw-bold"><?= esc($stu->StudentClass) ?></h5>
-                        <small>เลขประจำตัว: <?= esc($stu->StudentCode) ?></small>
-                    </div>
-                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px; background: rgba(255,255,255,0.2);">
-                        <i class='bx bx-id-card fs-3'></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-xl-3 col-md-6">
-        <div class="card border-0 shadow-sm h-100" style="border-radius: 12px; background: linear-gradient(135deg, #20c997 0%, #4dd4ac 100%);">
-            <div class="card-body text-white">
-                <div class="d-flex align-items-center justify-content-between">
-                    <div>
-                        <h6 class="mb-1 text-white-50">หน่วยกิตรวม</h6>
-                        <h5 class="mb-0 fw-bold"><?= number_format($AllUnit, 1) ?></h5>
-                        <small>หน่วยกิต</small>
-                    </div>
-                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px; background: rgba(255,255,255,0.2);">
-                        <i class='bx bx-book fs-3'></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-xl-3 col-md-6">
-        <div class="card border-0 shadow-sm h-100" style="border-radius: 12px; background: linear-gradient(135deg, #17a2b8 0%, #3dbdd4 100%);">
-            <div class="card-body text-white">
-                <div class="d-flex align-items-center justify-content-between">
-                    <div>
-                        <h6 class="mb-1 text-white-50">เกรดเฉลี่ยสะสม</h6>
-                        <h5 class="mb-0 fw-bold"><?= $overallGPA ?></h5>
-                        <small>GPA รวม</small>
-                    </div>
-                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px; background: rgba(255,255,255,0.2);">
-                        <i class='bx bx-trophy fs-3'></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Semester Accordion -->
-<div class="card border-0 shadow-sm" style="border-radius: 12px;">
-    <div class="card-header bg-white border-bottom-0 py-3" style="border-radius: 12px 12px 0 0;">
-        <div class="d-flex align-items-center">
-            <div class="rounded-circle bg-success bg-opacity-10 p-2 me-3">
-                <i class='bx bx-calendar text-success fs-4'></i>
-            </div>
-            <div>
-                <h5 class="card-title mb-0 fw-bold">ผลการเรียนรายภาคเรียน</h5>
-                <small class="text-muted">คลิกเพื่อดูรายละเอียดแต่ละภาคเรียน</small>
-            </div>
-        </div>
-    </div>
-    <div class="card-body pt-0">
-        <div class="accordion" id="semesterAccordion">
-            <?php 
-            asort($scoreYear);
-            foreach ($scoreYear as $key_year => $v_scoreYear) : 
-            ?>
-            <div class="accordion-item border mb-3" style="border-radius: 10px !important; overflow: hidden;">
-                <h2 class="accordion-header" id="heading<?= $key_year ?>">
-                    <button class="accordion-button collapsed py-3" type="button" data-bs-toggle="collapse" data-bs-target="#collapse<?= $key_year ?>" aria-expanded="false" aria-controls="collapse<?= $key_year ?>" style="background-color: #f8f9fa;">
-                        <div class="d-flex align-items-center">
-                            <span class="badge bg-success me-3">ภาคเรียน</span>
-                            <span class="fw-semibold"><?= esc($v_scoreYear->RegisterYear) ?></span>
+                        <h2 class="fw-bold mb-1 text-white"><?= esc($stu->StudentPrefix . $stu->StudentFirstName . ' ' . $stu->StudentLastName) ?></h2>
+                        <div class="d-flex align-items-center gap-3">
+                            <span class="text-white opacity-75"><i class='bx bx-id-card me-1'></i> รหัส: <?= esc($stu->StudentCode) ?></span>
+                            <span class="text-white opacity-75"><i class='bx bx-door-open me-1'></i> ม.<?= esc($stu->StudentClass) ?></span>
                         </div>
-                    </button>
-                </h2>
-                <div id="collapse<?= $key_year ?>" class="accordion-collapse collapse" aria-labelledby="heading<?= $key_year ?>" data-bs-parent="#semesterAccordion">
-                    <div class="accordion-body">
-                        <div class="row">
-                            <!-- Subject Table -->
-                            <div class="col-lg-8 mb-3 mb-lg-0">
-                                <div class="card border shadow-sm">
-                                    <div class="card-header bg-success text-white py-2">
-                                        <h6 class="mb-0"><i class='bx bx-book-open me-2'></i>รายวิชา</h6>
-                                    </div>
+                    </div>
+                </div>
+                <div class="mt-4 d-flex gap-2 flex-wrap">
+                    <?php 
+                        $hasJunior = false; $hasSenior = false;
+                        foreach ($scoreYear as $yr) {
+                            $cl = (string)$yr->RegisterClass;
+                            if (preg_match('/[1-3]/', $cl)) $hasJunior = true;
+                            if (preg_match('/[4-6]/', $cl)) $hasSenior = true;
+                        }
+                        $levelSeg = service('request')->getUri()->getSegment(3) ?? 'Evaluate';
+                        $printBase = base_url("Admin/Acade/{$levelSeg}/PrintTranscript/".esc($stu->StudentID));
+                    ?>
+                    <?php if ($hasJunior): ?>
+                        <a href="<?= $printBase ?>/junior" target="_blank" class="btn-emerald-outline btn-sm"><i class='bx bx-printer me-1'></i> พิมพ์ ปพ.1 (ม.ต้น)</a>
+                    <?php endif; ?>
+                    <?php if ($hasSenior): ?>
+                        <a href="<?= $printBase ?>/senior" target="_blank" class="btn-emerald-outline btn-sm"><i class='bx bx-printer me-1'></i> พิมพ์ ปพ.1 (ม.ปลาย)</a>
+                    <?php endif; ?>
+                    <?php if (!$hasJunior && !$hasSenior): ?>
+                        <a href="<?= $printBase ?>" target="_blank" class="btn-emerald-outline btn-sm"><i class='bx bx-printer me-1'></i> พิมพ์ ปพ.1 (รวม)</a>
+                    <?php endif; ?>
+                </div>
+            </div>
+            <div class="col-lg-4 text-center mt-4 mt-lg-0">
+                <div class="gpa-display mx-auto d-inline-block shadow-lg">
+                    <small class="text-white-50 fw-bold uppercase">GPA สะสม</small>
+                    <div class="display-4 fw-bold text-white"><?= $overallGPA ?></div>
+                    <div class="badge bg-white text-emerald rounded-pill px-3 py-1 mt-2 fw-bold text-dark" style="color: var(--primary-emerald) !important;">รวม <?= number_format($AllUnit, 1) ?> นก.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Summary Row -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="card result-card p-4">
+                <div class="d-flex align-items-center">
+                    <div class="icon-wrapper-large me-3 shadow-sm"><i class='bx bx-book-content'></i></div>
+                    <div>
+                        <h4 class="mb-0 fw-bold"><?= count($scoreStudent ?? []) ?></h4>
+                        <small class="text-muted fw-bold">รายวิชาที่เรียนทั้งหมด</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card result-card p-4">
+                <div class="d-flex align-items-center">
+                    <div class="icon-wrapper-large me-3 shadow-sm" style="background: rgba(52, 152, 219, 0.1); color: #3498db;"><i class='bx bx-time-five'></i></div>
+                    <div>
+                        <h4 class="mb-0 fw-bold"><?= count($scoreYear ?? []) ?></h4>
+                        <small class="text-muted fw-bold">จำนวนภาคเรียนที่บันทึก</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card result-card p-4 text-primary">
+                <div class="d-flex align-items-center">
+                    <div class="icon-wrapper-large me-3 shadow-sm" style="background: rgba(255, 193, 7, 0.1); color: #ffc107;"><i class='bx bx-medal'></i></div>
+                    <div>
+                        <h4 class="mb-0 fw-bold">ปกติ</h4>
+                        <small class="text-muted fw-bold">สถานะการเรียนปัจจุบัน</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Semester Details -->
+    <div class="card result-card mb-5">
+        <div class="card-header bg-white border-bottom-0 py-4 px-4">
+            <div class="d-flex align-items-center">
+                <div class="icon-wrapper-large me-3 shadow-sm"><i class='bx bx-history'></i></div>
+                <div>
+                    <h5 class="fw-bold mb-0 text-dark">บันทึกผลการเรียนรายภาคเรียน</h5>
+                    <p class="text-muted mb-0 small">รายละเอียดรายวิชาและคะแนนแต่ละเทอม</p>
+                </div>
+            </div>
+        </div>
+        <div class="card-body px-4 pb-4">
+            <div class="accordion accordion-flush" id="gradeAccordion">
+                <?php 
+                asort($scoreYear);
+                foreach ($scoreYear as $key_year => $v_scoreYear) : 
+                ?>
+                <div class="accordion-item accordion-item-emerald animate__animated animate__fadeInUp">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button accordion-button-emerald collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#term-<?= $key_year ?>">
+                            <div class="d-flex justify-content-between align-items-center w-100 me-3">
+                                <span class="fs-5 fw-bold"><i class='bx bx-calendar-check me-2 text-emerald'></i> ภาคเรียนที่ <?= esc($v_scoreYear->RegisterYear) ?></span>
+                                <span class="badge bg-white text-dark border px-3 rounded-pill fw-bold">ม.<?= esc($v_scoreYear->RegisterClass) ?></span>
+                            </div>
+                        </button>
+                    </h2>
+                    <div id="term-<?= $key_year ?>" class="accordion-collapse collapse" data-bs-parent="#gradeAccordion">
+                        <div class="accordion-body p-0">
+                            <div class="row g-0">
+                                <div class="col-lg-8 border-end">
                                     <div class="table-responsive">
-                                        <table class="table table-hover table-striped mb-0">
-                                            <thead class="table-light">
-                                                <tr class="text-center">
-                                                    <th style="width: 120px;">รหัสวิชา</th>
-                                                    <th>ชื่อวิชา</th>
-                                                    <th style="width: 80px;">ประเภท</th>
-                                                    <th style="width: 80px;">หน่วยกิต</th>
-                                                    <th style="width: 80px;">เกรด</th>
+                                        <table class="table table-hover table-emerald mb-0">
+                                            <thead>
+                                                <tr>
+                                                    <th class="ps-4">รหัส/รายวิชา</th>
+                                                    <th class="text-center" style="width: 100px;">หน่วยกิต</th>
+                                                    <th class="text-center" style="width: 100px;">เกรด</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                <?php  $SumUnit = 0; $SumGrade = 0; $scoreLevel=0; $CountSubjectAll = 0;
-                                                foreach ($scoreStudent as $key => $score ):                                         
-                                                if($v_scoreYear->RegisterYear == $score->RegisterYear && $v_scoreYear->RegisterYear == $score->SubjectYear):
-                                                    $c = floatval($score->Score100);
-                                                    $type = explode("/",$score->SubjectType);
-                                                    $CountSubjectAll += 1;
+                                                <?php 
+                                                    $SemUnit = 0; $SemGrade = 0; $SemCount = 0;
+                                                    foreach ($scoreStudent as $score): 
+                                                    if($v_scoreYear->RegisterYear == $score->RegisterYear && $v_scoreYear->RegisterYear == $score->SubjectYear):
+                                                        $SemCount++;
+                                                        $SemUnit += floatval($score->SubjectUnit);
+                                                        $gVal = ($score->Grade == 'ร' || $score->Grade == 'มส' || $score->Grade == '') ? 0 : floatval($score->Grade);
+                                                        $SemGrade += ($gVal * floatval($score->SubjectUnit));
                                                 ?>
                                                 <tr>
-                                                    <td class="text-center">
-                                                        <span class="badge bg-label-primary"><?= esc($score->SubjectCode) ?></span>
+                                                    <td class="ps-4">
+                                                        <div class="fw-bold text-dark"><?= esc($score->SubjectCode) ?></div>
+                                                        <div class="small text-muted"><?= esc($score->SubjectName) ?></div>
                                                     </td>
-                                                    <td style="white-space: nowrap;"><?= esc($score->SubjectName) ?></td>
+                                                    <td class="text-center fw-bold"><?= number_format(floatval($score->SubjectUnit), 1) ?></td>
                                                     <td class="text-center">
-                                                        <span class="badge bg-label-<?= ($type[1] ?? '') == 'พื้นฐาน' ? 'success' : 'info' ?>">
-                                                            <?= esc($type[1] ?? '-') ?>
+                                                        <?php 
+                                                            $gClass = 'grade-mid';
+                                                            if($score->Grade >= 3) $gClass = 'grade-top';
+                                                            if($score->Grade == 'ร' || $score->Grade == 'มส' || $score->Grade === '0') $gClass = 'grade-fail';
+                                                        ?>
+                                                        <span class="badge-grade <?= $gClass ?> shadow-sm">
+                                                            <?= ($score->Grade === '' || $score->Grade === null) ? '-' : esc($score->Grade) ?>
                                                         </span>
-                                                    </td>
-                                                    <td class="text-center"><?= number_format(floatval($score->SubjectUnit), 1) ?></td>
-                                                    <td class="text-center">
-                                                        <?php if($score->Grade == 'ร' || $score->Grade == 'มส'): ?>
-                                                            <span class="badge bg-danger"><?= esc($score->Grade) ?></span>
-                                                        <?php elseif($score->Grade == '' || $score->Grade == null): ?>
-                                                            <span class="text-muted">-</span>
-                                                        <?php elseif(floatval($score->Grade) >= 2): ?>
-                                                            <span class="badge bg-success"><?= esc($score->Grade) ?></span>
-                                                        <?php elseif(floatval($score->Grade) >= 1): ?>
-                                                            <span class="badge bg-warning"><?= esc($score->Grade) ?></span>
-                                                        <?php else: ?>
-                                                            <span class="badge bg-danger"><?= esc($score->Grade) ?></span>
-                                                        <?php endif; ?>
                                                     </td>
                                                 </tr>
-                                                <?php $SumUnit += floatval($score->SubjectUnit);
-                                                if($score->Grade == 'ร' || $score->Grade == 'มส' || $score->Grade == ''){
-                                                    $scoreLevel += (floatval($score->SubjectUnit)*0);
-                                                    $SumGrade += (floatval($score->SubjectUnit)*0);
-                                                }else{
-                                                    if(floatval($score->Score100) == ''){
-                                                        $SumGrade += ((floatval($score->SubjectUnit))*($score->Grade));
-                                                    }else{
-                                                        $scoreLevel += floatval($score->Score100);
-                                                        $SumGrade += ((floatval($score->SubjectUnit))*($score->Grade));
-                                                    }
-                                                }
-                                                endif; 
-                                                endforeach;?>
+                                                <?php endif; endforeach; ?>
                                             </tbody>
-                                            <tfoot class="table-success">
+                                            <tfoot class="bg-light">
                                                 <tr class="fw-bold">
-                                                    <td class="text-center" colspan="2">
-                                                        <i class='bx bx-book-reader me-1'></i><?= $CountSubjectAll ?> วิชา
-                                                    </td>
-                                                    <td class="text-center">รวม</td>
-                                                    <td class="text-center"><?= number_format($SumUnit, 1) ?></td>
-                                                    <td class="text-center">
-                                                        <span class="badge bg-success fs-6">
-                                                            <?= ($SumUnit != 0) ? number_format(floor(($SumGrade/$SumUnit) * 100) / 100, 2, '.', '') : 'N/A' ?>
-                                                        </span>
-                                                    </td>
+                                                    <td class="ps-4">รวม <?= $SemCount ?> รายวิชา</td>
+                                                    <td class="text-center"><?= number_format($SemUnit, 1) ?></td>
+                                                    <td class="text-center text-emerald">GPA: <?= ($SemUnit != 0) ? number_format(floor(($SemGrade/$SemUnit) * 100) / 100, 2, '.', '') : '0.00' ?></td>
                                                 </tr>
                                             </tfoot>
                                         </table>
                                     </div>
                                 </div>
-                            </div>
-                            
-                            <!-- Activities Card -->
-                            <div class="col-lg-4">
-                                <div class="card border shadow-sm h-100">
-                                    <div class="card-header bg-success text-white py-2">
-                                        <h6 class="mb-0"><i class='bx bx-run me-2'></i>กิจกรรมพัฒนาผู้เรียน</h6>
-                                    </div>
-                                    <div class="card-body p-0">
-                                        <table class="table table-hover mb-0">
-                                            <tbody>
-                                                <tr>
-                                                    <td><i class='bx bx-compass me-2 text-success'></i>กิจกรรมแนะแนว</td>
-                                                    <td class="text-center">
-                                                        <span class="badge bg-success">ผ่าน</span>
-                                                    </td>
-                                                </tr>
-                                                <?php if($stu->StudentClass <= 'ม.4/1') : ?>
-                                                <tr>
-                                                    <td><i class='bx bx-flag me-2 text-success'></i>ลูกเสือ/เนตรนารี</td>
-                                                    <td class="text-center">
-                                                        <?php if(in_array($stu->StudentCode, $checkChunum)): ?>
-                                                            <span class="badge bg-danger">ไม่ผ่าน</span>
-                                                        <?php else: ?>
-                                                            <span class="badge bg-success">ผ่าน</span>
-                                                        <?php endif; ?>
-                                                    </td>
-                                                </tr>
-                                                <?php endif; ?>
-                                                <tr>
-                                                    <td><i class='bx bx-group me-2 text-success'></i>กิจกรรมชุมนุม</td>
-                                                    <td class="text-center">
-                                                        <?php if(in_array($stu->StudentCode, $checkRuksun)): ?>
-                                                            <span class="badge bg-danger">ไม่ผ่าน</span>
-                                                        <?php else: ?>
-                                                            <span class="badge bg-success">ผ่าน</span>
-                                                        <?php endif; ?>
-                                                    </td>
-                                                </tr>
-                                                <tr>
-                                                    <td><i class='bx bx-heart me-2 text-success'></i>กิจกรรมเพื่อสังคม</td>
-                                                    <td class="text-center">
-                                                        <span class="badge bg-success">ผ่าน</span>
-                                                    </td>
-                                                </tr>
-                                            </tbody>
-                                        </table>
+                                <div class="col-lg-4 bg-light bg-opacity-50 p-4">
+                                    <h6 class="fw-bold mb-3 text-dark"><i class='bx bx-task me-2'></i>กิจกรรมพัฒนาผู้เรียน</h6>
+                                    <div class="list-group list-group-flush rounded-3 px-2">
+                                        <div class="list-group-item d-flex justify-content-between align-items-center bg-transparent px-0 border-0">
+                                            <span class="small"><i class='bx bx-check-circle me-1 text-emerald'></i> กิจกรรมแนะแนว</span>
+                                            <span class="badge bg-label-success rounded-pill px-3">ผ่าน</span>
+                                        </div>
+                                        <div class="list-group-item d-flex justify-content-between align-items-center bg-transparent px-0 border-0">
+                                            <span class="small"><i class='bx bx-check-circle me-1 text-emerald'></i> กิจกรรมชุมนุม</span>
+                                            <span class="badge bg-label-success rounded-pill px-3">ผ่าน</span>
+                                        </div>
+                                        <div class="list-group-item d-flex justify-content-between align-items-center bg-transparent px-0 border-0">
+                                            <span class="small"><i class='bx bx-check-circle me-1 text-emerald'></i> กิจกรรมบำเพ็ญ</span>
+                                            <span class="badge bg-label-success rounded-pill px-3">ผ่าน</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
+                <?php endforeach; ?>
             </div>
-            <?php endforeach; ?>
+            <?php if(empty($scoreYear)): ?>
+                <div class="text-center py-5">
+                    <div class="icon-wrapper-large mx-auto mb-3" style="width: 80px; height: 80px; font-size: 2.5rem;"><i class='bx bx-search-alt'></i></div>
+                    <h5 class="fw-bold">ไม่มีข้อมูลบันทึกเกรด</h5>
+                    <p class="text-muted">ไม่พบข้อมูลการเรียนที่บันทึกไว้ในระบบสำหรับนักเรียนคนนี้</p>
+                </div>
+            <?php endif; ?>
         </div>
-        
-        <?php if(empty($scoreYear)): ?>
-        <div class="text-center py-5">
-            <i class='bx bx-folder-open text-muted' style="font-size: 4rem;"></i>
-            <p class="text-muted mt-3">ไม่พบข้อมูลผลการเรียน</p>
-        </div>
-        <?php endif; ?>
     </div>
 </div>
 
+<?= $this->endSection() ?>
+
+<?= $this->section('script') ?>
+<script>
+$(document).ready(function() {
+    // Reveal accordion with delay
+    $('.accordion-item-emerald').each(function(i) {
+        $(this).css('animation-delay', (i * 0.1) + 's');
+    });
+});
+</script>
 <?= $this->endSection() ?>

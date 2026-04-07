@@ -1,128 +1,209 @@
 <?= $this->extend('admin/layout/main') ?>
 
 <?= $this->section('content') ?>
+
 <style>
-.stat-card {
-    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-}
-.stat-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 20px rgba(0,0,0,0.15);
-}
-.stat-icon {
-    width: 48px;
-    height: 48px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 10px;
-    font-size: 1.5rem;
-}
-.stat-value {
-    font-size: 1.75rem;
-    font-weight: 700;
-    line-height: 1.2;
-}
-.stat-label {
-    font-size: 0.875rem;
-    color: #6c757d;
-    margin-top: 4px;
-}
+    :root {
+        --primary-emerald: #15a362;
+        --dark-emerald: #0d6d41;
+        --light-emerald: #e8f5ee;
+        --border-radius: 16px;
+    }
+
+    /* Hero Header */
+    .hero-settings {
+        background: linear-gradient(135deg, var(--primary-emerald) 0%, var(--dark-emerald) 100%);
+        border-radius: var(--border-radius);
+        padding: 2.5rem;
+        color: white;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(21, 163, 98, 0.15);
+    }
+
+    .hero-settings::after {
+        content: '';
+        position: absolute;
+        bottom: -20%;
+        right: -5%;
+        width: 300px;
+        height: 300px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 50%;
+        pointer-events: none; /* ป้องกันการทับซ้อนบุ่ม */
+    }
+
+    /* Stats Card Premium */
+    .stat-card-premium {
+        border: none;
+        border-radius: var(--border-radius);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        background: white;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+    }
+
+    .stat-card-premium:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 25px rgba(0, 0, 0, 0.08);
+    }
+
+    .stat-icon-box {
+        width: 54px;
+        height: 54px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.6rem;
+        transition: all 0.3s;
+    }
+
+    .stat-card-premium:hover .stat-icon-box {
+        transform: scale(1.1) rotate(-5deg);
+    }
+
+    /* Emerald UI Elements */
+    .settings-card {
+        border: none;
+        border-radius: var(--border-radius);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+        background: white;
+    }
+
+    .settings-card-header {
+        background-color: white;
+        border-bottom: 1px solid #f1f3f5;
+        padding: 1.5rem;
+        border-top-left-radius: var(--border-radius);
+        border-top-right-radius: var(--border-radius);
+    }
+
+    .icon-wrapper {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--light-emerald);
+        color: var(--primary-emerald);
+        font-size: 1.2rem;
+    }
+
+    .btn-emerald {
+        background-color: var(--primary-emerald);
+        border-color: var(--primary-emerald);
+        color: white;
+        border-radius: 10px;
+        padding: 0.6rem 1.25rem;
+        font-weight: 600;
+        transition: all 0.3s;
+    }
+
+    .btn-emerald:hover {
+        background-color: var(--dark-emerald);
+        border-color: var(--dark-emerald);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(21, 163, 98, 0.2);
+    }
+
+    /* DataTable Overrides */
+    .table thead th {
+        background-color: #f8f9fa;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.5px;
+        font-weight: 700;
+        color: #495057;
+        border-bottom: 2px solid #eef2f7;
+    }
+
+    .badge-emerald {
+        background-color: var(--light-emerald);
+        color: var(--dark-emerald);
+        border: 1px solid rgba(21, 163, 98, 0.2);
+    }
+
+    .form-label { font-weight: 600; color: #444; }
+    .form-control, .form-select { border-radius: 10px; padding: 0.6rem 1rem; border: 1px solid #e2e8f0; }
+    .form-control:focus, .form-select:focus { border-color: var(--primary-emerald); box-shadow: 0 0 0 3px rgba(21, 163, 98, 0.1); }
 </style>
 
-<div class="container-xxl flex-grow-1 container-p-y">
-    <!-- Page Header -->
-    <div class="row g-3 mb-4 align-items-center justify-content-between">
-        <div class="col-auto">
-            <h4 class="fw-bold py-3 mb-0">
-                <span class="text-muted fw-light">งานหลักสูตร /</span> จัดการรายวิชา
-            </h4>
-            <p class="text-muted mb-0">ปีการศึกษา: <strong id="headerYear"><?= isset($SchoolYear->schyear_year) ? esc($SchoolYear->schyear_year) : '-' ?></strong></p>
-        </div>
-        <div class="col-auto">
-            <button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAddSubject" aria-expanded="false" aria-controls="collapseAddSubject">
-                <i class="bx bx-plus-circle me-1"></i> เพิ่มรายวิชาใหม่
-            </button>
+<div class="container-xxl flex-grow-1 container-p-y animate__animated animate__fadeIn">
+    <!-- Hero Header -->
+    <div class="hero-settings">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-2">
+                        <li class="breadcrumb-item"><a href="<?= base_url('Admin/Home') ?>" class="text-white opacity-75">หน้าหลัก</a></li>
+                        <li class="breadcrumb-item active text-white" aria-current="page">งานหลักสูตร</li>
+                    </ol>
+                </nav>
+                <h2 class="fw-bold mb-1 text-white">จัดการรายวิชา</h2>
+                <p class="mb-0 text-white opacity-75">ปีการศึกษาปัจจุบัน: <span id="headerYear" class="fw-bold"><?= isset($SchoolYear->schyear_year) ? esc($SchoolYear->schyear_year) : '-' ?></span></p>
+            </div>
+            <div class="col-md-4 text-md-end mt-3 mt-md-0" style="position: relative; z-index: 5;">
+                <button class="btn btn-emerald bg-white text-dark border-0 shadow-lg" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAddSubject">
+                    <i class="bx bx-plus-circle me-1"></i> เพิ่มรายวิชาใหม่
+                </button>
+            </div>
         </div>
     </div>
 
-    <!-- Dashboard Stats Cards -->
+    <!-- Stats Row -->
     <div class="row g-4 mb-4">
-        <!-- Total Subjects -->
-        <div class="col-sm-6 col-xl-3">
-            <div class="card stat-card h-100 border-0 shadow-sm">
-                <div class="card-body">
-                    <div class="d-flex align-items-start justify-content-between">
-                        <div>
-                            <div class="stat-value text-primary" id="stat-total">0</div>
-                            <div class="stat-label">รายวิชาทั้งหมด</div>
-                        </div>
-                        <div class="stat-icon bg-primary bg-opacity-10 text-primary">
-                            <i class="bx bx-book"></i>
-                        </div>
+        <div class="col-md-3">
+            <div class="card stat-card-premium p-4">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <h3 class="mb-1 fw-bold text-dark" id="stat-total">0</h3>
+                        <p class="text-muted mb-0 small">รายวิชาทั้งหมด</p>
                     </div>
-                    <div class="mt-3">
-                        <small class="text-muted"><i class="bx bx-calendar me-1"></i>ในปีการศึกษาปัจจุบัน</small>
+                    <div class="stat-icon-box" style="background: var(--light-emerald); color: var(--primary-emerald);">
+                        <i class="bx bx-book-content"></i>
                     </div>
                 </div>
             </div>
         </div>
-
-        <!-- Basic Subjects -->
-        <div class="col-sm-6 col-xl-3">
-            <div class="card stat-card h-100 border-0 shadow-sm">
-                <div class="card-body">
-                    <div class="d-flex align-items-start justify-content-between">
-                        <div>
-                            <div class="stat-value text-success" id="stat-basic">0</div>
-                            <div class="stat-label">วิชาพื้นฐาน</div>
-                        </div>
-                        <div class="stat-icon bg-success bg-opacity-10 text-success">
-                            <i class="bx bx-book-reader"></i>
-                        </div>
+        <div class="col-md-3">
+            <div class="card stat-card-premium p-4">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <h3 class="mb-1 fw-bold text-success" id="stat-basic">0</h3>
+                        <p class="text-muted mb-0 small">วิชาพื้นฐาน</p>
                     </div>
-                    <div class="mt-3">
-                        <small class="text-muted"><i class="bx bx-check-circle me-1"></i>วิชาบังคับ</small>
+                    <div class="stat-icon-box" style="background: #e8f5e9; color: #2e7d32;">
+                        <i class="bx bx-book-open"></i>
                     </div>
                 </div>
             </div>
         </div>
-
-        <!-- Advanced Subjects -->
-        <div class="col-sm-6 col-xl-3">
-            <div class="card stat-card h-100 border-0 shadow-sm">
-                <div class="card-body">
-                    <div class="d-flex align-items-start justify-content-between">
-                        <div>
-                            <div class="stat-value text-info" id="stat-advanced">0</div>
-                            <div class="stat-label">วิชาเพิ่มเติม</div>
-                        </div>
-                        <div class="stat-icon bg-info bg-opacity-10 text-info">
-                            <i class="bx bx-book-bookmark"></i>
-                        </div>
+        <div class="col-md-3">
+            <div class="card stat-card-premium p-4">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <h3 class="mb-1 fw-bold text-info" id="stat-advanced">0</h3>
+                        <p class="text-muted mb-0 small">วิชาเพิ่มเติม</p>
                     </div>
-                    <div class="mt-3">
-                        <small class="text-muted"><i class="bx bx-star me-1"></i>วิชาเลือก/เสรี</small>
+                    <div class="stat-icon-box" style="background: #e1f5fe; color: #0288d1;">
+                        <i class="bx bx-bookmark-plus"></i>
                     </div>
                 </div>
             </div>
         </div>
-
-        <!-- Current Status -->
-        <div class="col-sm-6 col-xl-3">
-            <div class="card stat-card h-100 border-0 shadow-sm">
-                <div class="card-body">
-                    <div class="d-flex align-items-start justify-content-between">
-                        <div>
-                            <div class="stat-value text-warning" id="stat-year"><?= isset($SchoolYear->schyear_year) ? esc($SchoolYear->schyear_year) : '-' ?></div>
-                            <div class="stat-label">ปีการศึกษา</div>
-                        </div>
-                        <div class="stat-icon bg-warning bg-opacity-10 text-warning">
-                            <i class="bx bx-calendar-event"></i>
-                        </div>
+        <div class="col-md-3">
+            <div class="card stat-card-premium p-4">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <h3 class="mb-1 fw-bold text-warning" id="stat-year"><?= isset($SchoolYear->schyear_year) ? esc($SchoolYear->schyear_year) : '-' ?></h3>
+                        <p class="text-muted mb-0 small">ปีการศึกษาที่ดำเนินการ</p>
                     </div>
-                    <div class="mt-3">
-                        <small class="text-muted"><i class="bx bx-info-circle me-1"></i>กำลังดำเนินการ</small>
+                    <div class="stat-icon-box" style="background: #fff8e1; color: #f57c00;">
+                        <i class="bx bx-calendar-event"></i>
                     </div>
                 </div>
             </div>
@@ -131,29 +212,32 @@
 
     <input type="hidden" name="CheckYearNow" id="CheckYearNow" value="<?= isset($selectedYear) ? esc($selectedYear) : (isset($SchoolYear->schyear_year) ? esc($SchoolYear->schyear_year) : '') ?>">
 
-    <!-- Add Form (Collapse) -->
+    <!-- Collapse Add Form -->
     <div class="collapse mb-4" id="collapseAddSubject">
-        <div class="card border-0 shadow-sm">
-            <div class="card-header bg-primary text-white py-3">
-                <h5 class="card-title mb-0 text-white"><i class="bx bx-plus-circle me-2"></i>เพิ่มข้อมูลรายวิชาใหม่</h5>
+        <div class="card settings-card animate__animated animate__fadeIn">
+            <div class="settings-card-header d-flex align-items-center" style="background: var(--primary-emerald);">
+                <div class="icon-wrapper me-3 bg-white text-emerald">
+                    <i class="bx bx-plus-circle"></i>
+                </div>
+                <h5 class="mb-0 fw-bold text-white">รายละเอียดรายวิชาใหม่</h5>
             </div>
-            <div class="card-body mt-4">
+            <div class="card-body p-4 pt-5">
                 <form id="form-subject">
-                    <div class="row g-3">
+                    <div class="row g-4">
                         <div class="col-md-3">
-                            <label class="form-label fw-bold">ปีการศึกษา</label>
+                            <label class="form-label">ภาคเรียน/ปีการศึกษา</label>
                             <select class="form-select" required name="SubjectYear" id="SubjectYear">
-                                <option value="">เลือกปีการศึกษา</option>
+                                <option value="">เลือกภาคเรียน</option>
                                 <?php $d = date('Y')+541; 
-                                for($j=1; $j<=3; $j++):
-                                    for ($i=$d; $i <= $d+2 ; $i++) :?>
+                                for ($i=$d+2; $i >= $d-1 ; $i--) :
+                                    for($j=2; $j>=1; $j--):?>
                                 <option <?= (isset($selectedYear) && $selectedYear == $j.'/'.$i) ? "selected" : ""?>
                                     value="<?= esc($j.'/'.$i) ?>"><?= esc($j.'/'.$i) ?></option>
                                 <?php endfor; endfor; ?>
                             </select>
                         </div>
                         <div class="col-md-3">
-                            <label class="form-label fw-bold">ระดับชั้น</label>
+                            <label class="form-label">ระดับชั้นที่เปิดสอน</label>
                             <select class="form-select" required name="SubjectClass" id="SubjectClass">
                                 <option value="">เลือกระดับชั้น</option>
                                 <?php foreach ($classroom->LevelClass() as $v_sara):?>
@@ -162,54 +246,54 @@
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label fw-bold">รหัสวิชา (ค้นหาจาก Google Sheets)</label>
+                            <label class="form-label">ค้นหารหัสวิชา (จากฐานข้อมูลกลาง)</label>
                             <select id="SubjectCode" name="SubjectCode" class="form-select select2">
-                                <option value="">-- พิมพ์เพื่อค้นหา --</option>
+                                <option value="">-- พิมพ์รหัสวิชาเพื่อค้นหา --</option>
                             </select>
                         </div>
 
                         <div class="col-md-6">
-                            <label class="form-label fw-bold">ชื่อวิชา</label>
-                            <input type="text" class="form-control" required name="SubjectName" id="SubjectName">
+                            <label class="form-label">ชื่อรายวิชา</label>
+                            <input type="text" class="form-control" required name="SubjectName" id="SubjectName" placeholder="เช่น ภาษาไทยพื้นฐาน">
                         </div>
                         <div class="col-md-2">
-                            <label class="form-label fw-bold">หน่วยกิต</label>
+                            <label class="form-label">หน่วยกิต</label>
                             <select class="form-select" required name="SubjectUnit" id="SubjectUnit">
-                                <option value="">เลือก</option>
+                                <option value="">-</option>
                                 <?php foreach (["0.5","1.0","1.5","2.0","2.5","3.0","3.5","4.0","4.5","5.0"] as $v_Unit):?>
                                 <option value="<?= esc($v_Unit) ?>"><?= esc($v_Unit) ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
                         <div class="col-md-2">
-                            <label class="form-label fw-bold">ชั่วโมง</label>
+                            <label class="form-label">จำนวนชั่วโมง</label>
                             <select class="form-select" required name="SubjectHour" id="SubjectHour">
-                                <option value="">เลือก</option>
+                                <option value="">-</option>
                                 <?php foreach (["20","40","60","80","100","120","140","160","180","200"] as $v_Hour):?>
                                 <option value="<?= esc($v_Hour) ?>"><?= esc($v_Hour) ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
                         <div class="col-md-2">
-                            <label class="form-label fw-bold">ประเภทวิชา</label>
+                            <label class="form-label">ประเภทวิชา</label>
                             <select class="form-select" required name="SubjectType" id="SubjectType">
-                                <option value="">เลือก</option>
+                                <option value="">-</option>
                                 <option value="1/พื้นฐาน">1/พื้นฐาน</option>
                                 <option value="2/เพิ่มเติม">2/เพิ่มเติม</option>
                             </select>
                         </div>
 
                         <div class="col-md-6">
-                            <label class="form-label fw-bold">สาระหลัก</label>
+                            <label class="form-label">กลุ่มสาระการเรียนรู้หลัก</label>
                             <select class="form-select" required name="FirstGroup" id="FirstGroup">
-                                <option value="">เลือกสาระหลัก</option>
+                                <option value="">เลือกกลุ่มสาระ</option>
                                 <?php foreach ($classroom->GroupSaraMain() as $v_sara):?>
                                 <option value="<?= esc($v_sara) ?>"><?= esc($v_sara) ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label fw-bold">สาระย่อย</label>
+                            <label class="form-label">สาระย่อย (ถ้ามี)</label>
                             <select class="form-select" required name="SecondGroup" id="SecondGroup">
                                 <option value="">เลือกสาระย่อย</option>
                                 <?php foreach ($classroom->GroupSaraSecond() as $v_sara):?>
@@ -218,10 +302,9 @@
                             </select>
                         </div>
 
-                        <div class="col-12 text-end">
-                            <hr class="mt-2 mb-3">
+                        <div class="col-12 text-end pt-3">
                             <button type="button" class="btn btn-label-secondary me-2" data-bs-toggle="collapse" data-bs-target="#collapseAddSubject">ยกเลิก</button>
-                            <button type="submit" class="btn btn-primary">บันทึกข้อมูล</button>
+                            <button type="submit" class="btn btn-emerald px-4 shadow-sm">บันทึกวิชาเรียน</button>
                         </div>
                     </div>
                 </form>
@@ -229,124 +312,112 @@
         </div>
     </div>
 
-    <!-- Data Table Section -->
-    <div class="card border-0 shadow-sm">
-        <div class="card-header bg-white py-3">
-            <div class="row align-items-center">
-                <div class="col">
-                    <h5 class="card-title mb-0">
-                        <i class="bx bx-list-ul me-2"></i>รายการวิชาเรียน
-                    </h5>
+    <!-- Data Table Card -->
+    <div class="card settings-card">
+        <div class="settings-card-header d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center">
+                <div class="icon-wrapper me-3">
+                    <i class="bx bx-list-ul"></i>
                 </div>
-                <div class="col-auto">
-                    <div class="d-flex align-items-center gap-2">
-                        <label for="SelectSubject" class="form-label mb-0 fw-medium">เลือกปี:</label>
-                        <select class="form-select form-select-sm SelectSubject" id="SelectSubject" style="width: auto; min-width: 140px;">
-                            <option selected value="">เลือกปีการศึกษา</option>
-                            <?php foreach ($GroupYear as $key => $v_GroupYear): ?>
-                            <option <?= (isset($v_GroupYear->SubjectYear) && isset($selectedYear) && $v_GroupYear->SubjectYear == $selectedYear) ? "selected" : ""?>
-                                value="<?= isset($v_GroupYear->SubjectYear) ? esc($v_GroupYear->SubjectYear) : '' ?>">
-                                <?= isset($v_GroupYear->SubjectYear) ? esc($v_GroupYear->SubjectYear) : '' ?>
-                            </option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
+                <h5 class="mb-0 fw-bold">รายการวิชาที่เปิดสอน</h5>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <div class="d-flex align-items-center">
+                    <label class="me-2 fw-bold text-muted small uppercase">เลือกปีการศึกษา:</label>
+                    <select class="form-select form-select-sm SelectSubject shadow-sm border-emerald" style="min-width: 160px; border-radius: 12px;">
+                        <option value="">ทั้งหมด</option>
+                        <?php foreach ($GroupYear as $v_GroupYear): ?>
+                        <option <?= (isset($v_GroupYear->SubjectYear) && isset($selectedYear) && $v_GroupYear->SubjectYear == $selectedYear) ? "selected" : ""?>
+                            value="<?= isset($v_GroupYear->SubjectYear) ? esc($v_GroupYear->SubjectYear) : '' ?>">
+                            <?= isset($v_GroupYear->SubjectYear) ? esc($v_GroupYear->SubjectYear) : '' ?>
+                        </option>
+                        <?php endforeach; ?>
+                    </select>
                 </div>
             </div>
         </div>
-        <div class="card-body">
+        <div class="card-body p-4">
             <div class="table-responsive">
-                <table class="table table-hover mb-0" id="tbSubject">
-                    <thead class="table-light">
+                <table class="table table-hover w-100" id="tbSubject">
+                    <thead>
                         <tr>
-                            <th class="cell">ปีการศึกษา</th>
-                            <th class="cell">รหัสวิชา</th>
-                            <th class="cell">ชื่อวิชา</th>
-                            <th class="cell">สาระ</th>
-                            <th class="cell">ชั้น</th>
-                            <th class="cell">ปีที่เรียน</th>
-                            <th class="cell text-center">จัดการ</th>
+                            <th>ปีการศึกษา</th>
+                            <th>รหัสวิชา</th>
+                            <th>ชื่อรายวิชา</th>
+                            <th>กลุ่มสาระ</th>
+                            <th>ระดับชั้น</th>
+                            <th class="text-center">จัดการ</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <!-- DataTable Content -->
-                    </tbody>
+                    <tbody class="align-middle"></tbody>
                 </table>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Modal แก้ไขข้อมูล -->
-<div class="modal fade" id="ModalUpdateSubject" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
-        <div class="modal-content">
+<!-- Modal Update -->
+<div class="modal fade animate__animated animate__fadeIn" id="ModalUpdateSubject" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content shadow-lg border-0" style="border-radius: 20px;">
             <form id="form-update-subject">
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title text-white"><i class="bx bx-edit me-2"></i>แก้ไขข้อมูลรายวิชา</h5>
+                <div class="modal-header px-4 py-3" style="background: var(--primary-emerald);">
+                    <h5 class="modal-title text-white fw-bold"><i class="bx bx-edit me-2"></i>แก้ไขข้อมูลรายวิชา</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body">
-                    <div class="row g-3">
+                <div class="modal-body p-4">
+                    <div class="row g-4">
                         <input type="hidden" name="Up_SubjectID" id="Up_SubjectID">
-
                         <div class="col-md-6">
-                            <label class="form-label fw-bold">ปีการศึกษา</label>
+                            <label class="form-label">ภาคเรียน/ปีการศึกษา</label>
                             <select class="form-select" required name="Up_SubjectYear" id="Up_SubjectYear">
-                                <option value="">เลือกปีการศึกษา</option>
-                                <?php $d = date('Y')+541; for ($i=$d; $i <= $d+2 ; $i++) :?>
+                                <?php $d = date('Y')+541; for ($i=$d+2; $i >= $d-1 ; $i--) :?>
                                 <option value="1/<?= esc($i);?>">1/<?= esc($i);?></option>
                                 <option value="2/<?= esc($i);?>">2/<?= esc($i);?></option>
-                                <option value="3/<?= esc($i);?>">3/<?= esc($i);?></option>
                                 <?php endfor; ?>
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label fw-bold">ระดับชั้น</label>
+                            <label class="form-label">ระดับชั้น</label>
                             <select class="form-select" required name="Up_SubjectClass" id="Up_SubjectClass">
-                                <option value="">เลือกระดับชั้น</option>
                                 <?php foreach ($classroom->LevelClass() as $v_sara):?>
                                 <option value="<?= esc($v_sara) ?>"><?= esc($v_sara) ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label fw-bold">รหัสวิชา</label>
+                            <label class="form-label">รหัสวิชา</label>
                             <input type="text" class="form-control" required name="Up_SubjectCode" id="Up_SubjectCode">
                         </div>
                         <div class="col-md-8">
-                            <label class="form-label fw-bold">ชื่อวิชา</label>
+                            <label class="form-label">ชื่อวิชา</label>
                             <input type="text" class="form-control" required name="Up_SubjectName" id="Up_SubjectName">
                         </div>
-                        <div class="col-md-3">
-                            <label class="form-label fw-bold">หน่วยกิต</label>
-                            <input type="text" class="form-control" required name="Up_SubjectUnit" id="Up_SubjectUnit">
+                        <div class="col-md-4">
+                            <label class="form-label">หน่วยกิต / ชั่วโมง</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" required name="Up_SubjectUnit" id="Up_SubjectUnit" placeholder="นก.">
+                                <input type="text" class="form-control" required name="Up_SubjectHour" id="Up_SubjectHour" placeholder="ชม.">
+                            </div>
                         </div>
-                        <div class="col-md-3">
-                            <label class="form-label fw-bold">ชั่วโมง</label>
-                            <input type="text" class="form-control" required name="Up_SubjectHour" id="Up_SubjectHour">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold">ประเภทวิชา</label>
+                        <div class="col-md-8">
+                            <label class="form-label">ประเภทวิชา</label>
                             <select class="form-select" required name="Up_SubjectType" id="Up_SubjectType">
-                                <option value="">เลือกประเภทวิชา</option>
                                 <option value="1/พื้นฐาน">1/พื้นฐาน</option>
                                 <option value="2/เพิ่มเติม">2/เพิ่มเติม</option>
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label fw-bold">สาระหลัก</label>
+                            <label class="form-label">สาระหลัก</label>
                             <select class="form-select" required name="Up_FirstGroup" id="Up_FirstGroup">
-                                <option value="">เลือกสาระหลัก</option>
                                 <?php foreach ($classroom->GroupSaraMain() as $v_sara):?>
                                 <option value="<?= esc($v_sara) ?>"><?= esc($v_sara) ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label fw-bold">สาระย่อย</label>
+                            <label class="form-label">สาระย่อย</label>
                             <select class="form-select" required name="Up_SecondGroup" id="Up_SecondGroup">
-                                <option value="">เลือกสาระย่อย</option>
                                 <?php foreach ($classroom->GroupSaraSecond() as $v_sara):?>
                                 <option value="<?= esc($v_sara) ?>"><?= esc($v_sara) ?></option>
                                 <?php endforeach; ?>
@@ -354,13 +425,9 @@
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-label-secondary" data-bs-dismiss="modal">
-                        <i class="bx bx-x me-1"></i>ยกเลิก
-                    </button>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="bx bx-save me-1"></i>บันทึกการแก้ไข
-                    </button>
+                <div class="modal-footer px-4 py-3 bg-light border-0" style="border-radius: 0 0 20px 20px;">
+                    <button type="button" class="btn btn-label-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+                    <button type="submit" class="btn btn-emerald px-4 shadow-sm">บันทึกการแก้ไข</button>
                 </div>
             </form>
         </div>
@@ -375,37 +442,29 @@ $(document).ready(function() {
     let tablel_Subject;
     let currentYear = $('#CheckYearNow').val();
 
-    // Initialize Select2
     $('.select2').select2({
         theme: 'bootstrap-5',
         dropdownAutoWidth: true,
         width: '100%'
     });
 
-    // Load initial table
     loadTable(currentYear);
 
-    // Update stats function
     function updateStats(data) {
         if (!data || !Array.isArray(data)) return;
-        
         const total = data.length;
-        
-        // Robust checking for SubjectType
         const basic = data.filter(row => {
             let type = (row.SubjectType || '').toString();
             return type.includes('พื้นฐาน') || type.startsWith('1');
         }).length;
-        
         const advanced = data.filter(row => {
             let type = (row.SubjectType || '').toString();
             return type.includes('เพิ่มเติม') || type.startsWith('2');
         }).length;
 
-        // Animate numbers
-        $('#stat-total').fadeOut(150, function() { $(this).text(total).fadeIn(150); });
-        $('#stat-basic').fadeOut(150, function() { $(this).text(basic).fadeIn(150); });
-        $('#stat-advanced').fadeOut(150, function() { $(this).text(advanced).fadeIn(150); });
+        $('#stat-total').text(total);
+        $('#stat-basic').text(basic);
+        $('#stat-advanced').text(advanced);
     }
 
     $(document).on('change', '.SelectSubject', function() {
@@ -423,15 +482,12 @@ $(document).ready(function() {
         tablel_Subject = $('#tbSubject').DataTable({
             responsive: true,
             processing: true,
-            language: {
-                url: "https://cdn.datatables.net/plug-ins/1.13.7/i18n/Thai.json"
-            },
+            language: { url: "https://cdn.datatables.net/plug-ins/1.13.7/i18n/Thai.json" },
             ajax: {
                 url: "<?= site_url('admin/academic/ConAdminRegisterSubject/AdminRegisterSubjectSelect') ?>",
                 type: "POST",
                 data: { "keyYear": Year },
                 dataSrc: function(json) {
-                    // Safety check: sometimes data is in json.data, sometimes it IS json
                     let rows = (json.data) ? json.data : json;
                     updateStats(rows); 
                     return rows;
@@ -441,16 +497,16 @@ $(document).ready(function() {
                 {
                     data: 'SubjectYear',
                     render: function(data) {
-                        return '<span class="badge bg-label-primary">' + data + '</span>';
+                        return '<span class="badge badge-emerald rounded-pill px-3">' + data + '</span>';
                     }
                 },
                 {
                     data: 'SubjectCode',
                     render: function(data) {
-                        return '<span class="fw-bold text-primary">' + data + '</span>';
+                        return '<span class="fw-bold text-dark">' + data + '</span>';
                     }
                 },
-                { data: 'SubjectName' },
+                { data: 'SubjectName', className: 'fw-medium' },
                 {
                     data: 'FirstGroup',
                     render: function(data) {
@@ -463,15 +519,14 @@ $(document).ready(function() {
                         return '<span class="badge bg-label-warning">' + data + '</span>';
                     }
                 },
-                { data: 'SubjectYear' },
                 {
                     data: 'SubjectID',
                     className: 'text-center',
                     render: function(data) {
                         return `
-                        <div class="btn-group btn-group-sm">
-                            <button type="button" class="btn btn-warning text-white EditSubject" idSbuj="${data}" title="แก้ไข"><i class="bx bx-edit"></i></button>
-                            <button type="button" class="btn btn-danger delete_subject" idSbuj="${data}" title="ลบ"><i class="bx bx-trash"></i></button>
+                        <div class="d-flex justify-content-center gap-2">
+                            <button type="button" class="btn btn-sm btn-icon btn-label-warning EditSubject" idSbuj="${data}"><i class="bx bx-edit"></i></button>
+                            <button type="button" class="btn btn-sm btn-icon btn-label-danger delete_subject" idSbuj="${data}"><i class="bx bx-trash"></i></button>
                         </div>`;
                     }
                 }
@@ -479,34 +534,64 @@ $(document).ready(function() {
         });
     }
 
-    // Load Subjects from Google Sheets
-    let api_url = "https://sheets.googleapis.com/v4/spreadsheets/1RbMq3N-4itgCJCnnc8TsZ8k4XZNlEz_kOLkKBvEsajQ/values/main1?key=AIzaSyATVgVTJM7ou3XdyBH-FsxVd9uj_A32tCc";
+    // Google Sheets Integration (via Published CSV)
+    const csv_url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSkmM4H4BP9GDxlVIHb7Eon1xR1jqwmeASdrKAfJLJ3Iplg1cRZGmgkNhNX5Q6ZkrhDSx95WF7h8HHE/pub?output=csv";
 
-    $.getJSON(api_url, function(data) {
-        let rows = data.values;
-        rows.shift();
+    function parseCSV(csvText) {
+        const lines = csvText.split(/\r?\n/);
+        const result = [];
+        // Helper to handle quoted CSV fields
+        const splitLine = (line) => {
+            const pattern = /("([^"]*)"|([^,]*))(,|$)/g;
+            const fields = [];
+            let match;
+            while ((match = pattern.exec(line)) !== null) {
+                let field = match[2] !== undefined ? match[2] : match[3];
+                fields.push(field);
+                if (match.index === pattern.lastIndex) pattern.lastIndex++;
+                if (match[4] === "") break;
+            }
+            return fields;
+        };
 
-        let subjects = rows.map(row => ({
-            id: row[0],
-            text: row[0] + ' : ' + row[1],
-            SubjectName: row[1],
-            SubjectUnit: row[2],
-            SubjectHour: row[3],
-            SubjectType: row[4],
-            FirstGroup: row[5],
-            SecondGroup: row[6],
-            SubjectClass: row[7]
-        }));
+        for (let i = 1; i < lines.length; i++) {
+            if (!lines[i].trim()) continue;
+            const row = splitLine(lines[i]);
+            if (row.length < 2) continue;
+            result.push({
+                id: row[0],
+                text: row[0] + ' : ' + row[1],
+                SubjectName: row[1],
+                SubjectUnit: row[2],
+                SubjectHour: row[3],
+                SubjectType: row[4],
+                FirstGroup: row[5],
+                SecondGroup: row[6],
+                SubjectClass: row[7]
+            });
+        }
+        return result;
+    }
 
-        $("#SubjectCode").select2({
-            placeholder: "พิมพ์รหัสวิชา หรือ ชื่อวิชา",
-            allowClear: true,
-            minimumInputLength: 2,
-            data: subjects,
-            theme: 'bootstrap-5',
-            width: '100%'
+    fetch(csv_url)
+        .then(response => response.text())
+        .then(csvText => {
+            const subjects = parseCSV(csvText);
+            $("#SubjectCode").select2({
+                placeholder: "พิมพ์รหัสวิชา หรือ ชื่อวิชา",
+                allowClear: true,
+                minimumInputLength: 2,
+                data: subjects,
+                theme: 'bootstrap-5'
+            });
+        })
+        .catch(error => {
+            console.error("CSV Fetch Error:", error);
+            $("#SubjectCode").select2({
+                placeholder: "⚠️ ไม่สามารถโหลดข้อมูลรายวิชาได้ (CSV Error)",
+                theme: 'bootstrap-5'
+            });
         });
-    });
 
     $("#SubjectCode").on("select2:select", function(e) {
         let selected = e.params.data;
@@ -520,11 +605,11 @@ $(document).ready(function() {
     });
 
     $(document).on('change', '#SubjectUnit', function() {
-        const unitMap = { 0.5: 20, 1.0: 40, 1.5: 60, 2.0: 80 };
+        const unitMap = { 0.5: 20, 1.0: 40, 1.5: 60, 2.0: 80, 2.5: 100, 3.0: 120 };
         $('#SubjectHour').val(unitMap[$(this).val()] || '');
     });
 
-    // Form Submit (Add)
+    // CRUD Ops
     $(document).on('submit', '#form-subject', function(e) {
         e.preventDefault();
         $.ajax({
@@ -535,30 +620,18 @@ $(document).ready(function() {
                 if (data > 0) {
                     $('#form-subject')[0].reset();
                     $('#SubjectCode').val(null).trigger('change');
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'บันทึกสำเร็จ',
-                        showConfirmButton: false,
-                        timer: 1500
-                    });
+                    Swal.fire({ icon: 'success', title: 'เพิ่มวิชาเรียนสำเร็จ', showConfirmButton: false, timer: 1500 });
                     tablel_Subject.ajax.reload();
+                    // bootstrap.Collapse.getInstance(document.getElementById('collapseAddSubject')).hide(); // ไม่ต้องพับคืนเพื่อให้ป้อนต่อได้
                 } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'ไม่สามารถบันทึกได้',
-                        text: 'รายวิชานี้มีอยู่แล้วในภาคเรียนนี้',
-                        showConfirmButton: false,
-                        timer: 2000
-                    });
+                    Swal.fire({ icon: 'error', title: 'ข้อมูลซ้ำ', text: 'รายวิชานี้มีอยู่แล้วในเทอมนี้' });
                 }
             }
         });
     });
 
-    // Edit Button
     $(document).on('click', '.EditSubject', function() {
         let id = $(this).attr('idSbuj');
-        $('#ModalUpdateSubject').modal('show');
         $.ajax({
             url: '<?= site_url('admin/academic/ConAdminRegisterSubject/AdminRegisterSubjectEdit') ?>',
             type: 'post',
@@ -576,11 +649,11 @@ $(document).ready(function() {
                 $('#Up_FirstGroup').val(d.FirstGroup);
                 $('#Up_SecondGroup').val(d.SecondGroup);
                 $('#Up_SubjectID').val(d.SubjectID);
+                $('#ModalUpdateSubject').modal('show');
             }
         });
     });
 
-    // Update Form
     $(document).on('submit', '#form-update-subject', function(e) {
         e.preventDefault();
         $.ajax({
@@ -589,12 +662,7 @@ $(document).ready(function() {
             data: $(this).serialize(),
             success: function(data) {
                 $('#ModalUpdateSubject').modal('hide');
-                Swal.fire({
-                    icon: 'success',
-                    title: 'แก้ไขสำเร็จ',
-                    showConfirmButton: false,
-                    timer: 1500
-                });
+                Swal.fire({ icon: 'success', title: 'ปรับปรุงข้อมูลสำเร็จ', showConfirmButton: false, timer: 1500 });
                 tablel_Subject.ajax.reload();
             }
         });

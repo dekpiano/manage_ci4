@@ -1,170 +1,298 @@
 <?= $this->extend('admin/layout/main') ?>
 
 <?= $this->section('content') ?>
+<style>
+    :root {
+        --primary-emerald: #15a362;
+        --dark-emerald: #0d6d41;
+        --light-emerald: #e8f5ee;
+    }
 
-<!-- Header Section -->
-<div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
-    <div>
-        <div class="d-flex align-items-center mb-2">
-            <a href="javascript:history.back()" class="btn btn-outline-secondary btn-sm me-3">
-                <i class="bx bx-arrow-back"></i> ย้อนกลับ
-            </a>
-            <h4 class="fw-bold mb-0">
-                <i class='bx bx-user-check text-success me-2'></i>
-                <?= esc($title) ?>
-            </h4>
+    /* Hero Section */
+    .hero-settings {
+        background: linear-gradient(135deg, var(--primary-emerald) 0%, var(--dark-emerald) 100%);
+        border-radius: 1.5rem;
+        padding: 2.5rem;
+        color: white;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(21, 163, 98, 0.15);
+    }
+
+    .hero-settings::after {
+        content: '';
+        position: absolute;
+        bottom: -20%;
+        right: -5%;
+        width: 300px;
+        height: 300px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 50%;
+    }
+
+    .status-badge {
+        font-size: 0.75rem;
+        padding: 0.5rem 1rem;
+        border-radius: 50px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 700;
+    }
+
+    .status-active {
+        background: rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(10px);
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    /* Premium Card */
+    .settings-card {
+        border: none;
+        border-radius: 1.25rem;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.03);
+        transition: transform 0.3s ease;
+    }
+
+    .icon-wrapper {
+        width: 60px;
+        height: 60px;
+        border-radius: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.75rem;
+        background: var(--light-emerald);
+        color: var(--primary-emerald);
+        margin-bottom: 1.5rem;
+    }
+
+    /* Form Controls */
+    .btn-emerald {
+        background-color: var(--primary-emerald);
+        border-color: var(--primary-emerald);
+        color: white;
+        padding: 0.7rem 2rem;
+        font-weight: 600;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+    }
+
+    .btn-emerald:hover {
+        background-color: var(--dark-emerald);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(21, 163, 98, 0.2);
+    }
+
+    /* Table Styling Custom */
+    .table-custom thead th {
+        background-color: var(--light-emerald);
+        color: var(--dark-emerald);
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.5px;
+        font-weight: 700;
+        border: none;
+        padding: 1rem;
+    }
+
+    .table-custom tbody td {
+        padding: 1rem;
+        border-bottom: 1px solid #f2f2f2;
+    }
+
+    .card-title-balanced {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .text-emerald {
+        color: var(--primary-emerald) !important;
+    }
+</style>
+
+<div class="animate__animated animate__fadeIn">
+    <!-- Hero Section - Exact RWL Mirror -->
+    <div class="hero-settings animate__animated animate__fadeIn">
+        <div class="row align-items-center">
+            <div class="col-lg-8 animate__animated animate__slideInLeft">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb breadcrumb-style2 mb-2">
+                        <li class="breadcrumb-item"><a href="<?= base_url('Admin/Home') ?>" class="text-white opacity-75">หน้าหลัก</a></li>
+                        <li class="breadcrumb-item active text-white" aria-current="page">ตรวจสอบคะแนน</li>
+                    </ol>
+                </nav>
+                <h2 class="fw-bold mb-2 text-white card-title-balanced">
+                    <i class='bx bx-user-check'></i>
+                    <span>ตรวจสอบคะแนนครูรายบุคคล (ละเอียด)</span>
+                </h2>
+                <div class="d-flex align-items-center mt-3">
+                    <span class="status-badge status-active">
+                        <i class='bx bxs-circle me-1 small animate__animated animate__pulse animate__infinite'></i>
+                        <?= isset($Teacher) ? esc($Teacher->pers_prefix.$Teacher->pers_firstname.' '.$Teacher->pers_lastname) : '-' ?>
+                    </span>
+                    <span class="text-white-50 ms-3 small d-flex align-items-center">
+                        <i class='bx bx-calendar-event me-1'></i> ภาคเรียน/ปีการศึกษา <?= esc($Term) ?>/<?= esc($Year) ?>
+                    </span>
+                </div>
+            </div>
+            <div class="col-lg-4 text-center d-none d-lg-block animate__animated animate__zoomIn">
+                <i class='bx bxs-user-detail text-white opacity-25' style="font-size: 8rem;"></i>
+            </div>
         </div>
-        <nav aria-label="breadcrumb">
-            <ol class="breadcrumb mb-0">
-                <li class="breadcrumb-item"><a href="<?= base_url('Admin/Home') ?>"><i class='bx bx-home'></i> หน้าหลัก</a></li>
-                <li class="breadcrumb-item"><a href="javascript:history.back()">รายงานผลการบันทึกคะแนน</a></li>
-                <li class="breadcrumb-item active">ตรวจสอบคะแนน</li>
-            </ol>
-        </nav>
     </div>
-</div>
 
-<!-- Teacher Info Card -->
-<div class="row g-4 mb-4">
-    <div class="col-xl-4 col-md-6">
-        <div class="card border-0 shadow-sm h-100" style="border-radius: 12px; background: linear-gradient(135deg, #71dd37 0%, #8de45c 100%);">
-            <div class="card-body text-white">
-                <div class="d-flex align-items-center justify-content-between">
-                    <div>
-                        <h6 class="mb-1 text-white-50">ครูผู้สอน</h6>
-                        <h5 class="mb-0 fw-bold"><?= isset($Teacher) ? esc($Teacher->pers_prefix.$Teacher->pers_firstname.' '.$Teacher->pers_lastname) : '-' ?></h5>
+    <!-- Quick Stats Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="card settings-card animate__animated animate__fadeInUp" style="animation-delay: 0.1s;">
+                <div class="card-body p-4">
+                    <div class="icon-wrapper shadow-sm">
+                        <i class='bx bx-book-content'></i>
                     </div>
-                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px; background: rgba(255,255,255,0.2);">
-                        <i class='bx bx-user fs-3'></i>
+                    <h4 class="fw-bold mb-1"><?= count($checkSubject ?? []) ?></h4>
+                    <p class="text-muted mb-0">จำนวนรายวิชาที่สอน</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card settings-card animate__animated animate__fadeInUp" style="animation-delay: 0.2s;">
+                <div class="card-body p-4">
+                    <div class="icon-wrapper shadow-sm">
+                        <i class='bx bxs-user-account'></i>
                     </div>
+                    <h4 class="fw-bold mb-1">
+                        <?php 
+                            $stuSet = [];
+                            foreach($CheckScore as $sc) { $stuSet[$sc->StudentID] = true; }
+                            echo count($stuSet);
+                        ?>
+                    </h4>
+                    <p class="text-muted mb-0">จำนวนนักเรียนทั้งหมด</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card settings-card animate__animated animate__fadeInUp" style="animation-delay: 0.3s;">
+                <div class="card-body p-4">
+                    <div class="icon-wrapper shadow-sm">
+                        <i class='bx bx-refresh'></i>
+                    </div>
+                    <label class="form-label text-muted small mb-2 d-block">เปลี่ยนปีการศึกษา</label>
+                    <select class="form-select border-0 bg-light fw-bold text-emerald" id="selectYear">
+                        <?php foreach ($CheckYearSaveScore as $yearRow) : ?>
+                            <?php 
+                                $yearVal = $yearRow->RegisterYear; 
+                                $isSelected = ($Term.'/'.$Year == $yearVal) ? 'selected' : '';
+                            ?>
+                            <option value="<?= esc($yearVal) ?>" <?= $isSelected ?>><?= esc($yearVal) ?></option>
+                        <?php endforeach; ?>
+                    </select>
                 </div>
             </div>
         </div>
     </div>
-    <div class="col-xl-4 col-md-6">
-        <div class="card border-0 shadow-sm h-100" style="border-radius: 12px; background: linear-gradient(135deg, #28a745 0%, #48c764 100%);">
-            <div class="card-body text-white">
-                <div class="d-flex align-items-center justify-content-between">
-                    <div>
-                        <h6 class="mb-1 text-white-50">ภาคเรียน/ปีการศึกษา</h6>
-                        <h5 class="mb-0 fw-bold"><?= esc($Term) ?>/<?= esc($Year) ?></h5>
-                    </div>
-                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px; background: rgba(255,255,255,0.2);">
-                        <i class='bx bx-calendar fs-3'></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-xl-4 col-md-6">
-        <div class="card border-0 shadow-sm h-100" style="border-radius: 12px; background: linear-gradient(135deg, #20c997 0%, #4dd4ac 100%);">
-            <div class="card-body text-white">
-                <div class="d-flex align-items-center justify-content-between">
-                    <div>
-                        <h6 class="mb-1 text-white-50">จำนวนวิชา</h6>
-                        <h5 class="mb-0 fw-bold"><?= count($checkSubject ?? []) ?> วิชา</h5>
-                    </div>
-                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px; background: rgba(255,255,255,0.2);">
-                        <i class='bx bx-book-open fs-3'></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 
-<!-- Subject Accordion -->
-<div class="card border-0 shadow-sm" style="border-radius: 12px;">
-    <div class="card-header bg-white border-bottom-0 py-3" style="border-radius: 12px 12px 0 0;">
-        <div class="d-flex align-items-center">
-            <div class="rounded-circle bg-success bg-opacity-10 p-2 me-3">
-                <i class='bx bx-list-check text-success fs-4'></i>
-            </div>
-            <div>
-                <h5 class="card-title mb-0 fw-bold">รายวิชาที่สอน</h5>
-                <small class="text-muted">คลิกเพื่อดูรายละเอียดคะแนนแต่ละวิชา</small>
-            </div>
+    <!-- Subjects List Card (Main Container) -->
+    <div class="card settings-card border-top border-emerald border-4 animate__animated animate__fadeInUp" style="animation-delay: 0.4s;">
+        <div class="card-header bg-white py-4 px-4 border-bottom-0">
+            <h5 class="fw-bold mb-0 d-flex align-items-center">
+                <i class='bx bx-list-check me-2 text-emerald fs-4'></i> รายละเอียดคะแนนรายชื่อนักเรียน
+            </h5>
         </div>
-    </div>
-    <div class="card-body pt-0">
-        <div class="accordion" id="subjectAccordion">
-            <?php foreach ($checkSubject as $key => $v_checkSubject) : ?>
-                <div class="accordion-item border mb-3" style="border-radius: 10px !important; overflow: hidden;">
-                    <h2 class="accordion-header" id="heading<?= $key ?>">
-                        <button class="accordion-button collapsed py-3" type="button" data-bs-toggle="collapse" data-bs-target="#collapse<?= $key ?>" aria-expanded="false" aria-controls="collapse<?= $key ?>" style="background-color: #f8f9fa;">
-                            <div class="d-flex align-items-center w-100">
-                                <span class="badge bg-success me-3" style="min-width: 100px;"><?= esc($v_checkSubject->SubjectCode) ?></span>
-                                <span class="fw-semibold"><?= esc($v_checkSubject->SubjectName) ?></span>
-                            </div>
-                        </button>
-                    </h2>
-                    <div id="collapse<?= $key ?>" class="accordion-collapse collapse" aria-labelledby="heading<?= $key ?>" data-bs-parent="#subjectAccordion">
-                        <div class="accordion-body p-0">
-                            <div class="table-responsive">
-                                <table class="table table-hover table-striped mb-0 scoreTable" id="scoreTable<?= $key ?>">
-                                    <thead class="table-success">
-                                        <tr class="text-center">
-                                            <th style="width: 120px;">เลขประจำตัว</th>
-                                            <th style="width: 100px;">ระดับชั้น</th>
-                                            <th style="white-space: nowrap;">ชื่อ - นามสกุล</th>
-                                            <th style="width: 80px;">สถานะ</th>
-                                            <th style="width: 100px;">ก่อนกลางภาค</th>
-                                            <th style="width: 100px;">สอบกลางภาค</th>
-                                            <th style="width: 100px;">หลังกลางภาค</th>
-                                            <th style="width: 100px;">สอบปลายภาค</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php 
-                                        $foundScores = false;
-                                        foreach ($CheckScore as $v_CheckScore) :
-                                            if ($v_checkSubject->SubjectID == $v_CheckScore->SubjectID) :
-                                                $foundScores = true;
-                                                $subScore = explode('|', $v_CheckScore->Score100); ?>
+        <div class="card-body p-0">
+            <div class="accordion accordion-flush" id="subjectAccordion">
+                <?php foreach ($checkSubject as $key => $v_checkSubject) : ?>
+                    <?php 
+                        $totalS = 0; $compS = 0;
+                        foreach ($CheckScore as $v_CS) {
+                            if ($v_checkSubject->SubjectID == $v_CS->SubjectID) {
+                                $totalS++; $subS = explode('|', $v_CS->Score100); $isC = true;
+                                for ($i=0; $i<4; $i++) { if (!isset($subS[$i]) || $subS[$i] === '' || $subS[$i] === '-'){ $isC = false; break; } }
+                                if ($isC) $compS++;
+                            }
+                        }
+                        $perc = ($totalS > 0) ? round(($compS / $totalS) * 100) : 0;
+                    ?>
+                    <div class="accordion-item border-bottom">
+                        <h2 class="accordion-header" id="heading<?= $key ?>">
+                            <button class="accordion-button collapsed py-4 px-4" type="button" data-bs-toggle="collapse" data-bs-target="#collapse<?= $key ?>">
+                                <div class="d-flex align-items-center w-100 me-3">
+                                    <div class="avatar flex-shrink-0 me-3">
+                                        <span class="avatar-initial rounded bg-label-success fw-bold"><?= esc($v_checkSubject->SubjectCode[0]) ?></span>
+                                    </div>
+                                    <div class="me-auto">
+                                        <h6 class="mb-0 fw-bold"><?= esc($v_checkSubject->SubjectCode) ?> - <?= esc($v_checkSubject->SubjectName) ?></h6>
+                                        <small class="text-muted"><?= $totalS ?> นักเรียน • ความเรียบร้อย <?= $perc ?>%</small>
+                                    </div>
+                                    <div class="ms-3 d-none d-md-block">
+                                        <div class="progress" style="width: 100px; height: 6px; border-radius: 10px;">
+                                            <div class="progress-bar bg-success" role="progressbar" style="width: <?= $perc ?>%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </button>
+                        </h2>
+                        <div id="collapse<?= $key ?>" class="accordion-collapse collapse" data-bs-parent="#subjectAccordion">
+                            <div class="accordion-body p-0 border-top">
+                                <div class="table-responsive">
+                                    <table class="table table-custom mb-0 score-table" id="table_<?= $key ?>">
+                                        <thead>
+                                            <tr>
+                                                <th class="text-center" style="width: 70px;">#</th>
+                                                <th>เลขประจำตัว</th>
+                                                <th>ชื่อ-นามสกุล</th>
+                                                <th class="text-center">ก่อนกลาง</th>
+                                                <th class="text-center">กลางภาค</th>
+                                                <th class="text-center">หลังกลาง</th>
+                                                <th class="text-center">ปลายภาค</th>
+                                                <th class="text-center">รวม (100)</th>
+                                                <th class="text-center">สถานะ</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="bg-white">
+                                            <?php $idx = 1; foreach ($CheckScore as $v_CS) : if ($v_checkSubject->SubjectID == $v_CS->SubjectID) : ?>
+                                                <?php 
+                                                    $bits = explode('|', $v_CS->Score100); $sum = 0; $full = true;
+                                                    foreach($bits as $b) { if(is_numeric($b)) $sum += $b; else $full = false; }
+                                                ?>
                                                 <tr>
+                                                    <td class="text-center text-muted"><?= $idx++ ?></td>
+                                                    <td><span class="badge bg-label-primary"><?= esc($v_CS->StudentCode) ?></span></td>
+                                                    <td class="fw-bold"><?= esc($v_CS->StudentPrefix.$v_CS->StudentFirstName.' '.$v_CS->StudentLastName) ?></td>
+                                                    <td class="text-center"><?= $bits[0] ?? '-' ?></td>
+                                                    <td class="text-center"><?= $bits[1] ?? '-' ?></td>
+                                                    <td class="text-center"><?= $bits[2] ?? '-' ?></td>
+                                                    <td class="text-center"><?= $bits[3] ?? '-' ?></td>
+                                                    <td class="text-center fw-bold text-emerald"><?= $sum ?: '-' ?></td>
                                                     <td class="text-center">
-                                                        <span class="badge bg-label-primary"><?= esc($v_CheckScore->StudentCode) ?></span>
-                                                    </td>
-                                                    <td class="text-center"><?= esc($v_CheckScore->StudentClass) ?></td>
-                                                    <td style="white-space: nowrap;"><?= esc($v_CheckScore->StudentPrefix.$v_CheckScore->StudentFirstName.' '.$v_CheckScore->StudentLastName) ?></td>
-                                                    <td class="text-center">
-                                                        <?php if($v_CheckScore->StudentBehavior == 'ปกติ'): ?>
-                                                            <span class="badge bg-success">ปกติ</span>
+                                                        <?php if($full): ?>
+                                                            <span class="badge bg-success shadow-none">ครบถวน</span>
                                                         <?php else: ?>
-                                                            <span class="badge bg-warning"><?= esc($v_CheckScore->StudentBehavior) ?></span>
+                                                            <span class="badge bg-label-danger shadow-none">ไม่สมบูรณ์</span>
                                                         <?php endif; ?>
                                                     </td>
-                                                    <td class="text-center"><?= @$subScore[0] ?: '-' ?></td>
-                                                    <td class="text-center"><?= @$subScore[1] ?: '-' ?></td>
-                                                    <td class="text-center"><?= @$subScore[2] ?: '-' ?></td>
-                                                    <td class="text-center"><?= @$subScore[3] ?: '-' ?></td>
                                                 </tr>
-                                        <?php endif;
-                                        endforeach; 
-                                        
-                                        if (!$foundScores) : ?>
-                                            <tr>
-                                                <td colspan="8" class="text-center py-4 text-muted">
-                                                    <i class='bx bx-info-circle fs-4 me-2'></i>
-                                                    ไม่พบข้อมูลคะแนนสำหรับวิชานี้
-                                                </td>
-                                            </tr>
-                                        <?php endif; ?>
-                                    </tbody>
-                                </table>
+                                            <?php endif; endforeach; ?>
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            <?php endforeach; ?>
+                <?php endforeach; ?>
+            </div>
         </div>
-        
-        <?php if(empty($checkSubject)): ?>
-        <div class="text-center py-5">
-            <i class='bx bx-folder-open text-muted' style="font-size: 4rem;"></i>
-            <p class="text-muted mt-3">ไม่พบรายวิชาที่สอนในภาคเรียนนี้</p>
-        </div>
-        <?php endif; ?>
+    </div>
+
+    <!-- Actions -->
+    <div class="mt-4 text-center mb-5">
+        <a href="javascript:history.back()" class="btn btn-emerald px-5 shadow-sm">
+            <i class='bx bx-arrow-back me-1'></i> กลับไปยังหน้ารายงานหลัก
+        </a>
     </div>
 </div>
 
@@ -173,32 +301,38 @@
 <?= $this->section('script') ?>
 <script>
 $(document).ready(function() {
-    // Initialize DataTable for each score table when accordion is shown
+    // Academic Year Filter
+    $('#selectYear').on('change', function() {
+        var val = $(this).val();
+        if (val) {
+            var spl = val.split('/');
+            var tid = '<?= $TeacID ?>';
+            var path = window.location.pathname.includes('Executive') ? 'Executive' : 'Evaluate';
+            var url = '<?= base_url('Admin/Acade') ?>/' + path + '/ReportTeacherSaveScoreCheck/' + spl[0] + '/' + spl[1] + '/' + tid;
+            
+            Swal.fire({
+                title: 'กำลังเปลี่ยนข้อมูล...', text: 'ปีการศึกษา ' + val,
+                allowOutsideClick: false, didOpen: () => { Swal.showLoading(); }
+            });
+            window.location.href = url;
+        }
+    });
+
+    // Initialize DataTables for Accordion Tables
     $('.accordion-button').on('click', function() {
-        var target = $(this).attr('data-bs-target');
-        var tableId = $(target).find('.scoreTable').attr('id');
-        
-        if (tableId && !$.fn.DataTable.isDataTable('#' + tableId)) {
+        var tid = $(this).attr('data-bs-target');
+        var tbl = $(tid).find('.score-table');
+        if (tbl.length && !$.fn.DataTable.isDataTable(tbl)) {
             setTimeout(function() {
-                $('#' + tableId).DataTable({
+                tbl.DataTable({
                     "language": {
-                        "lengthMenu": "แสดง _MENU_ รายการ",
-                        "zeroRecords": "ไม่พบข้อมูล",
-                        "info": "แสดง _START_ ถึง _END_ จาก _TOTAL_ รายการ",
-                        "infoEmpty": "ไม่มีข้อมูล",
-                        "infoFiltered": "(กรองจากทั้งหมด _MAX_ รายการ)",
-                        "search": "ค้นหา:",
-                        "paginate": {
-                            "first": "หน้าแรก",
-                            "last": "หน้าสุดท้าย",
-                            "next": "ถัดไป",
-                            "previous": "ก่อนหน้า"
-                        }
+                        "lengthMenu": "_MENU_ รายการ", "zeroRecords": "ไม่พบข้อมูล",
+                        "info": "หน้า _PAGE_ จาก _PAGES_", "search": "ค้นหา:",
+                        "paginate": { "next": "ถัดไป", "previous": "ก่อนหน้า" }
                     },
-                    "stateSave": false,
-                    "order": [[1, "asc"]]
+                    "pageLength": 25, "dom": '<"p-3 d-flex justify-content-between align-items-center"f>rtip'
                 });
-            }, 100);
+            }, 150);
         }
     });
 });

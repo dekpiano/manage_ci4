@@ -150,3 +150,33 @@ $('#SelectorID').select2({
 
 ### 📁 ไฟล์ที่นำร่อง (First Implementation)
 - `app/Views/admin/Academic/AdminStudents/AdminStudentsAdjustNumber.php` (Classroom Selector)
+
+---
+
+## [2026-04-07] - โมเดิร์นไนซ์ UI/UX ด้วย Emerald Design Concept (Green #15a362) 🟢✨
+
+### 🚀 ฟีเจอร์ที่เพิ่ม/แก้ไข (Added/Modified)
+- **นิเทศ/แผนการสอน (Academic Supervision Module):**
+    - **ดีไซน์ใหม่ทั้งหมด:** นำระบบ Emerald Design มาใช้เพื่อความ Premium และ ทันสมัย
+    - **หน้าเลือกกลุ่มสาระ (`select_group.php`):** เปลี่ยน Hero Header เป็น Gradient Emerald และใช้ Card Grid แบบ Interactive
+    - **หน้าตรวจสอบรายบุคคล (`ChekPresGroup.php`):** 
+        - ออกแบบ Hero Header และ Stats Card ใหม่ (Elevated Cards)
+        - แสดงรายชื่อครูเป็น Grid Card พร้อม Avatar และ Badge สถานะ
+        - **Modal ประสบการณ์ใหม่:** ปรับปรุง Modal การตรวจสอบแผน และ Modal การอนุมัติ (Approval) ให้ใช้ Header Gradient และตารางแบบ Premium Layout
+    - **หน้ารายงานสรุปส่งแผน (`ReportCheckPlanMain.php`):** 
+        - ออกแบบ Filter Card ใหม่แบบกึ่งลอย (Half-overlap)
+        - ปรับปรุงตารางรายงานให้เป็นสไตล์ Clean & Modern
+        - ปรับแต่งปุ่มส่งออก Excel (xlsx-js-style) ให้เข้ากับ Emerald Theme
+
+- **ลงทะเบียนรายวิชา (`AdminRegisterSubjectMain`):**
+    - **เพิ่มประสิทธิภาพ Workflow:** ปรับปรุงให้ฟอร์มการเพิ่มวิชา "ไม่ต้องปิด/Refesh" หลังจากกดบันทึก เพื่อความรวดเร็วในการเพิ่มข้อมูลต่อเนื่อง (Rapid Data Entry)
+    - **AJAX Sync:** ใช้ AJAX โหลด DataTables ใหม่ทันทีหลังจากบันทึกข้อมูลสำเร็จ
+    - **CSV Parser:** ย้ายจาก Google Sheets API มาใช้ระบบ Fetch .csv แบบ Publish to Web เพื่อแก้ปัญหา CORS และลดการเรียก API Key
+    - **Sorting Logic:** พัฒนาระบบเรียงลำดับ ปีการศึกษา/เทอม แบบ Chronological (ล่าสุดขึ้นก่อน) โดยใช้ SQL Raw `SUBSTRING_INDEX`
+
+### 📁 ไฟล์ที่เกี่ยวข้อง
+- `app/Views/admin/Academic/AdminCheckPlan/select_group.php` (Redesigned)
+- `app/Views/admin/Academic/AdminCheckPlan/ChekPresGroup.php` (Redesigned & AJAX Refined)
+- `app/Views/admin/Academic/AdminCheckPlan/ReportCheckPlanMain.php` (Redesigned)
+- `app/Views/admin/Academic/AdminRegisterSubject/AdminRegisterSubjectMain.php` (UI Modernized & Workflow Optimized)
+- `app/Controllers/Admin/Academic/ConAdminRegisterSubject.php` (Sorting Logic Updated)

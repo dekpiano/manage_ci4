@@ -4,10 +4,70 @@
 
 <style>
     :root {
-        --primary-green: #15a362;
-        --secondary-green: #198754;
-        --light-green: #e8f5e9;
+        --primary-emerald: #15a362;
+        --dark-emerald: #0d6d41;
+        --light-emerald: #e8f5ee;
         --border-radius: 16px;
+    }
+
+    /* Hero Section */
+    .hero-settings {
+        background: linear-gradient(135deg, var(--primary-emerald) 0%, var(--dark-emerald) 100%);
+        border-radius: 1.5rem;
+        padding: 2.5rem;
+        color: white;
+        margin-bottom: 2.5rem;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(21, 163, 98, 0.15);
+    }
+
+    .hero-settings::after {
+        content: '';
+        position: absolute;
+        bottom: -20%;
+        right: -5%;
+        width: 300px;
+        height: 300px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 50%;
+    }
+
+    .status-badge {
+        font-size: 0.75rem;
+        padding: 0.5rem 1rem;
+        border-radius: 50px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 700;
+    }
+
+    .status-active {
+        background: rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(10px);
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    /* Premium Card */
+    .settings-card {
+        border: none;
+        border-radius: 1.25rem;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.03);
+        transition: transform 0.3s ease;
+    }
+
+    .icon-wrapper {
+        width: 60px;
+        height: 60px;
+        border-radius: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.75rem;
+        background: var(--light-emerald);
+        color: var(--primary-emerald);
+        margin-bottom: 1.5rem;
     }
 
     /* Table Container Styling */
@@ -41,7 +101,6 @@
         padding: 10px 8px !important;
     }
 
-    /* Second Row of Header Sticky */
     .table-score-report thead tr:nth-child(2) th {
         top: 48px !important; 
         z-index: 39;
@@ -49,7 +108,6 @@
         background-color: #f8f9fa !important;
     }
 
-    /* Sticky Columns Logic */
     .sticky-col {
         position: sticky !important;
         background-color: #fff !important;
@@ -59,7 +117,6 @@
         font-size: 0.82rem;
     }
     
-    /* Intersection Header & Column */
     .table-score-report thead th.sticky-col {
         z-index: 110 !important;
         background-color: #fcfdfe !important;
@@ -78,62 +135,15 @@
         min-width: 220px; 
         font-weight: 600;
         color: #212529;
-        border-right: 3px solid var(--primary-green) !important;
+        border-right: 3px solid var(--primary-emerald) !important;
         box-shadow: 6px 0 10px rgba(0,0,0,0.04);
     }
 
-    /* Subject Headers Branding */
     .subject-header-group {
-        border-bottom: 3px solid var(--primary-green) !important;
+        border-bottom: 3px solid var(--primary-emerald) !important;
         background-color: rgba(21, 163, 98, 0.04) !important;
     }
 
-    /* Hover effect */
-    .table-score-report tbody tr {
-        transition: all 0.2s ease;
-    }
-    .table-score-report tbody tr:hover td {
-        background-color: rgba(21, 163, 98, 0.03) !important;
-    }
-    .table-score-report tbody tr:hover .sticky-col {
-        background-color: #fcfdfe !important;
-    }
-
-    /* Score Cell Tweak */
-    .score-cell {
-        text-align: center;
-        font-size: 0.8rem;
-        min-width: 42px;
-        padding: 8px 4px !important;
-        border-right: 1px solid #f1f3f5 !important;
-        color: #495057;
-    }
-    .score-cell.has-score { 
-        color: var(--primary-green); 
-        font-weight: 700;
-    }
-    .score-cell.last-of-group {
-        border-right: 2px solid #dee2e6 !important;
-    }
-
-    /* Group shading */
-    .bg-group-pre { background-color: rgba(21, 163, 98, 0.02) !important; }
-    .bg-group-mid { background-color: rgba(21, 163, 98, 0.04) !important; }
-    .bg-group-post { background-color: rgba(21, 163, 98, 0.06) !important; }
-    .bg-group-final { background-color: rgba(21, 163, 98, 0.08) !important; }
-
-    .subject-header-cell {
-        writing-mode: vertical-rl;
-        text-orientation: mixed;
-        transform: rotate(180deg);
-        white-space: nowrap;
-        padding: 12px 6px !important;
-        height: 200px;
-        font-size: 0.75rem;
-        font-weight: 700;
-        text-align: left;
-    }
-    
     .score-cell {
         text-align: center;
         font-size: 0.85rem;
@@ -142,373 +152,246 @@
         transition: background-color 0.2s ease;
     }
     .score-cell:hover { background-color: rgba(21, 163, 98, 0.05) !important; }
-    .score-cell.has-score { background-color: rgba(21, 163, 98, 0.1) !important; color: #15a362; font-weight: 600; }
+    .score-cell.has-score { background-color: rgba(21, 163, 98, 0.1) !important; color: var(--primary-emerald); font-weight: 600; }
     .score-cell.no-score { background-color: #fff8e1 !important; color: #b78103; }
 
-    /* Custom Card */
-    .card-modern {
-        border-radius: var(--border-radius);
-        border: none;
-        box-shadow: 0 10px 30px rgba(144, 163, 179, 0.1);
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-    .card-modern:hover { transform: translateY(-5px); box-shadow: 0 15px 35px rgba(144, 163, 179, 0.15); }
-
-    /* Button Styling */
-    .btn-smooth {
-        border-radius: 12px;
-        padding: 0.6rem 1.2rem;
-        font-weight: 600;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    .btn-smooth:active { transform: scale(0.96); }
-
-    .btn-success-modern {
-        background: linear-gradient(135deg, #15a362 0%, #118d54 100%);
-        border: none;
+    .btn-emerald {
+        background-color: var(--primary-emerald);
+        border-color: var(--primary-emerald);
         color: white;
-    }
-    .btn-success-modern:hover {
-        background: linear-gradient(135deg, #118d54 0%, #0d7546 100%);
-        box-shadow: 0 4px 15px rgba(21, 163, 98, 0.3);
+        font-weight: 600;
+        border-radius: 10px;
+        padding: 0.6rem 1.25rem;
+        transition: all 0.3s ease;
     }
 
-    /* Select2 Modern Green Tweak */
+    .btn-emerald:hover {
+        background-color: var(--dark-emerald);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(21, 163, 98, 0.2);
+    }
+
+    .bg-group-pre { background-color: rgba(21, 163, 98, 0.02) !important; }
+    .bg-group-mid { background-color: rgba(21, 163, 98, 0.04) !important; }
+    .bg-group-post { background-color: rgba(21, 163, 98, 0.06) !important; }
+    .bg-group-final { background-color: rgba(21, 163, 98, 0.08) !important; }
+
     .select2-container--bootstrap-5 .select2-selection {
         border: 2px solid #edf1f4;
         border-radius: 12px !important;
         min-height: 48px;
         display: flex;
         align-items: center;
-        transition: all 0.2s ease;
     }
     .select2-container--bootstrap-5.select2-container--focus .select2-selection {
-        border-color: var(--primary-green) !important;
+        border-color: var(--primary-emerald) !important;
         box-shadow: 0 0 0 0.25rem rgba(21, 163, 98, 0.1) !important;
-    }
-    .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
-        padding-left: 1rem;
-        color: #495057;
-    }
-    .select2-container--bootstrap-5 .select2-dropdown {
-        border-radius: 12px !important;
-        border: 2px solid var(--primary-green) !important;
-        overflow: hidden;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.1) !important;
-    }
-    .select2-results__option--highlighted {
-        background-color: var(--primary-green) !important;
     }
 </style>
 
-<!-- Header Section -->
-<div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
-    <div>
-        <h4 class="fw-bold mb-1">
-            <i class='bx bx-spreadsheet text-success me-2'></i>
-            <?= isset($title) ? esc($title) : 'รายงานผลการบันทึกคะแนน (รายห้องเรียน)' ?>
-        </h4>
-        <nav aria-label="breadcrumb">
-            <ol class="breadcrumb mb-0">
-                <li class="breadcrumb-item"><a href="<?= base_url('Admin/Home') ?>"><i class='bx bx-home-alt'></i> หน้าหลัก</a></li>
-                <li class="breadcrumb-item"><a href="#" class="text-muted">งานทะเบียน</a></li>
-                <li class="breadcrumb-item active text-success">รายงานผลการบันทึกคะแนน</li>
-            </ol>
-        </nav>
+<div class="animate__animated animate__fadeIn">
+    <!-- Hero Section -->
+    <div class="hero-settings">
+        <div class="row align-items-center">
+            <div class="col-lg-8 animate__animated animate__slideInLeft">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb breadcrumb-style2 mb-2">
+                        <li class="breadcrumb-item"><a href="<?= base_url('Admin/Home') ?>" class="text-white opacity-75">หน้าหลัก</a></li>
+                        <li class="breadcrumb-item active text-white" aria-current="page">รายงานคะแนนรายห้อง</li>
+                    </ol>
+                </nav>
+                <h2 class="fw-bold mb-2 text-white">
+                    <i class='bx bx-spreadsheet me-2'></i>
+                    <span><?= isset($title) ? esc($title) : 'รายงานผลการบันทึกคะแนน (รายห้องเรียน)' ?></span>
+                </h2>
+                <div class="d-flex align-items-center mt-3">
+                    <span class="status-badge status-active">
+                        <i class='bx bxs-circle me-1 small animate__animated animate__pulse animate__infinite'></i>
+                        ระบบพร้อมตรวจสอบ
+                    </span>
+                    <?php if(isset($Class)): ?>
+                    <span class="text-white-50 ms-3 small">
+                        <i class='bx bx-chalkboard me-1'></i> ห้องเรียน: ม.<?= esc($Class) ?>/<?= esc($RoomValue) ?>
+                    </span>
+                    <?php endif; ?>
+                </div>
+            </div>
+            <div class="col-lg-4 text-center d-none d-lg-block animate__animated animate__zoomIn">
+                <i class='bx bx-table text-white opacity-25' style="font-size: 8rem;"></i>
+            </div>
+        </div>
     </div>
-</div>
 
-<!-- Filter Card -->
-<div class="card card-modern mb-4">
-    <div class="card-body py-4">
-        <div class="row g-3 align-items-end">
-            <div class="col-md-4">
-                <label for="KeyCheckYear" class="form-label fw-bold text-dark">
-                    <i class='bx bx-calendar-star text-success me-1'></i> ปีการศึกษา
-                </label>
-                <select class="form-select select2" id="KeyCheckYear" name="KeyCheckYear">
-                    <option value="">-- เลือกปีการศึกษา --</option>
-                    <?php foreach ($CheckYear as $v_CheckYear) : ?>
-                        <?php 
-                            $currentVal = ($Term ?? '') . '/' . ($Year ?? '');
-                            $isSelected = ($currentVal == $v_CheckYear->RegisterYear) ? 'selected' : '';
-                        ?>
-                        <option value="<?= esc($v_CheckYear->RegisterYear) ?>" <?= $isSelected ?>>
-                            <?= esc($v_CheckYear->RegisterYear) ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-            <div class="col-md-4">
-                <label for="SelectRoomReportScore" class="form-label fw-bold text-dark">
-                    <i class='bx bx-group text-success me-1'></i> ห้องเรียน
-                </label>
-                <select class="form-select select2" id="SelectRoomReportScore" name="SelectRoomReportScore">
-                    <option value="">-- เลือกห้องเรียน --</option>
-                    <?php foreach ($Room as $v_Room) : ?>
-                        <?php 
-                            $currentRoom = ($Class ?? '') . '/' . ($RoomValue ?? '');
-                            $isSelected = ($currentRoom == $v_Room) ? 'selected' : '';
-                        ?>
-                        <option value="<?= esc($v_Room) ?>" <?= $isSelected ?>>ม.<?= esc($v_Room) ?></option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-            <div class="col-md-4">
-                <button type="button" id="btnSearch" class="btn btn-success-modern btn-smooth w-100">
-                    <i class="bx bx-search-alt-2 me-1"></i> ค้นหาข้อมูล
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<?php if(isset($stu) && !empty($stu)): ?>
-
-<?php if(isset($isOldDataFormat) && $isOldDataFormat): ?>
-<!-- Warning for Old Data Format -->
-<div class="alert alert-danger alert-dismissible fade show mb-4" role="alert" style="border-radius: 12px; border-left: 4px solid #dc3545;">
-    <div class="d-flex align-items-start">
-        <i class='bx bx-error-circle fs-4 me-2 mt-1'></i>
-        <div>
-            <h6 class="alert-heading mb-1 fw-bold">
-                <i class='bx bx-x-circle me-1'></i> ไม่รองรับข้อมูลก่อนปีการศึกษา 1/2568
-            </h6>
-            <p class="mb-0 small">
-                ข้อมูลปี <strong><?= esc($Term) ?>/<?= esc($Year) ?></strong> ไม่ได้เก็บเลขห้องเรียนไว้ในฐานข้อมูล 
-                ระบบจึง<strong>ไม่สามารถแยกห้องเรียนได้</strong> และผลลัพธ์ที่แสดงอาจ<strong>ไม่ถูกต้อง</strong>
-                <br><span class="text-muted">* กรุณาเลือกปีการศึกษา 1/2568 ขึ้นไปเพื่อความถูกต้องของข้อมูล</span>
-            </p>
-        </div>
-    </div>
-    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-</div>
-<?php endif; ?>
-
-<!-- Summary Cards -->
-<div class="row g-4 mb-4">
-    <div class="col-xl-3 col-md-6">
-        <div class="card border-0 shadow-sm card-modern h-100" style="background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);">
-            <div class="card-body text-white">
-                <div class="d-flex align-items-center justify-content-between">
-                    <div>
-                        <h6 class="mb-1 text-white-50">จำนวนนักเรียน</h6>
-                        <h2 class="mb-0 fw-bold"><?= count($stu) ?></h2>
-                    </div>
-                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 60px; height: 60px; background: rgba(255,255,255,0.2);">
-                        <i class='bx bx-user-check fs-2'></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-xl-3 col-md-6">
-        <div class="card border-0 shadow-sm card-modern h-100" style="background: linear-gradient(135deg, #1abc9c 0%, #16a085 100%);">
-            <div class="card-body text-white">
-                <div class="d-flex align-items-center justify-content-between">
-                    <div>
-                        <h6 class="mb-1 text-white-50">จำนวนรายวิชา</h6>
-                        <h2 class="mb-0 fw-bold"><?= count($RegisSubject) ?></h2>
-                    </div>
-                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 60px; height: 60px; background: rgba(255,255,255,0.2);">
-                        <i class='bx bx-book-open fs-2'></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-xl-3 col-md-6">
-        <div class="card border-0 shadow-sm card-modern h-100" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);">
-            <div class="card-body text-white">
-                <div class="d-flex align-items-center justify-content-between">
-                    <div>
-                        <h6 class="mb-1 text-white-50">ห้องเรียน</h6>
-                        <h2 class="mb-0 fw-bold">ม.<?= esc($Class) ?>/<?= esc($RoomValue) ?></h2>
-                    </div>
-                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 60px; height: 60px; background: rgba(255,255,255,0.2);">
-                        <i class='bx bx-chalkboard fs-2'></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-xl-3 col-md-6">
-        <div class="card border-0 shadow-sm card-modern h-100" style="background: linear-gradient(135deg, #f39c12 0%, #d35400 100%);">
-            <div class="card-body text-white">
-                <div class="d-flex align-items-center justify-content-between">
-                    <div>
-                        <h6 class="mb-1 text-white-50">ปีการศึกษา</h6>
-                        <h2 class="mb-0 fw-bold"><?= esc($Term) ?>/<?= esc($Year) ?></h2>
-                    </div>
-                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 60px; height: 60px; background: rgba(255,255,255,0.2);">
-                        <i class='bx bx-calendar fs-2'></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Score Table Card -->
-<div class="card card-modern">
-    <div class="card-header bg-white border-bottom py-3">
-        <div class="d-flex flex-wrap justify-content-between align-items-center">
-            <div class="d-flex align-items-center">
-                <div class="rounded-circle bg-success bg-opacity-10 p-2 me-3">
-                    <i class='bx bx-table text-success fs-4'></i>
-                </div>
-                <div>
-                    <h5 class="card-title mb-0 fw-bold">ตารางคะแนนรายวิชา</h5>
-                    <small class="text-muted">ภาคเรียนที่ <?= (isset($Term) ? esc($Term) : '').'/'.(isset($Year) ? esc($Year) : '') ?></small>
-                </div>
-            </div>
-            <div class="d-flex gap-2">
-                <button type="button" class="btn btn-outline-success btn-smooth btn-sm" id="btnExportExcel">
-                    <i class='bx bx-file me-1'></i> Export Excel
-                </button>
-                <button type="button" class="btn btn-outline-dark btn-smooth btn-sm" id="btnPrint">
-                    <i class='bx bx-printer me-1'></i> พิมพ์รายงาน
-                </button>
-            </div>
-        </div>
-    </div>
-    <div class="card-body p-0">
-        <div class="table-container-score" id="tableContainer">
-            <table class="table table-bordered table-hover table-score-report mb-0" id="tblScoreRoom" style="border-collapse: separate; border-spacing: 0;">
-                <thead>
-                    <!-- Row 1: Subject Names -->
-                    <tr>
-                        <th class="text-center align-middle sticky-col sticky-col-1" rowspan="2">#</th>
-                        <th class="text-center align-middle sticky-col sticky-col-2" rowspan="2">รหัส</th>
-                        <th class="align-middle sticky-col sticky-col-3" rowspan="2">ชื่อ-นามสกุล</th>
-                        <?php foreach ($RegisSubject as $subject): ?>
-                            <th colspan="4" class="text-center subject-header-group" style="padding: 10px 4px;" title="<?= esc($subject->SubjectCode) ?> - <?= esc($subject->SubjectName) ?>">
-                                <div class="fw-bold text-success" style="font-size: 0.75rem; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin: 0 auto;">
-                                    <?= esc($subject->SubjectName) ?>
-                                </div>
-                                <div class="text-muted fw-normal" style="font-size: 0.62rem;">
-                                    <?= esc($subject->SubjectCode) ?>
-                                </div>
-                            </th>
+    <!-- Filter Card -->
+    <div class="card settings-card mb-4">
+        <div class="card-body py-4">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label for="KeyCheckYear" class="form-label fw-bold text-dark small uppercase">ปีการศึกษา</label>
+                    <select class="form-select select2" id="KeyCheckYear" name="KeyCheckYear">
+                        <option value="">-- เลือกปีการศึกษา --</option>
+                        <?php foreach ($CheckYear as $v_CheckYear) : ?>
+                            <?php 
+                                $currentVal = ($Term ?? '') . '/' . ($Year ?? '');
+                                $isSelected = ($currentVal == $v_CheckYear->RegisterYear) ? 'selected' : '';
+                            ?>
+                            <option value="<?= esc($v_CheckYear->RegisterYear) ?>" <?= $isSelected ?>>
+                                <?= esc($v_CheckYear->RegisterYear) ?>
+                            </option>
                         <?php endforeach; ?>
-                    </tr>
-                    <!-- Row 2: Score Types -->
-                    <tr>
-                        <?php foreach ($RegisSubject as $subject): ?>
-                            <th class="text-center score-header bg-group-pre" style="font-size: 0.65rem; min-width: 38px; padding: 6px 2px;">ก่อน</th>
-                            <th class="text-center score-header bg-group-mid" style="font-size: 0.65rem; min-width: 38px; padding: 6px 2px;">กลาง</th>
-                            <th class="text-center score-header bg-group-post" style="font-size: 0.65rem; min-width: 38px; padding: 6px 2px;">หลัง</th>
-                            <th class="text-center score-header bg-group-final" style="font-size: 0.65rem; min-width: 38px; padding: 6px 2px; border-right: 2px solid #dee2e6 !important;">ปลาย</th>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="SelectRoomReportScore" class="form-label fw-bold text-dark small uppercase">ห้องเรียน</label>
+                    <select class="form-select select2" id="SelectRoomReportScore" name="SelectRoomReportScore">
+                        <option value="">-- เลือกห้องเรียน --</option>
+                        <?php foreach ($Room as $v_Room) : ?>
+                            <?php 
+                                $currentRoom = ($Class ?? '') . '/' . ($RoomValue ?? '');
+                                $isSelected = ($currentRoom == $v_Room) ? 'selected' : '';
+                            ?>
+                            <option value="<?= esc($v_Room) ?>" <?= $isSelected ?>>ม.<?= esc($v_Room) ?></option>
                         <?php endforeach; ?>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php $num = 1; ?>
-                    <?php foreach ($stu as $student) : ?>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <button type="button" id="btnSearch" class="btn btn-emerald w-100">
+                        <i class="bx bx-search-alt-2 me-1"></i> ค้นหาข้อมูลรายห้อง
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <?php if(isset($stu) && !empty($stu)): ?>
+    <!-- Summary Row -->
+    <div class="row g-4 mb-4">
+        <div class="col-xl-3 col-md-6">
+            <div class="card settings-card">
+                <div class="card-body p-4 text-center">
+                    <div class="icon-wrapper mx-auto shadow-sm">
+                        <i class='bx bx-user-check'></i>
+                    </div>
+                    <h3 class="fw-bold mb-1"><?= count($stu) ?></h3>
+                    <p class="text-muted mb-0 small fw-bold">จำนวนนักเรียน</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card settings-card">
+                <div class="card-body p-4 text-center">
+                    <div class="icon-wrapper mx-auto shadow-sm" style="background: rgba(26, 188, 156, 0.1); color: #1abc9c;">
+                        <i class='bx bx-book-open'></i>
+                    </div>
+                    <h3 class="fw-bold mb-1"><?= count($RegisSubject) ?></h3>
+                    <p class="text-muted mb-0 small fw-bold">จำนวนรายวิชา</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card settings-card">
+                <div class="card-body p-4 text-center">
+                    <div class="icon-wrapper mx-auto shadow-sm" style="background: rgba(52, 152, 219, 0.1); color: #3498db;">
+                        <i class='bx bx-chalkboard'></i>
+                    </div>
+                    <h3 class="fw-bold mb-1">ม.<?= esc($Class) ?>/<?= esc($RoomValue) ?></h3>
+                    <p class="text-muted mb-0 small fw-bold">ห้องเรียนปัจจุบัน</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card settings-card">
+                <div class="card-body p-4 text-center">
+                    <div class="icon-wrapper mx-auto shadow-sm" style="background: rgba(243, 156, 18, 0.1); color: #f39c12;">
+                        <i class='bx bx-printer'></i>
+                    </div>
+                    <p class="text-muted mb-2 small fw-bold">เครื่องมือรายงาน</p>
+                    <div class="d-flex justify-content-center gap-2">
+                        <button type="button" class="btn btn-emerald btn-sm rounded-pill" id="btnPrint"><i class='bx bx-printer'></i></button>
+                        <button type="button" class="btn btn-outline-success btn-sm rounded-pill" id="btnExportExcel"><i class='bx bx-file'></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Table Card -->
+    <div class="card settings-card border-top border-emerald border-4">
+        <div class="card-header bg-white border-bottom-0 py-4 px-4">
+            <div class="d-flex flex-wrap justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                    <div class="icon-wrapper bg-label-success me-3 mb-0" style="width: 45px; height: 45px; font-size: 1.25rem;">
+                        <i class='bx bx-table'></i>
+                    </div>
+                    <div>
+                        <h5 class="card-title mb-0 fw-bold">ตารางคะแนนสะสมรายวิชา</h5>
+                        <small class="text-muted">แยกตามประเภทการทดสอบ (ก่อน, กลาง, หลัง, ปลาย)</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-container-score">
+                <table class="table table-bordered table-score-report mb-0" id="tblScoreRoom">
+                    <thead>
                         <tr>
-                            <td class="text-center fw-bold sticky-col sticky-col-1"><?= $num++ ?></td>
-                            <td class="text-center small sticky-col sticky-col-2"><?= esc($student->StudentCode) ?></td>
-                            <td class="text-nowrap sticky-col sticky-col-3">
-                                <?= esc($student->StudentPrefix . $student->StudentFirstName . ' ' . $student->StudentLastName) ?>
-                            </td>
-                            <?php foreach ($RegisSubject as $subject) : ?>
-                                <?php
-                                    $stuId = (string)$student->StudentID;
-                                    $subId = (string)$subject->SubjectID;
-                                    $scoreString = $scoresMap[$stuId][$subId] ?? '';
-                                    
-                                    // Split score: ก่อน|กลาง|หลัง|ปลาย
-                                    $scores = ['', '', '', ''];
-                                    if (!empty($scoreString)) {
-                                        $parts = explode('|', $scoreString);
-                                        $scores[0] = $parts[0] ?? '';
-                                        $scores[1] = $parts[1] ?? '';
-                                        $scores[2] = $parts[2] ?? '';
-                                        $scores[3] = $parts[3] ?? '';
-                                    }
-                                ?>
-                                <td class="text-center score-cell bg-group-pre <?= (strlen($scores[0]) > 0) ? 'has-score' : '' ?>">
-                                    <?= (strlen($scores[0]) > 0) ? esc($scores[0]) : '-' ?>
-                                </td>
-                                <td class="text-center score-cell bg-group-mid <?= (strlen($scores[1]) > 0) ? 'has-score' : '' ?>">
-                                    <?= (strlen($scores[1]) > 0) ? esc($scores[1]) : '-' ?>
-                                </td>
-                                <td class="text-center score-cell bg-group-post <?= (strlen($scores[2]) > 0) ? 'has-score' : '' ?>">
-                                    <?= (strlen($scores[2]) > 0) ? esc($scores[2]) : '-' ?>
-                                </td>
-                                <td class="text-center score-cell bg-group-final last-of-group <?= (strlen($scores[3]) > 0) ? 'has-score' : '' ?>">
-                                    <?= (strlen($scores[3]) > 0) ? esc($scores[3]) : '-' ?>
-                                </td>
+                            <th class="text-center align-middle sticky-col sticky-col-1" rowspan="2">#</th>
+                            <th class="text-center align-middle sticky-col sticky-col-2" rowspan="2">รหัส</th>
+                            <th class="align-middle sticky-col sticky-col-3" rowspan="2">ชื่อ-นามสกุล</th>
+                            <?php foreach ($RegisSubject as $subject): ?>
+                                <th colspan="4" class="text-center subject-header-group" title="<?= esc($subject->SubjectCode) ?> - <?= esc($subject->SubjectName) ?>">
+                                    <div class="fw-bold text-emerald small truncate" style="max-width: 150px; margin: 0 auto;"><?= esc($subject->SubjectName) ?></div>
+                                    <div class="text-muted x-small"><?= esc($subject->SubjectCode) ?></div>
+                                </th>
                             <?php endforeach; ?>
                         </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
-        </div>
-    </div>
-    <div class="card-footer bg-white py-3">
-        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
-            <div class="d-flex align-items-center gap-3">
-                <span class="d-flex align-items-center gap-1">
-                    <span class="d-inline-block rounded" style="width: 14px; height: 14px; background: rgba(21, 163, 98, 0.02); border: 1px solid #eee;"></span>
-                    <small class="text-muted">ก่อนกลางภาค</small>
-                </span>
-                <span class="d-flex align-items-center gap-1">
-                    <span class="d-inline-block rounded" style="width: 14px; height: 14px; background: rgba(21, 163, 98, 0.04); border: 1px solid #eee;"></span>
-                    <small class="text-muted">กลางภาค</small>
-                </span>
-                <span class="d-flex align-items-center gap-1">
-                    <span class="d-inline-block rounded" style="width: 14px; height: 14px; background: rgba(21, 163, 98, 0.06); border: 1px solid #eee;"></span>
-                    <small class="text-muted">หลังกลางภาค</small>
-                </span>
-                <span class="d-flex align-items-center gap-1">
-                    <span class="d-inline-block rounded" style="width: 14px; height: 14px; background: rgba(21, 163, 98, 0.08); border: 1px solid #eee;"></span>
-                    <small class="text-muted">ปลายภาค</small>
-                </span>
+                        <tr>
+                            <?php foreach ($RegisSubject as $subject): ?>
+                                <th class="text-center bg-group-pre x-small">ก่อน</th>
+                                <th class="text-center bg-group-mid x-small">กลาง</th>
+                                <th class="text-center bg-group-post x-small">หลัง</th>
+                                <th class="text-center bg-group-final x-small" style="border-right: 2px solid #dee2e6 !important;">ปลาย</th>
+                            <?php endforeach; ?>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white">
+                        <?php foreach ($stu as $idx => $student) : ?>
+                            <tr>
+                                <td class="text-center text-muted sticky-col sticky-col-1"><?= $idx + 1 ?></td>
+                                <td class="text-center small sticky-col sticky-col-2"><?= esc($student->StudentCode) ?></td>
+                                <td class="text-nowrap sticky-col sticky-col-3 fw-bold"><?= esc($student->StudentPrefix . $student->StudentFirstName . ' ' . $student->StudentLastName) ?></td>
+                                <?php foreach ($RegisSubject as $subject) : ?>
+                                    <?php
+                                        $scoreString = $scoresMap[(string)$student->StudentID][(string)$subject->SubjectID] ?? '';
+                                        $sc = ['', '', '', ''];
+                                        if ($scoreString) { $p = explode('|', $scoreString); $sc[0]=$p[0]??''; $sc[1]=$p[1]??''; $sc[2]=$p[2]??''; $sc[3]=$p[3]??''; }
+                                    ?>
+                                    <td class="text-center score-cell bg-group-pre <?= ($sc[0]!=='') ? 'has-score' : '' ?>"><?= ($sc[0]!=='') ? esc($sc[0]) : '-' ?></td>
+                                    <td class="text-center score-cell bg-group-mid <?= ($sc[1]!=='') ? 'has-score' : '' ?>"><?= ($sc[1]!=='') ? esc($sc[1]) : '-' ?></td>
+                                    <td class="text-center score-cell bg-group-post <?= ($sc[2]!=='') ? 'has-score' : '' ?>"><?= ($sc[2]!=='') ? esc($sc[2]) : '-' ?></td>
+                                    <td class="text-center score-cell bg-group-final last-of-group <?= ($sc[3]!=='') ? 'has-score' : '' ?>" style="border-right: 2px solid #dee2e6 !important;"><?= ($sc[3]!=='') ? esc($sc[3]) : '-' ?></td>
+                                <?php endforeach; ?>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
             </div>
-            <span class="badge bg-label-success">แสดงทั้งหมด <?= count($stu) ?> คน, <?= count($RegisSubject) ?> รายวิชา</span>
         </div>
     </div>
+    <?php else: ?>
+    <!-- Empty State -->
+    <div class="card settings-card border-0 shadow-sm">
+        <div class="card-body text-center py-5">
+            <div class="icon-wrapper mx-auto mb-4" style="width: 100px; height: 100px; font-size: 3rem;">
+                <i class="bx bx-spreadsheet"></i>
+            </div>
+            <h4 class="fw-bold">กรุณาเลือกปีการศึกษาและห้องเรียน</h4>
+            <p class="text-muted mx-auto" style="max-width: 450px;">ระบุเงื่อนไขที่ต้องการตรวจสอบ เพื่อแสดงรายงานผลการบันทึกคะแนนรายวิชาของนักเรียนแบบรายห้อง</p>
+        </div>
+    </div>
+    <?php endif; ?>
 </div>
-
-<?php else: ?>
-<!-- Empty State -->
-<div class="card border-0 shadow-sm card-modern">
-    <div class="card-body text-center py-5">
-        <div class="mb-4">
-            <div class="rounded-circle bg-success bg-opacity-10 d-inline-flex align-items-center justify-content-center" style="width: 100px; height: 100px;">
-                <i class="bx bx-spreadsheet text-success" style="font-size: 3rem;"></i>
-            </div>
-        </div>
-        <h5 class="text-dark fw-bold">กรุณาเลือกปีการศึกษาและห้องเรียน</h5>
-        <p class="text-muted mx-auto mb-4" style="max-width: 400px;">
-            ระบุปีการศึกษาที่ต้องการตรวจสอบ และเลือกห้องเรียนเพื่อแสดงรายงานผลการบันทึกคะแนนรายวิชาของนักเรียน
-        </p>
-        <div class="d-flex justify-content-center gap-3">
-            <div class="text-center">
-                <div class="rounded bg-light p-3 mb-2">
-                    <i class='bx bx-calendar fs-3 text-success'></i>
-                </div>
-                <small class="text-muted">1. เลือกปีการศึกษา</small>
-            </div>
-            <div class="text-muted align-self-center"><i class='bx bx-right-arrow-alt fs-4'></i></div>
-            <div class="text-center">
-                <div class="rounded bg-light p-3 mb-2">
-                    <i class='bx bx-group fs-3 text-success'></i>
-                </div>
-                <small class="text-muted">2. เลือกห้องเรียน</small>
-            </div>
-            <div class="text-muted align-self-center"><i class='bx bx-right-arrow-alt fs-4'></i></div>
-            <div class="text-center">
-                <div class="rounded bg-light p-3 mb-2">
-                    <i class='bx bx-search-alt fs-3 text-success'></i>
-                </div>
-                <small class="text-muted">3. คลิกค้นหา</small>
-            </div>
-        </div>
-    </div>
-</div>
-<?php endif; ?>
 
 <?= $this->endSection() ?>
 
@@ -518,7 +401,6 @@ $(document).ready(function() {
     // Initialize Select2
     $('.select2').select2({
         theme: 'bootstrap-5',
-        dropdownParent: $('body'),
         width: '100%'
     });
 
@@ -541,26 +423,17 @@ $(document).ready(function() {
     });
     
     select.find('option').not('[value=""]').remove();
-    select.append(options);
-    select.val(selectedValue);
+    select.append(options).val(selectedValue);
 
     // Search Button
-    <?php 
-        $currentSegment = service('request')->getUri()->getSegment(3) ?? 'Evaluate';
-        $baseUrl = site_url("Admin/Acade/{$currentSegment}/ReportScoreRoomMain");
-    ?>
-    const baseUrl = '<?= $baseUrl ?>';
-
     $('#btnSearch').on('click', function() {
         let selectedYear = $('#KeyCheckYear').val();
         let selectedRoom = $('#SelectRoomReportScore').val();
+        let path = window.location.pathname.includes('Executive') ? 'Executive' : 'Evaluate';
+        const baseUrl = '<?= site_url("Admin/Acade/") ?>' + path + '/ReportScoreRoomMain';
 
-        if (!selectedYear) {
-            Swal.fire({ icon: 'warning', title: 'กรุณาเลือกปีการศึกษา', confirmButtonColor: '#15a362' });
-            return;
-        }
-        if (!selectedRoom) {
-            Swal.fire({ icon: 'warning', title: 'กรุณาเลือกห้องเรียน', confirmButtonColor: '#15a362' });
+        if (!selectedYear || !selectedRoom) {
+            Swal.fire({ icon: 'warning', title: 'กรุณาเลือกข้อมูลให้ครบ', confirmButtonColor: '#15a362' });
             return;
         }
 
@@ -575,8 +448,9 @@ $(document).ready(function() {
 
     // Export Excel
     $('#btnExportExcel').on('click', function() {
-        <?php if(isset($Term) && $Term !== 'All' && isset($Year) && $Year !== 'All' && isset($Class) && $Class !== 'All' && isset($RoomValue) && $RoomValue !== 'All'): ?>
-            const exportUrl = '<?= site_url("Admin/Acade/{$currentSegment}/ExportScoreRoomToExcel/{$Term}/{$Year}/{$Class}/{$RoomValue}") ?>';
+        <?php if(isset($Term) && isset($Year) && isset($Class) && isset($RoomValue)): ?>
+            let path = window.location.pathname.includes('Executive') ? 'Executive' : 'Evaluate';
+            const exportUrl = '<?= site_url("Admin/Acade/") ?>' + path + '/ExportScoreRoomToExcel/<?= $Term ?>/<?= $Year ?>/<?= $Class ?>/<?= $RoomValue ?>';
             
             Swal.fire({
                 title: 'กำลังเตรียมไฟล์ Excel...',

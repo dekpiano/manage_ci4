@@ -60,14 +60,26 @@ class ConAdminCourse extends BaseController
             $data['year'] = $SubYear[1];
             $data['term'] = $SubYear[0];
         } else {
-            // ใช้ปีการศึกษาหลักของระบบ (admin_selected_year session)
-            $selectedYearStr = get_selected_year(); // e.g. "1/2568"
-            if (strpos($selectedYearStr, '/') !== false) {
-                list($data['term'], $data['year']) = explode('/', $selectedYearStr);
+            // Find latest year/term from tb_send_plan as primary fallback
+            $latestYear = $this->db->table('tb_send_plan')
+                                   ->select('seplan_year, seplan_term')
+                                   ->orderBy('seplan_year', 'DESC')
+                                   ->orderBy('seplan_term', 'DESC')
+                                   ->limit(1)
+                                   ->get()->getRow();
+            
+            if ($latestYear) {
+                $data['year'] = $latestYear->seplan_year;
+                $data['term'] = $latestYear->seplan_term;
             } else {
-                // fallback ไป tb_send_plan_setup ถ้า session ยังว่าง
-                $data['year'] = ! empty($data['CheckYear'][0]->seplanset_year) ? $data['CheckYear'][0]->seplanset_year : null;
-                $data['term'] = ! empty($data['CheckYear'][0]->seplanset_term) ? $data['CheckYear'][0]->seplanset_term : null;
+                // final fallback to admin_selected_year session or setup table
+                $selectedYearStr = get_selected_year();
+                if (strpos($selectedYearStr, '/') !== false) {
+                    list($data['term'], $data['year']) = explode('/', $selectedYearStr);
+                } else {
+                    $data['year'] = ! empty($data['CheckYear'][0]->seplanset_year) ? $data['CheckYear'][0]->seplanset_year : null;
+                    $data['term'] = ! empty($data['CheckYear'][0]->seplanset_term) ? $data['CheckYear'][0]->seplanset_term : null;
+                }
             }
         }
 
@@ -126,7 +138,22 @@ class ConAdminCourse extends BaseController
                 return $this->response->setJSON(['status' => 'error', 'message' => 'ไม่พบรายวิชาที่เลือก']);
             }
 
-            $SubYear = explode('/', $CheckSubject->SubjectYear);
+            $CheckTeacher = $this->DBpersonnel->table('tb_personnel')
+                                    ->where('pers_id', $this->request->getPost('SelectTeacher'))
+                                    ->get()->getRow();
+
+            if (empty($CheckTeacher)) {
+                return $this->response->setJSON(['status' => 'error', 'message' => 'ไม่พบครูผู้สอนที่เลือก']);
+            }
+
+            // Get Year/Term from Form or Fallback to Subject's Year
+            $formYear = $this->request->getPost('SelectYear');
+            if (!empty($formYear) && strpos($formYear, '/') !== false) {
+                $SubYear = explode('/', $formYear);
+            } else {
+                $SubYear = explode('/', $CheckSubject->SubjectYear);
+            }
+
             $Checkplan = $this->db->table('tb_send_plan')
                                 ->where('seplan_coursecode', $CheckSubject->SubjectCode)
                                 ->where('seplan_usersend', $this->request->getPost('SelectTeacher'))
@@ -150,28 +177,36 @@ class ConAdminCourse extends BaseController
             $status = $this->request->getPost('seplan_sendcomment') ?? '';
             $textToStore = nl2br(esc($status));
 
-            $typePlan = ['บันทึกตรวจใช้แผน', 'แบบตรวจแผนการจัดการเรียนรู้', 'โครงการสอน', 'แผนการสอนหน้าเดียว', 'แผนการสอนเต็ม', 'บันทึกหลังสอน'];
+            $typePlan = $this->db->table('tb_send_plan_type')->get()->getResult();
             
-            $this->db->transStart();
+            $this->db->transException(true)->transStart();
 
             foreach ($typePlan as $v_typePlan) {
-                $SubjectType = explode('/', $CheckSubject->SubjectType);
-                $SubjectYear = explode('/', $CheckSubject->SubjectYear);
-                $SubjectClass = explode('.', $CheckSubject->SubjectClass);
+                $SubjectType_arr = explode('/', $CheckSubject->SubjectType);
+                $SubjectClass_arr = explode('.', $CheckSubject->SubjectClass);
 
                 $insert = [
                     'seplan_namesubject'  => $CheckSubject->SubjectName,
                     'seplan_coursecode'   => $CheckSubject->SubjectCode,
-                    'seplan_typesubject'  => $SubjectType[1] ?? null,
-                    'seplan_year'         => $SubjectYear[1] ?? null,
-                    'seplan_term'         => $SubjectYear[0] ?? null,
+                    'seplan_typesubject'  => (count($SubjectType_arr) > 1) ? $SubjectType_arr[1] : $CheckSubject->SubjectType,
+                    'seplan_year'         => $SubYear[1] ?? $SubYear[0],
+                    'seplan_term'         => (count($SubYear) > 1) ? $SubYear[0] : null,
                     'seplan_status1'      => "รอตรวจ",
                     'seplan_status2'      => "รอตรวจ",
                     'seplan_sendcomment'  => $textToStore,
-                    'seplan_gradelevel'   => $SubjectClass[1] ?? null,
-                    'seplan_typeplan'     => $v_typePlan,
+                    'seplan_gradelevel'   => (count($SubjectClass_arr) > 1) ? $SubjectClass_arr[1] : $CheckSubject->SubjectClass,
+                    'seplan_typeplan'     => $v_typePlan->type_name,
+                    'seplan_typeplan_id'  => $v_typePlan->type_id,
                     'seplan_usersend'     => $this->request->getPost('SelectTeacher'),
-                    'seplan_learning'     => $CheckTeacher->pers_learning,
+                    'seplan_learning'     => $CheckTeacher->pers_learning ?? null,
+                    'seplan_createdate'   => date('Y-m-d H:i:s'),
+                    'seplan_inspector1'   => '',
+                    'seplan_inspector2'   => '',
+                    'seplan_comment1'     => '',
+                    'seplan_comment2'     => '',
+                    'seplan_file'         => '',
+                    'seplan_checkdate1'   => '0000-00-00 00:00:00',
+                    'seplan_checkdate2'   => '0000-00-00 00:00:00',
                 ];
                 $this->db->table('tb_send_plan')->insert($insert);
             }
@@ -179,14 +214,13 @@ class ConAdminCourse extends BaseController
             $this->db->transComplete();
 
             if ($this->db->transStatus() === false) {
-                return $this->response->setJSON(['status' => 'error', 'message' => 'เกิดข้อผิดพลาดในการบันทึกข้อมูล']);
+                return $this->response->setJSON(['status' => 'error', 'message' => 'เกิดข้อผิดพลาดในการบันทึกข้อมูล (Database Error)']);
             } else {
                 return $this->response->setJSON(['status' => 'success', 'message' => 'เพิ่มข้อมูลครูและรายวิชาเรียบร้อยแล้ว']);
             }
 
         } catch (\Exception $e) {
-            log_message('error', '[ERROR] {exception}', ['exception' => $e]);
-            return $this->response->setJSON(['status' => 'error', 'message' => 'เกิดข้อผิดพลาดร้ายแรง']);
+            return $this->response->setJSON(['status' => 'error', 'message' => 'เกิดข้อผิดพลาด: ' . $e->getMessage()]);
         }
     }
 

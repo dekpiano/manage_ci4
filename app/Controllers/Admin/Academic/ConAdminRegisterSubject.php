@@ -88,12 +88,15 @@ class ConAdminRegisterSubject extends BaseController
         $keyYear = $this->request->getPost('keyYear');
         $subject = [];
 
+        $builder = $this->db->table('tb_subjects');
+        // เรียงตามปีการศึกษา (หลัง /) และ เทอม (หน้า /) ให้ถูกต้องตามลำดับเวลา โดยปิด escape เพื่อให้ใช้ฟังก์ชัน SQL ได้
+        $builder->orderBy("SUBSTRING_INDEX(SubjectYear, '/', -1) DESC, SUBSTRING_INDEX(SubjectYear, '/', 1) DESC", '', false);
+
         if(!empty($keyYear)){
-            $subject = $this->db->table('tb_subjects')->where('SubjectYear',$keyYear)->get()->getResult();
+            $subject = $builder->where('SubjectYear',$keyYear)->get()->getResult();
         }else{
-            // ใช้ปีการศึกษาจากระบบกลาง
             $currentYear = get_selected_year();
-            $subject = $this->db->table('tb_subjects')->where('SubjectYear', !empty($currentYear) ? $currentYear : null)->get()->getResult();
+            $subject = $builder->where('SubjectYear', !empty($currentYear) ? $currentYear : null)->get()->getResult();
         }
 
        
@@ -171,13 +174,17 @@ class ConAdminRegisterSubject extends BaseController
 
     public function AdminRegisterSubjectMain(){   
         $data['admin'] = $this->DBpersonnel->table('tb_personnel')->select('pers_id,pers_img')->where('pers_id',session()->get('login_id'))->get()->getRow();
-        $data['GroupYear'] = $this->db->table('tb_subjects')->select('SubjectYear')->groupBy('SubjectYear')->orderBy('SubjectYear','ASC')->get()->getResult();
+        $data['GroupYear'] = $this->db->table('tb_subjects')
+                                ->select('SubjectYear')
+                                ->groupBy('SubjectYear')
+                                ->orderBy("SUBSTRING_INDEX(SubjectYear, '/', -1) DESC, SUBSTRING_INDEX(SubjectYear, '/', 1) DESC", '', false)
+                                ->get()->getResult();
 
-        //$this->update_data_with_foreach(); exit();
-       
         $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
-        // ใช้ปีการศึกษาจากระบบกลาง (session หรือ tb_schoolyear)
-        $data['selectedYear'] = get_selected_year();
+        
+        // ใช้ปีการศึกษาล่าสุดจากฐานข้อมูลเป็นค่าเริ่มต้น ถ้าไม่มีให้ใช้จากระบบกลาง
+        $latestInDB = !empty($data['GroupYear']) ? $data['GroupYear'][0]->SubjectYear : null;
+        $data['selectedYear'] = $latestInDB ?? get_selected_year();
         $data['title'] = "วิชาเรียน";	
         $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();
         $data['classroom'] = new \App\Libraries\Classroom();
