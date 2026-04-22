@@ -59,7 +59,8 @@ class Model_login extends Model
                                     skjacth_academic.tb_admin_rloes.admin_rloes_nanetype AS academic_nanetype,
                                     skjacth_academic.tb_admin_rloes.admin_rloes_status AS academic_status,
                                     skjacth_general.tb_admin_rloes.admin_rloes_status AS general_status,
-                                    skjacth_personnel.tb_personnel.pers_changepassword
+                                    skjacth_personnel.tb_personnel.pers_changepassword,
+                                    skjacth_personnel.tb_personnel.pers_position
                                 ')
                                 ->join('skjacth_general.tb_admin_rloes','skjacth_general.tb_admin_rloes.admin_rloes_userid = skjacth_personnel.tb_personnel.pers_id','left')
                                 ->join('skjacth_academic.tb_admin_rloes','skjacth_academic.tb_admin_rloes.admin_rloes_userid = skjacth_personnel.tb_personnel.pers_id','left')
@@ -116,7 +117,8 @@ class Model_login extends Model
                                     skjacth_general.tb_admin_rloes.admin_rloes_nanetype AS general_nanetype,
                                     skjacth_academic.tb_admin_rloes.admin_rloes_nanetype AS academic_nanetype,
                                     skjacth_academic.tb_admin_rloes.admin_rloes_status AS academic_status,
-                                    skjacth_general.tb_admin_rloes.admin_rloes_status AS general_status
+                                    skjacth_general.tb_admin_rloes.admin_rloes_status AS general_status,
+                                    skjacth_personnel.tb_personnel.pers_position
                                 ')
                                 ->join('skjacth_general.tb_admin_rloes','skjacth_general.tb_admin_rloes.admin_rloes_userid = skjacth_personnel.tb_personnel.pers_id','left')
                                 ->join('skjacth_academic.tb_admin_rloes','skjacth_academic.tb_admin_rloes.admin_rloes_userid = skjacth_personnel.tb_personnel.pers_id','left')

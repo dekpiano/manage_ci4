@@ -180,3 +180,34 @@ $('#SelectorID').select2({
 - `app/Views/admin/Academic/AdminCheckPlan/ReportCheckPlanMain.php` (Redesigned)
 - `app/Views/admin/Academic/AdminRegisterSubject/AdminRegisterSubjectMain.php` (UI Modernized & Workflow Optimized)
 - `app/Controllers/Admin/Academic/ConAdminRegisterSubject.php` (Sorting Logic Updated)
+
+---
+
+## [2026-04-07] - ระบบสำรองข้อมูลฐานข้อมูล (Database Backup System) 💾✨
+
+### 🚀 ฟีเจอร์ที่เพิ่ม/แก้ไข (Added/Modified)
+- **ระบบสำรองข้อมูลสำหรับ Superadmin:**
+    - พัฒนาหน้าการจัดการสำรองข้อมูล (Backup) ที่อนุญาตให้ Superadmin เลือกตารางที่ต้องการสำรองได้เป็นรายตาราง
+    - **UI/UX Premium:** ออกแบบด้วย Emerald Design Theme (`#15a362`) และใช้ Sneat Components
+    - **กลไกการสำรองข้อมูล (PHP Engine):**
+        - พัฒนาระบบสร้าง SQL Dump ด้วย PHP (ไม่ใช้ `mysqldump` เพื่อความเข้ากันได้ 100% ในทุก Host)
+        - รองรับ `CREATE TABLE` และ `INSERT INTO` พร้อมปิด `FOREIGN_KEY_CHECKS` ชั่วคราวขณะ Import
+        - แสดงจำนวนแถว (Rows) และสถานะความจุของแต่ละตารางเพื่อให้แอดมินตัดสินใจเลือกได้ง่าย
+    - **Filename Standard:** ปรับปรุงชื่อไฟล์ดาวน์โหลดให้เป็น `bookings.sql` ตามความต้องการของผู้ใช้
+    - **Structure Normalization:** ปรับปรุงโครงสร้าง SQL ให้เป็นแบบ **phpMyAdmin Standard** ตามไฟล์ตัวอย่าง (`bookings.sql`):
+        - ย้ายคำสั่ง `INDEX`, `AUTO_INCREMENT` และ `CONSTRAINT` ไปไว้ท้ายไฟล์ด้วย `ALTER TABLE`
+        - เพิ่มระบบ `START TRANSACTION` และ `COMMIT`
+        - ปรับปรุงการ `INSERT` ข้อมูลให้เป็นแบบ Multi-row เพื่อประสิทธิภาพและสวยงาม
+    - **ระบบความปลอดภัย:** บังคับตรวจสอบสิทธิ์ `superadmin` ในระดับ Controller ตลอดเวลา
+- **Routing:**
+    - เพิ่มเส้นทางใหม่: `admin/academic/backup` และ `admin/academic/backup/run`
+
+### 📁 ไฟล์ที่เกี่ยวข้อง
+- `app/Controllers/Admin/Academic/ConAdminBackup.php` (Created)
+- `app/Views/admin/Academic/AdminBackup/AdminBackupMain.php` (Created)
+- `app/Config/Routes.php` (Modified)
+
+### 📋 สิ่งที่ต้องทำต่อ (Next Steps / TODO)
+- [ ] เพิ่มปุ่ม **"ดูรายละเอียด"** ในตารางแผนการสอน (ใน Modal) เพื่อดูรายละเอียดเชิงลึกของแต่ละหัวข้อ (In Progress)
+- [ ] พัฒนาฟังก์ชันการส่งออกไฟล์ Backup ไปยังบริการ Cloud Storage (เช่น Google Drive) เพื่อความปลอดภัยเพิ่มขึ้น
+- [ ] เพิ่มระบบจัดการไฟล์ Backup ที่เคยสร้างไว้ (List & Download History)

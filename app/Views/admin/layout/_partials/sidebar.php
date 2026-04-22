@@ -466,5 +466,26 @@
             </a>
         </li>
         <?php endif; ?>
+        <!-- สำรองข้อมูล (Superadmin Only) -->
+        <?php 
+        $db = \Config\Database::connect();
+        $check_super = $db->table('tb_admin_rloes')->where('admin_rloes_userid', session('login_id'))->get()->getRow();
+        if (@$check_super->admin_rloes_status === 'superadmin'): ?>
+        <li class="menu-header small text-uppercase">
+            <span class="menu-header-text">Advanced System Management</span>
+        </li>
+        <li class="menu-item <?= ($s1 == 'admin' && $s3 == 'backup' ? 'active' : '') ?>">
+            <a href="<?=base_url('admin/academic/backup');?>" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-cloud-download" style="color: var(--sidebar-primary) !important;"></i>
+                <div data-i18n="สำรองข้อมูลฐานข้อมูล" style="font-weight: 700;">สำรองข้อมูลฐานข้อมูล</div>
+            </a>
+        </li>
+        <li class="menu-item <?= ($s1 == 'diagnostic' && $s2 == 'register-class' ? 'active' : '') ?>">
+            <a href="<?=base_url('diagnostic/register-class');?>" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-list-check" style="color: #ff9f43 !important;"></i>
+                <div data-i18n="แก้ไขห้องเรียน (Audit)" style="font-weight: 700;">แก้ไขห้องเรียน (Audit)</div>
+            </a>
+        </li>
+        <?php endif; ?>
     </ul>
 </aside>

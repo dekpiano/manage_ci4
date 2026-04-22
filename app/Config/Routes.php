@@ -25,6 +25,7 @@ use App\Controllers\Admin\Academic\ConAdminSaveScore;
 use App\Controllers\Admin\Academic\ConAdminSettingAdminRoles;
 use App\Controllers\Admin\Academic\ConAdminCharacteristics;
 use App\Controllers\Admin\Academic\ConAdminRWL;
+use App\Controllers\Admin\Academic\ConAdminBackup;
 use App\Controllers\Admin\Academic\ConAdminStudents;
 use App\Controllers\Admin\Affairs\ConAdminStudentHomeRoom;
 use App\Controllers\Admin\Affairs\ConAdminStudentSupport;
@@ -40,6 +41,12 @@ use App\Controllers\Session;
 $routes->get('/', [Welcome::class, 'index']);
 $routes->get('welcome', [Welcome::class, 'index']);
 $routes->get('debug-db', 'Admin\Academic\ConDebug::index');
+$routes->group('diagnostic/register-class', function($routes) {
+    $routes->get('', 'Admin\Academic\ConAdminRegisterClassFixer::index');
+    $routes->get('audit-data', 'Admin\Academic\ConAdminRegisterClassFixer::getAuditData');
+    $routes->post('process-fix', 'Admin\Academic\ConAdminRegisterClassFixer::processFix');
+    $routes->get('missing-rooms', 'Admin\Academic\ConAdminRegisterClassFixer::scanMissingRooms'); // Keeping old for legacy
+});
 
 // CI3 Routes Migration
 $routes->get('ClosePage', [Welcome::class, 'ClosePage']);
@@ -191,6 +198,10 @@ $routes->group('ConAdminSettingAdminRoles', function ($routes) {
     $routes->post('deleteAcademicStaff', [ConAdminSettingAdminRoles::class, 'deleteAcademicStaff']);
     $routes->post('updateStaffDetails', [ConAdminSettingAdminRoles::class, 'updateStaffDetails']);
 });
+
+// Database Backup (Superadmin Only)
+$routes->get('admin/academic/backup', [ConAdminBackup::class, 'index']);
+$routes->post('admin/academic/backup/run', [ConAdminBackup::class, 'runBackup']);
 
 // Routes for Desirable Characteristics Settings
 $routes->get('admin/academic/characteristics/settings', [ConAdminCharacteristics::class, 'index']);

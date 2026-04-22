@@ -282,6 +282,138 @@ $(document).on('change', '#onoff_year, [name="keyYear"], #CheckYearMain, #select
 
     <?= $this->renderSection('script') ?>
 
+    <!-- Global Menu Search Logic -->
+    <style>
+        #search-results-wrapper {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 350px;
+            max-height: 400px;
+            background: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            z-index: 1060;
+            overflow-y: auto;
+            border: 1px solid #eee;
+            display: none;
+            margin-top: 10px;
+        }
+        .search-result-item {
+            padding: 10px 15px;
+            border-bottom: 1px solid #f8f9fa;
+            display: flex;
+            align-items: center;
+            text-decoration: none !important;
+            color: #435971;
+            transition: all 0.2s;
+        }
+        .search-result-item:hover {
+            background-color: #f0faf5;
+            color: #15a362;
+        }
+        .search-result-item i {
+            font-size: 1.2rem;
+            margin-right: 12px;
+            color: #697a8d;
+        }
+        .search-result-item:hover i {
+            color: #15a362;
+        }
+        .search-result-header {
+            font-size: 0.75rem;
+            color: #adb5bd;
+            font-weight: 700;
+            padding: 10px 15px 5px;
+            text-transform: uppercase;
+        }
+    </style>
+
+    <div id="search-results-wrapper"></div>
+
+    <script>
+    $(document).ready(function() {
+        const $searchInput = $('#navbar-search-input');
+        const $resultsWrapper = $('#search-results-wrapper');
+        let menuItems = [];
+
+        // Index the sidebar menu items
+        $('#layout-menu .menu-item').each(function() {
+            const $item = $(this);
+            const $link = $item.children('.menu-link');
+            if ($link.length && $link.attr('href') !== 'javascript:void(0);') {
+                const title = $link.find('div[data-i18n]').text().trim() || $link.text().trim();
+                const icon = $link.find('i').attr('class') || 'bx bx-link';
+                const parentHeader = $item.closest('.menu-inner').find('.menu-header').last().find('.menu-header-text').text() || 'เมนูหลัก';
+                
+                menuItems.push({
+                    title: title,
+                    url: $link.attr('href'),
+                    icon: icon,
+                    header: parentHeader
+                });
+            }
+        });
+
+        // Search logic
+        $searchInput.on('input', function() {
+            const query = $(this).val().trim().toLowerCase();
+            if (query.length < 2) {
+                $resultsWrapper.hide();
+                return;
+            }
+
+            const filtered = menuItems.filter(item => 
+                item.title.toLowerCase().includes(query) || 
+                item.header.toLowerCase().includes(query)
+            );
+
+            if (filtered.length > 0) {
+                let html = '';
+                let lastHeader = '';
+                
+                filtered.forEach(item => {
+                    if (item.header !== lastHeader) {
+                        html += `<div class="search-result-header">${item.header}</div>`;
+                        lastHeader = item.header;
+                    }
+                    html += `
+                        <a href="${item.url}" class="search-result-item">
+                            <i class="${item.icon}"></i>
+                            <div>
+                                <div class="fw-bold fs-tiny lh-1">${item.title}</div>
+                                <small class="text-muted" style="font-size: 0.65rem;">${item.url.split('/').pop()}</small>
+                            </div>
+                        </a>
+                    `;
+                });
+                $resultsWrapper.html(html).show();
+                
+                // Position results wrapper under input
+                const offset = $searchInput.offset();
+                $resultsWrapper.css({
+                    top: offset.top + $searchInput.outerHeight() + 5,
+                    left: offset.left
+                });
+            } else {
+                $resultsWrapper.html('<div class="p-3 text-center text-muted">ไม่พบคิวรีที่ตรงกัน</div>').show();
+            }
+        });
+
+        // Close search results on click outside or Esc
+        $(document).on('click', function(e) {
+            if (!$(e.target).closest('#navbar-search-input, #search-results-wrapper').length) {
+                $resultsWrapper.hide();
+            }
+        });
+
+        $(document).on('keydown', function(e) {
+            if (e.key === 'Escape') {
+                $resultsWrapper.hide();
+            }
+        });
+    });
+    </script>
     <?= $this->renderSection('modals') ?>
 </body>
 
