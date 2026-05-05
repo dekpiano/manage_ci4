@@ -66,6 +66,8 @@ class Model_login extends Model
                                 ->join('skjacth_academic.tb_admin_rloes','skjacth_academic.tb_admin_rloes.admin_rloes_userid = skjacth_personnel.tb_personnel.pers_id','left')
                                 ->where('pers_username',$username)
                                 ->where('pers_password',$password)
+                                ->orderBy("CASE WHEN skjacth_academic.tb_admin_rloes.admin_rloes_nanetype != '' THEN 0 ELSE 1 END", 'ASC', false)
+                                ->orderBy("FIELD(skjacth_academic.tb_admin_rloes.admin_rloes_status, 'superadmin', 'admin', 'manager')", 'ASC', false)
                                 ->get();
 
         if($query->getNumRows() > 0)
@@ -123,6 +125,8 @@ class Model_login extends Model
                                 ->join('skjacth_general.tb_admin_rloes','skjacth_general.tb_admin_rloes.admin_rloes_userid = skjacth_personnel.tb_personnel.pers_id','left')
                                 ->join('skjacth_academic.tb_admin_rloes','skjacth_academic.tb_admin_rloes.admin_rloes_userid = skjacth_personnel.tb_personnel.pers_id','left')
                                 ->where('pers_username', $id)
+                                ->orderBy("CASE WHEN skjacth_academic.tb_admin_rloes.admin_rloes_nanetype != '' THEN 0 ELSE 1 END", 'ASC', false)
+                                ->orderBy("FIELD(skjacth_academic.tb_admin_rloes.admin_rloes_status, 'superadmin', 'admin', 'manager')", 'ASC', false)
                                 ->get();
                                 
         if($query->getNumRows() > 0)

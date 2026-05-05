@@ -26,6 +26,8 @@ class ConAdminSettingAdminRoles extends BaseController
 
         $check_status = $this->db->table('tb_admin_rloes')
                                  ->where('admin_rloes_userid', session('login_id'))
+                                 ->orderBy("CASE WHEN admin_rloes_nanetype != '' THEN 0 ELSE 1 END", 'ASC', false)
+                                 ->orderBy("FIELD(admin_rloes_status, 'superadmin', 'admin', 'manager')", 'ASC', false)
                                  ->get()
                                  ->getRow();
 

@@ -4,6 +4,20 @@
 
 ---
 
+## [2026-05-05] - ปรับปรุงระบบมอบหมายงานสอนและแยกปีการศึกษา (Timetable Assignment Fixes)
+
+### 🚀 ฟีเจอร์ที่เพิ่ม/แก้ไข (Added/Modified)
+- **ระบบแยกปีการศึกษา (Module Localization):**
+    - แก้ไขให้ระบบตารางสอนใช้ Session Key แยกต่างหาก (`timetable_selected_year`) เพื่อไม่ให้การเปลี่ยนปีในตารางสอนไปกระทบกับปีการศึกษาหลักของระบบใหญ่
+    - เพิ่มเมธอด `getTimetableYear()` เพื่อจัดการลำดับการดึงปีการศึกษาเฉพาะโมดูล
+- **ปรับปรุงการแสดงผล Step 2 (มอบหมายงานสอน):**
+    - **ชื่อครูผู้สอน:** เพิ่มการ `trim()` ไอดีครู และขยายเงื่อนไขการดึงชื่อให้ครอบคลุมทุกตำแหน่ง เพื่อแก้ปัญหาชื่อขึ้นว่า "ไม่ทราบชื่อ"
+    - **รายชื่อวิชาในกลุ่ม (Joint Groups):** ปรับปรุงให้ตารางแสดงรายชื่อ **ทุกวิชา** ที่อยู่ในกลุ่มเรียนพร้อมกัน ไม่ใช่แค่หัวข้อเดียว เพื่อความโปร่งใสในการตรวจสอบ
+    - **ชื่อห้องเรียน:** เพิ่มคำนำหน้า **"ม."** (เช่น ม.1/1) ใน Modal เพื่อให้ตรงกับมาตรฐานข้อมูลเดิมและป้องกันข้อมูลหายตอนกดแก้ไข
+- **UI/UX:**
+    - ปรับปุ่มเมนูหลักใน Wizard ให้มีขนาดใหญ่ขึ้น (Big Buttons) พร้อมไอคอนและเอฟเฟกต์ยกตัว (Hover Elevate) เพื่อให้ใช้งานง่าย
+    - กู้คืนหน้า **Master Settings** สำหรับจัดการวิชาชุมนุม/ลูกเสือ/โฮมรูม ของทั้งโรงเรียน
+
 ## [2026-04-02] - ระบบตรวจสอบแผนการจัดการเรียนรู้ (Refactor Lesson Plan Check)
 
 ### 🚀 ฟีเจอร์ที่เพิ่ม/แก้ไข (Added/Modified)
@@ -211,3 +225,94 @@ $('#SelectorID').select2({
 - [ ] เพิ่มปุ่ม **"ดูรายละเอียด"** ในตารางแผนการสอน (ใน Modal) เพื่อดูรายละเอียดเชิงลึกของแต่ละหัวข้อ (In Progress)
 - [ ] พัฒนาฟังก์ชันการส่งออกไฟล์ Backup ไปยังบริการ Cloud Storage (เช่น Google Drive) เพื่อความปลอดภัยเพิ่มขึ้น
 - [ ] เพิ่มระบบจัดการไฟล์ Backup ที่เคยสร้างไว้ (List & Download History)
+
+---
+
+## [2026-05-04] - ระบบจัดการตารางสอน (Timetable Management System) 📅🤖
+
+### 🚀 ฟีเจอร์ที่เพิ่ม/แก้ไข (Added/Modified)
+- **ระบบมอบหมายงานสอน (Timetable Assignment):**
+    - **UI/UX Modernization:** ปรับปรุง Modal การมอบหมายงานสอนใหม่ให้เป็นแบบ Step-based Wizard (5 Steps) พร้อมดีไซน์ Emerald Theme (#15a362)
+    - **Fixed HTML Structure:** แก้ไขข้อผิดพลาดของโครงสร้าง Form ที่ทำให้ปุ่ม Submit อยู่นอก Tag `<form>` ทำให้บันทึกข้อมูลไม่ได้
+    - **Group ID Preservation:** พัฒนาระบบคงค่า `group_id` เมื่อมีการแก้ไขรายวิชาที่ถูก "มัดรวมกลุ่มสอน" ไว้ เพื่อไม่ให้กลุ่มแตกออกจากกันหลังการแก้ไข
+    - **Select2 Integration:** ปรับปรุงการ Initialize Select2 ใน Modal ให้ทำงานได้สมบูรณ์ทุกครั้งที่เปิด/ปิด และรองรับการเลือกห้องเรียนจากฐานข้อมูลห้องเรียนทั้งหมด
+    - **Suggested Teachers (Smart Logic):** พัฒนาระบบแนะนำครูผู้สอนอัตโนมัติเมื่อเลือกวิชา (อ้างอิงจากแผนการสอนที่ครูส่ง) โดยมี Logic พิเศษป้องกันการเขียนทับข้อมูลเดิมขณะอยู่ในโหมดแก้ไข (Edit Mode)
+
+- **ระบบประมวลผลตารางสอน AI (AI Generation Engine):**
+    - **Premium Processing Feedback:** เพิ่ม Modal แสดงสถานะการประมวลผล AI พร้อมแอนิเมชันหุ่นยนต์ (Pulse Animation) และ Progress Bar เพื่อให้ผู้ใช้ทราบสถานะการทำงานจริง
+    - **Backend Robustness:**
+        - แก้ไข Error `$teacher_name_map` ที่ไม่ได้ถูกประกาศไว้ ทำให้การรายงานความขัดแย้ง (Conflicts) ล้มเหลว
+        - เพิ่มระบบตรวจสอบคอลัมน์ `room_name` แบบไดนามิก เพื่อรองรับโครงสร้างฐานข้อมูลที่แตกต่างกันในแต่ละเครื่อง
+        - ปรับปรุง Error Handling ให้ส่งคืนรายละเอียดความขัดแย้ง (เช่น ครูติดสอนช่องไหน, ห้องไม่ว่างคาบใด) กลับมาแสดงผลที่หน้าเว็บอย่างชัดเจน
+    - **Auto-Sync Logic:** เมื่อประมวลผลสำเร็จ 100% ระบบจะทำการปลดล็อค "ขั้นตอนที่ 5: ตรวจสอบ" และนำทางผู้ใช้ไปโดยอัตโนมัติ
+
+### 🛠️ เทคนิคที่สำคัญ (Technical Highlights)
+- **AJAX Step-based Workflow:** ใช้การจัดการสถานะ Step ผ่าน `localStorage` และ `sessionStorage` (สำหรับรายงานความผิดพลาด) เพื่อให้ Wizard ทำงานต่อเนื่องแม้มีการ Reload หน้า
+- **Transaction Safety:** ใช้ `db->transStart()` และ `transRollback()` ใน Controller เพื่อประกันว่าหาก AI จัดตารางไม่ลงแม้แต่วิชาเดียว ข้อมูลเดิมจะไม่ถูกทำลาย (Atomic Operations)
+
+### 📁 ไฟล์ที่เกี่ยวข้อง
+- `app/Controllers/Admin/Academic/ConAdminTimetable.php` (Logic Update)
+- `app/Views/admin/Academic/AdminTimetable/ProcessMain.php` (UI/UX Redesign)
+- `app/Config/Routes.php` (Route Definition)
+
+
+---
+
+## [2026-05-04] - พัฒนาระบบเงื่อนไขและล็อคเวลา (Constraint & Lock System Enhancements) 🔒⚠️
+
+### 🚀 ฟีเจอร์ที่เพิ่ม/แก้ไข (Added/Modified)
+- **ระบบล็อคเวลาครู (Teacher Lock Grid):**
+    *   **Visual Feedback:** เพิ่มการแสดงผลตารางสอนปัจจุบันของครูในหน้าล็อคเวลา (แถบสีฟ้า) เพื่อให้แอดมินเห็นความไม่ว่างที่เกิดจากคาบสอนจริง ก่อนจะทำการล็อคเวลาไม่ว่างแบบ Manual
+    *   **Context-Aware Grid:** แสดงข้อมูลห้องเรียนและรหัสวิชาที่ครูติดสอนอยู่ในแต่ละคาบ ช่วยลดความผิดพลาดในการล็อคเวลาทับซ้อนกับคาบสอน
+    *   **Teacher Constraint Summary:** เพิ่มหน้า "ภาพรวมความไม่ว่างของครู" (ก่อนเลือกครู) แสดงสถิติจำนวนคนที่ไม่ว่างในแต่ละคาบทั้งโรงเรียน พร้อม Tooltip รายชื่อครู
+
+- **ระบบล็อคคาบวิชา (Subject Lock Grid):**
+    *   **Smart Conflict Warning (สีส้ม ⚠️):** พัฒนาระบบตรวจสอบความว่างของครูแบบ Real-time ในตารางล็อควิชา หากครูที่สอนวิชานั้นไม่ว่าง (ติดสอนห้องอื่นหรือถูกล็อคเวลาไว้) ช่องในตารางจะกลายเป็นสีส้มพร้อมไอคอนแจ้งเตือน
+    *   **Detailed Tooltips:** เมื่อ Hover ที่ช่องแจ้งเตือน ระบบจะแสดงรายชื่อครูและสาเหตุที่ไม่ว่าง
+    *   **Real-time Sync:** ปรับปรุงให้ตัวเลขคาบที่ลงไปแล้ว (เช่น 1/9) อัปเดตทันทีทั้งในตารางและรายการวิชาทางซ้ายมือโดยไม่ต้อง Refresh หน้าเว็บ
+    *   **Smart Lunch Break:** ระบบแยกคาบพักกลางวันอัตโนมัติ (ม.ต้น คาบ 4 / ม.ปลาย คาบ 5) และอนุญาตให้ลงวิชาเรียนในคาบพักที่ "ไม่ใช่" ของระดับชั้นนั้นได้ (Smart Override)
+    *   **Strict Overlap Protection:** เพิ่มระบบป้องกันการวางวิชาทับคาบพักกลางวันหรือทับวิชาเดิม โดยระบบจะตรวจสอบทั้ง "บล็อกวิชา" (กรณีวิชามีหลายคาบติดกัน) และแจ้งเตือนด้วยสีแดงและข้อความทันที
+
+### 🛠️ เทคนิคที่สำคัญ (Technical Highlights)
+- **Cross-Database Join Analysis:** ปรับปรุง SQL Query ใน `getConstraintGrid` ให้สามารถ Join ข้อมูลครอบคลุมทุกเงื่อนไข
+- **AJAX Sync with Cache Busting:** ใช้เทคนิค `$.ajax` พร้อมปิด Cache และใส่ Timestamp เพื่อให้การอัปเดตข้อมูล Real-time แม่นยำ 100%
+- **Contiguous Block Validation:** พัฒนา Logic การตรวจสอบตำแหน่ง `td` ในตารางแบบ Array เพื่อตรวจจับการซ้อนทับของวิชาที่มีหลายคาบติดกัน (Multiple Period Blocks)
+
+### 📁 ไฟล์ที่เกี่ยวข้อง
+- `app/Controllers/Admin/Academic/ConAdminTimetable.php` (Enhanced Logic & New Summary Route)
+- `app/Views/admin/Academic/AdminTimetable/Partials/TeacherConstraintGrid.php` (UI Update)
+- `app/Views/admin/Academic/AdminTimetable/Partials/ConstraintGrid.php` (Lunch Logic & Data Attributes)
+- `app/Views/admin/Academic/AdminTimetable/Partials/TeacherConstraintSummary.php` (New File)
+- `app/Views/admin/Academic/AdminTimetable/ProcessMain.php` (JS Logic for Real-time Sync & Overlap Check)
+- `app/Config/Routes.php` (New Route for Summary)
+
+---
+
+## [2026-05-04] - ระบบจัดการกลุ่มสอนควบและซิงค์เงื่อนไขพักกลางวัน (Atomic Teaching Groups & Constraint Sync) 🍱🔄
+
+### 🚀 ฟีเจอร์ที่เพิ่ม/แก้ไข (Added/Modified)
+- **มาตรฐานกลุ่มสอนควบ (Teaching Group Atomic Standard):**
+    *   **Group Unit Scheduling:** กำหนดให้วิชาที่ถูกมัดรวมกลุ่ม (Teaching Group) ต้องถูกมองเป็นยูนิตเดียว "ขยับหนึ่ง ขยับทั้งหมด" ทั้งในการจัดแบบ Manual และ AI
+    *   **Synchronized Locking (Step 3):** การล็อคหรือปลดล็อควิชาในตาราง จะส่งผลไปยังสมาชิกทุกคนในกลุ่มทันที โดยระบบจะลบและเขียนข้อมูลลง `tb_timetable_data` ใหม่ให้ทั้งกลุ่มเพื่อความสอดคล้อง 100%
+
+- **ระบบป้องกันคาบพักแบบรวมกลุ่ม (Collective Lunch Protection):**
+    *   **Mixed-Level Awareness:** พัฒนาระบบตรวจสอบระดับชั้นภายในกลุ่ม (Junior vs Senior)
+        *   ถ้ากลุ่มมี ม.ต้น (ม.1-3) -> บล็อกคาบ 4
+        *   ถ้ากลุ่มมี ม.ปลาย (ม.4-6) -> บล็อกคาบ 5
+        *   **กรณีกลุ่มผสม (Mixed):** ระบบจะบล็อกทั้งคาบ 4 และ คาบ 5 โดยอัตโนมัติ เพื่อให้มั่นใจว่าทุกคนในกลุ่มได้รับเวลาพักตามกฎของโรงเรียน
+        *   **Cross-Module Enforcement:** บังคับใช้เงื่อนไขนี้ครอบคลุมทุกส่วน: ประมวลผล AI (`autoGenerate`), การย้ายคาบในตารางรวม (`moveSlot`, `saveSlot`), การล็อควิชาใน Step 3 (`saveSubjectLock`), และการตรวจสอบใน UI แบบ Real-time
+        *   **Stable Query Logic:** แก้ไขปัญหา 500 Internal Error โดยการเปลี่ยนจากระบบ Query แบบ Closure มาใช้ `whereIn` เพื่อความเข้ากันได้ 100% กับฐานข้อมูล
+
+- **การอัปเกรด AI Generation Engine (Step 4):**
+    *   **Constraint Aggregation:** ปรับปรุงฟังก์ชัน `autoGenerate` ให้ทำการสแกนสมาชิกทุกคนในกลุ่มก่อนวางวิชา เพื่อรวบรวมเงื่อนไข "ความไม่ว่าง" (Busy) และ "กิจกรรมโรงเรียน" (Master Slots) ของทุกระดับชั้นมาใช้พร้อมกัน
+    *   **Strict Activity Sync:** ป้องกันไม่ให้วิชากลุ่มถูกจัดลงในคาบที่มีกิจกรรมโรงเรียนที่สมาชิกคนใดคนหนึ่งในกลุ่มต้องเข้าร่วม
+
+### 🛠️ เทคนิคที่สำคัญ (Technical Highlights)
+- **Group-Aware Iteration:** ใช้การวนลูป `foreach ($group['assignments'])` เพื่อสร้าง `group_blocked_periods` และ `group_blocked_master` แบบเฉพาะเจาะจงรายกลุ่ม
+- **Atomic Transaction Management:** ใช้ระบบ Transaction ของฐานข้อมูล เพื่อประกันความปลอดภัยว่าการอัปเดตข้อมูลของกลุ่มต้องสำเร็จทั้งหมดหรือล้มเหลวทั้งหมด (All-or-Nothing)
+
+### 📁 ไฟล์ที่เกี่ยวข้อง
+- `app/Controllers/Admin/Academic/ConAdminTimetable.php` (Core Logic Update)
+- `app/Views/admin/Academic/AdminTimetable/Partials/ConstraintGrid.php` (Manual Validation Update)
+
+---

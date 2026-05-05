@@ -146,8 +146,55 @@ class ConAdminRegisterSubject extends BaseController
              echo $this->modAdminRegisterSubject->ModSubjectInsert($data);
 
         }
-        
-       
+    }
+
+    public function AdminRegisterSubjectBulkInsert()
+    {
+        $subjects = $this->request->getPost('subjects');
+        $year = $this->request->getPost('year');
+
+        if (empty($subjects) || !is_array($subjects)) {
+            return $this->response->setJSON(['status' => 'error', 'message' => 'ไม่พบข้อมูลวิชาที่เลือก']);
+        }
+
+        $successCount = 0;
+        $skipCount = 0;
+
+        foreach ($subjects as $sub) {
+            $check = $this->db->table('tb_subjects')
+                ->where('SubjectCode', $sub['SubjectCode'])
+                ->where('SubjectYear', $year)
+                ->countAllResults();
+
+            if ($check > 0) {
+                $skipCount++;
+                continue;
+            }
+
+            $data = [
+                'SubjectCode' => $sub['SubjectCode'],
+                'SubjectName' => $sub['SubjectName'],
+                'SubjectUnit' => $sub['SubjectUnit'],
+                'SubjectHour' => $sub['SubjectHour'],
+                'SubjectType' => $sub['SubjectType'],
+                'FirstGroup' => $sub['FirstGroup'],
+                'SecondGroup' => $sub['SecondGroup'],
+                'SubjectClass' => $sub['SubjectClass'],
+                'SubjectYear' => $year
+            ];
+
+            if ($this->db->table('tb_subjects')->insert($data)) {
+                $successCount++;
+            }
+        }
+
+        if ($successCount > 0) {
+            $msg = "บันทึกวิชาเรียนสำเร็จ $successCount รายการ";
+            if ($skipCount > 0) $msg .= " (ข้าม $skipCount รายการที่ซ้ำ)";
+            return $this->response->setJSON(['status' => 'success', 'message' => $msg]);
+        } else {
+            return $this->response->setJSON(['status' => 'error', 'message' => 'วิชาที่เลือกทั้งหมดมีอยู่ในระบบแล้วในเทอมนี้']);
+        }
     }
 
     public function AdminRegisterSubjectUpdate(){      
@@ -182,9 +229,8 @@ class ConAdminRegisterSubject extends BaseController
 
         $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
         
-        // ใช้ปีการศึกษาล่าสุดจากฐานข้อมูลเป็นค่าเริ่มต้น ถ้าไม่มีให้ใช้จากระบบกลาง
-        $latestInDB = !empty($data['GroupYear']) ? $data['GroupYear'][0]->SubjectYear : null;
-        $data['selectedYear'] = $latestInDB ?? get_selected_year();
+        // ใช้ปีการศึกษาจากระบบกลาง (Session) เป็นค่าเริ่มต้น
+        $data['selectedYear'] = get_selected_year();
         $data['title'] = "วิชาเรียน";	
         $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();
         $data['classroom'] = new \App\Libraries\Classroom();

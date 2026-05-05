@@ -54,13 +54,14 @@ class ConAdminCourse extends BaseController
                                             ->get()->getResult();
         $data['CheckYear'] = $this->db->table('tb_send_plan_setup')->get()->getResult();
 
-        if ($this->request->getGet('onoff_year')) {
-            // ผู้ใช้เลือกปีการศึกษาเองจาก Dropdown
-            $SubYear = explode('/', $this->request->getGet('onoff_year'));
-            $data['year'] = $SubYear[1];
-            $data['term'] = $SubYear[0];
+        // ลำดับความสำคัญของปีการศึกษา: GET -> Session -> Latest Data -> Setup Table
+        $onoffYear = $this->request->getGet('onoff_year');
+        $selectedYearStr = $onoffYear ?: get_selected_year();
+
+        if ($selectedYearStr && strpos($selectedYearStr, '/') !== false) {
+            list($data['term'], $data['year']) = explode('/', $selectedYearStr);
         } else {
-            // Find latest year/term from tb_send_plan as primary fallback
+            // ถ้าไม่มีใน Session หรือ GET ให้ลองหาจากข้อมูลล่าสุดที่มีในระบบ
             $latestYear = $this->db->table('tb_send_plan')
                                    ->select('seplan_year, seplan_term')
                                    ->orderBy('seplan_year', 'DESC')
@@ -72,14 +73,9 @@ class ConAdminCourse extends BaseController
                 $data['year'] = $latestYear->seplan_year;
                 $data['term'] = $latestYear->seplan_term;
             } else {
-                // final fallback to admin_selected_year session or setup table
-                $selectedYearStr = get_selected_year();
-                if (strpos($selectedYearStr, '/') !== false) {
-                    list($data['term'], $data['year']) = explode('/', $selectedYearStr);
-                } else {
-                    $data['year'] = ! empty($data['CheckYear'][0]->seplanset_year) ? $data['CheckYear'][0]->seplanset_year : null;
-                    $data['term'] = ! empty($data['CheckYear'][0]->seplanset_term) ? $data['CheckYear'][0]->seplanset_term : null;
-                }
+                // สุดท้ายไปดึงจากค่าตั้งค่ากลาง
+                $data['year'] = ! empty($data['CheckYear'][0]->seplanset_year) ? $data['CheckYear'][0]->seplanset_year : null;
+                $data['term'] = ! empty($data['CheckYear'][0]->seplanset_term) ? $data['CheckYear'][0]->seplanset_term : null;
             }
         }
 
@@ -130,93 +126,117 @@ class ConAdminCourse extends BaseController
     public function UpdateSendPlanTeacher()
     {
         try {
-            $CheckSubject = $this->db->table('tb_subjects')
-                                    ->where('SubjectID', $this->request->getPost('SelectSubject'))
-                                    ->get()->getRow();
+            $selectSubjects = $this->request->getPost('SelectSubject');
+            $selectTeacher = $this->request->getPost('SelectTeacher');
+            $formYear = $this->request->getPost('SelectYear');
 
-            if (empty($CheckSubject)) {
-                return $this->response->setJSON(['status' => 'error', 'message' => 'ไม่พบรายวิชาที่เลือก']);
+            if (empty($selectSubjects) || !is_array($selectSubjects)) {
+                return $this->response->setJSON(['status' => 'error', 'message' => 'กรุณาเลือกรายวิชาอย่างน้อยหนึ่งวิชา']);
             }
 
-            $CheckTeacher = $this->DBpersonnel->table('tb_personnel')
-                                    ->where('pers_id', $this->request->getPost('SelectTeacher'))
-                                    ->get()->getRow();
-
-            if (empty($CheckTeacher)) {
+            if (empty($selectTeacher)) {
                 return $this->response->setJSON(['status' => 'error', 'message' => 'ไม่พบครูผู้สอนที่เลือก']);
             }
 
-            // Get Year/Term from Form or Fallback to Subject's Year
-            $formYear = $this->request->getPost('SelectYear');
-            if (!empty($formYear) && strpos($formYear, '/') !== false) {
-                $SubYear = explode('/', $formYear);
-            } else {
-                $SubYear = explode('/', $CheckSubject->SubjectYear);
-            }
-
-            $Checkplan = $this->db->table('tb_send_plan')
-                                ->where('seplan_coursecode', $CheckSubject->SubjectCode)
-                                ->where('seplan_usersend', $this->request->getPost('SelectTeacher'))
-                                ->where('seplan_year', $SubYear[1])
-                                ->where('seplan_term', $SubYear[0])
-                                ->countAllResults();
-
-            if ($Checkplan > 0) {
-                return $this->response->setJSON(['status' => 'error', 'message' => 'ข้อมูลครูและรายวิชานี้มีอยู่แล้ว']);
-            }
-
             $CheckTeacher = $this->DBpersonnel->table('tb_personnel')
-                                        ->select('pers_learning')
-                                        ->where('pers_id', $this->request->getPost('SelectTeacher'))
-                                        ->get()->getRow();
-            
+                                    ->select('pers_id, pers_learning')
+                                    ->where('pers_id', $selectTeacher)
+                                    ->get()->getRow();
+
             if (empty($CheckTeacher)) {
-                return $this->response->setJSON(['status' => 'error', 'message' => 'ไม่พบข้อมูลครูผู้สอน']);
+                return $this->response->setJSON(['status' => 'error', 'message' => 'ไม่พบครูผู้สอนที่เลือกในฐานข้อมูล']);
             }
 
+            $typePlan = $this->db->table('tb_send_plan_type')->get()->getResult();
             $status = $this->request->getPost('seplan_sendcomment') ?? '';
             $textToStore = nl2br(esc($status));
 
-            $typePlan = $this->db->table('tb_send_plan_type')->get()->getResult();
-            
             $this->db->transException(true)->transStart();
 
-            foreach ($typePlan as $v_typePlan) {
-                $SubjectType_arr = explode('/', $CheckSubject->SubjectType);
-                $SubjectClass_arr = explode('.', $CheckSubject->SubjectClass);
+            $successCount = 0;
+            $skipCount = 0;
 
-                $insert = [
-                    'seplan_namesubject'  => $CheckSubject->SubjectName,
-                    'seplan_coursecode'   => $CheckSubject->SubjectCode,
-                    'seplan_typesubject'  => (count($SubjectType_arr) > 1) ? $SubjectType_arr[1] : $CheckSubject->SubjectType,
-                    'seplan_year'         => $SubYear[1] ?? $SubYear[0],
-                    'seplan_term'         => (count($SubYear) > 1) ? $SubYear[0] : null,
-                    'seplan_status1'      => "รอตรวจ",
-                    'seplan_status2'      => "รอตรวจ",
-                    'seplan_sendcomment'  => $textToStore,
-                    'seplan_gradelevel'   => (count($SubjectClass_arr) > 1) ? $SubjectClass_arr[1] : $CheckSubject->SubjectClass,
-                    'seplan_typeplan'     => $v_typePlan->type_name,
-                    'seplan_typeplan_id'  => $v_typePlan->type_id,
-                    'seplan_usersend'     => $this->request->getPost('SelectTeacher'),
-                    'seplan_learning'     => $CheckTeacher->pers_learning ?? null,
-                    'seplan_createdate'   => date('Y-m-d H:i:s'),
-                    'seplan_inspector1'   => '',
-                    'seplan_inspector2'   => '',
-                    'seplan_comment1'     => '',
-                    'seplan_comment2'     => '',
-                    'seplan_file'         => '',
-                    'seplan_checkdate1'   => '0000-00-00 00:00:00',
-                    'seplan_checkdate2'   => '0000-00-00 00:00:00',
-                ];
-                $this->db->table('tb_send_plan')->insert($insert);
+            foreach ($selectSubjects as $subjectID) {
+                $CheckSubject = $this->db->table('tb_subjects')
+                                        ->where('SubjectID', $subjectID)
+                                        ->get()->getRow();
+
+                if (empty($CheckSubject)) continue;
+
+                // Get Year/Term from Form or Fallback to Subject's Year
+                if (!empty($formYear) && strpos($formYear, '/') !== false) {
+                    $SubYear = explode('/', $formYear);
+                } else {
+                    $SubYear = explode('/', $CheckSubject->SubjectYear);
+                }
+
+                $year = $SubYear[1] ?? $SubYear[0];
+                $term = (count($SubYear) > 1) ? $SubYear[0] : null;
+
+                $Checkplan = $this->db->table('tb_send_plan')
+                                    ->where('seplan_coursecode', $CheckSubject->SubjectCode)
+                                    ->where('seplan_usersend', $selectTeacher)
+                                    ->where('seplan_year', $year)
+                                    ->where('seplan_term', $term)
+                                    ->countAllResults();
+
+                if ($Checkplan > 0) {
+                    $skipCount++;
+                    continue;
+                }
+
+                foreach ($typePlan as $v_typePlan) {
+                    $SubjectType_arr = explode('/', $CheckSubject->SubjectType);
+                    $SubjectClass_arr = explode('.', $CheckSubject->SubjectClass);
+
+                    $insert = [
+                        'seplan_namesubject'  => $CheckSubject->SubjectName,
+                        'seplan_coursecode'   => $CheckSubject->SubjectCode,
+                        'seplan_typesubject'  => (count($SubjectType_arr) > 1) ? $SubjectType_arr[1] : $CheckSubject->SubjectType,
+                        'seplan_year'         => $year,
+                        'seplan_term'         => $term,
+                        'seplan_status1'      => "รอตรวจ",
+                        'seplan_status2'      => "รอตรวจ",
+                        'seplan_sendcomment'  => $textToStore,
+                        'seplan_gradelevel'   => (count($SubjectClass_arr) > 1) ? $SubjectClass_arr[1] : $CheckSubject->SubjectClass,
+                        'seplan_typeplan'     => $v_typePlan->type_name,
+                        'seplan_typeplan_id'  => $v_typePlan->type_id,
+                        'seplan_usersend'     => $selectTeacher,
+                        'seplan_learning'     => $CheckTeacher->pers_learning ?? null,
+                        'seplan_createdate'   => date('Y-m-d H:i:s'),
+                        'seplan_inspector1'   => '',
+                        'seplan_inspector2'   => '',
+                        'seplan_comment1'     => '',
+                        'seplan_comment2'     => '',
+                        'seplan_file'         => '',
+                        'seplan_checkdate1'   => '0000-00-00 00:00:00',
+                        'seplan_checkdate2'   => '0000-00-00 00:00:00',
+                    ];
+                    $this->db->table('tb_send_plan')->insert($insert);
+                }
+                $successCount++;
             }
 
             $this->db->transComplete();
 
             if ($this->db->transStatus() === false) {
-                return $this->response->setJSON(['status' => 'error', 'message' => 'เกิดข้อผิดพลาดในการบันทึกข้อมูล (Database Error)']);
+                return $this->response->setJSON(['status' => 'error', 'message' => 'เกิดข้อผิดพลาดในการบันทึกข้อมูล']);
             } else {
-                return $this->response->setJSON(['status' => 'success', 'message' => 'เพิ่มข้อมูลครูและรายวิชาเรียบร้อยแล้ว']);
+                if ($successCount > 0) {
+                    $msg = "เพิ่มข้อมูลสำเร็จ $successCount รายการ";
+                    if ($skipCount > 0) {
+                        $msg .= "<br/><small class='text-warning'>ข้าม $skipCount รายการที่ซ้ำกันอยู่แล้ว</small>";
+                    }
+                    return $this->response->setJSON(['status' => 'success', 'message' => $msg]);
+                } else {
+                    if ($skipCount > 0) {
+                        return $this->response->setJSON([
+                            'status' => 'warning', 
+                            'message' => "วิชาที่เลือกถูกลงทะเบียนให้ครูท่านนี้ไว้ก่อนแล้ว ($skipCount รายการ)"
+                        ]);
+                    }
+                    return $this->response->setJSON(['status' => 'error', 'message' => 'ไม่พบข้อมูลวิชาที่เลือกหรือเกิดข้อผิดพลาด']);
+                }
             }
 
         } catch (\Exception $e) {
@@ -271,21 +291,39 @@ class ConAdminCourse extends BaseController
             return;
         }
 
+        $newTeacherId = $this->request->getPost('up_seplan_usersend');
+        $courseCode = $this->request->getPost('up_seplan_coursecode');
+        $year = $this->request->getPost('up_seplan_year');
+        $term = $this->request->getPost('up_seplan_term');
+
+        // Check if the NEW teacher already has this course assignment (Duplicate Check)
+        $existing = $this->db->table('tb_send_plan')
+            ->where('seplan_coursecode', $courseCode)
+            ->where('seplan_usersend', $newTeacherId)
+            ->where('seplan_year', $year)
+            ->where('seplan_term', $term)
+            ->get()->getRow();
+
+        if ($existing) {
+            echo json_encode(['status' => 'error', 'message' => 'ครูท่านนี้ถูกลงทะเบียนในวิชานี้ไว้แล้วในเทอมนี้ ไม่สามารถเปลี่ยนซ้ำได้']);
+            return;
+        }
+
         $data = [
             'seplan_namesubject'  => $this->request->getPost('up_seplan_namesubject'),
             'seplan_gradelevel'   => $this->request->getPost('up_seplan_gradelevel'),
             'seplan_typesubject'  => $this->request->getPost('up_seplan_typesubject'),
-            'seplan_usersend'     => $this->request->getPost('up_seplan_usersend'),
+            'seplan_usersend'     => $newTeacherId,
             'seplan_learning'     => $Teacher->pers_learning,
         ];
         $IF = [
-            'seplan_coursecode' => $this->request->getPost('up_seplan_coursecode'),
-            'seplan_year'       => $this->request->getPost('up_seplan_year'),
-            'seplan_term'       => $this->request->getPost('up_seplan_term'),
+            'seplan_coursecode' => $courseCode,
+            'seplan_year'       => $year,
+            'seplan_term'       => $term,
         ];
         $result = $this->db->table('tb_send_plan')->where($IF)->update($data);
 
-        echo ($result);
+        echo json_encode(['status' => 'success', 'message' => 'แก้ไขข้อมูลเรียบร้อยแล้ว']);
     }
 
     public function getPlanDetails()
@@ -438,6 +476,20 @@ class ConAdminCourse extends BaseController
         }
         // Respond with an error if it's not a POST request
         return $this->response->setStatusCode(405)->setJSON(['status' => 'error', 'message' => 'Method not allowed.']);
+    }
+
+    public function getSubjectsByYear()
+    {
+        $yearTerm = $this->request->getGet('yearTerm');
+        if (empty($yearTerm)) {
+            return $this->response->setJSON([]);
+        }
+
+        $subjects = $this->db->table('tb_subjects')
+                            ->where('SubjectYear', $yearTerm)
+                            ->get()->getResult();
+
+        return $this->response->setJSON($subjects);
     }
 
     public function delete_teacher_subject()

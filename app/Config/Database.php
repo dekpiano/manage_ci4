@@ -175,6 +175,31 @@ class Database extends Config
     ];
 
     /**
+     * The timetable database connection.
+     *
+     * @var array<string, mixed>
+     */
+    public array $timetable = [
+        'DSN'          => '',
+        'hostname'     => 'localhost',
+        'username'     => 'root',
+        'password'     => 'rootpassword',
+        'database'     => 'skjacth_timetable',
+        'DBDriver'     => 'MySQLi',
+        'DBPrefix'     => '',
+        'pConnect'     => true,
+        'DBDebug'      => true,
+        'charset'      => 'utf8',
+        'DBCollat'     => 'utf8_general_ci',
+        'swapPre'      => '',
+        'encrypt'      => false,
+        'compress'     => false,
+        'strictOn'     => false,
+        'failover'     => [],
+        'port'         => 3306,
+    ];
+
+    /**
      * This database connection is used when
      * running PHPUnit database tests.
      *
@@ -238,6 +263,10 @@ class Database extends Config
         $this->admission['hostname'] = $dbHost;
         $this->admission['username'] = $dbUser;
         $this->admission['password'] = $dbPass;
+
+        $this->timetable['hostname'] = $dbHost;
+        $this->timetable['username'] = $dbUser;
+        $this->timetable['password'] = $dbPass;
 
         // Ensure that we always set the database group to 'tests' if
         // we are currently running an automated test suite.

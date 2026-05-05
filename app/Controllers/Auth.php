@@ -17,7 +17,7 @@ class Auth extends BaseController
     {
         if (session()->get('login_id')) {
             $status = session()->get('status');
-            if (in_array($status, ['admin', 'academic', 'general', 'superadmin'])) {
+            if (in_array($status, ['admin', 'academic', 'general', 'superadmin', 'manager'])) {
                 return redirect()->to(base_url('Admin/Home'));
             }
         }
@@ -45,7 +45,7 @@ class Auth extends BaseController
 
         if ($result) {
             $status = $result->academic_status ?: 'admin';
-            if (!in_array($status, ['admin', 'academic', 'general', 'superadmin'])) {
+            if (!in_array($status, ['admin', 'academic', 'general', 'superadmin', 'manager'])) {
                 return redirect()->to(base_url('/'))->with('error', 'คุณไม่มีสิทธิ์เข้าใช้งานระบบนี้');
             }
 // ... (rest of session data)
@@ -116,7 +116,7 @@ class Auth extends BaseController
             
             if ($result) {
                 $status = $result->academic_status ?: 'admin';
-                if (!in_array($status, ['admin', 'academic', 'general', 'superadmin'])) {
+                if (!in_array($status, ['admin', 'academic', 'general', 'superadmin', 'manager'])) {
                     return redirect()->to(base_url('/'))->with('error', 'คุณไม่มีสิทธิ์เข้าใช้งานระบบนี้');
                 }
 // ... (rest of update user data and session)

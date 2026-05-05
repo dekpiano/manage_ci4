@@ -160,6 +160,7 @@ $routes->post('admin/academic/ConAdminRegisterSubject/AdminRegisterSubjectSelect
 $routes->post('admin/academic/ConAdminRegisterSubject/AdminRegisterSubjectEdit', [ConAdminRegisterSubject::class, 'AdminRegisterSubjectEdit']);
 $routes->post('admin/academic/ConAdminRegisterSubject/AdminRegisterSubjectUpdate', [ConAdminRegisterSubject::class, 'AdminRegisterSubjectUpdate']);
 $routes->post('admin/academic/ConAdminRegisterSubject/AdminRegisterSubjectInsert', [ConAdminRegisterSubject::class, 'AdminRegisterSubjectInsert']);
+$routes->post('admin/academic/ConAdminRegisterSubject/AdminRegisterSubjectBulkInsert', [ConAdminRegisterSubject::class, 'AdminRegisterSubjectBulkInsert']);
 $routes->delete('admin/academic/ConAdminRegisterSubject/AdminRegisterSubjectDelete/(:num)', [ConAdminRegisterSubject::class, 'AdminRegisterSubjectDelete/$1']);
 $routes->get('admin/academic/ConAdminRegisterSubject/AdminRegisterSubjectEdit', [ConAdminRegisterSubject::class, 'AdminRegisterSubjectEdit']);
 $routes->get('Admin/Acade/Course/SendPlan', [ConAdminCourse::class, 'SendPlanMain']);
@@ -171,6 +172,7 @@ $routes->post('admin/academic/course/add_teacher_subject', [ConAdminCourse::clas
 $routes->post('admin/academic/course/delete_teacher_subject', [ConAdminCourse::class, 'delete_teacher_subject']);
 $routes->post('admin/academic/course/update_setting', [ConAdminCourse::class, 'UpdateSettingSendPlan']);
 $routes->get('admin/academic/course/getPlansTableData', [ConAdminCourse::class, 'getPlansTableData']);
+$routes->get('admin/academic/course/getSubjectsByYear', [ConAdminCourse::class, 'getSubjectsByYear']);
 $routes->post('Admin/Settings/UpdateSchoolYear', [ConAdminCourse::class, 'updateSchoolYear']);
 
 // Research Submission Settings Routes
@@ -184,7 +186,78 @@ $routes->post('admin/academic/checkplan/updateplanstatus', [ConAdminCheckPlan::c
 $routes->get('admin/academic/checkplan/plans/(:segment)', [ConAdminCheckPlan::class, 'plansByGroup/$1']);
 $routes->get('admin/academic/checkplan/teacherplans/(:segment)', [ConAdminCheckPlan::class, 'getTeacherPlans/$1']);
 $routes->get('admin/academic/checkplan/plandetails/(:segment)', [ConAdminCheckPlan::class, 'getPlanDetails/$1']);
+$routes->get('admin/academic/api', [\App\Controllers\Admin\Academic\ConAdminApi::class, 'index']);
 $routes->get('admin/academic/report/checkplan', [ConAdminCheckPlan::class, 'report']);
+
+// Timetable Management System
+$routes->get('db-check', 'DbCheck::index');
+
+$routes->group('admin/academic/timetable', ['namespace' => 'App\Controllers'], function ($routes) {
+    $routes->get('', 'Admin\Academic\ConAdminTimetable::index');
+    $routes->get('create', 'Admin\Academic\ConAdminTimetable::create');
+    $routes->get('full', 'Admin\Academic\ConAdminTimetable::full');
+    $routes->get('get-progress', 'Admin\Academic\ConAdminTimetable::getProgress');
+    $routes->post('change-year', 'Admin\Academic\ConAdminTimetable::changeYear');
+    $routes->get('audit', 'Admin\Academic\ConAdminTimetable::auditTimetable');
+    $routes->get('class-timetables', 'Admin\Academic\ConAdminTimetable::classTimetables');
+    $routes->get('teacher-timetables', 'Admin\Academic\ConAdminTimetable::teacherTimetables');
+    $routes->get('view-class', 'Admin\Academic\ConAdminTimetable::viewClass');
+    $routes->get('view-teacher', 'Admin\Academic\ConAdminTimetable::viewTeacher');
+    $routes->get('edit/(:num)', 'Admin\Academic\ConAdminTimetable::edit/$1');
+    $routes->post('save-assignment', 'Admin\Academic\ConAdminTimetable::saveAssignment');
+    $routes->post('update-assignment/(:num)', 'Admin\Academic\ConAdminTimetable::updateAssignment/$1');
+    $routes->post('quick-add-subject', 'Admin\Academic\ConAdminTimetable::quickAddSubject');
+    $routes->post('delete-assignment', 'Admin\Academic\ConAdminTimetable::deleteAssignment');
+    $routes->match(['get', 'post'], 'save-teaching-group', 'Admin\Academic\ConAdminTimetable::saveTeachingGroup');
+    $routes->match(['get', 'post'], 'delete-teaching-group', 'Admin\Academic\ConAdminTimetable::deleteTeachingGroup');
+    $routes->get('subject-groups', 'Admin\Academic\ConAdminTimetable::subjectGroups');
+    $routes->post('save-joint-group', 'Admin\Academic\ConAdminTimetable::saveSubjectGroup');
+    $routes->post('delete-joint-group/(:num)', 'Admin\Academic\ConAdminTimetable::deleteSubjectGroup/$1');
+    $routes->get('get-suggested-teachers', 'Admin\Academic\ConAdminTimetable::getSuggestedTeachers');
+
+    // Subjects for Timetable
+    $routes->get('subjects', 'Admin\Academic\ConAdminTimetable::subjects');
+    $routes->post('save-subject', 'Admin\Academic\ConAdminTimetable::saveTimetableSubject');
+    $routes->post('import-subjects', 'Admin\Academic\ConAdminTimetable::importSubjects');
+    $routes->post('delete-subject', 'Admin\Academic\ConAdminTimetable::deleteTimetableSubject');
+
+    // Timetable Processing
+    $routes->get('process', 'Admin\Academic\ConAdminTimetable::process');
+    $routes->match(['get', 'post'], 'auto-generate', 'Admin\Academic\ConAdminTimetable::autoGenerate');
+    $routes->get('get-class-timetable', 'Admin\Academic\ConAdminTimetable::getClassTimetable');
+    $routes->get('view-class-timetable', 'Admin\Academic\ConAdminTimetable::viewClassTimetable');
+    $routes->get('get-constraint-grid', 'Admin\Academic\ConAdminTimetable::getConstraintGrid');
+    $routes->get('get-master-lock-grid', 'Admin\Academic\ConAdminTimetable::getMasterLockGrid');
+    $routes->post('save-subject-lock', 'Admin\Academic\ConAdminTimetable::saveSubjectLock');
+    $routes->get('editor', 'Admin\Academic\ConAdminTimetable::editor');
+    $routes->post('save-slot', 'Admin\Academic\ConAdminTimetable::saveSlot');
+    $routes->post('delete-slot', 'Admin\Academic\ConAdminTimetable::deleteSlot');
+    $routes->match(['get', 'post'], 'move-slot', 'Admin\Academic\ConAdminTimetable::moveSlot');
+    $routes->post('clear-class-timetable', 'Admin\Academic\ConAdminTimetable::clearClassTimetable');
+    $routes->post('reset-all-data', 'Admin\Academic\ConAdminTimetable::resetAllData');
+
+    // Timetable Settings
+    $routes->get('settings', 'Admin\Academic\ConAdminTimetable::settings');
+    $routes->post('update-day', 'Admin\Academic\ConAdminTimetable::updateDay');
+    $routes->post('save-period', 'Admin\Academic\ConAdminTimetable::savePeriod');
+    $routes->post('delete-period', 'Admin\Academic\ConAdminTimetable::deletePeriod');
+    $routes->post('toggle-lock', 'Admin\Academic\ConAdminTimetable::toggleLock');
+    $routes->get('master-settings', 'Admin\Academic\ConAdminTimetable::masterSettings');
+    $routes->post('save-master-slot', 'Admin\Academic\ConAdminTimetable::saveMasterSlot');
+    $routes->post('reset-all-data', 'Admin\Academic\ConAdminTimetable::resetAllData');
+
+    // Teacher Constraints
+    $routes->get('teacher-constraints', 'Admin\Academic\ConAdminTimetable::teacherConstraints');
+    $routes->get('get-master-teacher-lock-grid', 'Admin\Academic\ConAdminTimetable::getMasterTeacherLockGrid');
+    $routes->get('get-teacher-constraint-grid', 'Admin\Academic\ConAdminTimetable::getTeacherConstraintGrid');
+    $routes->get('get-teacher-constraint-summary', 'Admin\Academic\ConAdminTimetable::getTeacherConstraintSummary');
+    $routes->post('save-teacher-constraint', 'Admin\Academic\ConAdminTimetable::saveTeacherConstraint');
+
+    // Subject Constraints
+    $routes->get('subject-constraints', 'Admin\Academic\ConAdminTimetable::subjectConstraints');
+    $routes->post('save-subject-lock', 'Admin\Academic\ConAdminTimetable::saveSubjectLock');
+
+});
 
 $routes->get('Admin/Acade/Report', [ConAdminExtraSubject::class, 'ExtraReport']);
 
@@ -337,3 +410,15 @@ $routes->get('LearningOnline/(:segment)', [ConStudents::class, 'LearningOnlineDe
 $routes->get('ReportLearnOnline', [ConStudents::class, 'PageReportLearnOnline']);
 $routes->get('user/searchclassschedule', [ConStudents::class, 'SearchClassSchedule']);
 $routes->get('user/getscheduleyears', [ConStudents::class, 'getScheduleYears']);
+
+/**
+ * API V1 Routes
+ */
+$routes->group('api/v1', ['namespace' => 'App\Controllers\Api\V1'], function($routes) {
+    $routes->get('students/stats', 'StudentApi::stats');
+    $routes->get('students/graduation-stats', 'StudentApi::graduationStats');
+    $routes->resource('personnel', ['controller' => 'PersonnelApi', 'only' => ['index', 'show']]);
+    $routes->resource('students', ['controller' => 'StudentApi', 'only' => ['index', 'show']]);
+    $routes->resource('subjects', ['controller' => 'SubjectApi', 'only' => ['index', 'show']]);
+});
+

@@ -368,6 +368,45 @@
                 <div data-i18n="จัดการตารางเรียน">จัดการตารางเรียน</div>
             </a>
         </li>
+        <li class="menu-item <?= ($s3 == 'timetable' ? 'active open' : '') ?>">
+            <a href="javascript:void(0);" class="menu-link menu-toggle">
+                <i class="menu-icon tf-icons bx bx-calendar-star" style="color: #15a362 !important;"></i>
+                <div data-i18n="จัดตารางสอน (Auto)" style="font-weight: 700;">จัดตารางสอน (Auto)</div>
+            </a>
+            <ul class="menu-sub">
+                <li class="menu-item <?= ($s3 == 'timetable' && $s4 == 'process' ? 'active' : '') ?>">
+                    <a href="<?=base_url('admin/academic/timetable/process');?>" class="menu-link">
+                        <i class="menu-icon tf-icons bx bx-magic-wand"></i>
+                        <div data-i18n="จัดการและจัดตารางสอน">จัดการและจัดตารางสอน</div>
+                    </a>
+                </li>
+                <li class="menu-item <?= ($s3 == 'timetable' && $s4 == 'full' ? 'active' : '') ?>">
+                    <a href="<?=base_url('admin/academic/timetable/full');?>" class="menu-link">
+                        <div data-i18n="ตารางสอนรวม">ตารางสอนรวม</div>
+                    </a>
+                </li>
+                <li class="menu-item <?= ($s3 == 'timetable' && ($s4 == 'teacher-timetables' || $s4 == 'view-teacher') ? 'active' : '') ?>">
+                    <a href="<?=base_url('admin/academic/timetable/teacher-timetables');?>" class="menu-link">
+                        <div data-i18n="ตารางสอนรายครู">ตารางสอนรายครู</div>
+                    </a>
+                </li>
+                <li class="menu-item <?= ($s3 == 'timetable' && ($s4 == 'class-timetables' || $s4 == 'view-class') ? 'active' : '') ?>">
+                    <a href="<?=base_url('admin/academic/timetable/class-timetables');?>" class="menu-link">
+                        <div data-i18n="ตารางเรียนรายห้อง">ตารางเรียนรายห้อง</div>
+                    </a>
+                </li>
+                <li class="menu-item <?= ($s3 == 'timetable' && $s4 == 'teacher-constraints' ? 'active' : '') ?>">
+                    <a href="<?=base_url('admin/academic/timetable/teacher-constraints');?>" class="menu-link">
+                        <div data-i18n="เงื่อนไขเวลาครู">เงื่อนไขเวลาครู</div>
+                    </a>
+                </li>
+                <li class="menu-item <?= ($s3 == 'timetable' && $s4 == 'subject-groups' ? 'active' : '') ?>">
+                    <a href="<?=base_url('admin/academic/timetable/subject-groups');?>" class="menu-link">
+                        <div data-i18n="กลุ่มวิชาเรียนพร้อมกัน">กลุ่มวิชาเรียนพร้อมกัน</div>
+                    </a>
+                </li>
+            </ul>
+        </li>
         <li class="menu-item <?= ($s4 == 'SendPlan' || $s3 == 'checkplan' || ($s3 == 'report' && $s4 == 'checkplan') ? 'active open' : '') ?>">
             <a href="javascript:void(0);" class="menu-link menu-toggle">
                 <i class="menu-icon tf-icons bx bx-edit"></i>
@@ -463,6 +502,12 @@
             <a href="<?=base_url('Admin/Acade/Setting/AdminRoles');?>" class="menu-link">
                 <i class="menu-icon tf-icons bx bx-shield-quarter"></i>
                 <div data-i18n="จัดการบทบาท">จัดการบทบาท</div>
+            </a>
+        </li>
+        <li class="menu-item <?= ($s3 == 'api' ? 'active' : '') ?>">
+            <a href="<?=base_url('admin/academic/api');?>" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-code-block"></i>
+                <div data-i18n="จัดการ API">จัดการ API</div>
             </a>
         </li>
         <?php endif; ?>

@@ -30,6 +30,13 @@
 - The correct layout to extend in teacher views is 'admin/layout/main'.
 - Table `tb_learning` is located in the `skjacth_skj` database, accessed via the `skj` database group in CodeIgniter.
 - **Rule (Design Theme):** ใช้โทนสีเขียว **`#15a362`** เป็นสีหลัก (Primary/Success) ของเว็บเสมอครับ 🟢✨
+- **Rule (UX/UI):** การแสดงผล **SweetAlert2 (swal2)** ต้องอยู่เลเยอร์บนสุดเสมอ (**`z-index: 9999 !important`**) เพื่อไม่ให้ถูก Modal ทับครับ 🔔🔝
+- **Rule (Timetable Assignment Form):** ในหน้ามอบหมายงานสอน (Step 2) ให้ใช้ **Classic Modal Form** เสมอ โดยมีลักษณะดังนี้:
+    1. แบ่งเป็น Step (1-5) พร้อม Step Badge สีเขียวขนาดเล็ก
+    2. มีปุ่ม "เพิ่มวิชาด่วน" (Quick Add) ในส่วนการเลือกวิชา
+    3. **Logic:** ต้องมีระบบแนะนำครูผู้สอนอัตโนมัติ (Suggested Teachers) เมื่อเลือกวิชา
+    4. **Logic:** ต้องมีระบบคำนวณรูปแบบการแบ่งคาบ (Period Split) อัตโนมัติเมื่อกรอกจำนวนคาบต่อสัปดาห์
+    5. ปุ่มบันทึกต้องเป็นสีเขียว `#15a362` และมีปุ่มยกเลิกเป็นสีเทา (Label Secondary)
 ---
 
 # 🌟 GEMINI.MD: PROJECT CONTEXT & DESIGN STANDARD

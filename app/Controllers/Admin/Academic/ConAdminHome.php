@@ -30,7 +30,12 @@ class ConAdminHome extends BaseController
             exit();
         }
 
-        $check_status_data = $this->db->table('tb_admin_rloes')->where('admin_rloes_userid', session()->get('login_id'))->get()->getRow();
+        $check_status_data = $this->db->table('tb_admin_rloes')
+                                      ->where('admin_rloes_userid', session()->get('login_id'))
+                                      ->orderBy("CASE WHEN admin_rloes_nanetype != '' THEN 0 ELSE 1 END", 'ASC', false)
+                                      ->orderBy("FIELD(admin_rloes_status, 'superadmin', 'admin', 'manager')", 'ASC', false)
+                                      ->get()
+                                      ->getRow();
 
         if (empty($check_status_data) || (! in_array($check_status_data->admin_rloes_status, ["admin", "manager", "superadmin"]))) {
             session()->setFlashdata(['msg' => 'OK', 'messge' => 'คุณไม่มีสิทธ์ในระบบจัดข้อมูลนี้ ติดต่อเจ้าหน้าที่คอม', 'alert' => 'error']);

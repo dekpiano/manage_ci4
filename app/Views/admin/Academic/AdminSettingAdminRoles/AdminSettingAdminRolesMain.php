@@ -25,49 +25,10 @@
     }
     ?>
 
-    <!-- Major Roles -->
-    <div class="card mb-4">
-        <h5 class="card-header">ผู้บริหารฝ่ายวิชาการ</h5>
-        <div class="card-body">
-            <div class="list-group">
-                <!-- Manager -->
-                <div class="list-group-item d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="mb-1">ผู้อำนวยการโรงเรียน</h6>
-                        <small class="text-muted" id="name-manager"><?= getTeacherName(@$roles[1]->admin_rloes_userid, $teachers) ?></small>
-                    </div>
-                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#changeRoleModal" data-role-id="1" data-role-name="ผู้อำนวยการโรงเรียน">
-                        <i class='bx bx-edit-alt me-1'></i>เปลี่ยน
-                    </button>
-                </div>
-                <!-- Deputy -->
-                <div class="list-group-item d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="mb-1">รองผู้อำนวยการฝ่ายวิชาการ</h6>
-                        <small class="text-muted" id="name-deputy"><?= getTeacherName(@$roles[2]->admin_rloes_userid, $teachers) ?></small>
-                    </div>
-                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#changeRoleModal" data-role-id="2" data-role-name="รองผู้อำนวยการฝ่ายวิชาการ">
-                        <i class='bx bx-edit-alt me-1'></i>เปลี่ยน
-                    </button>
-                </div>
-                <!-- Leader -->
-                <div class="list-group-item d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="mb-1">หัวหน้าฝ่ายวิชาการ</h6>
-                        <small class="text-muted" id="name-leader"><?= getTeacherName(@$roles[3]->admin_rloes_userid, $teachers) ?></small>
-                    </div>
-                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#changeRoleModal" data-role-id="3" data-role-name="หัวหน้าฝ่ายวิชาการ">
-                        <i class='bx bx-edit-alt me-1'></i>เปลี่ยน
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Admin Staff and Permissions -->
-    <div class="card">
+    <div class="card mb-4">
         <div class="card-header d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">เจ้าหน้าที่และหัวหน้างานฝ่ายวิชาการ</h5>
+            <h5 class="mb-0">เจ้าหน้าที่และหัวหน้างานฝ่ายวิชาการ (สิทธิ์การเข้าถึง)</h5>
             <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addStaffModal">
                 <i class='bx bx-plus me-1'></i> เพิ่มเจ้าหน้าที่
             </button>
@@ -123,6 +84,45 @@
                     <?php endforeach; ?>
                 </tbody>
             </table>
+        </div>
+    </div>
+
+    <!-- Major Roles (Executives) -->
+    <div class="card mb-4">
+        <h5 class="card-header">ผู้บริหารฝ่ายวิชาการ</h5>
+        <div class="card-body">
+            <div class="list-group">
+                <!-- Manager -->
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="mb-1">ผู้อำนวยการโรงเรียน</h6>
+                        <small class="text-muted" id="name-manager"><?= getTeacherName(@$roles[1]->admin_rloes_userid, $teachers) ?></small>
+                    </div>
+                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#changeRoleModal" data-role-id="1" data-role-name="ผู้อำนวยการโรงเรียน">
+                        <i class='bx bx-edit-alt me-1'></i>เปลี่ยน
+                    </button>
+                </div>
+                <!-- Deputy -->
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="mb-1">รองผู้อำนวยการฝ่ายวิชาการ</h6>
+                        <small class="text-muted" id="name-deputy"><?= getTeacherName(@$roles[2]->admin_rloes_userid, $teachers) ?></small>
+                    </div>
+                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#changeRoleModal" data-role-id="2" data-role-name="รองผู้อำนวยการฝ่ายวิชาการ">
+                        <i class='bx bx-edit-alt me-1'></i>เปลี่ยน
+                    </button>
+                </div>
+                <!-- Leader -->
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="mb-1">หัวหน้าฝ่ายวิชาการ</h6>
+                        <small class="text-muted" id="name-leader"><?= getTeacherName(@$roles[3]->admin_rloes_userid, $teachers) ?></small>
+                    </div>
+                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#changeRoleModal" data-role-id="3" data-role-name="หัวหน้าฝ่ายวิชาการ">
+                        <i class='bx bx-edit-alt me-1'></i>เปลี่ยน
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 </div>
