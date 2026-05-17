@@ -143,6 +143,62 @@
     .swal2-container {
         z-index: 9999 !important;
     }
+
+    .progress-bar.bg-success {
+        background-color: #15a362 !important;
+    }
+
+    /* Card Menu Step 1 */
+    .card-setting-step1 {
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: 1px solid #f0f2f4 !important;
+    }
+    .card-setting-step1:hover {
+        border-color: #15a362 !important;
+        background: rgba(21, 163, 98, 0.02);
+    }
+    .card-setting-step1:hover .avatar {
+        transform: scale(1.1);
+    }
+
+    /* 🎨 Import Modal UI Enhancement */
+    .subject-import-item { transition: opacity 0.2s ease; }
+    .shadow-sm-hover:hover {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08) !important;
+        transform: translateY(-2px);
+        border-color: #15a362 !important;
+    }
+    .scroll-custom::-webkit-scrollbar { width: 5px; }
+    .scroll-custom::-webkit-scrollbar-thumb { background: #e0e0e0; border-radius: 10px; }
+    .transition-all { transition: all 0.3s ease; }
+
+    /* ✅ Selected State for Import Cards */
+    .subject-import-card {
+        border: 1px solid #e0e0e0;
+        background: #fff;
+    }
+    .subject-import-card.is-selected {
+        background-color: #f1fbf4 !important;
+        border-color: #15a362 !important;
+        box-shadow: 0 0 0 1px #15a362;
+    }
+    .subject-import-card.is-selected .bg-checkbox-area {
+        background-color: #15a362 !important;
+        border-color: #15a362 !important;
+    }
+    .check-subject-wizard {
+        width: 20px !important;
+        height: 20px !important;
+        cursor: pointer;
+        transform: scale(1.3);
+        margin: 0 !important;
+    }
+    .bg-checkbox-area {
+        width: 50px;
+        background: #f8f9fa;
+        transition: all 0.2s ease;
+    }
 </style>
 <?= $this->endSection() ?>
 
@@ -286,109 +342,67 @@
 
                 <div class="p-4">
                     <div class="row g-4">
-                        <!-- 📅 Day Settings -->
-                        <div class="col-md-5">
-                            <div class="card h-100 border shadow-none bg-light-subtle">
-                                <div class="card-header d-flex align-items-center justify-content-between py-3">
-                                    <h6 class="m-0 fw-bold"><i class='bx bx-calendar me-2 text-primary'></i> วันที่เปิดเรียน</h6>
-                                    <span class="badge bg-label-primary rounded-pill">Active Days</span>
-                                </div>
-                                <div class="card-body">
-                                    <div class="list-group list-group-flush rounded-3 border overflow-hidden">
-                                        <?php foreach($days as $day): ?>
-                                        <div class="list-group-item d-flex justify-content-between align-items-center py-3">
-                                            <div class="d-flex align-items-center">
-                                                <div class="avatar avatar-sm me-3">
-                                                    <span class="avatar-initial rounded-pill bg-label-<?= ($day->day_key == 'SAT' || $day->day_key == 'SUN') ? 'danger' : 'success' ?>">
-                                                        <?= mb_substr($day->day_name, 0, 1) ?>
-                                                    </span>
-                                                </div>
-                                                <span class="fw-bold"><?= $day->day_name ?></span>
-                                            </div>
-                                            <div class="form-check form-switch mb-0">
-                                                <input class="form-check-input day-toggle" type="checkbox" 
-                                                    data-id="<?= $day->day_id ?>" 
-                                                    <?= $day->is_active ? 'checked' : '' ?>>
-                                            </div>
-                                        </div>
-                                        <?php endforeach; ?>
+                        <!-- 📅 Day Settings Card -->
+                        <div class="col-md-4 col-lg-3">
+                            <div class="card card-setting-step1 h-100 shadow-none" data-bs-toggle="modal" data-bs-target="#modalSettingDays">
+                                <div class="card-body text-center py-4">
+                                    <div class="avatar avatar-lg bg-label-success mx-auto mb-3">
+                                        <i class="bx bx-calendar fs-2"></i>
                                     </div>
-                                    <div class="alert alert-warning d-flex align-items-center mt-3 mb-0 border-0 shadow-none">
-                                        <i class='bx bx-error-circle me-2'></i>
-                                        <div class="small">การเปิด/ปิดวันเรียน จะมีผลต่อการสุ่มตารางในขั้นตอนถัดไป</div>
-                                    </div>
+                                    <h6 class="fw-bold mb-1 text-dark">วันที่เปิดเรียน</h6>
+                                    <p class="text-muted small mb-0">กำหนดวันเรียนในสัปดาห์</p>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- ⏰ Period Settings -->
-                        <div class="col-md-7">
-                            <div class="card h-100 border shadow-none">
-                                <div class="card-header d-flex align-items-center justify-content-between py-3">
-                                    <h6 class="m-0 fw-bold"><i class='bx bx-time me-2 text-primary'></i> คาบเรียนและเวลา</h6>
-                                    <div class="d-flex gap-3 align-items-center">
-                                        <a href="<?= base_url('admin/academic/timetable/master-settings') ?>" class="btn btn-label-success btn-lg rounded-4 shadow-sm border-2 px-4 hover-elevate">
-                                            <i class="bx bx-calendar-star fs-4 me-2"></i>
-                                            <div>
-                                                <div class="fw-bold fs-6">ตั้งค่าคาบกิจกรรมส่วนกลาง</div>
-                                                <div style="font-size: 0.65rem; opacity: 0.8;">ชุมนุม, ลูกเสือ, โฮมรูม (Master Slots)</div>
-                                            </div>
-                                        </a>
-                                        <button class="btn btn-primary btn-lg rounded-4 shadow-sm px-4" id="btnAddPeriod">
-                                            <i class="bx bx-plus-circle fs-4 me-2"></i> เพิ่มคาบเรียน
-                                        </button>
+                        <!-- ⏰ Period Settings Card -->
+                        <div class="col-md-4 col-lg-3">
+                            <div class="card card-setting-step1 h-100 shadow-none" data-bs-toggle="modal" data-bs-target="#modalSettingPeriods">
+                                <div class="card-body text-center py-4">
+                                    <div class="avatar avatar-lg bg-label-primary mx-auto mb-3">
+                                        <i class="bx bx-time fs-2"></i>
                                     </div>
-                                </div>
-                                <div class="card-body">
-                                    <div class="table-responsive border rounded-3 overflow-hidden">
-                                        <table class="table table-sm table-hover mb-0">
-                                            <thead class="bg-light">
-                                                <tr>
-                                                    <th class="ps-3 py-2">คาบที่</th>
-                                                    <th class="py-2">ช่วงเวลา (เริ่ม - จบ)</th>
-                                                    <th class="py-2">ประเภท</th>
-                                                    <th class="text-center py-2 pe-3">ลบ</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody id="periodsTableBody">
-                                                <?php foreach($periods as $p): ?>
-                                                <tr class="period-row" data-id="<?= $p->period_id ?>">
-                                                    <td class="ps-3 align-middle fw-bold">คาบ <?= $p->period_number ?></td>
-                                                    <td class="align-middle">
-                                                        <div class="input-group input-group-merge input-group-sm" style="width: 200px;">
-                                                            <input type="time" class="form-control period-time-input" data-field="start_time" value="<?= substr($p->start_time, 0, 5) ?>">
-                                                            <span class="input-group-text">-</span>
-                                                            <input type="time" class="form-control period-time-input" data-field="end_time" value="<?= substr($p->end_time, 0, 5) ?>">
-                                                        </div>
-                                                    </td>
-                                                    <td class="align-middle">
-                                                        <select class="form-select form-select-sm period-type-select" style="width: 120px;">
-                                                            <option value="0" <?= !$p->is_break ? 'selected' : '' ?>>คาบเรียน</option>
-                                                            <option value="1" <?= $p->is_break ? 'selected' : '' ?>>พักกลางวัน</option>
-                                                        </select>
-                                                        <div class="mt-1">
-                                                            <select class="form-select form-select-sm period-level-select" style="width: 120px; font-size: 0.7rem;">
-                                                                <option value="ALL" <?= $p->level_group == 'ALL' ? 'selected' : '' ?>>ทั้งหมด</option>
-                                                                <option value="Junior" <?= $p->level_group == 'Junior' ? 'selected' : '' ?>>ม.ต้น</option>
-                                                                <option value="Senior" <?= $p->level_group == 'Senior' ? 'selected' : '' ?>>ม.ปลาย</option>
-                                                            </select>
-                                                        </div>
-                                                    </td>
-                                                    <td class="text-center align-middle pe-3">
-                                                        <button class="btn btn-sm btn-icon text-danger btn-delete-period">
-                                                            <i class="bx bx-trash"></i>
-                                                        </button>
-                                                    </td>
-                                                </tr>
-                                                <?php endforeach; ?>
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                    <div class="text-end mt-3">
-                                        <small class="text-muted"><i class='bx bx-info-circle me-1'></i> ข้อมูลจะถูกบันทึกโดยอัตโนมัติเมื่อมีการเปลี่ยนแปลง</small>
-                                    </div>
+                                    <h6 class="fw-bold mb-1 text-dark">ตั้งค่าคาบเรียนและเวลา</h6>
+                                    <p class="text-muted small mb-0">กำหนดเวลาและคาบพักกลางวัน</p>
                                 </div>
                             </div>
+                        </div>
+
+                        <!-- 📚 Manage Subjects Card -->
+                        <div class="col-md-4 col-lg-3">
+                            <div class="card card-setting-step1 h-100 shadow-none" data-bs-toggle="modal" data-bs-target="#modalManageSubjects">
+                                <div class="card-body text-center py-4">
+                                    <div class="avatar avatar-lg bg-label-danger mx-auto mb-3">
+                                        <i class="bx bx-book fs-2"></i>
+                                    </div>
+                                    <h6 class="fw-bold mb-1 text-dark">จัดการรายวิชา</h6>
+                                    <p class="text-muted small mb-0">ดึงข้อมูลวิชาจากระบบทะเบียน</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 🏛️ Master Slots Card -->
+                        <div class="col-md-4 col-lg-3">
+                            <div class="card card-setting-step1 h-100 shadow-none" data-bs-toggle="modal" data-bs-target="#modalMasterSlots">
+                                <div class="card-body text-center py-4">
+                                    <div class="avatar avatar-lg bg-label-warning mx-auto mb-3">
+                                        <i class="bx bx-calendar-star fs-2"></i>
+                                    </div>
+                                    <h6 class="fw-bold mb-1 text-dark">กิจกรรมส่วนกลาง</h6>
+                                    <p class="text-muted small mb-0">ล็อคกิจกรรม (ชุมนุม, โฮมรูม)</p>
+                                </div>
+                            </div>
+                        </div>
+
+
+                    </div>
+
+                    <!-- 💡 Instruction Alert -->
+                    <div class="alert alert-info d-flex align-items-center mt-5 mb-0 border-0 shadow-sm rounded-4">
+                        <i class='bx bx-bulb fs-3 me-2 text-info'></i>
+                        <div>
+                            <h6 class="alert-heading fw-bold mb-1">คำแนะนำการตั้งค่าพื้นฐาน</h6>
+                            <p class="mb-0 small opacity-75">การเปลี่ยนแปลงข้อมูลในส่วนนี้ จะส่งผลให้ระบบ AI ต้องทำการจัดตารางสอนใหม่ทั้งหมด (ยกเว้นวิชาที่ถูกล็อคไว้) เพื่อให้แน่ใจว่าเงื่อนไขเวลาถูกต้องที่สุดครับ</p>
                         </div>
                     </div>
                 </div>
@@ -842,7 +856,7 @@
                         <label class="form-label fw-bold small">ชื่อวิชา</label>
                         <input type="text" class="form-control" name="SubjectName" placeholder="เช่น สังคมศึกษา" required>
                     </div>
-                    <button type="submit" class="btn btn-primary w-100 rounded-pill py-2 fw-bold">บันทึกวิชาใหม่</button>
+                    <button type="submit" class="btn btn-success w-100 rounded-pill py-2 fw-bold" style="background: #15a362 !important; border: none;">บันทึกวิชาใหม่</button>
                 </form>
             </div>
         </div>
@@ -864,6 +878,378 @@
     font-size: 0.8rem;
     margin-right: 8px;
 }
+</style>
+
+<!-- 🛠️ MODALS FOR STEP 1: BASIC SETTINGS -->
+
+<!-- 📅 Modal Setting Days -->
+<div class="modal fade" id="modalSettingDays" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header border-bottom p-3">
+                <h5 class="modal-title fw-bold mb-0"><i class="bx bx-calendar me-1 text-success"></i> วันที่เปิดเรียน</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div class="list-group list-group-flush">
+                    <?php foreach($days as $day): ?>
+                    <div class="list-group-item d-flex justify-content-between align-items-center py-3 px-4">
+                        <div class="d-flex align-items-center">
+                            <div class="avatar avatar-sm me-3">
+                                <span class="avatar-initial rounded-pill bg-label-<?= ($day->day_key == 'SAT' || $day->day_key == 'SUN') ? 'danger' : 'success' ?>">
+                                    <?= mb_substr($day->day_name, 0, 1) ?>
+                                </span>
+                            </div>
+                            <span class="fw-bold"><?= $day->day_name ?></span>
+                        </div>
+                        <div class="form-check form-switch mb-0">
+                            <input class="form-check-input day-toggle" type="checkbox" 
+                                data-id="<?= $day->day_id ?>" 
+                                <?= $day->is_active ? 'checked' : '' ?>>
+                        </div>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+                <div class="p-4 bg-light border-top">
+                    <div class="alert alert-warning d-flex align-items-center mb-0 border-0 shadow-none p-2">
+                        <i class='bx bx-error-circle me-2'></i>
+                        <div class="small">การเปิด/ปิดวันเรียน จะส่งผลต่อการสุ่มตาราง</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ⏰ Modal Setting Periods -->
+<div class="modal fade" id="modalSettingPeriods" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header border-bottom p-3">
+                <div class="d-flex align-items-center">
+                    <h5 class="modal-title fw-bold mb-0"><i class="bx bx-time me-1 text-primary"></i> คาบเรียนและเวลา</h5>
+                    <button class="btn btn-sm btn-primary rounded-pill ms-3" id="btnAddPeriod">
+                        <i class="bx bx-plus me-1"></i> เพิ่มคาบ
+                    </button>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="ps-4 py-3">คาบที่</th>
+                                <th class="py-3">ช่วงเวลา (เริ่ม - จบ)</th>
+                                <th class="py-3">ประเภท</th>
+                                <th class="text-center py-3 pe-4">ลบ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="periodsTableBody">
+                            <?php foreach($periods as $p): ?>
+                            <tr class="period-row" data-id="<?= $p->period_id ?>">
+                                <td class="ps-4 align-middle fw-bold">คาบ <?= $p->period_number ?></td>
+                                <td class="align-middle">
+                                    <div class="input-group input-group-merge input-group-sm" style="width: 200px;">
+                                        <input type="time" class="form-control period-time-input" data-field="start_time" value="<?= substr($p->start_time, 0, 5) ?>">
+                                        <span class="input-group-text">-</span>
+                                        <input type="time" class="form-control period-time-input" data-field="end_time" value="<?= substr($p->end_time, 0, 5) ?>">
+                                    </div>
+                                </td>
+                                <td class="align-middle">
+                                    <div class="d-flex flex-column gap-1">
+                                        <select class="form-select form-select-sm period-type-select" style="width: 120px;">
+                                            <option value="0" <?= !$p->is_break ? 'selected' : '' ?>>คาบเรียน</option>
+                                            <option value="1" <?= $p->is_break ? 'selected' : '' ?>>พักกลางวัน</option>
+                                        </select>
+                                        <select class="form-select form-select-sm period-level-select" style="width: 120px; font-size: 0.7rem;">
+                                            <option value="ALL" <?= $p->level_group == 'ALL' ? 'selected' : '' ?>>ทั้งหมด</option>
+                                            <option value="Junior" <?= $p->level_group == 'Junior' ? 'selected' : '' ?>>ม.ต้น</option>
+                                            <option value="Senior" <?= $p->level_group == 'Senior' ? 'selected' : '' ?>>ม.ปลาย</option>
+                                        </select>
+                                    </div>
+                                </td>
+                                <td class="text-center align-middle pe-4">
+                                    <button class="btn btn-sm btn-icon btn-label-danger rounded-pill btn-delete-period">
+                                        <i class="bx bx-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer bg-light p-3 border-top">
+                <small class="text-muted w-100"><i class='bx bx-info-circle me-1'></i> ข้อมูลเวลาและประเภทคาบจะถูกบันทึกอัตโนมัติเมื่อมีการแก้ไขครับ</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 📚 Modal Manage Subjects -->
+<div class="modal fade" id="modalManageSubjects" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header border-bottom p-3">
+                <div class="d-flex align-items-center">
+                    <h5 class="modal-title fw-bold mb-0"><i class="bx bx-book me-1 text-danger"></i> จัดการรายวิชาตารางสอน</h5>
+                    <div class="ms-3">
+                        <button class="btn btn-sm btn-primary rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#modalImportSubject">
+                            <i class="bx bx-download me-1"></i> นำเข้าวิชา
+                        </button>
+                        <button class="btn btn-sm btn-label-primary rounded-pill px-3 ms-2" data-bs-toggle="modal" data-bs-target="#modalQuickAddSubject">
+                            <i class="bx bx-plus me-1"></i> เพิ่มเอง
+                        </button>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div class="table-responsive" style="max-height: 450px;">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light sticky-top">
+                            <tr>
+                                <th class="ps-4 py-3">รหัสวิชา</th>
+                                <th class="py-3">ชื่อรายวิชา</th>
+                                <th class="text-center py-3 pe-4">จัดการ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="timetableSubjectsBody">
+                            <?php if(empty($timetable_subjects)): ?>
+                            <tr>
+                                <td colspan="3" class="text-center py-5">
+                                    <div class="text-muted small">ยังไม่มีข้อมูลวิชาในระบบตารางสอน</div>
+                                </td>
+                            </tr>
+                            <?php else: ?>
+                                <?php foreach($timetable_subjects as $ts): ?>
+                                <tr>
+                                    <td class="ps-4"><span class="badge bg-label-dark"><?= $ts->tsub_code ?: '-' ?></span></td>
+                                    <td class="fw-bold text-dark"><?= $ts->tsub_name ?></td>
+                                    <td class="text-center pe-4">
+                                        <button class="btn btn-icon btn-sm text-danger btn-delete-tsub" data-id="<?= $ts->tsub_id ?>">
+                                            <i class="bx bx-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 📥 Modal Import Subject (Secondary Level) -->
+<div class="modal fade" id="modalImportSubject" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header border-bottom p-3">
+                <h5 class="modal-title fw-bold mb-0"><i class="bx bx-download me-1 text-primary"></i> นำเข้าวิชาจากระบบทะเบียน (<?= $term ?>/<?= $year ?>)</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="formImportSubjectsWizard">
+                    <?= csrf_field() ?>
+                    <input type="hidden" name="term" value="<?= $term ?>">
+                    <input type="hidden" name="year" value="<?= $year ?>">
+                    
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-8">
+                            <div class="input-group input-group-merge shadow-none">
+                                <span class="input-group-text border-0 bg-light rounded-start-pill ps-3"><i class="bx bx-search text-muted"></i></span>
+                                <input type="text" class="form-control border-0 bg-light rounded-end-pill py-2" id="searchSubjectImport" placeholder="ค้นหารหัสวิชา หรือ ชื่อวิชา...">
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <button type="button" class="btn btn-label-secondary rounded-pill w-100" id="btnSelectAllSubjects">เลือกทั้งหมด</button>
+                        </div>
+                    </div>
+
+                    <div class="row g-2 overflow-auto scroll-custom" style="max-height: 450px;" id="subjectImportList">
+                        <?php 
+                        $existingCodes = array_filter(array_column($timetable_subjects, 'tsub_code'));
+                        foreach($academic_subjects as $as): 
+                            $isJunior = in_array($as->SubjectClass, ['1', '2', '3']);
+                            $isSenior = in_array($as->SubjectClass, ['4', '5', '6']);
+                            $levelColor = $isJunior ? 'success' : ($isSenior ? 'warning' : 'primary');
+                            $isImported = in_array($as->SubjectCode, $existingCodes);
+                        ?>
+                        <div class="col-md-6 subject-import-item <?= $isImported ? 'is-imported' : '' ?>" data-search="<?= strtolower($as->SubjectCode.' '.$as->SubjectName) ?>">
+                            <div class="subject-import-card border rounded-3 overflow-hidden h-100 shadow-sm-hover transition-all <?= $isImported ? 'bg-light opacity-75' : '' ?>">
+                                <label class="d-flex align-items-stretch w-100 <?= $isImported ? '' : 'cursor-pointer' ?> mb-0" for="<?= $isImported ? '' : 'as_wizard_'.$as->SubjectID ?>">
+                                    <div class="d-flex align-items-center justify-content-center bg-checkbox-area border-end">
+                                        <?php if($isImported): ?>
+                                            <i class="bx bx-check-circle text-success fs-4"></i>
+                                        <?php else: ?>
+                                            <input class="form-check-input check-subject-wizard" type="checkbox" name="subject_ids[]" value="<?= $as->SubjectID ?>" id="as_wizard_<?= $as->SubjectID ?>">
+                                        <?php endif; ?>
+                                    </div>
+                                    <div class="p-3 flex-grow-1">
+                                        <div class="d-flex justify-content-between align-items-start mb-1">
+                                            <span class="badge bg-label-dark font-monospace small px-2 py-1"><?= $as->SubjectCode ?></span>
+                                            <?php if($isImported): ?>
+                                                <span class="badge bg-success rounded-pill" style="font-size: 0.6rem;">นำเข้าแล้ว</span>
+                                            <?php else: ?>
+                                                <span class="badge bg-label-<?= $levelColor ?> rounded-pill" style="font-size: 0.6rem;">ม.<?= $as->SubjectClass ?></span>
+                                            <?php endif; ?>
+                                        </div>
+                                        <div class="fw-bold text-dark text-truncate mb-1" style="max-width: 200px;" title="<?= $as->SubjectName ?>"><?= $as->SubjectName ?></div>
+                                        <div class="d-flex gap-2">
+                                            <small class="text-muted" style="font-size: 0.7rem;"><i class='bx bx-book-content me-1'></i><?= $as->SubjectType ?></small>
+                                            <small class="text-muted" style="font-size: 0.7rem;"><i class='bx bx-star me-1'></i><?= $as->SubjectUnit ?> นก.</small>
+                                        </div>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                        <?php endforeach; ?>
+                    </div>
+                    
+                    <div class="mt-4 pt-3 border-top d-flex justify-content-between align-items-center">
+                        <div class="text-muted small">
+                            พบวิชาทั้งหมด <span class="fw-bold text-primary"><?= count($academic_subjects) ?></span> รายการ
+                        </div>
+                        <div>
+                            <button type="button" class="btn btn-label-secondary rounded-pill px-4 me-2" data-bs-dismiss="modal">ยกเลิก</button>
+                            <button type="submit" class="btn btn-success rounded-pill px-5 shadow-sm fw-bold" style="background: #15a362 !important; border: none;">นำเข้าที่เลือก</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 🏛️ Modal Master Slots (Grid View) -->
+<div class="modal fade" id="modalMasterSlots" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-fullscreen-sm-down" style="max-width: 95%;">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header border-bottom p-3">
+                <div class="d-flex align-items-center">
+                    <h5 class="modal-title fw-bold mb-0"><i class="bx bx-calendar-star me-1 text-warning"></i> ตั้งค่ากิจกรรมส่วนกลาง (Master Slots)</h5>
+                    <div class="btn-group btn-group-sm rounded-pill ms-4 border shadow-none" role="group">
+                        <input type="radio" class="btn-check" name="level_filter" id="filter_all" value="ALL" checked>
+                        <label class="btn btn-outline-primary px-3" for="filter_all">ทั้งหมด</label>
+                        <input type="radio" class="btn-check" name="level_filter" id="filter_junior" value="Junior">
+                        <label class="btn btn-outline-primary px-3" for="filter_junior">ม.ต้น</label>
+                        <input type="radio" class="btn-check" name="level_filter" id="filter_senior" value="Senior">
+                        <label class="btn btn-outline-primary px-3" for="filter_senior">ม.ปลาย</label>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0 overflow-auto" style="max-height: 80vh;">
+                <div class="table-responsive">
+                    <table class="table table-bordered m-0 border-0 text-center">
+                        <thead>
+                            <tr>
+                                <th class="bg-light fw-bold py-3" style="min-width: 100px;">วัน / คาบ</th>
+                                <?php foreach($periods as $p): ?>
+                                <th class="bg-light p-0 py-2" style="min-width: 120px;">
+                                    <div class="small fw-bold">คาบ <?= $p->period_number ?></div>
+                                    <div class="text-muted" style="font-size: 0.65rem;"><?= date('H:i', strtotime($p->start_time)) ?> - <?= date('H:i', strtotime($p->end_time)) ?></div>
+                                </th>
+                                <?php endforeach; ?>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php 
+                            $dayMapShort = [
+                                'MON' => ['จันทร์', '#ffebee', '#f44336'],
+                                'TUE' => ['อังคาร', '#fce4ec', '#e91e63'],
+                                'WED' => ['พุธ', '#e8f5e9', '#4caf50'],
+                                'THU' => ['พฤหัสบดี', '#fff3e0', '#ff9800'],
+                                'FRI' => ['ศุกร์', '#e3f2fd', '#2196f3'],
+                                'SAT' => ['เสาร์', '#f3e5f5', '#9c27b0'],
+                                'SUN' => ['อาทิตย์', '#fffde7', '#fbc02d']
+                            ];
+                            foreach($days as $day): 
+                                if(!$day->is_active) continue;
+                                $colors = $dayMapShort[$day->day_key] ?? ['#f8f9fa', '#6c757d'];
+                            ?>
+                            <tr>
+                                <td class="fw-bold" style="background: <?= $colors[0] ?>; color: <?= $colors[1] ?>; vertical-align: middle;">
+                                    <?= $day->day_name ?>
+                                </td>
+                                <?php foreach($periods as $p): ?>
+                                <td class="p-0 position-relative">
+                                    <div id="slot-<?= $day->day_key ?>-<?= $p->period_number ?>" 
+                                         class="slot-master d-flex flex-column align-items-center justify-content-center p-2"
+                                         style="height: 85px; min-width: 120px;"
+                                         onclick="editMasterSlot('<?= $day->day_key ?>', '<?= $p->period_number ?>', '<?= $day->day_name ?>')">
+                                        <div class="activity-display w-100">
+                                            <i class="bx bx-plus text-muted opacity-25 fs-4"></i>
+                                        </div>
+                                    </div>
+                                </td>
+                                <?php endforeach; ?>
+                            </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer bg-light p-3 border-top justify-content-start">
+                <div class="d-flex gap-3 small">
+                    <span class="d-flex align-items-center"><i class="bx bxs-square text-primary me-1"></i> ทุกระดับชั้น</span>
+                    <span class="d-flex align-items-center"><i class="bx bxs-square text-success me-1"></i> ม.ต้น</span>
+                    <span class="d-flex align-items-center"><i class="bx bxs-square text-warning me-1"></i> ม.ปลาย</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 📋 Modal Edit Master Slot Detail -->
+<div class="modal fade" id="modalEditMasterSlot" tabindex="-1" aria-hidden="true" style="z-index: 10000;">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <form class="modal-content border-0 shadow-lg rounded-4" id="formMasterSlotWizard">
+            <div class="modal-header bg-primary py-3">
+                <h5 class="modal-title fw-bold text-white mb-0">กิจกรรมหลัก</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <input type="hidden" id="modal_ms_day" name="day">
+                <input type="hidden" id="modal_ms_period" name="period">
+                
+                <div class="text-center mb-3">
+                    <span class="badge bg-label-primary fs-7 mb-1" id="modal_ms_info_day"></span>
+                    <h6 class="fw-bold mb-0" id="modal_ms_info_period"></h6>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold small text-uppercase">ระดับชั้น</label>
+                    <select class="form-select rounded-pill" name="level_group" id="modal_ms_level_group">
+                        <option value="ALL">ทุกระดับชั้น (ALL)</option>
+                        <option value="Junior">มัธยมต้น (Junior)</option>
+                        <option value="Senior">มัธยมปลาย (Senior)</option>
+                    </select>
+                </div>
+
+                <div class="mb-0">
+                    <label class="form-label fw-bold small text-uppercase">ชื่อกิจกรรม</label>
+                    <input type="text" class="form-control rounded-pill" name="subject_name" id="modal_ms_subject_name" placeholder="เช่น ชุมนุม, ลูกเสือ" autocomplete="off">
+                    <div class="form-text small mt-1 text-danger italic">* เว้นว่างเพื่อลบออก</div>
+                </div>
+            </div>
+            <div class="modal-footer border-0 pt-0 p-4">
+                <button type="button" class="btn btn-label-secondary rounded-pill px-4" data-bs-dismiss="modal">ยกเลิก</button>
+                <button type="submit" class="btn btn-primary rounded-pill px-4 shadow">บันทึก</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    .slot-master { transition: all 0.2s ease; cursor: pointer; border: 1px dashed transparent; }
+    .slot-master:hover { background: rgba(21, 163, 98, 0.05); border-color: #15a362; }
+    .slot-filled { background: #f0faf5; border: 2px solid #15a362 !important; border-radius: 8px; }
+    .slot-filled .activity-name { color: #15a362; font-weight: 700; font-size: 0.8rem; }
+    .slot-filled .level-badge { position: absolute; bottom: 4px; right: 4px; font-size: 0.55rem; padding: 2px 6px; }
 </style>
 
 <div class="modal fade" id="modalAIProcessing" data-bs-backdrop="static" tabindex="-1">
@@ -974,6 +1360,71 @@ window.refreshAssignmentList = function() {
 };
 
 $(document).ready(function() {
+    // --- 🏛️ Master Slots Management ---
+    const masterData = <?= json_encode($master_slots) ?>;
+    let currentMSFilter = 'ALL';
+
+    window.renderMasterGrid = function() {
+        // Reset all slots
+        $('.slot-master').removeClass('slot-filled').css('border-color', 'transparent');
+        $('.activity-display').html('<i class="bx bx-plus text-muted opacity-25 fs-4"></i>');
+
+        masterData.forEach(item => {
+            const show = (currentMSFilter === 'ALL') || (item.level_group === 'ALL') || (item.level_group === currentMSFilter);
+            if (show) {
+                const $slot = $(`#slot-${item.day}-${item.period}`);
+                $slot.addClass('slot-filled');
+                let badgeClass = 'bg-label-primary';
+                if(item.level_group === 'Junior') badgeClass = 'bg-label-success';
+                if(item.level_group === 'Senior') badgeClass = 'bg-label-warning';
+
+                $slot.find('.activity-display').html(`
+                    <div class="activity-name text-truncate px-1">${item.subject_name}</div>
+                    <span class="badge ${badgeClass} level-badge rounded-pill">${item.level_group}</span>
+                `);
+            }
+        });
+    };
+
+    window.editMasterSlot = function(day, period, dayName) {
+        $('#modal_ms_day').val(day);
+        $('#modal_ms_period').val(period);
+        $('#modal_ms_info_day').text(dayName);
+        $('#modal_ms_info_period').text('คาบที่ ' + period);
+
+        const existing = masterData.find(m => m.day === day && m.period === period && m.level_group === currentMSFilter);
+        $('#modal_ms_subject_name').val(existing ? existing.subject_name : '');
+        $('#modal_ms_level_group').val(currentMSFilter);
+        $('#modalEditMasterSlot').modal('show');
+    };
+
+    renderMasterGrid();
+
+    $('input[name="level_filter"]').on('change', function() {
+        currentMSFilter = $(this).val();
+        renderMasterGrid();
+    });
+
+    $('#formMasterSlotWizard').on('submit', function(e) {
+        e.preventDefault();
+        const $btn = $(this).find('button[type="submit"]');
+        $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span>');
+
+        $.post('<?= base_url("admin/academic/timetable/save-master-slot") ?>', $(this).serialize(), function(res) {
+            if(res.status === 'success') {
+                Swal.fire({ icon: 'success', title: 'สำเร็จ', timer: 1000, showConfirmButton: false }).then(() => location.reload());
+            } else {
+                Swal.fire('ผิดพลาด', res.message, 'error');
+                $btn.prop('disabled', false).text('บันทึก');
+            }
+        });
+    });
+
+    // --- ➕ Quick Add Period Link ---
+    $('#btnQuickAddPeriodMenu').on('click', function() {
+        $('#modalSettingPeriods').modal('show');
+        setTimeout(() => $('#btnAddPeriod').click(), 300);
+    });
     // 🚀 Initialize UI state based on persisted step
     updateWizard();
 
@@ -1015,6 +1466,69 @@ $(document).ready(function() {
         $('#formAddAssignmentWizard').find('select').val(null).trigger('change');
         $('#edit_ids').val('');
         initSelect2();
+    });
+
+    // --- 📚 Subject Management Logic ---
+    $('#searchSubjectImport').on('keyup', function() {
+        const value = $(this).val().toLowerCase();
+        $('.subject-import-item').filter(function() {
+            $(this).toggle($(this).data('search').indexOf(value) > -1)
+        });
+    });
+
+    $('#btnSelectAllSubjects').on('click', function() {
+        const allChecked = $('.check-subject-wizard:checked').length === $('.check-subject-wizard:not(:disabled)').length;
+        const targetState = !allChecked;
+        
+        $('.check-subject-wizard').prop('checked', targetState);
+        $('.subject-import-card').each(function() {
+            if ($(this).find('.check-subject-wizard').length > 0) {
+                $(this).toggleClass('is-selected', targetState);
+            }
+        });
+        $(this).text(targetState ? 'ยกเลิกการเลือก' : 'เลือกทั้งหมด');
+    });
+
+    $(document).on('change', '.check-subject-wizard', function() {
+        $(this).closest('.subject-import-card').toggleClass('is-selected', $(this).is(':checked'));
+    });
+
+    $('#formImportSubjectsWizard').on('submit', function(e) {
+        e.preventDefault();
+        const $btn = $(this).find('button[type="submit"]');
+        $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span> นำเข้า...');
+
+        $.post('<?= base_url("admin/academic/timetable/import-subjects") ?>', $(this).serialize(), function(res) {
+            if(res.status === 'success') {
+                Swal.fire({ icon: 'success', title: 'นำเข้าสำเร็จ', timer: 1000, showConfirmButton: false }).then(() => location.reload());
+            } else {
+                Swal.fire('ผิดพลาด', res.message, 'error');
+                $btn.prop('disabled', false).text('นำเข้าข้อมูล');
+            }
+        });
+    });
+
+    $(document).on('click', '.btn-delete-tsub', function() {
+        const id = $(this).data('id');
+        Swal.fire({
+            title: 'ยืนยันการลบวิชา?',
+            text: "วิชานี้จะถูกลบออกจากระบบตารางสอน (ไม่มีผลกับระบบทะเบียน)",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'ลบข้อมูล',
+            cancelButtonText: 'ยกเลิก',
+            customClass: { confirmButton: 'btn btn-danger', cancelButton: 'btn btn-label-secondary' }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.post('<?= base_url("admin/academic/timetable/delete-subject") ?>', { id: id, '<?= csrf_token() ?>': '<?= csrf_hash() ?>' }, function(res) {
+                    if(res.status === 'success') {
+                        location.reload();
+                    } else {
+                        Swal.fire('ผิดพลาด', res.message, 'error');
+                    }
+                });
+            }
+        });
     });
 
     // --- 📅 Year Selection Logic ---
@@ -1082,7 +1596,7 @@ $(document).ready(function() {
             // Append row dynamically
             const newRow = `
                 <tr class="period-row" data-id="${res.period_id}">
-                    <td class="ps-3 align-middle fw-bold">คาบ ${nextPeriod}</td>
+                    <td class="ps-4 align-middle fw-bold">คาบ ${nextPeriod}</td>
                     <td class="align-middle">
                         <div class="input-group input-group-merge input-group-sm" style="width: 200px;">
                             <input type="time" class="form-control period-time-input" data-field="start_time" value="08:00">
@@ -1091,11 +1605,11 @@ $(document).ready(function() {
                         </div>
                     </td>
                     <td class="align-middle">
-                        <select class="form-select form-select-sm period-type-select" style="width: 120px;">
-                            <option value="0" selected>คาบเรียน</option>
-                            <option value="1">พักกลางวัน</option>
-                        </select>
-                        <div class="mt-1">
+                        <div class="d-flex flex-column gap-1">
+                            <select class="form-select form-select-sm period-type-select" style="width: 120px;">
+                                <option value="0" selected>คาบเรียน</option>
+                                <option value="1">พักกลางวัน</option>
+                            </select>
                             <select class="form-select form-select-sm period-level-select" style="width: 120px; font-size: 0.7rem;">
                                 <option value="ALL" selected>ทั้งหมด</option>
                                 <option value="Junior">ม.ต้น</option>
@@ -1103,8 +1617,8 @@ $(document).ready(function() {
                             </select>
                         </div>
                     </td>
-                    <td class="text-center align-middle pe-3">
-                        <button class="btn btn-sm btn-icon text-danger btn-delete-period">
+                    <td class="text-center align-middle pe-4">
+                        <button class="btn btn-sm btn-icon btn-label-danger rounded-pill btn-delete-period">
                             <i class="bx bx-trash"></i>
                         </button>
                     </td>
@@ -1240,18 +1754,51 @@ $(document).ready(function() {
     updateSplitOptions(); // Initial call
 
     // 🚀 Suggested Teachers Logic
+    const $teacherSelect = $('#modal_teacher_id');
+    const originalTeacherOptions = $teacherSelect.html();
+
     $('#modal_subject_id').on('change', function(e, data) {
-        // Check if it's a manual change (default to true if not specified)
         const isManual = (data && data.manual !== undefined) ? data.manual : true;
         if (!isManual) return;
         
         const subjectId = $(this).val();
-        if (!subjectId) return;
-        const $teacherSelect = $('#modal_teacher_id');
+        if (!subjectId) {
+            $teacherSelect.html(originalTeacherOptions).trigger('change');
+            return;
+        }
         
         $.get('<?= base_url('admin/academic/timetable/get-suggested-teachers') ?>', { subject_id: subjectId }, function(suggested) {
             if (suggested && suggested.length > 0) {
-                const suggestedIds = suggested.map(s => s.pers_id);
+                const suggestedIds = suggested.map(s => s.pers_id.toString());
+                const $options = $(originalTeacherOptions);
+                
+                const suggestedOpts = [];
+                const otherOpts = [];
+
+                $options.each(function() {
+                    const val = $(this).val();
+                    if (val) {
+                        if (suggestedIds.includes(val.toString())) {
+                            suggestedOpts.push($(this));
+                        } else {
+                            otherOpts.push($(this));
+                        }
+                    }
+                });
+
+                $teacherSelect.empty();
+                if (suggestedOpts.length > 0) {
+                    const $group = $('<optgroup label="ครูที่สอนวิชานี้ (ตามแผนการสอน)"></optgroup>');
+                    suggestedOpts.forEach(opt => $group.append(opt));
+                    $teacherSelect.append($group);
+                }
+
+                if (otherOpts.length > 0) {
+                    const $otherGroup = $('<optgroup label="ครูท่านอื่นๆ"></optgroup>');
+                    otherOpts.forEach(opt => $otherGroup.append(opt));
+                    $teacherSelect.append($otherGroup);
+                }
+                
                 $teacherSelect.val(suggestedIds).trigger('change');
                 
                 Swal.fire({
@@ -1259,6 +1806,8 @@ $(document).ready(function() {
                     title: 'แนะนำครูผู้สอนให้โดยอัตโนมัติ ' + suggested.length + ' ท่าน',
                     showConfirmButton: false, timer: 3000
                 });
+            } else {
+                $teacherSelect.html(originalTeacherOptions).trigger('change');
             }
         });
     });
@@ -1275,6 +1824,15 @@ $(document).ready(function() {
             data: $(this).serialize(),
             success: function(res) {
                 if (res.status === 'success') {
+                    // Context 1: Manage Subjects Modal in Step 1
+                    if ($('#modalManageSubjects').is(':visible')) {
+                        Swal.fire({ icon: 'success', title: 'เพิ่มวิชาสำเร็จ!', timer: 800, showConfirmButton: false }).then(() => {
+                            location.reload();
+                        });
+                        return;
+                    }
+
+                    // Context 2: Assignment Form in Step 2
                     const displayName = (res.data.tsub_code ? '[' + res.data.tsub_code + '] ' : '') + res.data.tsub_name;
                     const newOption = new Option(displayName, res.data.tsub_id, true, true);
                     $('#modal_subject_id').append(newOption).trigger('change');

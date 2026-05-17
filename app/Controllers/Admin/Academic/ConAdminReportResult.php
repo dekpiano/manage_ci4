@@ -1736,11 +1736,14 @@ class ConAdminReportResult extends BaseController
                 skjacth_admission.tb_recruitstudent.recruit_category,
                 skjacth_admission.tb_recruitstudent.recruit_status,
                 skjacth_admission.tb_recruitstudent.recruit_statusSurrender,
+                skjacth_admission.tb_recruitstudent.recruit_statusFinal,
                 skjacth_admission.tb_recruitstudent.recruit_idCard,
                 skjacth_personnel.tb_students.stu_UpdateConfirm
                 ')
         ->join('skjacth_personnel.tb_students','skjacth_admission.tb_recruitstudent.recruit_idCard = skjacth_personnel.tb_students.stu_iden','LEFT')
         ->where('tb_recruitstudent.recruit_year',$keyYear)        
+        ->where('tb_recruitstudent.recruit_statusFinal IS NOT NULL')
+        ->where('tb_recruitstudent.recruit_statusSurrender IS NOT NULL')
         ->get()->getResult();
 
         foreach($SelDataStudent as $record){
@@ -1752,6 +1755,7 @@ class ConAdminReportResult extends BaseController
                 "recruit_tpyeRoom" => $record->recruit_tpyeRoom,
                 "recruit_category" => $record->recruit_category,
                 "recruit_status" => $record->recruit_status,
+                "recruit_statusFinal" => $record->recruit_statusFinal,
                 "stu_UpdateConfirm" => $record->stu_UpdateConfirm,
                 "recruit_statusSurrender" => $record->recruit_statusSurrender,
                 "recruit_idCard" => $record->recruit_idCard
@@ -1769,14 +1773,93 @@ class ConAdminReportResult extends BaseController
         $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
         $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();
 
-        $CkeckIDEN = $this->DBadmission->table('tb_recruitstudent')->select('recruit_idCard,recruit_regLevel,recruit_img')->where('recruit_id',$IDStu)->get()->getRow();
+        $CkeckIDEN = $this->DBadmission->table('tb_recruitstudent')->select('*')->where('recruit_id',$IDStu)->get()->getRow();
+        $data['recruitData'] = $CkeckIDEN;
         $data['recruit_regLevel'] =  !empty($CkeckIDEN) ? $CkeckIDEN->recruit_regLevel : null;
         $data['recruit_img'] =  !empty($CkeckIDEN) ? $CkeckIDEN->recruit_img : null;
+        $data['recruit_statusFinal'] =  !empty($CkeckIDEN) ? $CkeckIDEN->recruit_statusFinal : null;
+        $data['recruit_statusSurrender'] =  !empty($CkeckIDEN) ? $CkeckIDEN->recruit_statusSurrender : null;
+        $data['recruit_category'] =  !empty($CkeckIDEN) ? $CkeckIDEN->recruit_category : null;
+        $data['recruit_tpyeRoom'] =  !empty($CkeckIDEN) ? $CkeckIDEN->recruit_tpyeRoom : null;
         $data['DataStudent'] = !empty($CkeckIDEN->recruit_idCard) ? $this->DBpersonnel->table('tb_students')->where('stu_iden',$CkeckIDEN->recruit_idCard)->get()->getRow() : null;
 
-        //echo '<pre>'; print_r($data['DataStudent']); exit();
+        $data['recruitLabels'] = [
+            'recruit_id' => 'ID ผู้สมัคร',
+            'recruit_regLevel' => 'ชั้นที่สมัคร',
+            'recruit_prefix' => 'คำนำหน้า',
+            'recruit_firstName' => 'ชื่อ',
+            'recruit_lastName' => 'นามสกุล',
+            'recruit_idCard' => 'เลขประจำตัวประชาชน',
+            'recruit_birthday' => 'วันเกิด',
+            'recruit_sex' => 'เพศ',
+            'recruit_religion' => 'ศาสนา',
+            'recruit_nationality' => 'สัญชาติ',
+            'recruit_race' => 'เชื้อชาติ',
+            'recruit_phone' => 'เบอร์โทรศัพท์',
+            'recruit_email' => 'อีเมล',
+            'recruit_schoolName' => 'โรงเรียนเดิม',
+            'recruit_schoolProvince' => 'จังหวัดโรงเรียนเดิม',
+            'recruit_grade' => 'เกรดเฉลี่ย (GPA)',
+            'recruit_category' => 'รอบที่สมัคร/ประเภทโควตา',
+            'recruit_tpyeRoom' => 'สายการเรียน/ประเภทห้องเรียน',
+            'recruit_typeRoomBackup' => 'สายการเรียนสำรอง',
+            'recruit_img' => 'ชื่อไฟล์รูปภาพ',
+            'recruit_status' => 'สถานะการสมัคร',
+            'recruit_statusFinal' => 'ผลการตัดสินสุดท้าย',
+            'recruit_statusSurrender' => 'สถานะการมอบตัว',
+            'recruit_year' => 'ปีการศึกษา',
+            'recruit_regNum' => 'เลขที่สมัคร/เลขที่นั่งสอบ',
+            
+            // ข้อมูลบิดา
+            'recruit_fPrefix' => 'คำนำหน้าบิดา',
+            'recruit_fFirstName' => 'ชื่อบิดา',
+            'recruit_fLastName' => 'นามสกุลบิดา',
+            'recruit_fPhone' => 'เบอร์โทรศัพท์บิดา',
+            'recruit_fIdCard' => 'เลขบัตรประชาชนบิดา',
+            'recruit_fJob' => 'อาชีพบิดา',
+            'recruit_fSalary' => 'รายได้บิดา',
+            'recruit_fStatus' => 'สถานภาพบิดา',
+            
+            // ข้อมูลมารดา
+            'recruit_mPrefix' => 'คำนำหน้ามารดา',
+            'recruit_mFirstName' => 'ชื่อมารดา',
+            'recruit_mLastName' => 'นามสกุลมารดา',
+            'recruit_mPhone' => 'เบอร์โทรศัพท์มารดา',
+            'recruit_mIdCard' => 'เลขบัตรประชาชนมารดา',
+            'recruit_mJob' => 'อาชีพมารดา',
+            'recruit_mSalary' => 'รายได้มารดา',
+            'recruit_mStatus' => 'สถานภาพมารดา',
+            
+            // ข้อมูลผู้ปกครอง
+            'recruit_pPrefix' => 'คำนำหน้าผู้ปกครอง',
+            'recruit_pFirstName' => 'ชื่อผู้ปกครอง',
+            'recruit_pLastName' => 'นามสกุลผู้ปกครอง',
+            'recruit_pPhone' => 'เบอร์โทรศัพท์ผู้ปกครอง',
+            'recruit_pIdCard' => 'เลขบัตรประชาชนผู้ปกครอง',
+            'recruit_pRelation' => 'ความสัมพันธ์ผู้ปกครอง',
+            'recruit_pJob' => 'อาชีพผู้ปกครอง',
+            'recruit_pSalary' => 'รายได้ผู้ปกครอง',
+            
+            // ที่อยู่
+            'recruit_oldStudent' => 'สถานะนักเรียนเก่า',
+            'recruit_province' => 'จังหวัดที่อยู่',
+            'recruit_district' => 'อำเภอที่อยู่',
+            'recruit_tambon' => 'ตำบลที่อยู่',
+            'recruit_address' => 'บ้านเลขที่/ที่อยู่',
+            'recruit_zipcode' => 'รหัสไปรษณีย์',
+            
+            // ระบบ
+            'recruit_createdate' => 'วันที่สมัคร',
+            'recruit_updatedate' => 'วันที่แก้ไขล่าสุด',
+            'recruit_userUpdate' => 'ผู้แก้ไขล่าสุด',
+            'recruit_ipUpdate' => 'IP ที่เข้าถึงล่าสุด',
+            'recruit_token' => 'รหัส Token ระบบ'
+        ];
+
+        if ($this->request->isAJAX()) {
+            return $this->response->setJSON($data);
+        }
         
         echo view('admin/Academic/AdminReportResults/AdminReportEnrollDetailStudent',$data);
-        
     }
 }

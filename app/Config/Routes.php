@@ -371,6 +371,7 @@ $routes->get('Admin/Acade/Evaluate/ReportScoreRoomMain/(:segment)/(:segment)/(:s
 $routes->get('Admin/Acade/Evaluate/ExportScoreRoomToExcel/(:segment)/(:segment)/(:segment)/(:segment)', [ConAdminReportResult::class, 'exportScoreRoomToExcel']);
 $routes->get('Admin/Acade/Executive/ExportScoreRoomToExcel/(:segment)/(:segment)/(:segment)/(:segment)', [ConAdminReportResult::class, 'exportScoreRoomToExcel']);
 $routes->get('Admin/Acade/Executive/ReportEnroll/Main', [ConAdminReportResult::class, 'AdminReportEnrollMain']);
+$routes->post('Admin/Acade/Executive/ReportEnroll/Data', [ConAdminReportResult::class, 'AdminReportEnrollData']);
 $routes->get('Admin/Acade/Executive/ReportEnroll/ID/(:segment)', [ConAdminReportResult::class, 'AdminReportEnrollDetailStudent']);
 $routes->post('Admin/Acade/Executive/exportRoomReportToExcel', [ConAdminReportResult::class, 'exportRoomReportToExcel']);
 $routes->get('Admin/Acade/Evaluate/ReportAcademicSummaryRoyalRoseStandard', [ConAdminReportResult::class, 'AdminReportAcademicSummaryRoyalRoseStandard']);

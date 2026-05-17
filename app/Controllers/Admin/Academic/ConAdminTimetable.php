@@ -283,9 +283,22 @@ class ConAdminTimetable extends BaseController
         $data['periods'] = $this->modConfig->getPeriods();
         $data['master_slots'] = $this->modConfig->getMasterSlots($term, $year);
 
+        // 📚 Subjects Management Data
+        $data['timetable_subjects'] = $this->db_timetable->table('tb_timetable_subjects')
+                                        ->where('term', $term)
+                                        ->where('year', $year)
+                                        ->orderBy('tsub_code', 'ASC')
+                                        ->get()->getResult();
+
+        $data['academic_subjects'] = $this->db->table('tb_subjects')
+                                        ->where('SubjectYear', $selectedYear)
+                                        ->orderBy('SubjectCode', 'ASC')
+                                        ->get()->getResult();
+
         // 👨‍🏫 Teacher Map for Grouping
         $teachers = $this->db_personnel->table('tb_personnel')
                                 ->select('pers_id, pers_prefix, pers_firstname, pers_lastname')
+                                ->whereIn('pers_position', ['posi_003', 'posi_004', 'posi_005', 'posi_006'])
                                 ->where('pers_status', 'กำลังใช้งาน')
                                 ->orderBy('pers_firstname', 'ASC')
                                 ->get()->getResult();

@@ -265,8 +265,10 @@
                 </li>
             </ul>
         </li>
+        <?php endif; ?>
 
         <!-- 2. งานวัดผลและประเมินผล -->
+        <?php if(in_array("งานวัดและประเมินผล",$Exp_Checkrloes)): ?>
         <li class="menu-header small text-uppercase">
             <span class="menu-header-text">งานวัดผลและประเมินผล</span>
         </li>
@@ -430,8 +432,10 @@
                 </li>
             </ul>
         </li>
+        <?php endif; ?>
 
         <!-- 4. งานวิจัยเพื่อพัฒนาคุณภาพ -->
+        <?php if(in_array("งานวิจัย",$Exp_Checkrloes)): ?>
         <li class="menu-header small text-uppercase">
             <span class="menu-header-text">งานวิจัยเพื่อพัฒนาคุณภาพ</span>
         </li>
@@ -455,11 +459,11 @@
         </li>
         <?php endif; ?>
 
-        <!-- 5. กิจกรรมและแนะแนว -->
-        <li class="menu-header small text-uppercase">
-            <span class="menu-header-text">กิจกรรมและแนะแนว</span>
-        </li>
+        <!-- 5. กิจกรรมพัฒนาผู้เรียน -->
         <?php if(in_array("งานกิจกรรมพัฒนาผู้เรียน",$Exp_Checkrloes)): ?>
+        <li class="menu-header small text-uppercase">
+            <span class="menu-header-text">กิจกรรมพัฒนาผู้เรียน</span>
+        </li>
         <li class="menu-item <?= ($totalSegments >= 3 && $s3 == 'DevelopStudents' || ($totalSegments >= 4 && $s4 == 'student-registrations') ? 'active open' : '' ) ?>">
             <a href="javascript:void(0);" class="menu-link menu-toggle">
                 <i class="menu-icon tf-icons bx bx-extension"></i>
@@ -475,7 +479,11 @@
         </li>
         <?php endif; ?>
 
+        <!-- 6. งานแนะแนว -->
         <?php if(in_array("งานแนะแนว",$Exp_Checkrloes)): ?>
+        <li class="menu-header small text-uppercase">
+            <span class="menu-header-text">งานแนะแนว</span>
+        </li>
         <li class="menu-item <?= ($totalSegments >= 3 && $s3 == 'Guidance') ? 'active open' : '' ?>">
             <a href="javascript:void(0);" class="menu-link menu-toggle">
                 <i class="menu-icon tf-icons bx bx-street-view"></i>
@@ -485,6 +493,11 @@
                 <li class="menu-item <?= ($totalSegments >= 4 && $s4 == 'HomeVisit' ? 'active' : '') ?>">
                     <a href="<?=base_url('Admin/Acade/Guidance/HomeVisit');?>" class="menu-link">
                         <div data-i18n="ข้อมูลเยี่ยมบ้าน">ข้อมูลเยี่ยมบ้าน</div>
+                    </a>
+                </li>
+                <li class="menu-item <?= ($totalSegments >= 4 && $s4 == 'ReportEnroll' ? 'active' : '') ?>">
+                    <a href="<?=base_url('Admin/Acade/Executive/ReportEnroll/Main');?>" class="menu-link">
+                        <div data-i18n="งานรับสมัครนักเรียน">งานรับสมัครนักเรียน</div>
                     </a>
                 </li>
             </ul>

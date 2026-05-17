@@ -198,7 +198,7 @@
                 <input type="hidden" id="permission-user-id-input">
                 <p>เลือกสิทธิ์การเข้าถึงระบบสำหรับฝ่ายวิชาการ</p>
                 <?php 
-                    $all_permissions = ['งานทะเบียน', 'งานหลักสูตร', 'งานวัดและประเมินผล', 'งานกิจกรรมพัฒนาผู้เรียน']; 
+                    $all_permissions = ['งานทะเบียน', 'งานหลักสูตร', 'งานวัดและประเมินผล', 'งานกิจกรรมพัฒนาผู้เรียน', 'งานวิจัย', 'งานแนะแนว']; 
                 ?>
                 <div id="permissions-checkbox-list">
                     <?php foreach($all_permissions as $perm): ?>
