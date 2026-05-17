@@ -12,6 +12,7 @@ class ConAdminStudents extends BaseController
     protected $modAdminStudents;
     protected $modAdminClassRoom;
     protected $DBpersonnel;
+    protected $DBadmission;
     protected $db;
     protected $classroom;
 
@@ -20,6 +21,7 @@ class ConAdminStudents extends BaseController
         $this->modAdminStudents = new ModAdminStudents();
         $this->modAdminClassRoom = new ModAdminClassRoom();
         $this->DBpersonnel = \Config\Database::connect('personnel');
+        $this->DBadmission = \Config\Database::connect('admission');
         $this->db = \Config\Database::connect(); // Initialize the default database connection
         $this->classroom = new Classroom(); // Initialize the Classroom library
 
@@ -165,6 +167,12 @@ class ConAdminStudents extends BaseController
             if (!$this->db->fieldExists('StudentStatusYear', 'tb_students')) {
                 $this->db->query("ALTER TABLE tb_students ADD COLUMN StudentStatusYear VARCHAR(10) NULL AFTER StudentStatusDate");
             }
+            if (!$this->db->fieldExists('YearFinish', 'tb_students')) {
+                $this->db->query("ALTER TABLE tb_students ADD COLUMN YearFinish VARCHAR(10) NULL AFTER StudentStatusYear");
+            }
+            if (!$this->db->fieldExists('StudentLeave', 'tb_students')) {
+                $this->db->query("ALTER TABLE tb_students ADD COLUMN StudentLeave VARCHAR(255) NULL");
+            }
         } catch (\Exception $e) {
             log_message('error', 'Failed to add lifecycle columns: ' . $e->getMessage());
         }
@@ -234,70 +242,77 @@ class ConAdminStudents extends BaseController
             return $this->response->setJSON(['status' => 'error', 'message' => 'ข้อมูลไม่ครบถ้วน']);
         }
 
-        $this->db->transStart();
+        $this->db->transBegin();
+        try {
+            foreach ($studentIds as $id) {
+                $student = $this->db->table('tb_students')->where('StudentID', $id)->get()->getRow();
+                if ($student) {
+                    $finalLeaveReason = $leaveReason;
 
-        foreach ($studentIds as $id) {
-            $student = $this->db->table('tb_students')->where('StudentID', $id)->get()->getRow();
-            if ($student) {
-                $finalLeaveReason = $leaveReason;
-
-                // Auto-fill Logic based on requirements
-                if (empty($finalLeaveReason)) {
-                    if ($newStatus == '5/จบการศึกษา') {
-                        if (strpos($student->StudentClass, '3') !== false) {
-                            $finalLeaveReason = 'จบการศึกษาภาคบังคับ';
-                        } elseif (strpos($student->StudentClass, '6') !== false) {
-                            $finalLeaveReason = 'จบการศึกษาขั้นพื้นฐาน';
+                    // Auto-fill Logic based on requirements
+                    if (empty($finalLeaveReason)) {
+                        if ($newStatus == '5/จบการศึกษา') {
+                            if (strpos($student->StudentClass, '3') !== false) {
+                                $finalLeaveReason = 'จบการศึกษาภาคบังคับ';
+                            } elseif (strpos($student->StudentClass, '6') !== false) {
+                                $finalLeaveReason = 'จบการศึกษาขั้นพื้นฐาน';
+                            }
+                        } elseif ($newStatus == '2/ย้ายสถานศึกษา') {
+                            $finalLeaveReason = 'ศึกษาต่อสถานศึกษาอื่น';
                         }
-                    } elseif ($newStatus == '2/ย้ายสถานศึกษา') {
-                        $finalLeaveReason = 'ศึกษาต่อสถานศึกษาอื่น';
                     }
+
+                    // Convert date_approve to B.E. (dd/mm/yyyy) if not empty
+                    $formatted_approve = null;
+                    if (!empty($dateApprove)) {
+                        $d = new \DateTime($dateApprove);
+                        $formatted_approve = $d->format('d/m/') . ((int)$d->format('Y') + 543);
+                    }
+
+                    // Convert date_finish to B.E. (dd/mm/yyyy) if not empty
+                    $formatted_finish = null;
+                    if (!empty($dateFinish)) {
+                        $d = new \DateTime($dateFinish);
+                        $formatted_finish = $d->format('d/m/') . ((int)$d->format('Y') + 543);
+                    }
+
+                    $statusDate = $this->request->getPost('status_date') ?: date('Y-m-d');
+
+                    $data = [
+                        'StudentStatus'      => $newStatus,
+                        'StudentDateApprove' => $formatted_approve,
+                        'StudentDateFinish'  => $formatted_finish,
+                        'StudentStatusDate'  => $statusDate,
+                        'StudentLeave'       => $finalLeaveReason
+                    ];
+
+                    // Only set YearFinish if the student is finishing their education here (Graduate/Transfer/Exit)
+                    // If they are just moving back to 'Normal' or 'Suspended', YearFinish should be cleared/null
+                    if (in_array($newStatus, ['5/จบการศึกษา', '2/ย้ายสถานศึกษา', '3/จำหน่าย'])) {
+                        $data['YearFinish'] = $yearOnly;
+                    } else {
+                        $data['YearFinish'] = null; 
+                    }
+
+                    $this->db->table('tb_students')->where('StudentID', $id)->update($data);
                 }
-
-                // Convert date_approve to B.E. (dd/mm/yyyy) if not empty
-                $formatted_approve = null;
-                if (!empty($dateApprove)) {
-                    $d = new \DateTime($dateApprove);
-                    $formatted_approve = $d->format('d/m/') . ((int)$d->format('Y') + 543);
-                }
-
-                // Convert date_finish to B.E. (dd/mm/yyyy) if not empty
-                $formatted_finish = null;
-                if (!empty($dateFinish)) {
-                    $d = new \DateTime($dateFinish);
-                    $formatted_finish = $d->format('d/m/') . ((int)$d->format('Y') + 543);
-                }
-
-                $d_now = new \DateTime();
-                $date_now = $d_now->format('d/m/') . ((int)$d_now->format('Y') + 543);
-
-                $data = [
-                    'StudentStatus'      => $newStatus,
-                    'StudentDateApprove' => $formatted_approve,
-                    'StudentDateFinish'  => $formatted_finish,
-                    'StudentStatusDate'  => $date_now,
-                    'StudentLeave'       => $finalLeaveReason
-                ];
-
-                // Only set YearFinish if the student is finishing their education here (Graduate/Transfer/Exit)
-                // If they are just moving back to 'Normal' or 'Suspended', YearFinish should be cleared/null
-                if (in_array($newStatus, ['5/จบการศึกษา', '2/ย้ายสถานศึกษา', '3/จำหน่าย'])) {
-                    $data['YearFinish'] = $yearOnly;
-                } else {
-                    $data['YearFinish'] = null; 
-                }
-
-                $this->db->table('tb_students')->where('StudentID', $id)->update($data);
             }
+
+            if ($this->db->transStatus() === false) {
+                $dbError = $this->db->error();
+                $this->db->transRollback();
+                return $this->response->setJSON([
+                    'status' => 'error',
+                    'message' => 'เกิดข้อผิดพลาดในการอัปเดตข้อมูล (Transaction status failed): ' . ($dbError['message'] ?? 'Unknown Error') . ' (Code: ' . ($dbError['code'] ?? '0') . ')'
+                ]);
+            }
+
+            $this->db->transCommit();
+            return $this->response->setJSON(['status' => 'success', 'message' => 'อัปเดตสถานะนักเรียน ' . count($studentIds) . ' รายการสำเร็จ']);
+        } catch (\Exception $e) {
+            $this->db->transRollback();
+            return $this->response->setJSON(['status' => 'error', 'message' => 'เกิดข้อผิดพลาดในการอัปเดตข้อมูล: ' . $e->getMessage()]);
         }
-
-        $this->db->transComplete();
-
-        if ($this->db->transStatus() === false) {
-            return $this->response->setJSON(['status' => 'error', 'message' => 'เกิดข้อผิดพลาดในการอัปเดตข้อมูล']);
-        }
-
-        return $this->response->setJSON(['status' => 'success', 'message' => 'อัปเดตสถานะนักเรียน ' . count($studentIds) . ' รายการสำเร็จ']);
     }
 
     public function processPromotionBulk()
@@ -322,36 +337,44 @@ class ConAdminStudents extends BaseController
             return $this->response->setJSON(['status' => 'error', 'message' => 'กรุณาเลือกนักเรียน']);
         }
 
-        $this->db->transStart();
+        $this->db->transBegin();
+        try {
+            $updateData = [];
 
-        $updateData = [];
+            // Only set YearFinish if we are specifically setting a "Finish" status (Graduate/Exit)
+            // If it's a normal promotion, nextStatus will be empty or 1/ปกติ
+            if (!empty($nextStatus) && in_array($nextStatus, ['5/จบการศึกษา', '2/ย้ายสถานศึกษา', '3/จำหน่าย'])) {
+                $updateData['YearFinish'] = $yearOnly;
+            } else {
+                // Ensure YearFinish is null for normal promotions
+                $updateData['YearFinish'] = null;
+            }
 
-        // Only set YearFinish if we are specifically setting a "Finish" status (Graduate/Exit)
-        // If it's a normal promotion, nextStatus will be empty or 1/ปกติ
-        if (!empty($nextStatus) && in_array($nextStatus, ['5/จบการศึกษา', '2/ย้ายสถานศึกษา', '3/จำหน่าย'])) {
-            $updateData['YearFinish'] = $yearOnly;
-        } else {
-            // Ensure YearFinish is null for normal promotions
-            $updateData['YearFinish'] = null;
+            if (!empty($nextStatus)) {
+                $updateData['StudentStatus'] = $nextStatus;
+            }
+
+            if (!empty($nextGrade) && !empty($nextRoom)) {
+                $updateData['StudentClass'] = "ม.{$nextGrade}/{$nextRoom}";
+            }
+
+            $this->db->table('tb_students')->whereIn('StudentID', $studentIds)->update($updateData);
+
+            if ($this->db->transStatus() === false) {
+                $dbError = $this->db->error();
+                $this->db->transRollback();
+                return $this->response->setJSON([
+                    'status' => 'error',
+                    'message' => 'เกิดข้อผิดพลาดในการประมวลผล (Transaction status failed): ' . ($dbError['message'] ?? 'Unknown Error') . ' (Code: ' . ($dbError['code'] ?? '0') . ')'
+                ]);
+            }
+
+            $this->db->transCommit();
+            return $this->response->setJSON(['status' => 'success', 'message' => 'ดำเนินการสำเร็จ ' . count($studentIds) . ' รายการ']);
+        } catch (\Exception $e) {
+            $this->db->transRollback();
+            return $this->response->setJSON(['status' => 'error', 'message' => 'เกิดข้อผิดพลาดในการประมวลผล: ' . $e->getMessage()]);
         }
-
-        if (!empty($nextStatus)) {
-            $updateData['StudentStatus'] = $nextStatus;
-        }
-
-        if (!empty($nextGrade) && !empty($nextRoom)) {
-            $updateData['StudentClass'] = "ม.{$nextGrade}/{$nextRoom}";
-        }
-
-        $this->db->table('tb_students')->whereIn('StudentID', $studentIds)->update($updateData);
-
-        $this->db->transComplete();
-
-        if ($this->db->transStatus() === false) {
-            return $this->response->setJSON(['status' => 'error', 'message' => 'เกิดข้อผิดพลาดในการประมวลผล']);
-        }
-
-        return $this->response->setJSON(['status' => 'success', 'message' => 'ดำเนินการสำเร็จ ' . count($studentIds) . ' รายการ']);
     }
 
 
@@ -506,6 +529,9 @@ class ConAdminStudents extends BaseController
 
             $studentNumber    = trim($row[0] ?? '');  // StudentNumber / เลขที่
             $studentClass     = trim($row[1] ?? '');  // ชั้นปี
+            if (!empty($studentClass) && mb_substr($studentClass, 0, 2) !== 'ม.') {
+                $studentClass = 'ม.' . $studentClass;
+            }
             $studentCode      = trim($row[2] ?? '');  // เลขประจำตัว
             $prefix           = trim($row[3] ?? '');  // คำนำหน้า
             $firstName        = trim($row[4] ?? '');  // ชื่อ
@@ -650,6 +676,18 @@ class ConAdminStudents extends BaseController
     }
     
     public function AdminStudentsDelete($id){   
+        // ตรวจสอบว่านักเรียนเคยลงทะเบียนใน tb_register หรือไม่
+        $hasRegister = $this->db->table('tb_register')
+            ->where('StudentID', $id)
+            ->countAllResults();
+
+        if ($hasRegister > 0) {
+            return $this->response->setJSON([
+                'status' => 'error',
+                'message' => 'ไม่สามารถลบนักเรียนคนนี้ได้ เนื่องจากมีข้อมูลการลงทะเบียนเรียนหรือมีผลการเรียนอยู่ในระบบแล้ว'
+            ]);
+        }
+
         if ($this->modAdminStudents->Students_Delete($id)) {
             return $this->response->setJSON(['status' => 'success', 'message' => 'ลบข้อมูลสำเร็จ']);
         } else {
@@ -753,7 +791,13 @@ class ConAdminStudents extends BaseController
             'StudentPrefix' => $this->request->getPost('StudentPrefix'),
             'StudentFirstName' => $this->request->getPost('StudentFirstName'),
             'StudentLastName' => $this->request->getPost('StudentLastName'),
-            'StudentClass' => $this->request->getPost('StudentClass'),
+            'StudentClass' => (function() {
+                $c = trim($this->request->getPost('StudentClass') ?? '');
+                if (!empty($c) && mb_substr($c, 0, 2) !== 'ม.') {
+                    $c = 'ม.' . $c;
+                }
+                return $c;
+            })(),
             'StudentNumber' => $this->request->getPost('StudentNumber'),
             'StudentCode' => $this->request->getPost('StudentCode'),
             'StudentSex' => in_array($this->request->getPost('StudentPrefix'), ['เด็กชาย', 'นาย']) ? 'ชาย' : 'หญิง',
@@ -853,6 +897,9 @@ class ConAdminStudents extends BaseController
 
                 $studentNumber = trim($row[0] ?? '');  // StudentNumber / เลขที่
                 $studentClass = trim($row[1] ?? '');   // ชั้นปี
+                if (!empty($studentClass) && mb_substr($studentClass, 0, 2) !== 'ม.') {
+                    $studentClass = 'ม.' . $studentClass;
+                }
                 $studentCode = trim($row[2] ?? '');    // เลขประจำตัว
                 $prefix = trim($row[3] ?? '');         // คำนำหน้า
                 $firstName = trim($row[4] ?? '');      // ชื่อ
@@ -1000,6 +1047,11 @@ class ConAdminStudents extends BaseController
         $data['title'] = "เพิ่มข้อมูลนักเรียนใหม่";
         $data['class_list'] = $this->classroom->ListRoom();
         $data['study_line_list'] = $this->classroom->studentStudyLineOptions();
+        $data['school_years'] = $this->db->table('tb_schoolyear')->orderBy('schyear_year', 'desc')->get()->getResult();
+        // ดึงปีการศึกษาจากระบบรับสมัครจริง (tb_recruitstudent)
+        $data['admission_years'] = $this->DBadmission->table('tb_recruitstudent')->select('recruit_year')->groupBy('recruit_year')->orderBy('recruit_year', 'DESC')->get()->getResult();
+        // ดึงระดับชั้นที่มีจริงจากระบบรับสมัคร
+        $data['admission_levels'] = $this->DBadmission->table('tb_recruitstudent')->select('recruit_regLevel')->groupBy('recruit_regLevel')->orderBy('recruit_regLevel', 'ASC')->get()->getResult();
         $data['student'] = null;
         $data['personnel_data_found'] = false;
         return view('admin/Academic/AdminStudents/AdminStudentsAdd', $data);
@@ -1026,7 +1078,13 @@ class ConAdminStudents extends BaseController
             'StudentPrefix' => $this->request->getPost('StudentPrefix'),
             'StudentFirstName' => $this->request->getPost('StudentFirstName'),
             'StudentLastName' => $this->request->getPost('StudentLastName'),
-            'StudentClass' => $this->request->getPost('StudentClass'),
+            'StudentClass' => (function() {
+                $c = trim($this->request->getPost('StudentClass') ?? '');
+                if (!empty($c) && mb_substr($c, 0, 2) !== 'ม.') {
+                    $c = 'ม.' . $c;
+                }
+                return $c;
+            })(),
             'StudentNumber' => $this->request->getPost('StudentNumber'),
             'StudentCode' => $this->request->getPost('StudentCode'),
             'StudentSex' => in_array($this->request->getPost('StudentPrefix'), ['เด็กชาย', 'นาย']) ? 'ชาย' : 'หญิง',
@@ -1191,7 +1249,7 @@ class ConAdminStudents extends BaseController
     {
         $search = $this->request->getPost('search');
         if (empty($search)) return $this->response->setJSON([]);
-        
+
         $builder = $this->db->table('tb_students');
         $builder->groupStart()
                 ->like('StudentFirstName', $search)
@@ -1199,8 +1257,414 @@ class ConAdminStudents extends BaseController
                 ->orLike('StudentCode', $search)
                 ->groupEnd()
                 ->limit(20);
-        
+
         $students = $builder->get()->getResult();
         return $this->response->setJSON($students);
+    }
+
+    // =====================================================
+    // Admission Import (นำเข้าจากระบบรับสมัครนักเรียน)
+    // =====================================================
+
+    /**
+     * ดึงรายชื่อนักเรียนจากฐานข้อมูลรับสมัคร (tb_recruitstudent)
+     * เงื่อนไข: ต้องผ่านการตรวจสอบ (recruit_statusFinal IS NOT NULL)
+     *           และยืนยันมอบตัว (recruit_statusSurrender IS NOT NULL) แล้วเท่านั้น
+     */
+    public function getAdmissionStudents()
+    {
+        $this->response->setHeader('Content-Type', 'application/json');
+
+        $targetYear = $this->request->getGet('target_year') ?: 'all';
+        $targetClass = $this->request->getGet('target_class') ?: 'all';
+        $search = $this->request->getGet('search') ?: '';
+
+        try {
+            $builder = $this->DBadmission->table('tb_recruitstudent');
+            $builder->select('*');
+
+            // ★ เงื่อนไขสำคัญ: ต้องผ่านการสอบและยืนยันมอบตัวแล้วเท่านั้น
+            $builder->where('recruit_statusFinal IS NOT NULL');
+            $builder->where('recruit_statusSurrender IS NOT NULL');
+
+            // กรองปีการศึกษา
+            if ($targetYear !== 'all') {
+                $builder->where('recruit_year', $targetYear);
+            }
+
+            // กรองระดับชั้น
+            if ($targetClass !== 'all') {
+                $builder->like('recruit_regLevel', $targetClass, 'after');
+            }
+
+            // ค้นหาตามชื่อ/นามสกุล/เลขบัตร
+            if (!empty($search)) {
+                $builder->groupStart();
+                $builder->orLike('recruit_firstName', $search);
+                $builder->orLike('recruit_lastName', $search);
+                $builder->orLike('recruit_idCard', $search);
+                $builder->groupEnd();
+            }
+
+            $builder->orderBy('recruit_regLevel', 'ASC');
+            $builder->orderBy('recruit_firstName', 'ASC');
+            $builder->limit(500);
+            $students = $builder->get()->getResult();
+
+            // ดึงเลข ปชช. ที่มีอยู่แล้วในระบบ academic เพื่อ mark ว่าซ้ำ
+            $existingIds = [];
+            $idValues = array_filter(array_map(fn($s) => $s->recruit_idCard ?? null, $students));
+            if (!empty($idValues)) {
+                $cleanIds = array_map(fn($id) => str_replace('-', '', $id), $idValues);
+                $existing = $this->db->table('tb_students')
+                    ->select('StudentIDNumber')
+                    ->whereIn("REPLACE(StudentIDNumber, '-', '')", $cleanIds, false)
+                    ->where('StudentStatus', '1/ปกติ')
+                    ->get()->getResult();
+                $existingIds = array_map(fn($e) => str_replace('-', '', $e->StudentIDNumber), $existing);
+            }
+
+            return $this->response->setJSON([
+                'status' => 'success',
+                'students' => $students,
+                'existing_ids' => $existingIds,
+                'total' => count($students)
+            ]);
+
+        } catch (\Exception $e) {
+            log_message('error', 'getAdmissionStudents Error: ' . $e->getMessage());
+            return $this->response->setStatusCode(500)->setJSON([
+                'status' => 'error',
+                'message' => 'เกิดข้อผิดพลาด: ' . $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * ดึงพรีวิวข้อมูลที่จะนำเข้าจาก admission เพื่อแสดงผลและรับข้อมูลเพิ่มเติมจากผู้ใช้ใน modal
+     */
+    public function getAdmissionImportPreview()
+    {
+        $this->response->setHeader('Content-Type', 'application/json');
+
+        $selectedIds = $this->request->getPost('selected_ids');
+
+        if (empty($selectedIds)) {
+            return $this->response->setJSON(['status' => 'error', 'message' => 'กรุณาเลือกนักเรียนอย่างน้อย 1 คน']);
+        }
+
+        if (!is_array($selectedIds)) {
+            $selectedIds = [$selectedIds];
+        }
+
+        try {
+            $students = [];
+            $classCodeCounters = [];
+
+            foreach ($selectedIds as $recruitId) {
+                $r = $this->DBadmission->table('tb_recruitstudent')
+                    ->where('recruit_id', $recruitId)->get()->getRow();
+                if (!$r) continue;
+
+                $firstName = trim($r->recruit_firstName ?? '');
+                $lastName  = trim($r->recruit_lastName ?? '');
+                $prefix    = trim($r->recruit_prefix ?? '');
+                $idCard    = trim($r->recruit_idCard ?? '');
+                $birthRaw  = trim($r->recruit_birthday ?? '');
+                $classRaw  = trim($r->recruit_regLevel ?? '');
+                $studyLine = $this->getStudyLineAbbreviation($r->recruit_tpyeRoom ?? '');
+
+                $finalClass = $classRaw;
+
+                // ตรวจสอบซ้ำด้วยเลขบัตรประชาชน
+                $idCardClean = str_replace('-', '', $idCard);
+                $isDuplicate = false;
+                if (!empty($idCardClean)) {
+                    $existing = $this->db->table('tb_students')
+                        ->where("REPLACE(StudentIDNumber, '-', '')", $idCardClean, false)
+                        ->where('StudentStatus', '1/ปกติ')
+                        ->countAllResults();
+                    if ($existing > 0) {
+                        $isDuplicate = true;
+                    }
+                }
+
+                // เจนรหัสประจำตัวต่อเนื่อง
+                if (!isset($classCodeCounters[$finalClass])) {
+                    $classCodeCounters[$finalClass] = $this->generateStudentCode($finalClass);
+                } else {
+                    $classCodeCounters[$finalClass] = str_pad(intval($classCodeCounters[$finalClass]) + 1, strlen($classCodeCounters[$finalClass]), '0', STR_PAD_LEFT);
+                }
+                $code = $classCodeCounters[$finalClass];
+
+                $birthBE = $this->convertToBE($birthRaw);
+
+                $students[] = [
+                    'recruit_id'        => $recruitId,
+                    'StudentPrefix'     => $prefix,
+                    'StudentFirstName'  => $firstName,
+                    'StudentLastName'   => $lastName,
+                    'StudentIDNumber'   => $idCard,
+                    'StudentDateBirth'  => $birthBE,
+                    'StudentClass'      => $finalClass,
+                    'StudentStudyLine'  => $studyLine,
+                    'StudentCode'       => $code,
+                    'StudentNumber'     => '0', // ให้แก้ไขเลขที่เองได้สะดวก
+                    'StudentDateEntrance' => date('d/m/') . (date('Y') + 543),
+                    'isDuplicate'       => $isDuplicate,
+                    'StudentRegion'     => $r->recruit_religion ?? '',
+                    'YearIn'            => !empty($r->recruit_year) ? "1/{$r->recruit_year}" : '',
+                ];
+            }
+
+            return $this->response->setJSON([
+                'status' => 'success',
+                'students' => $students
+            ]);
+
+        } catch (\Exception $e) {
+            return $this->response->setJSON([
+                'status' => 'error',
+                'message' => 'เกิดข้อผิดพลาดในการโหลดพรีวิว: ' . $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * นำเข้าข้อมูลนักเรียนจาก admission ที่ผ่านการยืนยันและแก้ไขข้อมูลเพิ่มเติมบน modal
+     */
+    public function processAdmissionImport()
+    {
+        $this->response->setHeader('Content-Type', 'application/json');
+
+        $students = $this->request->getPost('students');
+
+        if (empty($students) || !is_array($students)) {
+            return $this->response->setJSON(['status' => 'error', 'message' => 'กรุณาเลือกนักเรียนและตรวจสอบข้อมูลก่อนนำเข้า']);
+        }
+
+        try {
+            // ปิด Strict Mode ชั่วคราวทั้ง 2 DB connections ก่อนเริ่ม transaction
+            // เพื่อให้ MySQL ใส่ค่า default อัตโนมัติสำหรับคอลัมน์ NOT NULL ที่ไม่ได้ส่งค่าไป
+            $this->db->query("SET SESSION sql_mode = ''");
+            $this->DBpersonnel->query("SET SESSION sql_mode = ''");
+            $this->db->transStart();
+            $successCount = 0;
+            $skipCount = 0;
+
+            foreach ($students as $s) {
+                $firstName = trim($s['StudentFirstName'] ?? '');
+                $lastName  = trim($s['StudentLastName'] ?? '');
+                $prefix    = trim($s['StudentPrefix'] ?? '');
+                $idCard    = trim($s['StudentIDNumber'] ?? '');
+                $birthBE   = trim($s['StudentDateBirth'] ?? '');
+                $class     = trim($s['StudentClass'] ?? '');
+                if (!empty($class)) {
+                    if (mb_substr($class, 0, 2) !== 'ม.') {
+                        $class = 'ม.' . $class;
+                    }
+                }
+                $studyLine = trim($s['StudentStudyLine'] ?? '');
+                $code      = trim($s['StudentCode'] ?? '');
+                $number    = trim($s['StudentNumber'] ?? '0');
+                $entranceBE = trim($s['StudentDateEntrance'] ?? '');
+
+                if (empty($firstName) && empty($lastName)) { $skipCount++; continue; }
+
+                $idCardClean = str_replace(['-', ' '], '', $idCard);
+                if (!empty($idCardClean)) {
+                    $existing = $this->db->table('tb_students')
+                        ->where("REPLACE(StudentIDNumber, '-', '')", $idCardClean)
+                        ->where('StudentStatus', '1/ปกติ')->countAllResults();
+                    if ($existing > 0) { $skipCount++; continue; }
+                }
+
+                $sex = in_array($prefix, ['เด็กชาย', 'นาย']) ? 'ชาย' : 'หญิง';
+                $region = trim($s['StudentRegion'] ?? '');
+                $yearIn = trim($s['YearIn'] ?? '');
+                $password = md5(md5($idCardClean));
+
+                $studentData = [
+                    'StudentBehavior'     => 'ปกติ',
+                    'StudentNumber'       => $number,
+                    'StudentClass'        => $class,
+                    'StudentCode'         => $code,
+                    'StudentPrefix'       => $prefix,
+                    'StudentFirstName'    => $firstName,
+                    'StudentLastName'     => $lastName,
+                    'StudentStudyLine'    => $studyLine,
+                    'StudentIDNumber'     => $idCardClean,
+                    'StudentPassword'     => $password,
+                    'StudentDateBirth'    => $birthBE,
+                    'StudentDateEntrance' => $entranceBE ?: date('d/m/') . (date('Y') + 543),
+                    'StudentSex'          => $sex,
+                    'StudentStatus'       => '1/ปกติ',
+                    'StudentRegion'       => $region,
+                    'YearIn'              => $yearIn,
+                ];
+
+                $resInsert = $this->modAdminStudents->insert($studentData);
+                if ($resInsert === false) {
+                    $errors = $this->modAdminStudents->errors();
+                    $dbError = $this->db->error();
+                    throw new \Exception("ล้มเหลวในการบันทึกข้อมูลของ {$firstName} {$lastName}: " . ($dbError['message'] ?? implode(', ', $errors) ?: 'Unknown DB Error'));
+                }
+                $successCount++;
+
+                if (!empty($idCardClean)) {
+                    $dataP = [
+                        'stu_prefix'    => $prefix, 
+                        'stu_fristName' => $firstName,
+                        'stu_lastName'  => $lastName,
+                        'stu_birthDay'  => $birthBE,
+                        'stu_iden'      => $idCardClean,
+                    ];
+                    $exP = $this->DBpersonnel->table('tb_students')
+                        ->where("REPLACE(stu_iden, '-', '')", $idCardClean)->countAllResults();
+                    if ($exP > 0) {
+                        $resUpdateP = $this->DBpersonnel->table('tb_students')
+                            ->where("REPLACE(stu_iden, '-', '')", $idCardClean)->update($dataP);
+                        if ($resUpdateP === false) {
+                            $dbErrorP = $this->DBpersonnel->error();
+                            throw new \Exception("ล้มเหลวในการอัปเดตข้อมูล (Personnel DB) ของ {$firstName} {$lastName}: " . ($dbErrorP['message'] ?? 'Unknown DB Error'));
+                        }
+                    } else {
+                        $resInsertP = $this->DBpersonnel->table('tb_students')->insert($dataP);
+                        if ($resInsertP === false) {
+                            $dbErrorP = $this->DBpersonnel->error();
+                            throw new \Exception("ล้มเหลวในการนำเข้าข้อมูล (Personnel DB) ของ {$firstName} {$lastName}: " . ($dbErrorP['message'] ?? 'Unknown DB Error'));
+                        }
+                    }
+                }
+            }
+
+            $this->db->transComplete();
+            if ($this->db->transStatus() === false) {
+                $dbError = $this->db->error();
+                throw new \Exception('Transaction failed: ' . ($dbError['message'] ?? 'Unknown DB Error'));
+            }
+
+            return $this->response->setJSON([
+                'status' => 'success',
+                'message' => "นำเข้าสำเร็จ {$successCount} รายการ | ข้าม {$skipCount} รายการ (ซ้ำ/ไม่มีข้อมูล)"
+            ]);
+        } catch (\Exception $e) {
+            $this->db->transRollback();
+            log_message('error', 'processAdmissionImport Error: ' . $e->getMessage());
+            return $this->response->setJSON(['status' => 'error', 'message' => 'เกิดข้อผิดพลาด: ' . $e->getMessage()]);
+        }
+    }
+
+    // =====================================================
+    // Helper methods สำหรับ Admission Import
+    // =====================================================
+
+    /**
+     * ค้นหาคอลัมน์จากชื่อที่เป็นไปได้
+     */
+    private function findColumn(array $columnNames, array $candidates): ?string
+    {
+        foreach ($candidates as $candidate) {
+            // exact match (case-insensitive)
+            foreach ($columnNames as $col) {
+                if (strcasecmp($col, $candidate) === 0) return $col;
+            }
+        }
+        // partial match
+        foreach ($candidates as $candidate) {
+            foreach ($columnNames as $col) {
+                if (stripos($col, $candidate) !== false) return $col;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * เดาคำนำหน้าจากเพศหรือคอลัมน์ prefix
+     */
+    private function guessPrefix($row, ?string $colSex, ?string $colPrefix): string
+    {
+        if ($colPrefix && !empty($row->$colPrefix)) {
+            return trim($row->$colPrefix);
+        }
+        if ($colSex && !empty($row->$colSex)) {
+            $sex = mb_strtolower(trim($row->$colSex));
+            if (in_array($sex, ['ชาย', 'male', 'm', 'boy'])) return 'เด็กชาย';
+            if (in_array($sex, ['หญิง', 'female', 'f', 'girl'])) return 'เด็กหญิง';
+        }
+        return 'เด็กชาย';
+    }
+
+    /**
+     * แปลงวันที่เป็น พ.ศ. (dd/mm/yyyy)
+     */
+    private function convertToBE(string $dateRaw, string $format = 'd/m/Y', string $sep = '/'): string
+    {
+        if (empty($dateRaw)) return null;
+
+        // ลองแปลงจากรูปแบบต่างๆ
+        $formats = ['Y-m-d', 'd/m/Y', 'd-m-Y', 'Y/m/d', 'd.m.Y', 'Y.m.d'];
+        foreach ($formats as $fmt) {
+            $d = \DateTime::createFromFormat($fmt, $dateRaw);
+            if ($d !== false) {
+                $beYear = (int)$d->format('Y') + 543;
+                return $d->format("d{$sep}m{$sep}{$beYear}");
+            }
+        }
+
+        // ลอง strtotime
+        $ts = strtotime($dateRaw);
+        if ($ts !== false) {
+            $beYear = (int)date('Y', $ts) + 543;
+            return date("d{$sep}m{$sep}{$beYear}", $ts);
+        }
+
+        return null;
+    }
+
+    /**
+     * สร้างเลขประจำตัวนักเรียนอัตโนมัติ
+     */
+    private function generateStudentCode(string $class): string
+    {
+        // สร้าง code จากปี + ลำดับ
+        $year = get_selected_year();
+        $yearShort = substr($year, -2);
+
+        // หาลำดับสูงสุด
+        $last = $this->db->table('tb_students')
+            ->select('StudentCode')
+            ->like('StudentCode', $yearShort, 'after')
+            ->orderBy('StudentCode', 'DESC')
+            ->limit(1)
+            ->get()->getRow();
+
+        $nextNum = 1;
+        if ($last && !empty($last->StudentCode)) {
+            $num = (int)substr($last->StudentCode, -4);
+            $nextNum = $num + 1;
+        }
+
+        return $yearShort . str_pad($nextNum, 4, '0', STR_PAD_LEFT);
+    }
+
+    /**
+     * แปลงชื่อสายการเรียนจาก admission ให้สอดคล้องกับรหัสย่อภาษาอังกฤษของโรงเรียน
+     */
+    private function getStudyLineAbbreviation(?string $studyLine): string
+    {
+        if (empty($studyLine)) {
+            return '';
+        }
+        $studyLine = trim($studyLine);
+        
+        $englishCodes = ["SMT(S)", "SMT(T)", "CEP", "CP", "PAP1", "PAP2", "PAP3", "PAP4", "SP1", "SP2", "SP3","SP4"];
+        foreach ($englishCodes as $code) {
+            if (mb_stripos($studyLine, $code) !== false) {
+                return $code;
+            }
+        }
+
+        return $studyLine;
     }
 }

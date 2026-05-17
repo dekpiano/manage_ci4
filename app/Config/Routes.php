@@ -121,6 +121,11 @@ $routes->get('Admin/Acade/Registration/Students', [ConAdminStudents::class, 'Adm
 $routes->get('Admin/Acade/Registration/Students/Data', [ConAdminStudents::class, 'AdminStudentsData']);
 $routes->get('Admin/Acade/Registration/Students/Lifecycle', [ConAdminStudents::class, 'AdminStudentsLifecycle']);
 $routes->get('Admin/Acade/Registration/Students/Add', [ConAdminStudents::class, 'AdminStudentsAdd']);
+
+// Admission Import Routes
+$routes->get('Admin/Academic/ConAdminStudents/getAdmissionStudents', [ConAdminStudents::class, 'getAdmissionStudents']);
+$routes->post('Admin/Academic/ConAdminStudents/processAdmissionImport', [ConAdminStudents::class, 'processAdmissionImport']);
+$routes->post('Admin/Academic/ConAdminStudents/getAdmissionImportPreview', [ConAdminStudents::class, 'getAdmissionImportPreview']);
 $routes->post('Admin/Acade/Registration/Students/CheckDuplicate', [ConAdminStudents::class, 'checkDuplicate']);
 $routes->post('Admin/Acade/Registration/Students/Insert', [ConAdminStudents::class, 'processStudentAdd']);
 $routes->post('Admin/Acade/Registration/Students/ImportGoogle', [ConAdminStudents::class, 'processGoogleSheetImport']);

@@ -316,3 +316,29 @@ $('#SelectorID').select2({
 - `app/Views/admin/Academic/AdminTimetable/Partials/ConstraintGrid.php` (Manual Validation Update)
 
 ---
+
+## [2026-05-17] - ปรับปรุงการบันทึกข้อมูลชั้นปีนักเรียน & ดีไซน์หน้าแอดมิน (Student Class Auto-Prefixing & Emerald UI Makeover) 🟢✨
+
+### 🚀 ฟีเจอร์ที่เพิ่ม/แก้ไข (Added/Modified)
+- **ระบบจัดฟอร์แมตชั้นปีอัตโนมัติ (Student Class Auto-Prefixing):**
+    - พัฒนาฟังก์ชันตรวจสอบและเติมคำนำหน้า **"ม."** ให้กับระดับชั้นเรียน (StudentClass) อัตโนมัติในทุกช่องทางของการบันทึกข้อมูล หากชั้นปีนั้นยังไม่ได้มีตัวอักษร "ม." นำหน้า เช่น เมื่อพิมพ์ `1/1` หรือ `5/4` ระบบจะแปลงเป็น `ม.1/1` หรือ `ม.5/4` ก่อนบันทึกลงฐานข้อมูลโดยอัตโนมัติ
+    - **ขอบเขตการบังคับใช้:**
+        1. **Google Sheets Sync (Method 1 - CSV Publish to Web):** ปรับจังหวะ Sync ให้เติม "ม." ทันที
+        2. **Google Sheets Sync (Method 2 - AJAX Dry-Run):** ปรับฟังก์ชันแสดงตัวอย่างพรีวิวและการบันทึกจริง
+        3. **Manual Student Add Form:** ปรับแต่งฟังก์ชันบันทึกข้อมูลนักเรียนเดี่ยว
+        4. **Admission Import Form:** ปรับแต่งส่วนประมวลผลการนำเข้านักเรียนจากฐานข้อมูลรับสมัครนักเรียนใหม่
+        5. **Student Details Update Form:** ปรับส่วนการบันทึกแก้ไขข้อมูลนักเรียนรายบุคคล
+- **ดีไซน์ Emerald UI หน้าเพิ่มนักเรียน (Admission Panel Premium Makeover):**
+    - ปรับโฉม **"การ์ดรายชื่อจากระบบรับสมัคร" (ฝั่งซ้าย)** ใหม่ทั้งหมด:
+        - เปลี่ยนสไตล์จากสีเทาปกติ (Flat Gray) เป็นการแต่งขอบด้วยสีเขียวมินต์สะดุดตา `#20c997`
+        - หัวข้อการ์ดและปุ่มเปลี่ยนเป็นโทนไล่เฉดสีสวยงาม `linear-gradient(135deg, rgba(32, 201, 151, 0.15), rgba(32, 201, 151, 0.04))`
+        - หัวตารางในตารางรายชื่อเปลี่ยนเป็นเฉดสีเขียวพาสเทลอ่อน `#f1faf6` พร้อมเส้นตัดขอบคมชัดสีมินต์ `#20c997` มอบสัมผัสแห่งความพรีเมียมและเรียบหรู
+- **การจำกัดสิทธิ์การลบนักเรียน (Student Deletion Integrity Control):**
+    - เพิ่มการตรวจสอบความสัมพันธ์ของข้อมูล (Data Integrity Check) ในหน้าแสดงรายชื่อนักเรียนปกติ (`/Admin/Acade/Registration/Students/normal`)
+    - **กฎทางธุรกิจ (Business Rule):** ปุ่มลบจะอนุญาตให้ลบข้อมูลนักเรียนได้เฉพาะกรณีที่นักเรียนคนดังกล่าว **ไม่เคยมีประวัติการลงทะเบียนเรียนหรือผลการเรียน** ในตาราง `skjacth_academic.tb_register` เท่านั้น หากระบบพบข้อมูลในตารางลงทะเบียนเรียน จะทำการปฏิเสธคำขอลบพร้อมแจ้งเตือนผ่าน SweetAlert2 อย่างชัดเจนเพื่อความปลอดภัยสูงสุดของข้อมูลเกรดและประวัติวิชาการ
+
+### 📁 ไฟล์ที่เกี่ยวข้อง
+- `app/Controllers/Admin/Academic/ConAdminStudents.php` (Modified - StudentClass Processing Rules & Delete Student Restrictions)
+- `app/Views/admin/Academic/AdminStudents/AdminStudentsAdd.php` (Modified - Emerald UI Design Refinement)
+
+

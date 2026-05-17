@@ -28,6 +28,11 @@ class ModAdminStudents extends Model
         'YearFinish',
         'StudentStudyLine',
         'StudentSchoolYear',
+        'StudentNationality',
+        'StudentRace',
+        'StudentPassword',
+        'StudentRegion',
+        'YearIn',
     ]; // Fields that can be mass-assigned
 
     public function Students_Insert($data)
