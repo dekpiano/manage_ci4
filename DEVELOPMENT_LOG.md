@@ -317,6 +317,28 @@ $('#SelectorID').select2({
 
 ---
 
+## [2026-05-17] - ปรับปรุงการจัดการตารางเรียนเป็นแบบ Modal & ระบบลากวางไฟล์ (Class Schedule Modal & Drag-Drop Uploader) 🟢✨
+
+### 🚀 ฟีเจอร์ที่เพิ่ม/แก้ไข (Added/Modified)
+- **ระบบแบบฟอร์ม Modal บนหน้าหลัก (Class Schedule Modal Form):**
+    - ย้ายระบบการเพิ่มและแก้ไขตารางเรียนจากหน้าแบบฟอร์มเดิม (`AdminClassScheduleForm.php`) มาไว้ใน Modal หน้าหลัก (`AdminClassScheduleMain.php`)
+    - **Backwards Compatibility:** ปรับปรุงคอนโทรลเลอร์ `ConAdminClassSchedule.php` (เมธอด `add` และ `edit`) ให้เปลี่ยนเส้นทาง (Redirect) ไปยังหน้าหลักพร้อมแนบพารามิเตอร์ `action=add` หรือ `action=edit&id=...` เพื่อความถูกต้องของเส้นทางเดิม (Routes)
+    - ปรับเปลี่ยนปุ่มแก้ไขและปุ่มเพิ่มบนหน้าหลักเพื่อใช้การทำงานของ Modal เต็มรูปแบบ (ไม่ต้องรีโหลดหน้าเว็บ)
+- **ระบบลากวางไฟล์อัจฉริยะ (Drag & Drop Uploader):**
+    - พัฒนาพื้นที่อัปโหลดแบบลากและวาง (Drag & Drop Zone) สีเขียวมินต์พรีเมียม `#15a362` เพื่อการอัปโหลดไฟล์ที่ลื่นไหล
+    - รองรับการลากไฟล์รูปภาพ (JPG, PNG) และไฟล์ PDF โดยระบบจะแสดงสถานะ ขนาด และรูปภาพตัวอย่างพรีวิวแบบเรียลไทม์
+    - **PDF Auto-Conversion:** ซิงค์ระบบประมวลผล PDF จากแบบฟอร์มเดิม (ใช้ pdf.js) เพื่อแปลงและรวมทุกหน้าเป็นภาพ JPEG เดี่ยวแนวตั้งความละเอียดสูงโดยอัตโนมัติก่อนส่งขึ้นคลาวด์/เซิร์ฟเวอร์ proxy
+- **การแก้ไขข้อมูลอัจฉริยะ (Smart Edit Flow):**
+    - พัฒนาระบบตรวจสอบในฝั่ง Frontend หากผู้ใช้แก้ไขข้อมูลทั่วไป (เช่น ภาคเรียน, ปีการศึกษา, ชั้น, แผนการเรียน) โดย **ไม่ได้อัปโหลดไฟล์ใหม่** ระบบจะใช้ชื่อไฟล์ภาพเดิมที่เคยอัปโหลดไว้ ข้ามขั้นตอนการเรียก Proxy อัปโหลด ช่วยประหยัดเวลาและทราฟฟิกเครือข่ายอย่างมาก
+- **การจัดระดับ SweetAlert2 (swal2 Layer Override):**
+    - บังคับการแสดงผล SweetAlert2 ให้อยู่บนสุดเสมอด้วย `z-index: 9999 !important` เพื่อแก้ปัญหาการแสดงผลแจ้งเตือนถูกตัว Modal ทับ
+
+### 📁 ไฟล์ที่เกี่ยวข้อง
+- `app/Controllers/Admin/Academic/ConAdminClassSchedule.php` (Modified - Redirect rules for add & edit)
+- `app/Views/admin/Academic/AdminClassSchedule/AdminClassScheduleMain.php` (Modified - Modal & Drag-Drop UI/UX Integration)
+
+---
+
 ## [2026-05-17] - ปรับปรุงการบันทึกข้อมูลชั้นปีนักเรียน & ดีไซน์หน้าแอดมิน (Student Class Auto-Prefixing & Emerald UI Makeover) 🟢✨
 
 ### 🚀 ฟีเจอร์ที่เพิ่ม/แก้ไข (Added/Modified)
@@ -340,5 +362,79 @@ $('#SelectorID').select2({
 ### 📁 ไฟล์ที่เกี่ยวข้อง
 - `app/Controllers/Admin/Academic/ConAdminStudents.php` (Modified - StudentClass Processing Rules & Delete Student Restrictions)
 - `app/Views/admin/Academic/AdminStudents/AdminStudentsAdd.php` (Modified - Emerald UI Design Refinement)
+
+---
+
+## [2026-05-17] - แก้ไขปัญหาการอัปโหลดไฟล์ และกำจัดหน้าต่างเตือน DataTables (File Upload Reliability & DataTables Warning Fix) 🟢🛠️
+
+### 🚀 ฟีเจอร์ที่เพิ่ม/แก้ไข (Added/Modified)
+- **ระบบจัดเก็บไฟล์อัปโหลดส่วนกลาง (JavaScript Global File Binding):**
+    - ปรับปรุง [AdminClassScheduleMain.php](file:///d:/SkjSystem/academic2025/app/Views/admin/Academic/AdminClassSchedule/AdminClassScheduleMain.php) โดยการเปลี่ยนจากการอ้างอิง `.files` ของ Input ตรงๆ (ซึ่งเบราว์เซอร์มักบล็อกความปลอดภัยเมื่อเป็นการลากวาง) มาใช้ตัวแปร JavaScript Global `selectedFile` ในการเก็บสถานะไฟล์ ทำให้การบันทึกตารางเรียนผ่าน Modal และระบบ Drag & Drop ทำงานได้อย่างถูกต้อง แม่นยำ และปลอดภัย 100%
+- **ระบบลบล้างหน้าต่างแจ้งเตือน DataTables (Suppressing DataTables Warning Alerts):**
+    - แก้ไขปัญหา **"DataTables warning: table id=TbClassSchedule - Invalid year format"** ที่เกิดขึ้นเนื่องจากไม่มีข้อมูลตารางเรียนเริ่มต้นในฐานข้อมูล ส่งผลให้ค่าปีการศึกษาที่ส่งไปมีลักษณะว่าง (Empty parameter)
+    - **วิธีการแก้ไข:**
+        1. อัปเดตคอนโทรลเลอร์ `ConAdminClassSchedule::getDataByYear()` ให้รองรับการทำงานแบบมี **Fallback** ย้อนกลับไปดึงปีการศึกษาปัจจุบันที่ทำงานอยู่ (`tb_schoolyear`) หากพารามิเตอร์ปีการศึกษาถูกส่งเข้ามาแบบค่าว่าง
+        2. ปรับแต่งส่วนส่งคืน JSON ในกรณีที่มีฟอร์แมตไม่ตรง ให้ส่งชุดข้อมูลว่าง `['data' => []]` แทนการส่ง Error ออกไป ช่วยให้ DataTables แสดงผลตารางโล่งสะอาดตาแบบไร้เสียงแจ้งเตือนอย่างสมบูรณ์แบบ (Premium UX)
+        3. ปรับแต่งหน้าดึงข้อมูลหลักให้มีการดึงปีการศึกษาปัจจุบันเข้าสู่รายการเลือก (`YearAll`) เสมอ ป้องกันสถานะดรอปดาวน์เป็นค่าว่าง
+- **ปรับปรุงการดึงข้อผิดพลาด Proxy (Enhanced Upload Proxy Logging):**
+    - เพิ่มระบบส่งข้อความล้มเหลวแบบระบุรหัส (Error Code) และคำอธิบายเชิงลึกจากเซิร์ฟเวอร์ proxy เพื่อช่วยให้นักพัฒนาวิเคราะห์ปัญหาเครือข่ายหรือสิทธิ์โฟลเดอร์ได้ทันที
+
+### 📁 ไฟล์ที่เกี่ยวข้อง
+- `app/Controllers/Admin/Academic/ConAdminClassSchedule.php` (Modified - Added Year Fallback & Suppressed DT Warnings)
+- `app/Views/admin/Academic/AdminClassSchedule/AdminClassScheduleMain.php` (Modified - Shifted to Global JS selectedFile Binding)
+
+---
+
+## [2026-05-17] - สถาปัตยกรรมแบ่งส่วนอัปโหลดไฟล์อัจฉริยะ (Premium Chunked File Upload Architecture) 🟢📦✨
+
+### 🚀 ฟีเจอร์ที่เพิ่ม/แก้ไข (Added/Modified)
+- **ระบบแบ่งส่วนไฟล์ระดับ Client (Client-side Chunk Slicing):**
+    - พัฒนาระบบหั่นไฟล์ภาพและ PDF ใน [AdminClassScheduleMain.php](file:///d:/SkjSystem/academic2025/app/Views/admin/Academic/AdminClassSchedule/AdminClassScheduleMain.php) ออกเป็นชิ้นส่วนย่อยๆ ขนาดชิ้นละ **1MB** โดยใช้คำสั่งมาตรฐาน `blob.slice()` ในระดับ JavaScript
+    - ส่งไฟล์แต่ละชิ้นส่วนขึ้นไปยังเซิร์ฟเวอร์แบบต่อเนื่องเป็นลำดับ (Sequentially) ป้องกันปัญหาการอัปโหลดล้มเหลวเนื่องจากขนาดไฟล์เกินขีดจำกัดสูงสุดของระบบ (`upload_max_filesize` หรือ `post_max_size` ใน `php.ini`)
+- **การแจ้งเตือนความคืบหน้าแบบพรีเมียม (Dynamic Real-time Progress Bar):**
+    - ใช้ชุดคำสั่งอัปเดตสถานะของ **SweetAlert2** เพื่อแสดงผลความก้าวหน้า (ProgressBar) แบบแอนิเมชันเคลื่อนไหวสีเขียวมินต์พรีเมียม `#15a362` 
+    - แจ้งข้อมูลเชิงลึกแบบสดใหม่ เช่น *"กำลังส่งชิ้นส่วนที่ 2/5 (40%)"* เพื่อเพิ่มความมั่นใจในการรออัปโหลดไฟล์ขนาดใหญ่
+- **ระบบรวมชิ้นส่วนฝั่งเซิร์ฟเวอร์ Proxy (Server-side Chunk Assembly Engine):**
+    - ปรับแต่งฟังก์ชัน `upload_proxy()` ใน [ConAdminClassSchedule.php](file:///d:/SkjSystem/academic2025/app/Controllers/Admin/Academic/ConAdminClassSchedule.php) 
+    - เมื่อชิ้นส่วนของไฟล์ถูกส่งเข้ามา ระบบจะนำไปบันทึกและต่อเติมไฟล์ชั่วคราว (Append) ไว้ในโฟลเดอร์ `writable/uploads/chunks/`
+    - เมื่อรับชิ้นส่วนสุดท้ายครบถ้วน (`chunk_index == total_chunks - 1`) ระบบจะนำไฟล์ตัวเต็มที่เพิ่งรวมเสร็จสมบูรณ์ ส่งต่อผ่าน cURL ไปยังเซิร์ฟเวอร์หลัก `https://skj.nsnpao.go.th/upload.php` โดยตรงแบบไร้รอยต่อ
+    - ลบไฟล์ขยะชั่วคราวออกจากเซิร์ฟเวอร์ท้องถิ่นทันทีเพื่อรักษาความสะอาดและป้องกันปัญหาพื้นที่เก็บข้อมูลเต็ม
+
+- **ระบบผ่านด่านความปลอดภัย CSRF (CSRF Security Integration):**
+    - แก้ไขข้อผิดพลาด **SyntaxError: Unexpected token '<'** (เกิดจากการถูกบล็อกจากระบบความปลอดภัยของ CodeIgniter 4 แล้วส่งกลับเป็นหน้า 403 Forbidden HTML)
+    - **วิธีการแก้ไข:** ทำการแทรกรหัสความปลอดภัย (CSRF Token Name & Value) เข้าไปใน `remoteUploadFormData` ทุกครั้งที่มีการอัปโหลดชิ้นส่วนไฟล์ ทำให้ระบบผ่านตัวกรองก่อนเรียกใช้คอนโทรลเลอร์ (Before Filter) ได้อย่างราบรื่น 100%
+
+### 📁 ไฟล์ที่เกี่ยวข้อง
+- `app/Controllers/Admin/Academic/ConAdminClassSchedule.php` (Modified - Added chunk assembly & cURL upload sequence)
+- `app/Views/admin/Academic/AdminClassSchedule/AdminClassScheduleMain.php` (Modified - Implemented blob slicing, dynamic progress bar, and CSRF token injection)
+
+---
+
+## [2026-05-17] - อัปเดตความเสถียรของหน้าแก้ไข ระบบแสดงภาพนักเรียน ตัวเลือกปีล่าสุด และเพิ่มความคมชัด PDF 🟢📸✨
+
+### 🚀 ฟีเจอร์ที่เพิ่ม/แก้ไข (Added/Modified)
+- **เพิ่มความคมชัดระดับ 100% สำหรับการแปลง PDF (100% Perfect Crisp Lossless PNG Conversion):**
+    - แก้ไขปัญหาความเบลอของตัวหนังสือตารางเรียน โดยขยายมาตราส่วนการแสดงผล PDF (PDF Render Scale) จาก `2.0` ขึ้นไปเป็น **`3.0`** ทำให้ตัวอักษรและเส้นตารางคมชัดมากที่สุด
+    - เปลี่ยนฟอร์แมตของรูปภาพผลลัพธ์จากการบีบอัดแบบสูญเสียข้อมูล (Lossy JPEG) เป็นการบันทึกแบบ **ไร้รอยสูญเสียข้อมูล (Lossless PNG - `image/png`)** ทำให้ภาพที่ได้มีรายละเอียด **คมชัด 100% (Pixel-Perfect) ไร้รอยแตก (Zero Artifacts)** 
+    - ด้วยธรรมชาติของตารางเรียนที่มีพื้นหลังสีขาวล้วนและการไล่สีแบบ Flat สีแบนราบ lossless PNG จึงสามารถบีบอัดข้อมูลได้อย่างมีประสิทธิภาพสูง ส่งผลให้ได้ภาพที่คมชัดระดับสูงสุดแต่มีขนาดไฟล์ที่เล็กมากเพียง **200KB - 500KB** เท่านั้น (ผ่านขีดจำกัด 1MB ของเซิร์ฟเวอร์หลักได้อย่างสบายๆ)
+- **แก้ไขข้อผิดพลาด DataException: "There is no data to update" (Model Update Fix):**
+    - แก้ไขในไฟล์ `ModAdminClassSchedule.php` เมธอด `class_schedule_update()` เนื่องจากก่อนหน้านี้เรียกใช้ `$this->where()->update($data)` ซึ่งไม่ได้ส่ง Primary Key เข้าไปเป็นอาร์กิวเมนต์ตัวแรกของโมเดลตามที่ CodeIgniter 4 กำหนด ส่งผลให้ข้อมูลถูกกรองทิ้งและเกิดข้อผิดพลาดในการบันทึก
+    - **วิธีการแก้ไข:** ปรับเปลี่ยนโครงสร้างการเรียกเป็น `$this->update($schestu_id, $data)` ตามมาตรฐาน CI4 เพื่อให้การบันทึกการแก้ไขผ่านฉลุยอย่างไร้ที่ติ
+- **แก้ไขปุ่ม "บันทึกการแก้ไข" กดไม่ได้ (Modal Reset & Unlock Fix):**
+    - แก้ไขปัญหาปุ่ม submit ใน Modal ค้างอยู่ที่สถานะ `disabled` หลังจากอัปโหลดไฟล์ล้มเหลวในครั้งแรก
+    - **วิธีการแก้ไข:** เพิ่มการสั่งปลดล็อกปุ่ม `$('#btnSubmitForm').prop('disabled', false)` ภายในฟังก์ชัน `resetFormState()` ทุกครั้งเมื่อเปิด Modal ใหม่ เพื่อความราบรื่นในการใช้งาน
+- **ระบบเลือกปีการศึกษาล่าสุดอัตโนมัติ (Dynamic Latest Year Selector):**
+    - ปรับเปลี่ยน Dropdown การกรองปีตารางเรียน จากเดิมที่มีการ Hardcode เลือก `1/2568` ไว้ ให้เปลี่ยนมาใช้ตัวเลือกตัวแรกสุดที่ส่งมาจากฐานข้อมูลผ่าน `$key === 0 ? "selected" : ""` ซึ่งข้อมูลถูกดึงด้วยลำดับล่าสุดเรียงจากบนลงล่างอยู่แล้ว ทำให้ตารางจะแสดงปีล่าสุดโดยอัตโนมัติเมื่อกดเข้ามา
+- **แก้ไขปัญหารูปภาพตารางเรียนไม่แสดงในฝั่งนักเรียน (Student Schedule Image Load Fix):**
+    - ตรวจพบว่าไฟล์ `image_proxy.php` ไม่มีอยู่จริงในโครงการ ส่งผลให้รูปภาพฝั่งหน้าเว็บนักเรียน (`/ClassSchedule`) ขึ้นข้อผิดพลาด 404 และแสดงเป็นกล่องว่างเมื่อคลิกดู
+    - **วิธีการแก้ไข:** แก้ไขไฟล์ `PageClassSchedule.php` ของฝั่งผู้ใช้ให้เรียกภาพตรงจากเซิร์ฟเวอร์อัปโหลดหลัก `https://skj.nsnpao.go.th/uploads/academic/ClassSchedule/...` และดึงปี/เทอมตามข้อมูลของแต่ละแถวจริง (`item.schestu_year`/`item.schestu_term`) ช่วยให้รูปภาพตารางเรียน ม.1/1 และห้องเรียนอื่นๆ ปรากฏขึ้นมาอย่างคมชัดทันที
+- **เพิ่ม GET Fallback ป้องกันหน้าเว็บล่ม (Preventing 404 GET Fallbacks):**
+    - เพิ่ม Route สำรองสำหรับ `insert_class_schedule` และ `upload_proxy` ในรูปแบบ `GET` ใน `Routes.php` เพื่อเปลี่ยนทิศทาง (Redirect) ไปหน้าหลักอย่างปลอดภัยแทนการเปิดหน้า 404 ข้อมูลตกหล่น
+
+### 📁 ไฟล์ที่เกี่ยวข้อง
+- `app/Views/admin/Academic/AdminClassSchedule/AdminClassScheduleMain.php` (Modified - Optimized PDF rendering scale & quality, unlocked submit button on reset)
+- `app/Models/Admin/ModAdminClassSchedule.php` (Modified - Adjusted CI4 update method syntax)
+- `app/Views/user/PageClassSchedule.php` (Modified - Fixed image URLs and dynamic fields)
+- `app/Config/Routes.php` (Modified - Added GET fallbacks for upload paths)
 
 

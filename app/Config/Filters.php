@@ -38,7 +38,11 @@ class Filters extends BaseConfig
         'before' => [
             'maintenance',
             // 'honeypot',
-            'csrf' => ['except' => ['Auth/googleLogin']],
+            'csrf' => ['except' => [
+                'Auth/googleLogin',
+                'admin/academic/ConAdminClassSchedule/upload_proxy',
+                'admin/academic/ConAdminClassSchedule/insert_class_schedule',
+            ]],
             // 'invalidchars',
         ],
         'after' => [

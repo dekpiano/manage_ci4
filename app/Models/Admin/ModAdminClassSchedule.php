@@ -50,7 +50,7 @@ class ModAdminClassSchedule extends Model
 
     public function class_schedule_update($data, $schestu_id)
     {
-        return $this->where('schestu_id', $schestu_id)->update($data);
+        return $this->update($schestu_id, $data);
     }
 
     public function class_schedule_delete($id)

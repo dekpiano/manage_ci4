@@ -136,12 +136,11 @@ $(document).ready(function() {
 
         let html = '';
         data.forEach(item => {
-            const imageUrl = uploadServerBaseUrl + $('#SearchYear').val() + '/' + $('#SearchTerm').val() + '/' + item.schestu_filename;
-            const proxiedUrl = '<?= base_url('image_proxy.php?url=') ?>' + encodeURIComponent(imageUrl);
+            const imageUrl = uploadServerBaseUrl + item.schestu_year + '/' + item.schestu_term + '/' + item.schestu_filename;
             
             html += `
                 <div class="col-6 col-md-4 col-lg-3">
-                    <div class="card class-card shadow-sm p-3" data-fancybox="gallery" data-src="${proxiedUrl}" data-caption="ม.${item.schestu_classname} (${item.schestu_name})">
+                    <div class="card class-card shadow-sm p-3" data-fancybox="gallery" data-src="${imageUrl}" data-caption="ม.${item.schestu_classname} (${item.schestu_name})">
                         <div class="class-icon">
                             <i class="bx bx-book-open"></i>
                         </div>

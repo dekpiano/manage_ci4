@@ -59,6 +59,21 @@ class ConAdminClassSchedule extends BaseController
                                     ->orderBy('schestu_term', 'DESC')
                                     ->get()->getResult();
 
+        // Ensure the current active school year is always present in YearAll to prevent empty dropdown
+        $currentActiveYear = isset($data['SchoolYear']->schyear_year) ? $data['SchoolYear']->schyear_year : '';
+        $hasCurrent = false;
+        foreach ($data['YearAll'] as $v) {
+            if ($v->Year === $currentActiveYear) {
+                $hasCurrent = true;
+                break;
+            }
+        }
+        if (!$hasCurrent && !empty($currentActiveYear)) {
+            $newYear = new \stdClass();
+            $newYear->Year = $currentActiveYear;
+            array_unshift($data['YearAll'], $newYear);
+        }
+
         session()->set('SchoolYear', $data['SchoolYear']->schyear_year);
         
         echo view('admin/Academic/AdminClassSchedule/AdminClassScheduleMain', $data);
@@ -67,24 +82,7 @@ class ConAdminClassSchedule extends BaseController
     
     public function add()
     {
-        $DBpersonnel = \Config\Database::connect('personnel');
-
-        $data['admin'] = $DBpersonnel->table('tb_personnel')
-                                    ->select('pers_id,pers_img')
-                                    ->where('pers_id', session()->get('login_id'))
-                                    ->get()->getResult();
-
-        $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
-        $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();
-        $data['title'] = "ตารางเรียน";
-        $data['icon'] = '<i class="far fa-plus-square"></i>';
-        $data['color'] = 'primary';
-
-        $data['class_schedule'] = 'schestu_' . uniqid();
-        $data['action'] = 'insert_class_schedule';
-
-        echo view('admin/Academic/AdminClassSchedule/AdminClassScheduleForm', $data);
-        
+        return redirect()->to(base_url('Admin/Acade/Course/ClassSchedule?action=add'));
     }
 
     public function insert_class_schedule()
@@ -149,13 +147,14 @@ class ConAdminClassSchedule extends BaseController
     public function upload_proxy()
     {
         $file = $this->request->getFile('schestu_filename');
-        if (!$file || !$file->isValid()) {
-            return $this->response->setJSON(['status' => 'error', 'message' => 'No file uploaded or file is invalid.']);
+        if (!$file) {
+            return $this->response->setJSON(['status' => 'error', 'message' => 'No file uploaded or retrieved under key "schestu_filename".']);
         }
-
-        $target_url = getenv('upload.server.url');
-        if (!$target_url) {
-            $target_url = 'https://skj.nsnpao.go.th/upload.php'; // Fallback if env is missing
+        if (!$file->isValid()) {
+            return $this->response->setJSON([
+                'status' => 'error', 
+                'message' => 'ไฟล์ไม่สมบูรณ์: รหัสข้อผิดพลาด ' . $file->getError() . ' (' . $file->getErrorString() . ')'
+            ]);
         }
 
         $term = $this->request->getPost('term');
@@ -164,7 +163,7 @@ class ConAdminClassSchedule extends BaseController
 
         // Use filename from JS if provided, otherwise generate one
         $requestedName = $this->request->getPost('filename');
-        if($requestedName){
+        if ($requestedName) {
             $originalName = $requestedName;
         } else {
             $classname = $this->request->getPost('classname');
@@ -172,28 +171,149 @@ class ConAdminClassSchedule extends BaseController
             $originalName = $year . '-' . $term . '-Room-' . $cleanClassName . '.jpg';
         }
 
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $target_url);
-        curl_setopt($ch, CURLOPT_POST, true);
-        
-        $post_data = [
-            'file'     => new \CURLFile($file->getTempName(), $file->getClientMimeType(), $originalName),
-            'path'     => $path,
-            'filename' => $originalName  // ← จำเป็น! remote upload.php ใช้ $_POST['filename'] เป็นชื่อไฟล์
-        ];
-        
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $post_data);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        
-        $response = curl_exec($ch);
-        $error = curl_error($ch);
-        curl_close($ch);
+        // Get Chunk Info
+        $chunkIndex = $this->request->getPost('chunk_index');
+        $totalChunks = $this->request->getPost('total_chunks');
 
-        if ($error) {
-            return $this->response->setJSON(['status' => 'error', 'message' => 'Proxy Error: ' . $error]);
+        // If not chunked, standard direct upload
+        if ($chunkIndex === null || $totalChunks === null) {
+            $target_url = getenv('upload.server.url');
+            if (!$target_url) {
+                $target_url = 'https://skj.nsnpao.go.th/upload.php'; // Fallback if env is missing
+            }
+
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $target_url);
+            curl_setopt($ch, CURLOPT_POST, true);
+            
+            $post_data = [
+                'file'     => new \CURLFile($file->getTempName(), $file->getClientMimeType(), $originalName),
+                'path'     => $path,
+                'filename' => $originalName
+            ];
+            
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $post_data);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            
+            $response = curl_exec($ch);
+            $error = curl_error($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+
+            if ($error) {
+                return $this->response->setJSON(['status' => 'error', 'message' => 'Proxy Error: ' . $error]);
+            }
+
+            if ($httpCode >= 400) {
+                return $this->response->setJSON([
+                    'status' => 'error',
+                    'message' => 'เซิร์ฟเวอร์ปลายทางปฏิเสธไฟล์ (HTTP ' . $httpCode . ') — ไฟล์อาจมีขนาดใหญ่เกินไป'
+                ]);
+            }
+
+            $decoded = json_decode($response);
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                return $this->response->setJSON([
+                    'status' => 'error',
+                    'message' => 'เซิร์ฟเวอร์ปลายทางตอบกลับรูปแบบไม่ถูกต้อง (HTTP ' . $httpCode . ')'
+                ]);
+            }
+
+            return $this->response->setBody($response)->setContentType('application/json');
         }
 
-        return $this->response->setBody($response)->setContentType('application/json');
+        // Chunked upload handling
+        $chunkIndex = (int)$chunkIndex;
+        $totalChunks = (int)$totalChunks;
+
+        $temp_dir = WRITEPATH . 'uploads/chunks/';
+        if (!is_dir($temp_dir)) {
+            mkdir($temp_dir, 0777, true);
+        }
+
+        // Create a unique temporary filename based on session and sanitised filename
+        $temp_filename = md5(session()->get('login_id') . '_' . $originalName) . '.tmp';
+        $temp_filepath = $temp_dir . $temp_filename;
+
+        // Write/Append chunk data
+        $chunk_content = file_get_contents($file->getTempName());
+        if ($chunkIndex === 0) {
+            file_put_contents($temp_filepath, $chunk_content);
+        } else {
+            file_put_contents($temp_filepath, $chunk_content, FILE_APPEND);
+        }
+
+        // If it's the final chunk, assemble and upload to remote server
+        if ($chunkIndex === $totalChunks - 1) {
+            if (!file_exists($temp_filepath) || filesize($temp_filepath) === 0) {
+                return $this->response->setJSON(['status' => 'error', 'message' => 'ไฟล์ชิ้นส่วนสูญหายหรือไม่สามารถรวมไฟล์ได้']);
+            }
+
+            $target_url = getenv('upload.server.url');
+            if (!$target_url) {
+                $target_url = 'https://skj.nsnpao.go.th/upload.php';
+            }
+
+            // Detect mime type
+            $mime_type = 'image/jpeg';
+            if (function_exists('mime_content_type')) {
+                $mime_type = mime_content_type($temp_filepath);
+            }
+
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $target_url);
+            curl_setopt($ch, CURLOPT_POST, true);
+            
+            $post_data = [
+                'file'     => new \CURLFile($temp_filepath, $mime_type, $originalName),
+                'path'     => $path,
+                'filename' => $originalName
+            ];
+            
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $post_data);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            
+            $response = curl_exec($ch);
+            $error = curl_error($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+
+            // Clean up temporary file
+            if (file_exists($temp_filepath)) {
+                unlink($temp_filepath);
+            }
+
+            if ($error) {
+                return $this->response->setJSON(['status' => 'error', 'message' => 'Proxy Error on assembly: ' . $error]);
+            }
+
+            // Validate remote server response - check HTTP status and ensure it's valid JSON
+            if ($httpCode >= 400) {
+                $fileSizeMB = round(filesize($temp_filepath ?? '') / 1024 / 1024, 2);
+                return $this->response->setJSON([
+                    'status' => 'error', 
+                    'message' => 'เซิร์ฟเวอร์ปลายทางปฏิเสธไฟล์ (HTTP ' . $httpCode . ') — ไฟล์อาจมีขนาดใหญ่เกินไป กรุณาลดคุณภาพหรือขนาดไฟล์'
+                ]);
+            }
+
+            // Ensure the response is valid JSON before forwarding
+            $decoded = json_decode($response);
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                return $this->response->setJSON([
+                    'status' => 'error',
+                    'message' => 'เซิร์ฟเวอร์ปลายทางตอบกลับรูปแบบไม่ถูกต้อง (HTTP ' . $httpCode . ')'
+                ]);
+            }
+
+            return $this->response->setBody($response)->setContentType('application/json');
+        }
+
+        // Return chunk saved status to tell client to send the next chunk
+        return $this->response->setJSON([
+            'status' => 'chunk_saved',
+            'chunk_index' => $chunkIndex,
+            'total_chunks' => $totalChunks
+        ]);
     }
 
     public function delete_class_schedule($id, $filename, $year, $term) // Accept year and term
@@ -225,23 +345,7 @@ class ConAdminClassSchedule extends BaseController
 
     public function edit($id)
     {
-        $DBpersonnel = \Config\Database::connect('personnel');
-
-        $data['admin'] = $DBpersonnel->table('tb_personnel')
-                                    ->select('pers_id,pers_img')
-                                    ->where('pers_id', session()->get('login_id'))
-                                    ->get()->getResult();
-
-        $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
-        $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();
-        $data['title'] = "ตารางเรียน (แก้ไข)";
-        $data['icon'] = '<i class="far fa-edit"></i>';
-        $data['color'] = 'warning';
-
-        $data['class_schedule'] = $this->modAdminClassSchedule->where('schestu_id', $id)->get()->getResult();
-        $data['action'] = 'insert_class_schedule'; // Use same method for update
-
-        echo view('admin/Academic/AdminClassSchedule/AdminClassScheduleForm', $data);
+        return redirect()->to(base_url('Admin/Acade/Course/ClassSchedule?action=edit&id=' . $id));
     }
 
     private function deleteFromRemoteApi($path, $fileName)
@@ -288,8 +392,14 @@ class ConAdminClassSchedule extends BaseController
     public function getDataByYear()
     {
         $yearParam = $this->request->getPost('year');
+        if (empty($yearParam)) {
+            $schoolYearRow = $this->db->table('tb_schoolyear')->get()->getRow();
+            $yearParam = !empty($schoolYearRow) ? $schoolYearRow->schyear_year : '';
+        }
+
         if (empty($yearParam) || strpos($yearParam, '/') === false) {
-            return $this->response->setJSON(['data' => [], 'error' => 'Invalid year format']);
+            // Return empty data instead of error to prevent annoying DataTable warning dialog
+            return $this->response->setJSON(['data' => []]);
         }
 
         $Ex = explode('/', $yearParam);
