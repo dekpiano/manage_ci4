@@ -447,9 +447,9 @@ class ConAdminStudents extends BaseController
             if (isset($columns[$orderColumn]['data'])) {
                 $orderData = $columns[$orderColumn]['data'];
                 if ($orderData === 'StudentNumber') {
-                    $builder->orderBy('CAST(StudentNumber AS UNSIGNED)', $orderDir);
+                    $builder->orderBy('CAST(StudentNumber AS UNSIGNED)', $orderDir, false);
                 } elseif ($orderData === 'StudentClass') {
-                    $builder->orderBy('CAST(SUBSTRING(StudentClass, LOCATE(".", StudentClass) + 1) AS UNSIGNED)', $orderDir);
+                    $builder->orderBy('CAST(SUBSTRING(StudentClass, LOCATE(".", StudentClass) + 1) AS UNSIGNED)', $orderDir, false);
                 } else {
                     $builder->orderBy($orderData, $orderDir);
                 }
@@ -727,9 +727,359 @@ class ConAdminStudents extends BaseController
 
     public function AdminStudentsData(){
         $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();
-        $data['title'] = "จัดการข้อมูลนักเรียน LEC";
+        $data['class_list'] = $this->classroom->ListRoom(); // Include class list for filters
+        $data['title'] = "ข้อมูลนักเรียนสำหรับ LEC";
         $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
         echo view('admin/Academic/AdminStudents/AdminStudentsDataLEC', $data);
+    }
+
+    public function AdminStudentsLECShow()
+    {
+        try {
+            $builder = $this->db->table('tb_students');
+            $builder->select('StudentID, StudentNumber, StudentClass, StudentCode, StudentPrefix, StudentFirstName, StudentLastName, CONCAT(StudentPrefix, StudentFirstName, " ", StudentLastName) AS Fullname, StudentStatus, StudentBehavior, StudentStudyLine, StudentSex');
+
+            // Filters from request
+            $classFilter = $this->request->getPost('classFilter');
+            if (!empty($classFilter)) {
+                if (strpos($classFilter, '/') === false) {
+                    $builder->like('StudentClass', $classFilter . '/', 'after');
+                } else {
+                    $builder->where('StudentClass', $classFilter);
+                }
+            }
+
+            $statusFilter = $this->request->getPost('statusFilter');
+            if (!empty($statusFilter)) {
+                $builder->where('StudentStatus', $statusFilter);
+            }
+
+            $behaviorFilter = $this->request->getPost('behaviorFilter');
+            if (!empty($behaviorFilter)) {
+                $builder->where('StudentBehavior', $behaviorFilter);
+            }
+
+            $genderFilter = $this->request->getPost('genderFilter');
+            if (!empty($genderFilter)) {
+                $builder->where('StudentSex', $genderFilter);
+            }
+
+            $draw = $this->request->getPost('draw');
+            $start = $this->request->getPost('start');
+            $length = $this->request->getPost('length');
+            
+            $searchValue = '';
+            if (isset($this->request->getPost('search')['value'])) {
+                $searchValue = $this->request->getPost('search')['value'];
+            }
+
+            $orderColumn = 0; 
+            $orderDir = 'asc'; 
+            if (isset($this->request->getPost('order')[0])) {
+                $orderColumn = $this->request->getPost('order')[0]['column'];
+                $orderDir = $this->request->getPost('order')[0]['dir'];
+            }
+            $columns = $this->request->getPost('columns');
+
+            $totalRecords = $builder->countAllResults(false); 
+
+            if (!empty($searchValue)) {
+                $builder->groupStart()
+                        ->orLike('StudentCode', $searchValue)
+                        ->orLike('StudentFirstName', $searchValue)
+                        ->orLike('StudentLastName', $searchValue)
+                        ->orLike('StudentClass', $searchValue)
+                        ->groupEnd();
+            }
+
+            $filteredRecords = $builder->countAllResults(false); 
+
+            if (isset($columns[$orderColumn]['data'])) {
+                $orderData = $columns[$orderColumn]['data'];
+                if ($orderData === 'StudentNumber') {
+                    $builder->orderBy('CAST(StudentNumber AS UNSIGNED)', $orderDir, false);
+                } elseif ($orderData === 'StudentClass') {
+                    $builder->orderBy('CAST(SUBSTRING(StudentClass, LOCATE(".", StudentClass) + 1) AS UNSIGNED)', $orderDir, false);
+                } else {
+                    $builder->orderBy($orderData, $orderDir);
+                }
+            } else {
+                $builder->orderBy('StudentClass', 'asc')
+                        ->orderBy('CAST(StudentNumber AS UNSIGNED)', 'asc', false);
+            }
+
+            $length = ($length !== null) ? intval($length) : 10;
+            $start = ($start !== null) ? intval($start) : 0;
+
+            $builder->limit($length, $start);
+            $stu = $builder->get()->getResult();   
+
+            $data = [];
+            foreach($stu as $record){
+                $data[] = array( 
+                    "StudentCode" => $record->StudentCode,
+                    "StudentID" => $record->StudentID,
+                    "Fullname" => $record->StudentPrefix.$record->StudentFirstName.' '.$record->StudentLastName,
+                    "StudentClass" => $record->StudentClass,
+                    "StudentNumber" => $record->StudentNumber,
+                    "StudentStudyLine" => $record->StudentStudyLine ?: '-',
+                    "StudentStatus" => $record->StudentStatus,
+                    "StudentBehavior" => $record->StudentBehavior,
+                    "StudentSex" => $record->StudentSex
+                );
+            }
+            $output = array(
+                "draw" => intval($draw),
+                "recordsTotal" => intval($totalRecords),
+                "recordsFiltered" => intval($filteredRecords),
+                "data" =>  $data,           
+            );
+
+            return $this->response->setJSON($output);
+        } catch (\Throwable $e) {
+            log_message('error', 'Error in AdminStudentsLECShow: ' . $e->getMessage() . ' in ' . $e->getFile() . ' on line ' . $e->getLine());
+            return $this->response->setJSON([
+                'draw' => intval($this->request->getPost('draw') ?? 0),
+                'recordsTotal' => 0,
+                'recordsFiltered' => 0,
+                'data' => [],
+                'error' => 'เกิดข้อผิดพลาดในการดึงข้อมูลนักเรียน: ' . $e->getMessage() . ' (ไฟล์: ' . basename($e->getFile()) . ', บรรทัดที่: ' . $e->getLine() . ')'
+            ]);
+        }
+    }
+
+    public function AdminStudentsLECExport()
+    {
+        ob_start();
+        
+        $autoloadPath = SHARED_LIB_PATH . '/spreadsheet/vendor/autoload.php';
+        if (file_exists($autoloadPath)) {
+            require $autoloadPath;
+        } else {
+            throw new \Exception("ไม่พบไฟล์ Autoload ของ Spreadsheet Library ในเส้นทาง: " . $autoloadPath);
+        }
+
+        $classFilter = $this->request->getGet('classFilter');
+        $statusFilter = $this->request->getGet('statusFilter');
+        $behaviorFilter = $this->request->getGet('behaviorFilter');
+        $genderFilter = $this->request->getGet('genderFilter');
+        $exportFormat = $this->request->getGet('format') ?: 'excel'; // excel or csv
+
+        // Get selected columns as array
+        $selectedCols = $this->request->getGet('columns');
+        if (empty($selectedCols)) {
+            // Default columns if none selected
+            $selectedCols = ['StudentCode', 'StudentPrefix', 'StudentFirstName', 'StudentLastName', 'StudentClass', 'StudentNumber'];
+        }
+
+        // Define column maps
+        $columnNames = [
+            'StudentCode'         => 'เลขประจำตัวนักเรียน',
+            'StudentIDNumber'     => 'เลขประจำตัวประชาชน',
+            'StudentPrefix'       => 'คำนำหน้าชื่อ',
+            'StudentFirstName'    => 'ชื่อจริง',
+            'StudentLastName'     => 'นามสกุล',
+            'StudentSex'          => 'เพศ',
+            'StudentDateBirth'    => 'วันเกิด',
+            'StudentDateEntrance' => 'วันที่เข้าเรียน',
+            'StudentClass'        => 'ระดับชั้น',
+            'StudentNumber'       => 'เลขที่',
+            'StudentStudyLine'    => 'สายการเรียน',
+            'StudentStatus'       => 'สถานะนักเรียน',
+            'StudentBehavior'     => 'สถานะพฤติกรรม',
+            'YearFinish'          => 'ปีการศึกษาที่จำหน่าย/จบ',
+            'StudentNationality'  => 'สัญชาติ',
+            'StudentRace'         => 'เชื้อชาติ',
+            'StudentRegion'       => 'ศาสนา',
+            'YearIn'              => 'ปีการศึกษาที่เข้าเรียน',
+            // Address columns from personnel
+            'stu_hNumber'         => 'บ้านเลขที่',
+            'stu_hTambon'         => 'ตำบล (แขวง)',
+            'stu_hDistrict'       => 'อำเภอ (เขต)',
+            'stu_hProvince'       => 'จังหวัด',
+            'stu_hPostCode'       => 'รหัสไปรษณีย์',
+            // Personal columns from personnel
+            'stu_nickName'        => 'ชื่อเล่น',
+            'stu_phone'           => 'เบอร์โทรศัพท์นักเรียน',
+            'stu_email'           => 'อีเมล',
+            'stu_bloodType'       => 'กรุ๊ปเลือด',
+            'stu_birthDay'        => 'วันเกิด (ฐานข้อมูลบุคลากร)',
+            // Parent columns from tb_parent
+            'FatherName'          => 'ชื่อ-นามสกุลบิดา',
+            'MotherName'          => 'ชื่อ-นามสกุลมารดา',
+            'GuardianName'        => 'ชื่อ-นามสกุลผู้ปกครอง',
+        ];
+
+        // Database expression mapping for fields to prevent SQL unknown column errors
+        $dbExpressions = [
+            'StudentCode'         => 'tb_students.StudentCode',
+            'StudentIDNumber'     => 'tb_students.StudentIDNumber',
+            'StudentPrefix'       => 'tb_students.StudentPrefix',
+            'StudentFirstName'    => 'tb_students.StudentFirstName',
+            'StudentLastName'     => 'tb_students.StudentLastName',
+            'StudentSex'          => 'tb_students.StudentSex',
+            'StudentDateBirth'    => 'tb_students.StudentDateBirth',
+            'StudentDateEntrance' => 'tb_students.StudentDateEntrance',
+            'StudentClass'        => 'tb_students.StudentClass',
+            'StudentNumber'       => 'tb_students.StudentNumber',
+            'StudentStudyLine'    => 'tb_students.StudentStudyLine',
+            'StudentStatus'       => 'tb_students.StudentStatus',
+            'StudentBehavior'     => 'tb_students.StudentBehavior',
+            'YearFinish'          => 'tb_students.YearFinish',
+            'StudentNationality'  => 'tb_students.StudentNationality',
+            'StudentRace'         => 'tb_students.StudentRace',
+            'StudentRegion'       => 'tb_students.StudentRegion',
+            'YearIn'              => 'tb_students.YearIn',
+            // Address from personnel (aggregated to prevent ONLY_FULL_GROUP_BY error)
+            'stu_hNumber'         => 'MAX(personnel.stu_hNumber) AS stu_hNumber',
+            'stu_hTambon'         => 'MAX(personnel.stu_hTambon) AS stu_hTambon',
+            'stu_hDistrict'       => 'MAX(personnel.stu_hDistrict) AS stu_hDistrict',
+            'stu_hProvince'       => 'MAX(personnel.stu_hProvince) AS stu_hProvince',
+            'stu_hPostCode'       => 'MAX(personnel.stu_hPostCode) AS stu_hPostCode',
+            // Personal from personnel (aggregated to prevent ONLY_FULL_GROUP_BY error)
+            'stu_nickName'        => 'MAX(personnel.stu_nickName) AS stu_nickName',
+            'stu_phone'           => 'MAX(personnel.stu_phone) AS stu_phone',
+            'stu_email'           => 'MAX(personnel.stu_email) AS stu_email',
+            'stu_bloodType'       => 'MAX(personnel.stu_bloodType) AS stu_bloodType',
+            'stu_birthDay'        => 'MAX(personnel.stu_birthDay) AS stu_birthDay',
+            // Parents from tb_parent (aggregated to prevent ONLY_FULL_GROUP_BY error)
+            'FatherName'          => 'MAX(CONCAT(father.par_prefix, father.par_firstName, " ", father.par_lastName)) AS FatherName',
+            'MotherName'          => 'MAX(CONCAT(mother.par_prefix, mother.par_firstName, " ", mother.par_lastName)) AS MotherName',
+            'GuardianName'        => 'MAX(CONCAT(guardian.par_prefix, guardian.par_firstName, " ", guardian.par_lastName)) AS GuardianName',
+        ];
+
+        // Query students
+        $builder = $this->db->table('tb_students');
+        
+        // Left join to personnel.tb_students and tb_parent (Only match on non-empty ID card numbers to avoid blank matches)
+        $builder->join('skjacth_personnel.tb_students AS personnel', "tb_students.StudentIDNumber IS NOT NULL AND tb_students.StudentIDNumber != '' AND REPLACE(personnel.stu_iden, '-', '') = tb_students.StudentIDNumber", 'left');
+        $builder->join('skjacth_personnel.tb_parent AS father', "father.par_stuID = personnel.stu_iden AND father.par_relation = 'บิดา'", 'left');
+        $builder->join('skjacth_personnel.tb_parent AS mother', "mother.par_stuID = personnel.stu_iden AND mother.par_relation = 'มารดา'", 'left');
+        $builder->join('skjacth_personnel.tb_parent AS guardian', "guardian.par_stuID = personnel.stu_iden AND guardian.par_relation = 'ผู้ปกครอง'", 'left');
+
+        // Build selection list using dbExpressions mapping
+        $selects = ['tb_students.StudentID'];
+        foreach ($selectedCols as $col) {
+            if (array_key_exists($col, $dbExpressions)) {
+                $selects[] = $dbExpressions[$col];
+            }
+        }
+        // Disable automatic backtick escaping to support SQL aggregate functions like MAX()
+        $builder->select(implode(', ', $selects), false);
+
+        // Apply filters
+        if (!empty($classFilter)) {
+            if (strpos($classFilter, '/') === false) {
+                $builder->like('tb_students.StudentClass', $classFilter . '/', 'after');
+            } else {
+                $builder->where('tb_students.StudentClass', $classFilter);
+            }
+        }
+        if (!empty($statusFilter)) {
+            $builder->where('tb_students.StudentStatus', $statusFilter);
+        }
+        if (!empty($behaviorFilter)) {
+            $builder->where('tb_students.StudentBehavior', $behaviorFilter);
+        }
+        if (!empty($genderFilter)) {
+            $builder->where('tb_students.StudentSex', $genderFilter);
+        }
+
+        // Group by StudentID and sort
+        $builder->groupBy('tb_students.StudentID');
+        $builder->orderBy('tb_students.StudentClass', 'asc')
+                ->orderBy('CAST(tb_students.StudentNumber AS UNSIGNED)', 'asc', false);
+        
+        $students = $builder->get()->getResultArray();
+
+        // Setup spreadsheet
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+
+        // 1. Generate Headers
+        $headers = [];
+        foreach ($selectedCols as $col) {
+            if (array_key_exists($col, $columnNames)) {
+                $headers[] = $columnNames[$col];
+            }
+        }
+
+        // Write Headers
+        $colIdx = 'A';
+        foreach ($headers as $headerText) {
+            $sheet->setCellValue($colIdx . '1', $headerText);
+            // Styling headers
+            $sheet->getStyle($colIdx . '1')->getFont()->setBold(true);
+            $sheet->getStyle($colIdx . '1')->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
+                  ->getStartColor()->setARGB('FF15A362'); // Our premium green!
+            $sheet->getStyle($colIdx . '1')->getFont()->getColor()->setARGB('FFFFFFFF'); // White text
+            $colIdx++;
+        }
+
+        // 2. Generate Data rows
+        $rowIdx = 2;
+        foreach ($students as $student) {
+            $colIdx = 'A';
+            foreach ($selectedCols as $col) {
+                if (array_key_exists($col, $columnNames)) {
+                    $val = $student[$col] ?? '';
+                    
+                    // Format dates to B.E. if requested and not empty
+                    if (in_array($col, ['StudentDateBirth', 'StudentDateEntrance', 'stu_birthDay']) && !empty($val)) {
+                        // Check if in YYYY-MM-DD format
+                        if (strpos($val, '-') !== false) {
+                            try {
+                                $dateObj = new \DateTime($val);
+                                $beYear = (int)$dateObj->format('Y') + 543;
+                                $val = $dateObj->format('d/m/') . $beYear;
+                            } catch (\Exception $e) {}
+                        }
+                    }
+                    
+                    // Explicitly set as String to prevent leading zeros from disappearing (like in StudentCode or IDNumber)
+                    $sheet->setCellValueExplicit($colIdx . $rowIdx, $val, \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
+                    $colIdx++;
+                }
+            }
+            $rowIdx++;
+        }
+
+        // Auto-fit columns
+        $lastCol = $sheet->getHighestColumn();
+        for ($col = 'A'; $col !== $lastCol; $col++) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+        $sheet->getColumnDimension($lastCol)->setAutoSize(true);
+
+        $filename = 'LEC_Student_Data_' . date('Ymd_His');
+
+        // Discard and close all active output buffers to completely prevent Debug Bar or Kint injection on exit
+        while (ob_get_level() > 0) {
+            ob_end_clean();
+        }
+
+        if ($exportFormat === 'csv') {
+            $filename .= '.csv';
+            header('Content-Type: text/csv; charset=UTF-8');
+            header('Content-Disposition: attachment;filename="' . $filename . '"');
+            header('Cache-Control: max-age=0');
+            
+            // Add UTF-8 BOM so Excel opens it with correct Thai characters
+            echo "\xEF\xBB\xBF";
+            
+            $writer = new \PhpOffice\PhpSpreadsheet\Writer\Csv($spreadsheet);
+            $writer->setUseBOM(true);
+            $writer->save('php://output');
+        } else {
+            $filename .= '.xlsx';
+            header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+            header('Content-Disposition: attachment;filename="' . $filename . '"');
+            header('Cache-Control: max-age=0');
+            
+            $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+            $writer->save('php://output');
+        }
+        exit();
     }
 
     public function get_student_details($student_id)
@@ -1666,5 +2016,238 @@ class ConAdminStudents extends BaseController
         }
 
         return $studyLine;
+    }
+
+    /**
+     * ดึงข้อมูลการสมัครเรียน (Admission) และข้อมูลดิบทั้งหมดของนักเรียน
+     */
+    public function get_student_admission_details($student_id)
+    {
+        // 1. ดึงข้อมูลนักเรียนหลักจากตาราง tb_students (ข้อมูลในระบบวิชาการปัจจุบัน)
+        $student = $this->db->table('tb_students')->where('StudentID', $student_id)->get()->getRow();
+        if (empty($student)) {
+            return '<div class="alert alert-danger p-3 my-2"><i class="bx bx-error-circle me-1"></i>ไม่พบข้อมูลนักเรียนคนนี้ในระบบ</div>';
+        }
+
+        // 2. ดึงข้อมูลใบสมัครจาก tb_recruitstudent ในฐานข้อมูล admission โดยใช้เลขบัตรประชาชนเป็นเกณฑ์จับคู่
+        $recruitData = null;
+        if (!empty($student->StudentIDNumber)) {
+            $idCardClean = str_replace(['-', ' '], '', $student->StudentIDNumber);
+            $recruitData = $this->DBadmission->table('tb_recruitstudent')
+                ->where("REPLACE(recruit_idCard, '-', '') = '$idCardClean'")
+                ->get()
+                ->getRow();
+        }
+
+        // 3. ดึงข้อมูลเพิ่มเติมจากฐานข้อมูลบุคลากร tb_students
+        $personnelData = null;
+        if (!empty($student->StudentIDNumber)) {
+            $idCardClean = str_replace(['-', ' '], '', $student->StudentIDNumber);
+            $personnelData = $this->DBpersonnel->table('tb_students')
+                ->where("REPLACE(stu_iden, '-', '') = '{$idCardClean}'")
+                ->get()
+                ->getRow();
+        }
+
+        // 4. กรณีที่ไม่มีข้อมูลในฐานข้อมูลบุคลากร ให้ทำ fallback object คล้ายใน ConAdminReportResult
+        if (empty($personnelData)) {
+            $personnelData = new \stdClass();
+            $personnelData->stu_prefix = !empty($recruitData) ? ($recruitData->recruit_prefix ?? '') : $student->StudentPrefix;
+            $personnelData->stu_fristName = !empty($recruitData) ? ($recruitData->recruit_firstName ?? '') : $student->StudentFirstName;
+            $personnelData->stu_lastName = !empty($recruitData) ? ($recruitData->recruit_lastName ?? '') : $student->StudentLastName;
+            $personnelData->stu_phone = !empty($recruitData) ? ($recruitData->recruit_phone ?? '-') : '-';
+            $personnelData->stu_nickName = '-';
+            $personnelData->stu_iden = !empty($recruitData) ? ($recruitData->recruit_idCard ?? '') : $student->StudentIDNumber;
+            $personnelData->stu_birthDay = !empty($recruitData) ? ($recruitData->recruit_birthday ?? '-') : $student->StudentDateBirth;
+            $personnelData->stu_religion = !empty($recruitData) ? ($recruitData->recruit_religion ?? '-') : '-';
+            $personnelData->stu_bloodType = '-';
+            $personnelData->stu_birthHospital = '-';
+            $personnelData->stu_birthTambon = '-';
+            $personnelData->stu_birthDistrict = '-';
+            $personnelData->stu_birthProvirce = '-';
+            $personnelData->stu_nationality = !empty($recruitData) ? ($recruitData->recruit_nationality ?? '-') : '-';
+            $personnelData->stu_race = !empty($recruitData) ? ($recruitData->recruit_race ?? '-') : '-';
+            $personnelData->stu_wieght = '-';
+            $personnelData->stu_hieght = '-';
+            $personnelData->stu_diseaes = '-';
+            $personnelData->stu_parenalStatus = '-';
+            $personnelData->stu_presentLife = '-';
+            $personnelData->stu_talent = '-';
+            
+            // ข้อมูลที่อยู่ตามทะเบียนบ้าน
+            $personnelData->stu_hNumber = !empty($recruitData) ? ($recruitData->recruit_address ?? '-') : '-';
+            $personnelData->stu_hMoo = '-';
+            $personnelData->stu_hRoad = '-';
+            $personnelData->stu_hTambon = !empty($recruitData) ? ($recruitData->recruit_tambon ?? '-') : '-';
+            $personnelData->stu_hDistrict = !empty($recruitData) ? ($recruitData->recruit_district ?? '-') : '-';
+            $personnelData->stu_hProvince = !empty($recruitData) ? ($recruitData->recruit_province ?? '-') : '-';
+            $personnelData->stu_hPostCode = !empty($recruitData) ? ($recruitData->recruit_zipcode ?? '-') : '-';
+            
+            // ข้อมูลที่อยู่ปัจจุบัน
+            $personnelData->stu_cNumber = !empty($recruitData) ? ($recruitData->recruit_address ?? '-') : '-';
+            $personnelData->stu_cMoo = '-';
+            $personnelData->stu_cRoad = '-';
+            $personnelData->stu_cTumbao = !empty($recruitData) ? ($recruitData->recruit_tambon ?? '-') : '-';
+            $personnelData->stu_cDistrict = !empty($recruitData) ? ($recruitData->recruit_district ?? '-') : '-';
+            $personnelData->stu_cProvince = !empty($recruitData) ? ($recruitData->recruit_province ?? '-') : '-';
+            $personnelData->stu_cPostcode = !empty($recruitData) ? ($recruitData->recruit_zipcode ?? '-') : '-';
+            
+            $personnelData->stu_phoneUrgent = '-';
+            $personnelData->stu_natureRoom = '-';
+            
+            // ประวัติการศึกษาเดิม
+            $personnelData->stu_gradLevel = '-';
+            $personnelData->stu_schoolfrom = !empty($recruitData) ? ($recruitData->recruit_schoolName ?? '-') : '-';
+            $personnelData->stu_schoolTambao = '-';
+            $personnelData->stu_schoolDistrict = '-';
+            $personnelData->stu_schoolProvince = !empty($recruitData) ? ($recruitData->recruit_schoolProvince ?? '-') : '-';
+            
+            $personnelData->stu_usedStudent = !empty($recruitData) ? ($recruitData->recruit_oldStudent ?? 'ไม่เคย') : 'ไม่เคย';
+            $personnelData->stu_UpdateConfirm = !empty($recruitData) ? ($recruitData->recruit_status ?? null) : null;
+        }
+
+        // 5. Query parent data from personnel.tb_parent if available
+        // รวบรวมค่าที่เป็นไปได้ทั้งหมดของ รหัสนักเรียน และ เลขบัตรประชาชน ของนักเรียนคนนี้
+        $parent_data = ['father' => null, 'mother' => null, 'guardian' => null];
+        $possible_ids = [];
+        
+        // 1) รหัสนักเรียน (stu_idStu / StudentCode / StudentID)
+        if (!empty($student->StudentID)) {
+            $possible_ids[] = (string)$student->StudentID;
+        }
+        if (!empty($student->StudentCode)) {
+            $possible_ids[] = (string)$student->StudentCode;
+        }
+        if (!empty($personnelData->stu_idStu)) {
+            $possible_ids[] = (string)$personnelData->stu_idStu;
+        }
+        
+        // 2) เลขบัตรประจำตัวประชาชน (stu_iden / StudentIDNumber) ทั้งแบบมี - และไม่มี -
+        if (!empty($student->StudentIDNumber)) {
+            $cleanId = str_replace(['-', ' '], '', $student->StudentIDNumber);
+            $possible_ids[] = $cleanId;
+            if (strlen($cleanId) === 13) {
+                $possible_ids[] = substr($cleanId, 0, 1) . '-' . substr($cleanId, 1, 4) . '-' . substr($cleanId, 5, 5) . '-' . substr($cleanId, 10, 2) . '-' . substr($cleanId, 12, 1);
+            }
+        }
+        if (!empty($personnelData->stu_iden)) {
+            $possible_ids[] = $personnelData->stu_iden;
+            $cleanId = str_replace(['-', ' '], '', $personnelData->stu_iden);
+            $possible_ids[] = $cleanId;
+            if (strlen($cleanId) === 13) {
+                $possible_ids[] = substr($cleanId, 0, 1) . '-' . substr($cleanId, 1, 4) . '-' . substr($cleanId, 5, 5) . '-' . substr($cleanId, 10, 2) . '-' . substr($cleanId, 12, 1);
+            }
+        }
+
+        // กรองค่าว่างและค่าซ้ำออก
+        $possible_ids = array_unique(array_filter($possible_ids));
+
+        $parents = [];
+        if (!empty($possible_ids)) {
+            $parents = $this->DBpersonnel->table('tb_parent')
+                ->whereIn('par_stuID', $possible_ids)
+                ->get()
+                ->getResult();
+        }
+
+        foreach ($parents as $p) {
+            $rel = trim($p->par_relation ?? '');
+            if ($rel === 'บิดา') {
+                $parent_data['father'] = $p;
+            } elseif ($rel === 'มารดา') {
+                $parent_data['mother'] = $p;
+            } else {
+                // หากไม่ใช่ บิดา หรือ มารดา ให้ป้อนเข้าช่องผู้ปกครอง (เช่น ป้า, ลุง, ตา, ยาย, ผู้ปกครอง)
+                $parent_data['guardian'] = $p;
+            }
+        }
+
+        $data['student'] = $student;
+        $data['recruitData'] = $recruitData;
+        $data['DataStudent'] = $personnelData;
+        $data['parent_data'] = $parent_data;
+        $data['possible_ids'] = $possible_ids;
+        
+        $data['recruit_regLevel'] =  !empty($recruitData) ? $recruitData->recruit_regLevel : null;
+        $data['recruit_img'] =  !empty($recruitData) ? $recruitData->recruit_img : null;
+        $data['recruit_statusFinal'] =  !empty($recruitData) ? $recruitData->recruit_statusFinal : null;
+        $data['recruit_statusSurrender'] =  !empty($recruitData) ? $recruitData->recruit_statusSurrender : null;
+        $data['recruit_category'] =  !empty($recruitData) ? $recruitData->recruit_category : null;
+        $data['recruit_tpyeRoom'] =  !empty($recruitData) ? $recruitData->recruit_tpyeRoom : null;
+
+        $data['recruitLabels'] = [
+            'recruit_id' => 'ID ผู้สมัคร',
+            'recruit_regLevel' => 'ชั้นที่สมัคร',
+            'recruit_prefix' => 'คำนำหน้า',
+            'recruit_firstName' => 'ชื่อ',
+            'recruit_lastName' => 'นามสกุล',
+            'recruit_idCard' => 'เลขประจำตัวประชาชน',
+            'recruit_birthday' => 'วันเกิด',
+            'recruit_sex' => 'เพศ',
+            'recruit_religion' => 'ศาสนา',
+            'recruit_nationality' => 'สัญชาติ',
+            'recruit_race' => 'เชื้อชาติ',
+            'recruit_phone' => 'เบอร์โทรศัพท์',
+            'recruit_email' => 'อีเมล',
+            'recruit_schoolName' => 'โรงเรียนเดิม',
+            'recruit_schoolProvince' => 'จังหวัดโรงเรียนเดิม',
+            'recruit_grade' => 'เกรดเฉลี่ย (GPA)',
+            'recruit_category' => 'รอบที่สมัคร/ประเภทโควตา',
+            'recruit_tpyeRoom' => 'สายการเรียน/ประเภทห้องเรียน',
+            'recruit_typeRoomBackup' => 'สายการเรียนสำรอง',
+            'recruit_img' => 'ชื่อไฟล์รูปภาพ',
+            'recruit_status' => 'สถานะการสมัคร',
+            'recruit_statusFinal' => 'ผลการตัดสินสุดท้าย',
+            'recruit_statusSurrender' => 'สถานะการมอบตัว',
+            'recruit_year' => 'ปีการศึกษา',
+            'recruit_regNum' => 'เลขที่สมัคร/เลขที่นั่งสอบ',
+            
+            // ข้อมูลบิดา
+            'recruit_fPrefix' => 'คำนำหน้าบิดา',
+            'recruit_fFirstName' => 'ชื่อบิดา',
+            'recruit_fLastName' => 'นามสกุลบิดา',
+            'recruit_fPhone' => 'เบอร์โทรศัพท์บิดา',
+            'recruit_fIdCard' => 'เลขบัตรประชาชนบิดา',
+            'recruit_fJob' => 'อาชีพบิดา',
+            'recruit_fSalary' => 'รายได้บิดา',
+            'recruit_fStatus' => 'สถานภาพบิดา',
+            
+            // ข้อมูลมารดา
+            'recruit_mPrefix' => 'คำนำหน้ามารดา',
+            'recruit_mFirstName' => 'ชื่อมารดา',
+            'recruit_mLastName' => 'นามสกุลมารดา',
+            'recruit_mPhone' => 'เบอร์โทรศัพท์มารดา',
+            'recruit_mIdCard' => 'เลขบัตรประชาชนมารดา',
+            'recruit_mJob' => 'อาชีพมารดา',
+            'recruit_mSalary' => 'รายได้มารดา',
+            'recruit_mStatus' => 'สถานภาพมารดา',
+            
+            // ข้อมูลผู้ปกครอง
+            'recruit_pPrefix' => 'คำนำหน้าผู้ปกครอง',
+            'recruit_pFirstName' => 'ชื่อผู้ปกครอง',
+            'recruit_pLastName' => 'นามสกุลผู้ปกครอง',
+            'recruit_pPhone' => 'เบอร์โทรศัพท์ผู้ปกครอง',
+            'recruit_pIdCard' => 'เลขบัตรประชาชนผู้ปกครอง',
+            'recruit_pRelation' => 'ความสัมพันธ์ผู้ปกครอง',
+            'recruit_pJob' => 'อาชีพผู้ปกครอง',
+            'recruit_pSalary' => 'รายได้ผู้ปกครอง',
+            
+            // ที่อยู่
+            'recruit_oldStudent' => 'สถานะนักเรียนเก่า',
+            'recruit_province' => 'จังหวัดที่อยู่',
+            'recruit_district' => 'อำเภอที่อยู่',
+            'recruit_tambon' => 'ตำบลที่อยู่',
+            'recruit_address' => 'บ้านเลขที่/ที่อยู่',
+            'recruit_zipcode' => 'รหัสไปรษณีย์',
+            
+            // ระบบ
+            'recruit_createdate' => 'วันที่สมัคร',
+            'recruit_updatedate' => 'วันที่แก้ไขล่าสุด',
+            'recruit_userUpdate' => 'ผู้แก้ไขล่าสุด',
+            'recruit_ipUpdate' => 'IP ที่เข้าถึงล่าสุด',
+            'recruit_token' => 'รหัส Token ระบบ'
+        ];
+
+        return view('admin/Academic/AdminStudents/_recruit_details_modal', $data);
     }
 }

@@ -152,8 +152,7 @@
         - Added route `/admin/academic/checkplan/teacherplans/(:segment)` and fixed `(:num)` to `(:segment)`.
         - Modified `ChekPresGroup.php` to include a table in the modal for displaying teacher's plans via AJAX.
         - Corrected column `seplan_subject_code` to `seplan_coursecode` in model and view (JavaScript).
-        - Created `DEVELOPMENT_LOG.md` to track project history and modifications as a memory for the user and AI.
-        - Created `DEVELOPMENT_LOG.md` to track project history and implementations.
+        - Fixed `ErrorException Attempt to read property "stu_fristName" on null` in `AdminReportEnrollDetailStudent.php` by cleaning up the `stu_iden` query using `REPLACE(stu_iden, "-", "")` and implementing a robust `stdClass` fallback object from `tb_recruitstudent` when the student record is not present in the personnel database.
     </recent_actions>
 
     <current_plan>

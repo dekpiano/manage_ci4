@@ -239,6 +239,11 @@
                         <div data-i18n="เลื่อนชั้น/จบการศึกษา">เลื่อนชั้น/จบการศึกษา</div>
                     </a>
                 </li>
+                <li class="menu-item <?= ($s4 == 'Students' && $s5 == 'Data' ? 'active' : '') ?>">
+                    <a href="<?=base_url('Admin/Acade/Registration/Students/Data');?>" class="menu-link">
+                        <div data-i18n="ข้อมูลนักเรียนสำหรับ LEC">ข้อมูลนักเรียนสำหรับ LEC</div>
+                    </a>
+                </li>
             </ul>
         </li>
         <li class="menu-item <?= ($totalSegments >= 4 && $s4 == 'ClassRoom' ? 'active' : '') ?>">

@@ -119,6 +119,8 @@ $routes->post('admin/academic/ConAdminClassRoom/AddClassRoom', [ConAdminClassRoo
 $routes->post('admin/academic/ConAdminClassRoom/DeleteClassRoom/(:segment)', [ConAdminClassRoom::class, 'DeleteClassRoom']);
 $routes->get('Admin/Acade/Registration/Students', [ConAdminStudents::class, 'AdminStudentsMain']);
 $routes->get('Admin/Acade/Registration/Students/Data', [ConAdminStudents::class, 'AdminStudentsData']);
+$routes->post('Admin/Acade/Registration/Students/DataShow', [ConAdminStudents::class, 'AdminStudentsLECShow']);
+$routes->get('Admin/Acade/Registration/Students/DataExport', [ConAdminStudents::class, 'AdminStudentsLECExport']);
 $routes->get('Admin/Acade/Registration/Students/Lifecycle', [ConAdminStudents::class, 'AdminStudentsLifecycle']);
 $routes->get('Admin/Acade/Registration/Students/Add', [ConAdminStudents::class, 'AdminStudentsAdd']);
 
@@ -145,6 +147,7 @@ $routes->match(['get', 'post'],'Admin/Acade/Registration/StudentsUpdate', [ConAd
 $routes->match(['get', 'post'],'Admin/Acade/Registration/StudentsUpdate/(:segment)', [ConAdminStudents::class, 'AdminStudentsUpdate/$1']);
 
 $routes->get('Admin/Academic/ConAdminStudents/get_student_details/(:num)', [ConAdminStudents::class, 'get_student_details/$1']);
+$routes->get('Admin/Academic/ConAdminStudents/get_student_admission_details/(:num)', [ConAdminStudents::class, 'get_student_admission_details/$1']);
 $routes->post('Admin/Academic/ConAdminStudents/update_student_details', [ConAdminStudents::class, 'update_student_details']);
 $routes->post('Admin/Academic/ConAdminStudents/AdminStudentsDelete/(:num)', [ConAdminStudents::class, 'AdminStudentsDelete/$1']);
 

@@ -1781,7 +1781,76 @@ class ConAdminReportResult extends BaseController
         $data['recruit_statusSurrender'] =  !empty($CkeckIDEN) ? $CkeckIDEN->recruit_statusSurrender : null;
         $data['recruit_category'] =  !empty($CkeckIDEN) ? $CkeckIDEN->recruit_category : null;
         $data['recruit_tpyeRoom'] =  !empty($CkeckIDEN) ? $CkeckIDEN->recruit_tpyeRoom : null;
-        $data['DataStudent'] = !empty($CkeckIDEN->recruit_idCard) ? $this->DBpersonnel->table('tb_students')->where('stu_iden',$CkeckIDEN->recruit_idCard)->get()->getRow() : null;
+
+        // ดึงข้อมูลนักเรียนจากฐานข้อมูลบุคลากร โดยทำความสะอาดและรองรับเลขประจำตัวประชาชนที่มีหรือไม่มีขีด
+        $idCardClean = !empty($CkeckIDEN->recruit_idCard) ? str_replace(['-', ' '], '', $CkeckIDEN->recruit_idCard) : null;
+        $DataStudent = null;
+        if (!empty($idCardClean)) {
+            $DataStudent = $this->DBpersonnel->table('tb_students')
+                ->where('REPLACE(stu_iden, "-", "")', $idCardClean)
+                ->get()
+                ->getRow();
+        }
+
+        // กรณีที่นักเรียนยังไม่ถูกสร้างหรือซิงค์ข้อมูลลงใน tb_students ของระบบบุคลากร (เช่น ผู้สมัครใหม่)
+        // จะทำการสร้าง fallback object จากข้อมูลใบสมัครจริง (tb_recruitstudent) เพื่อไม่ให้เกิด Error ในหน้า View
+        if (empty($DataStudent)) {
+            $DataStudent = new \stdClass();
+            $DataStudent->stu_prefix = !empty($CkeckIDEN) ? ($CkeckIDEN->recruit_prefix ?? '') : '';
+            $DataStudent->stu_fristName = !empty($CkeckIDEN) ? ($CkeckIDEN->recruit_firstName ?? '') : '';
+            $DataStudent->stu_lastName = !empty($CkeckIDEN) ? ($CkeckIDEN->recruit_lastName ?? '') : '';
+            $DataStudent->stu_phone = !empty($CkeckIDEN) ? ($CkeckIDEN->recruit_phone ?? '-') : '-';
+            $DataStudent->stu_nickName = '-';
+            $DataStudent->stu_iden = !empty($CkeckIDEN) ? ($CkeckIDEN->recruit_idCard ?? '') : '';
+            $DataStudent->stu_birthDay = !empty($CkeckIDEN) ? ($CkeckIDEN->recruit_birthday ?? '-') : '-';
+            $DataStudent->stu_religion = !empty($CkeckIDEN) ? ($CkeckIDEN->recruit_religion ?? '-') : '-';
+            $DataStudent->stu_bloodType = '-';
+            $DataStudent->stu_birthHospital = '-';
+            $DataStudent->stu_birthTambon = '-';
+            $DataStudent->stu_birthDistrict = '-';
+            $DataStudent->stu_birthProvirce = '-';
+            $DataStudent->stu_nationality = !empty($CkeckIDEN) ? ($CkeckIDEN->recruit_nationality ?? '-') : '-';
+            $DataStudent->stu_race = !empty($CkeckIDEN) ? ($CkeckIDEN->recruit_race ?? '-') : '-';
+            $DataStudent->stu_wieght = '-';
+            $DataStudent->stu_hieght = '-';
+            $DataStudent->stu_diseaes = '-';
+            $DataStudent->stu_parenalStatus = '-';
+            $DataStudent->stu_presentLife = '-';
+            $DataStudent->stu_talent = '-';
+            
+            // ข้อมูลที่อยู่ตามทะเบียนบ้าน
+            $DataStudent->stu_hNumber = !empty($CkeckIDEN) ? ($CkeckIDEN->recruit_address ?? '-') : '-';
+            $DataStudent->stu_hMoo = '-';
+            $DataStudent->stu_hRoad = '-';
+            $DataStudent->stu_hTambon = !empty($CkeckIDEN) ? ($CkeckIDEN->recruit_tambon ?? '-') : '-';
+            $DataStudent->stu_hDistrict = !empty($CkeckIDEN) ? ($CkeckIDEN->recruit_district ?? '-') : '-';
+            $DataStudent->stu_hProvince = !empty($CkeckIDEN) ? ($CkeckIDEN->recruit_province ?? '-') : '-';
+            $DataStudent->stu_hPostCode = !empty($CkeckIDEN) ? ($CkeckIDEN->recruit_zipcode ?? '-') : '-';
+            
+            // ข้อมูลที่อยู่ปัจจุบัน
+            $DataStudent->stu_cNumber = !empty($CkeckIDEN) ? ($CkeckIDEN->recruit_address ?? '-') : '-';
+            $DataStudent->stu_cMoo = '-';
+            $DataStudent->stu_cRoad = '-';
+            $DataStudent->stu_cTumbao = !empty($CkeckIDEN) ? ($CkeckIDEN->recruit_tambon ?? '-') : '-';
+            $DataStudent->stu_cDistrict = !empty($CkeckIDEN) ? ($CkeckIDEN->recruit_district ?? '-') : '-';
+            $DataStudent->stu_cProvince = !empty($CkeckIDEN) ? ($CkeckIDEN->recruit_province ?? '-') : '-';
+            $DataStudent->stu_cPostcode = !empty($CkeckIDEN) ? ($CkeckIDEN->recruit_zipcode ?? '-') : '-';
+            
+            $DataStudent->stu_phoneUrgent = '-';
+            $DataStudent->stu_natureRoom = '-';
+            
+            // ประวัติการศึกษาเดิม
+            $DataStudent->stu_gradLevel = '-';
+            $DataStudent->stu_schoolfrom = !empty($CkeckIDEN) ? ($CkeckIDEN->recruit_schoolName ?? '-') : '-';
+            $DataStudent->stu_schoolTambao = '-';
+            $DataStudent->stu_schoolDistrict = '-';
+            $DataStudent->stu_schoolProvince = !empty($CkeckIDEN) ? ($CkeckIDEN->recruit_schoolProvince ?? '-') : '-';
+            
+            $DataStudent->stu_usedStudent = !empty($CkeckIDEN) ? ($CkeckIDEN->recruit_oldStudent ?? 'ไม่เคย') : 'ไม่เคย';
+            $DataStudent->stu_UpdateConfirm = !empty($CkeckIDEN) ? ($CkeckIDEN->recruit_status ?? null) : null;
+        }
+
+        $data['DataStudent'] = $DataStudent;
 
         $data['recruitLabels'] = [
             'recruit_id' => 'ID ผู้สมัคร',
