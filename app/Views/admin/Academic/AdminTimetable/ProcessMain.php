@@ -1273,6 +1273,30 @@
 
 <?= $this->section('script') ?>
 <script>
+// 🛡️ Global AJAX CSRF Sync
+function getCookie(name) {
+    let value = "; " + document.cookie;
+    let parts = value.split("; " + name + "=");
+    if (parts.length === 2) return parts.pop().split(";").shift();
+}
+
+$(document).ajaxSend(function(event, jqXHR, settings) {
+    if (settings.type === 'POST') {
+        let token = getCookie('csrf_cookie_name');
+        if (token) {
+            jqXHR.setRequestHeader('X-CSRF-TOKEN', token);
+        }
+    }
+});
+
+$(document).ajaxComplete(function(event, xhr, settings) {
+    let token = getCookie('csrf_cookie_name');
+    if (token) {
+        // Update all hidden CSRF inputs on the page
+        $('input[name="csrf_test_name"]').val(token);
+    }
+});
+
 // 🪄 Persist Step and UI state
 let currentStep = parseInt(localStorage.getItem('timetable_wizard_step')) || 1;
 const totalSteps = 5;
@@ -1757,11 +1781,50 @@ $(document).ready(function() {
     const $teacherSelect = $('#modal_teacher_id');
     const originalTeacherOptions = $teacherSelect.html();
 
+    // 🚀 Subject Details Fetch & Auto Hours Calculation in Modal
+    function fetchModalSubjectInfo(subjectId, autoSetHours = true) {
+        if (!subjectId) {
+            $('#modal-subject-detail-badge').remove();
+            return;
+        }
+
+        $.get('<?= base_url('admin/academic/timetable/get-subject-info') ?>', { subject_id: subjectId }, function(info) {
+            if (info && info.status === 'success') {
+                if (info.SubjectUnit !== null || info.SubjectHour !== null) {
+                    if (autoSetHours) {
+                        $('#wizard_hours_per_week').val(info.suggested_hours).trigger('change');
+                    }
+                    
+                    let detailHtml = '<div class="alert alert-light-success d-flex align-items-center p-2 mb-0 mt-2" style="border: 1px dashed #15a362; border-radius: 0.5rem; background-color: #f4fbf7;">' +
+                        '<i class="bx bx-info-circle text-success me-2 fs-5"></i>' +
+                        '<div>' +
+                        '<span class="badge bg-label-success me-2">ข้อมูลวิชา</span>' +
+                        '<small class="text-dark fw-semibold">' +
+                        'หน่วยกิต: <strong class="text-success">' + (info.SubjectUnit || '-') + '</strong> | ' +
+                        'จำนวนชั่วโมง: <strong class="text-success">' + (info.SubjectHour || '-') + ' ชม.</strong> | ' +
+                        'คำนวณคาบต่อสัปดาห์อัตโนมัติ: <strong class="text-success">' + info.suggested_hours + ' คาบ</strong>' +
+                        '</small>' +
+                        '</div>' +
+                        '</div>';
+                    
+                    $('#modal-subject-detail-badge').remove();
+                    $('<div id="modal-subject-detail-badge" class="mt-2"></div>').html(detailHtml).insertAfter($('#modal_subject_id').next('.select2-container'));
+                } else {
+                    $('#modal-subject-detail-badge').remove();
+                }
+            }
+        });
+    }
+
     $('#modal_subject_id').on('change', function(e, data) {
         const isManual = (data && data.manual !== undefined) ? data.manual : true;
+        const subjectId = $(this).val();
+        
+        // Fetch Subject details and auto-calculate hours
+        fetchModalSubjectInfo(subjectId, isManual);
+        
         if (!isManual) return;
         
-        const subjectId = $(this).val();
         if (!subjectId) {
             $teacherSelect.html(originalTeacherOptions).trigger('change');
             return;

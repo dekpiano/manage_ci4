@@ -256,6 +256,30 @@
 
 <?= $this->section('script') ?>
 <script>
+// 🛡️ Global AJAX CSRF Sync
+function getCookie(name) {
+    let value = "; " + document.cookie;
+    let parts = value.split("; " + name + "=");
+    if (parts.length === 2) return parts.pop().split(";").shift();
+}
+
+$(document).ajaxSend(function(event, jqXHR, settings) {
+    if (settings.type === 'POST') {
+        let token = getCookie('csrf_cookie_name');
+        if (token) {
+            jqXHR.setRequestHeader('X-CSRF-TOKEN', token);
+        }
+    }
+});
+
+$(document).ajaxComplete(function(event, xhr, settings) {
+    let token = getCookie('csrf_cookie_name');
+    if (token) {
+        // Update all hidden CSRF inputs on the page
+        $('input[name="csrf_test_name"]').val(token);
+    }
+});
+
 $(document).ready(function() {
     // 🟢 Initialize Smooth Select2
     $('.select2').each(function() {
@@ -372,6 +396,53 @@ $(document).ready(function() {
             }
         });
     });
+
+    // 🚀 Subject Details Fetch & Auto Hours Calculation
+    function fetchSubjectInfo(subjectId, autoSetHours = true) {
+        if (!subjectId) {
+            $('#subject-detail-badge').remove();
+            return;
+        }
+
+        $.get('<?= base_url('admin/academic/timetable/get-subject-info') ?>', { subject_id: subjectId }, function(info) {
+            if (info && info.status === 'success') {
+                if (info.SubjectUnit !== null || info.SubjectHour !== null) {
+                    if (autoSetHours) {
+                        $('#hours_per_week').val(info.suggested_hours).trigger('change');
+                    }
+                    
+                    let detailHtml = '<div class="alert alert-light-success d-flex align-items-center p-2 mb-0" style="border: 1px dashed #15a362; border-radius: 0.5rem; background-color: #f4fbf7;">' +
+                        '<i class="bx bx-info-circle text-success me-2 fs-5"></i>' +
+                        '<div>' +
+                        '<span class="badge bg-label-success me-2">ข้อมูลวิชา</span>' +
+                        '<small class="text-dark fw-semibold">' +
+                        'หน่วยกิต: <strong class="text-success">' + (info.SubjectUnit || '-') + '</strong> | ' +
+                        'จำนวนชั่วโมง: <strong class="text-success">' + (info.SubjectHour || '-') + ' ชม.</strong> | ' +
+                        'คำนวณคาบต่อสัปดาห์อัตโนมัติ: <strong class="text-success">' + info.suggested_hours + ' คาบ</strong>' +
+                        '</small>' +
+                        '</div>' +
+                        '</div>';
+                    
+                    $('#subject-detail-badge').remove();
+                    $('<div id="subject-detail-badge" class="mt-2"></div>').html(detailHtml).insertAfter($('#subject_id').next('.select2-container'));
+                } else {
+                    $('#subject-detail-badge').remove();
+                }
+            }
+        });
+    }
+
+    // Trigger on change
+    $('#subject_id').on('change', function() {
+        const subjectId = $(this).val();
+        fetchSubjectInfo(subjectId, true);
+    });
+
+    // Trigger on load (for edit mode)
+    const initialSubjectId = $('#subject_id').val();
+    if (initialSubjectId) {
+        fetchSubjectInfo(initialSubjectId, false); // don't overwrite user selection on load
+    }
 
     // 🚀 Dynamic Period Split Logic
     function updateSplitOptions() {

@@ -224,6 +224,7 @@ $routes->group('admin/academic/timetable', ['namespace' => 'App\Controllers'], f
     $routes->post('save-joint-group', 'Admin\Academic\ConAdminTimetable::saveSubjectGroup');
     $routes->post('delete-joint-group/(:num)', 'Admin\Academic\ConAdminTimetable::deleteSubjectGroup/$1');
     $routes->get('get-suggested-teachers', 'Admin\Academic\ConAdminTimetable::getSuggestedTeachers');
+    $routes->get('get-subject-info', 'Admin\Academic\ConAdminTimetable::getSubjectInfo');
 
     // Subjects for Timetable
     $routes->get('subjects', 'Admin\Academic\ConAdminTimetable::subjects');

@@ -319,8 +319,8 @@ class ConAdminTimetable extends BaseController
         
         $grouped = [];
         foreach($raw_assignments as $row) {
-            // Grouping key: if group_id exists, use it as primary key, otherwise use assign_id
-            $key = $row->group_id ? 'G_'.$row->group_id : 'A_'.$row->assign_id;
+            // Grouping key: if group_id exists, use it as primary key, otherwise group by subject_id
+            $key = $row->group_id ? 'G_'.$row->group_id : 'S_'.$row->subject_id;
             
             if (!$row->tsub_name) {
                 $row->tsub_name = "ไม่พบข้อมูลวิชา (ID: " . $row->subject_id . ")";
@@ -2333,6 +2333,56 @@ class ConAdminTimetable extends BaseController
             ->get()->getResult();
 
         return $this->response->setJSON($suggested);
+    }
+
+    public function getSubjectInfo()
+    {
+        $subject_id = $this->request->getGet('subject_id');
+        $selectedYear = $this->getTimetableYear();
+
+        $subject = $this->db_timetable->table('tb_timetable_subjects')
+            ->where('tsub_id', $subject_id)
+            ->get()->getRow();
+
+        if (!$subject) {
+            return $this->response->setJSON(['status' => 'error', 'message' => 'ไม่พบข้อมูลวิชาในระบบตารางสอน']);
+        }
+
+        // Find in tb_subjects to get credits/hours
+        $academic = $this->db->table('tb_subjects')
+            ->where([
+                'SubjectCode' => $subject->tsub_code,
+                'SubjectYear' => $selectedYear
+            ])
+            ->get()->getRow();
+
+        if ($academic) {
+            // Calculate suggested periods per week
+            // 1. From SubjectHour: e.g. 40 hours / 20 weeks = 2 periods/week
+            // 2. From SubjectUnit: e.g. 1.0 unit * 2 = 2 periods/week
+            $calculated_from_hour = !empty($academic->SubjectHour) ? round(floatval($academic->SubjectHour) / 20) : null;
+            $calculated_from_unit = !empty($academic->SubjectUnit) ? round(floatval($academic->SubjectUnit) * 2) : null;
+
+            $suggested_hours = $calculated_from_hour ?: ($calculated_from_unit ?: 2);
+
+            return $this->response->setJSON([
+                'status' => 'success',
+                'tsub_code' => $subject->tsub_code,
+                'tsub_name' => $subject->tsub_name,
+                'SubjectUnit' => $academic->SubjectUnit,
+                'SubjectHour' => $academic->SubjectHour,
+                'suggested_hours' => $suggested_hours
+            ]);
+        }
+
+        return $this->response->setJSON([
+            'status' => 'success',
+            'tsub_code' => $subject->tsub_code,
+            'tsub_name' => $subject->tsub_name,
+            'SubjectUnit' => null,
+            'SubjectHour' => null,
+            'suggested_hours' => 2 // default fallback
+        ]);
     }
 
     public function getConstraintGrid()
