@@ -59,7 +59,7 @@ class Auth extends BaseController
                 'img' => $result->pers_img,
                 'groupleade' => $result->pers_groupleade,
                 'pers_position' => $result->pers_position,
-                'CheckrloesAcademic' => (string)($result->academic_nanetype ?? ''),
+                'CheckrloesAcademic' => $status === 'superadmin' ? 'งานทะเบียน|งานวัดและประเมินผล|งานหลักสูตร|งานวิจัย|งานกิจกรรมพัฒนาผู้เรียน|งานแนะแนว' : (string)($result->academic_nanetype ?? ''),
                 'CheckrloesGeneral' => (string)($result->general_nanetype ?? ''),
                 'isLoggedIn' => true,
             ];
@@ -137,7 +137,7 @@ class Auth extends BaseController
                     'img' => $result->pers_img,
                     'groupleade' => $result->pers_groupleade,
                     'pers_position' => $result->pers_position,
-                    'CheckrloesAcademic' => (string)($result->academic_nanetype ?? ''),
+                    'CheckrloesAcademic' => $status === 'superadmin' ? 'งานทะเบียน|งานวัดและประเมินผล|งานหลักสูตร|งานวิจัย|งานกิจกรรมพัฒนาผู้เรียน|งานแนะแนว' : (string)($result->academic_nanetype ?? ''),
                     'CheckrloesGeneral' => (string)($result->general_nanetype ?? ''),
                     'isLoggedIn' => true,
                 ];

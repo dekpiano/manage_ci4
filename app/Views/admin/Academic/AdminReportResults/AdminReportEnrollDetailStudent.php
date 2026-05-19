@@ -1,6 +1,37 @@
 <?= $this->extend('admin/layout/main') ?>
 
 <?= $this->section('content') ?>
+<style>
+    /* Green brand theme overrides */
+    .btn-outline-primary {
+        color: #15a362 !important;
+        border-color: #15a362 !important;
+    }
+    .btn-outline-primary:hover {
+        background-color: #15a362 !important;
+        border-color: #15a362 !important;
+        color: #fff !important;
+    }
+    .text-primary {
+        color: #15a362 !important;
+    }
+    .bg-label-primary {
+        background-color: rgba(21, 163, 98, 0.08) !important;
+        color: #15a362 !important;
+    }
+    .nav-pills .nav-link.active, .nav-pills .nav-link.active:focus, .nav-pills .nav-link.active:hover {
+        background-color: #15a362 !important;
+        color: #fff !important;
+        box-shadow: 0 2px 4px rgba(21, 163, 98, 0.4) !important;
+    }
+    .nav-pills .nav-link {
+        color: #566a7f;
+    }
+    .nav-pills .nav-link:hover {
+        color: #15a362 !important;
+        background-color: rgba(21, 163, 98, 0.04) !important;
+    }
+</style>
 <div class="container-xxl flex-grow-1 container-p-y">
     <h4 class="fw-bold py-3 mb-4">
         <span class="text-muted fw-light">งานแนะแนว / รายงานการรับสมัครนักเรียน /</span> รายละเอียดผู้สมัคร
@@ -25,7 +56,7 @@
                     </div>
                     <div class="d-flex justify-content-around flex-wrap my-4 py-3 border-top border-bottom">
                         <div class="d-flex align-items-start me-4 mt-3 gap-3">
-                            <span class="badge bg-label-primary p-2 rounded"><i class="bx bx-phone bx-sm"></i></span>
+                            <span class="badge bg-label-success p-2 rounded"><i class="bx bx-phone bx-sm"></i></span>
                             <div>
                                 <h5 class="mb-0"><?=$DataStudent->stu_phone?></h5>
                                 <span>เบอร์โทรศัพท์</span>
@@ -48,7 +79,7 @@
                             </li>
                             <li class="mb-3">
                                 <span class="fw-bold me-2">วันเกิด:</span>
-                                <span><?=$DataStudent->stu_birthDay?></span>
+                                <span><?=thai_date_format($DataStudent->stu_birthDay, 'medium')?></span>
                             </li>
                             <li class="mb-3">
                                 <span class="fw-bold me-2">ศาสนา:</span>
@@ -85,6 +116,11 @@
                     <li class="nav-item">
                         <button type="button" class="nav-link" role="tab" data-bs-toggle="tab" data-bs-target="#navs-pills-top-messages" aria-controls="navs-pills-top-messages" aria-selected="false">
                             <i class="bx bx-graduation me-1"></i> ประวัติการศึกษา
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button type="button" class="nav-link" role="tab" data-bs-toggle="tab" data-bs-target="#navs-pills-top-history" aria-controls="navs-pills-top-history" aria-selected="false">
+                            <i class="bx bx-history me-1"></i> ประวัติการสมัคร
                         </button>
                     </li>
                     <li class="nav-item">
@@ -272,7 +308,15 @@
                                                 <?php if(!empty($value)): ?>
                                                 <tr>
                                                     <td class="fw-bold text-muted small"><?= isset($recruitLabels[$key]) ? $recruitLabels[$key] : $key ?></td>
-                                                    <td><?=$value?></td>
+                                                    <td>
+                                                        <?php 
+                                                        if (in_array($key, ['recruit_birthday', 'recruit_createdate', 'recruit_updatedate'])) {
+                                                            echo thai_date_format($value, 'medium');
+                                                        } else {
+                                                            echo $value;
+                                                        }
+                                                        ?>
+                                                    </td>
                                                 </tr>
                                                 <?php endif; ?>
                                             <?php endforeach; ?>

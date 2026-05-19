@@ -380,6 +380,10 @@ $routes->get('Admin/Acade/Evaluate/ReportScoreRoomMain', [ConAdminReportResult::
 $routes->get('Admin/Acade/Evaluate/ReportScoreRoomMain/(:segment)/(:segment)/(:segment)/(:segment)', [ConAdminReportResult::class, 'ReportScoreRoomMain']);
 $routes->get('Admin/Acade/Evaluate/ExportScoreRoomToExcel/(:segment)/(:segment)/(:segment)/(:segment)', [ConAdminReportResult::class, 'exportScoreRoomToExcel']);
 $routes->get('Admin/Acade/Executive/ExportScoreRoomToExcel/(:segment)/(:segment)/(:segment)/(:segment)', [ConAdminReportResult::class, 'exportScoreRoomToExcel']);
+$routes->get('Admin/Acade/Guidance/GraduationStats', [ConAdminReportResult::class, 'AdminReportGraduationStatsMain']);
+$routes->post('Admin/Acade/Guidance/GraduationStats/Data', [ConAdminReportResult::class, 'AdminReportGraduationStatsData']);
+$routes->post('Admin/Acade/Guidance/GraduationStats/Save', [ConAdminReportResult::class, 'AdminReportGraduationStatsSave']);
+$routes->match(['get', 'post'], 'admin/academic/api', [ConAdminReportResult::class, 'AdminReportGraduationStatsApi']);
 $routes->get('Admin/Acade/Executive/ReportEnroll/Main', [ConAdminReportResult::class, 'AdminReportEnrollMain']);
 $routes->post('Admin/Acade/Executive/ReportEnroll/Data', [ConAdminReportResult::class, 'AdminReportEnrollData']);
 $routes->get('Admin/Acade/Executive/ReportEnroll/ID/(:segment)', [ConAdminReportResult::class, 'AdminReportEnrollDetailStudent']);
@@ -428,6 +432,7 @@ $routes->get('user/getscheduleyears', [ConStudents::class, 'getScheduleYears']);
 $routes->group('api/v1', ['namespace' => 'App\Controllers\Api\V1'], function($routes) {
     $routes->get('students/stats', 'StudentApi::stats');
     $routes->get('students/graduation-stats', 'StudentApi::graduationStats');
+    $routes->get('students/graduation-destinations', 'StudentApi::graduationDestinations');
     $routes->resource('personnel', ['controller' => 'PersonnelApi', 'only' => ['index', 'show']]);
     $routes->resource('students', ['controller' => 'StudentApi', 'only' => ['index', 'show']]);
     $routes->resource('subjects', ['controller' => 'SubjectApi', 'only' => ['index', 'show']]);

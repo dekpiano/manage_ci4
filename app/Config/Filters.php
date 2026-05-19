@@ -42,6 +42,7 @@ class Filters extends BaseConfig
                 'Auth/googleLogin',
                 'admin/academic/ConAdminClassSchedule/upload_proxy',
                 'admin/academic/ConAdminClassSchedule/insert_class_schedule',
+                'admin/academic/api',
             ]],
             // 'invalidchars',
         ],

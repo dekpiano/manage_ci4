@@ -126,12 +126,64 @@
 <?= $this->section('script') ?>
 <style>
     .cursor-pointer tbody tr { cursor: pointer; }
-    .table-hover tbody tr.selected { background-color: rgba(105, 108, 255, 0.08) !important; border-left: 4px solid #696cff; }
+    .table-hover tbody tr.selected { background-color: rgba(21, 163, 98, 0.08) !important; border-left: 4px solid #15a362; }
+    
+    /* Green highlight and theme adjustments */
+    .text-primary { color: #15a362 !important; }
+    .btn-outline-primary {
+        color: #15a362;
+        border-color: #15a362;
+    }
+    .btn-outline-primary:hover {
+        background-color: #15a362 !important;
+        border-color: #15a362 !important;
+        color: #fff !important;
+    }
+    .spinner-border.text-primary {
+        color: #15a362 !important;
+    }
+    .bg-label-primary {
+        background-color: rgba(21, 163, 98, 0.08) !important;
+        color: #15a362 !important;
+    }
+    .page-item.active .page-link {
+        background-color: #15a362 !important;
+        border-color: #15a362 !important;
+    }
+    .form-select:focus {
+        border-color: #15a362 !important;
+        box-shadow: 0 0 0 0.25rem rgba(21, 163, 98, 0.25) !important;
+    }
 </style>
 
 <script>
     let TbDataAdmission;
     
+    // Client-side Thai Buddhist Era Date Formatter
+    function formatThaiDate(dateStr) {
+        if (!dateStr || dateStr === '-' || dateStr === '0000-00-00') return '-';
+        
+        // If already in Thai format
+        if (dateStr.includes('พ.ศ.') || dateStr.includes('ม.ค.') || dateStr.includes('ก.พ.')) {
+            return dateStr;
+        }
+        
+        let parts = dateStr.split('-');
+        if (parts.length !== 3) return dateStr;
+        
+        let year = parseInt(parts[0]);
+        let month = parseInt(parts[1]);
+        let day = parseInt(parts[2]);
+        
+        if (isNaN(year) || isNaN(month) || isNaN(day)) return dateStr;
+        
+        // Convert to Buddhist Era (พ.ศ.)
+        if (year < 2400) year += 543;
+        
+        const shortMonths = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+        return day + ' ' + shortMonths[month - 1] + ' ' + year;
+    }
+
     $(document).ready(function() {
         TB_DataAdmission($('#SelLern').attr('key_year'));
         
@@ -171,21 +223,24 @@
                 $('#detName').text((student && student.stu_prefix || '') + (student && student.stu_fristName || '') + ' ' + (student && student.stu_lastName || ''));
                 $('#detLevel').text('ม.' + res.recruit_regLevel);
                 $('#detIden').text(student && student.stu_iden || '-');
-                $('#detBirth').text(student && student.stu_birthDay || '-');
+                
+                // Formatted Thai Buddhist Era birthDay
+                $('#detBirth').text(formatThaiDate(student && student.stu_birthDay || res.recruitData && res.recruitData.recruit_birthday || '-'));
+                
                 $('#detPhone').text(student && student.stu_phone || '-');
                 $('#detCategory').text(res.recruit_category || '-');
                 $('#detTypeRoom').text(res.recruit_tpyeRoom || '-');
                 
                 let imgUrl = 'https://admission.skj.ac.th/uploads/recruitstudent/m' + res.recruit_regLevel + '/img/' + res.recruit_img;
                 $('#detImg').attr('src', imgUrl).on('error', function() {
-                    $(this).attr('src', 'https://ui-avatars.com/api/?name=' + (student && student.stu_fristName || 'Student') + '&color=7F9CF5&background=EBF4FF');
+                    $(this).attr('src', 'https://ui-avatars.com/api/?name=' + (student && student.stu_fristName || 'Student') + '&color=15a362&background=e0f2f1');
                 });
 
                 // Status List
                 let statusHtml = '';
                 
                 // 1. ผลการตัดสิน (Final Status)
-                statusHtml += '<div class="mb-3"><span class="badge bg-label-primary mb-1 w-100 py-2"><i class="bx bx-award me-1"></i> ผลการตัดสิน: ' + (res.recruit_statusFinal || 'รอดำเนินการ') + '</span></div>';
+                statusHtml += '<div class="mb-3"><span class="badge bg-label-success mb-1 w-100 py-2"><i class="bx bx-award me-1"></i> ผลการตัดสิน: ' + (res.recruit_statusFinal || 'รอดำเนินการ') + '</span></div>';
                 
                 // 2. การสมัคร
                 if (res.recruit_status == 'ผ่านการตรวจสอบ') {
@@ -256,7 +311,7 @@
                 { 
                     data: 'recruit_Fullname',
                     render: function(data, type, row) {
-                        return '<span class="fw-medium text-primary">' + data + '</span>';
+                        return '<span class="fw-medium text-success">' + data + '</span>';
                     }
                 },
                 {
@@ -269,7 +324,7 @@
                 {
                     data: 'recruit_statusFinal',
                     render: function(data, type, row) {
-                        return '<span class="badge bg-label-primary">' + (data || '-') + '</span>';
+                        return '<span class="badge bg-label-success">' + (data || '-') + '</span>';
                     }
                 }
             ]

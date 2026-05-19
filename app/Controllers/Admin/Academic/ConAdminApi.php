@@ -49,6 +49,12 @@ class ConAdminApi extends BaseController
                 'desc' => 'สถิติเด็กจบการศึกษาแยกตามปีและเพศ พร้อมคำนวณ %'
             ],
             [
+                'name' => 'สถิติปลายทางของผู้สำเร็จการศึกษา (สถิติเด็กจบแล้วไปไหน)',
+                'method' => 'GET',
+                'url' => base_url('api/v1/students/graduation-destinations'),
+                'desc' => 'สถิติปลายทางและเป้าหมายชีวิต การเรียนต่อ มหาวิทยาลัย หรือ ประกอบอาชีพรายบุคคล (?year=2568 หรือดึงสรุปทุกปีหากไม่ส่งพารามิเตอร์)'
+            ],
+            [
                 'name' => 'รายชื่อนักเรียน',
                 'method' => 'GET',
                 'url' => base_url('api/v1/students'),

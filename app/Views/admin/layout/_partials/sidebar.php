@@ -495,9 +495,9 @@
                 <div data-i18n="งานแนะแนว">งานแนะแนว</div>
             </a>
             <ul class="menu-sub">
-                <li class="menu-item <?= ($totalSegments >= 4 && $s4 == 'HomeVisit' ? 'active' : '') ?>">
-                    <a href="<?=base_url('Admin/Acade/Guidance/HomeVisit');?>" class="menu-link">
-                        <div data-i18n="ข้อมูลเยี่ยมบ้าน">ข้อมูลเยี่ยมบ้าน</div>
+                <li class="menu-item <?= ($totalSegments >= 4 && $s4 == 'GraduationStats' ? 'active' : '') ?>">
+                    <a href="<?=base_url('Admin/Acade/Guidance/GraduationStats');?>" class="menu-link">
+                        <div data-i18n="สถิติเด็กจบแล้วไปไหน">สถิติเด็กจบแล้วไปไหน</div>
                     </a>
                 </li>
                 <li class="menu-item <?= ($totalSegments >= 4 && $s4 == 'ReportEnroll' ? 'active' : '') ?>">

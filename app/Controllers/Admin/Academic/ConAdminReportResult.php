@@ -1710,6 +1710,350 @@ class ConAdminReportResult extends BaseController
     }
 
 
+    public function AdminReportGraduationStatsMain()
+    {
+        $data['title'] = "สถิติการศึกษาต่อและทำงานของผู้สำเร็จการศึกษา";
+        $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
+        $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();
+        
+        // Get all unique years of graduates (sorted newest first)
+        $data['SelYears'] = $this->db->table('tb_students')
+            ->select('YearFinish')
+            ->where('YearFinish !=', '')
+            ->where('YearFinish IS NOT NULL')
+            ->groupBy('YearFinish')
+            ->orderBy('YearFinish', 'DESC')
+            ->get()->getResult();
+
+        echo view('admin/Academic/AdminReportResults/AdminReportGraduationStatsMain', $data);
+    }
+
+    public function AdminReportGraduationStatsData()
+    {
+        $keyYear = $this->request->getPost('keyYear');
+
+        if (empty($keyYear)) {
+            return $this->response->setJSON([
+                'status' => 'error',
+                'message' => 'กรุณาระบุปีการศึกษา'
+            ]);
+        }
+
+        // Query students who graduated in this year
+        $students = $this->db->table('tb_students')
+            ->select('StudentID, StudentCode, StudentPrefix, StudentFirstName, StudentLastName, StudentClass, StudentIDNumber, YearFinish')
+            ->where('YearFinish', $keyYear)
+            ->orderBy('StudentClass', 'ASC')
+            ->orderBy('StudentNumber', 'ASC')
+            ->get()->getResult();
+
+        // Get details from skjacth_personnel.tb_students
+        $studentIds = array_column($students, 'StudentIDNumber');
+        
+        // Clean all IDs by removing hyphens to guarantee comparison matches
+        $cleanedStudentIds = array_map(function($id) {
+            return str_replace('-', '', $id);
+        }, $studentIds);
+
+        $personnelData = [];
+        if (!empty($cleanedStudentIds)) {
+            $personnelDataRaw = $this->DBpersonnel->table('tb_students')
+                ->select("REPLACE(stu_iden, '-', '') as clean_iden, stu_future_education, stu_career_interest")
+                ->whereIn("REPLACE(stu_iden, '-', '')", $cleanedStudentIds)
+                ->get()->getResult();
+            
+            foreach ($personnelDataRaw as $p) {
+                $personnelData[$p->clean_iden] = [
+                    'future_education' => $p->stu_future_education,
+                    'career_interest' => $p->stu_career_interest
+                ];
+            }
+        }
+
+        $data = [];
+        $studyingCount = 0;
+        $workingCount = 0;
+        $otherCount = 0;
+
+        foreach ($students as $index => $s) {
+            // Clean the student's ID number to search in the personnel array keys
+            $idenCleaned = str_replace('-', '', $s->StudentIDNumber);
+            $edu = isset($personnelData[$idenCleaned]) ? $personnelData[$idenCleaned]['future_education'] : '';
+            $career = isset($personnelData[$idenCleaned]) ? $personnelData[$idenCleaned]['career_interest'] : '';
+
+            $edu = trim($edu);
+            $career = trim($career);
+
+            $status = 'ยังไม่ระบุ';
+            if (!empty($edu) && $edu !== '-') {
+                $status = 'ศึกษาต่อ';
+                $studyingCount++;
+            } elseif (!empty($career) && $career !== '-') {
+                $status = 'ทำงาน';
+                $workingCount++;
+            } else {
+                $otherCount++;
+            }
+
+            $data[] = [
+                'index' => $index + 1,
+                'student_code' => $s->StudentCode,
+                'student_iden' => $s->StudentIDNumber,
+                'fullname' => $s->StudentPrefix . $s->StudentFirstName . ' ' . $s->StudentLastName,
+                'class' => $s->StudentClass,
+                'status' => $status,
+                'destination' => $status === 'ศึกษาต่อ' ? $edu : ($status === 'ทำงาน' ? $career : '-'),
+                'year_finish' => $s->YearFinish
+            ];
+        }
+
+        $total = count($students);
+
+        return $this->response->setJSON([
+            'status' => 'success',
+            'summary' => [
+                'total' => $total,
+                'studying' => $studyingCount,
+                'working' => $workingCount,
+                'other' => $otherCount,
+                'studying_percent' => $total > 0 ? round(($studyingCount / $total) * 100, 1) : 0,
+                'working_percent' => $total > 0 ? round(($workingCount / $total) * 100, 1) : 0,
+                'other_percent' => $total > 0 ? round(($otherCount / $total) * 100, 1) : 0,
+            ],
+            'students' => $data
+        ]);
+    }
+
+    public function AdminReportGraduationStatsSave()
+    {
+        $iden = $this->request->getPost('iden');
+        $status = $this->request->getPost('status');
+        $destination = $this->request->getPost('destination');
+        $yearFinish = $this->request->getPost('year_finish');
+
+        if (empty($iden)) {
+            return $this->response->setJSON([
+                'status' => 'error',
+                'message' => 'ไม่พบข้อมูลเลขประจำตัวประชาชนนักเรียน'
+            ]);
+        }
+
+        // Clean citizen ID to match db
+        $idenClean = str_replace('-', '', $iden);
+
+        // Check if student exists in skjacth_personnel.tb_students
+        $student = $this->DBpersonnel->table('tb_students')
+            ->where("REPLACE(stu_iden, '-', '')", $idenClean)
+            ->get()->getRow();
+
+        if (empty($student)) {
+            return $this->response->setJSON([
+                'status' => 'error',
+                'message' => 'ไม่พบข้อมูลประวัตินักเรียนคนนี้ในระบบทะเบียนประวัติ (skjacth_personnel.tb_students)'
+            ]);
+        }
+
+        $updateData = [];
+        if ($status === 'ศึกษาต่อ') {
+            $updateData['stu_future_education'] = $destination;
+            $updateData['stu_career_interest'] = ''; // Clear other
+        } elseif ($status === 'ทำงาน') {
+            $updateData['stu_career_interest'] = $destination;
+            $updateData['stu_future_education'] = ''; // Clear other
+        } else {
+            $updateData['stu_future_education'] = '';
+            $updateData['stu_career_interest'] = '';
+        }
+
+        // Update YearFinish in tb_students (default database)
+        $yearUpdated = false;
+        if (!empty($yearFinish)) {
+            $yearUpdated = $this->db->table('tb_students')
+                ->where("REPLACE(StudentIDNumber, '-', '')", $idenClean)
+                ->update(['YearFinish' => $yearFinish]);
+        }
+
+        $updated = $this->DBpersonnel->table('tb_students')
+            ->where("REPLACE(stu_iden, '-', '')", $idenClean)
+            ->update($updateData);
+
+        if ($updated || $yearUpdated) {
+            return $this->response->setJSON([
+                'status' => 'success',
+                'message' => 'บันทึกข้อมูลเส้นทางชีวิตและปีจบการศึกษาสำเร็จเรียบร้อยแล้ว'
+            ]);
+        } else {
+            return $this->response->setJSON([
+                'status' => 'error',
+                'message' => 'ไม่สามารถบันทึกข้อมูลลงฐานข้อมูลได้ หรือไม่มีการเปลี่ยนค่าข้อมูลใหม่'
+            ]);
+        }
+    }
+
+    public function AdminReportGraduationStatsApi()
+    {
+        $year = $this->request->getGet('year');
+        if (empty($year)) {
+            $year = $this->request->getPost('year');
+        }
+
+        // If no year specified, let's return a list of all years with summary stats for each year!
+        if (empty($year)) {
+            // Get all unique years of graduates
+            $yearsList = $this->db->table('tb_students')
+                ->select('YearFinish')
+                ->where('YearFinish !=', '')
+                ->where('YearFinish IS NOT NULL')
+                ->groupBy('YearFinish')
+                ->orderBy('YearFinish', 'DESC')
+                ->get()->getResult();
+
+            $summaryData = [];
+            foreach ($yearsList as $y) {
+                $keyYear = $y->YearFinish;
+                
+                // Query students who graduated in this year
+                $students = $this->db->table('tb_students')
+                    ->select('StudentIDNumber')
+                    ->where('YearFinish', $keyYear)
+                    ->get()->getResult();
+                
+                $studentIds = array_column($students, 'StudentIDNumber');
+                $cleanedStudentIds = array_map(function($id) {
+                    return str_replace('-', '', $id);
+                }, $studentIds);
+
+                $studyingCount = 0;
+                $workingCount = 0;
+                $otherCount = 0;
+
+                if (!empty($cleanedStudentIds)) {
+                    $personnelDataRaw = $this->DBpersonnel->table('tb_students')
+                        ->select("stu_future_education, stu_career_interest")
+                        ->whereIn("REPLACE(stu_iden, '-', '')", $cleanedStudentIds)
+                        ->get()->getResult();
+                    
+                    foreach ($personnelDataRaw as $p) {
+                        $edu = trim($p->stu_future_education);
+                        $career = trim($p->stu_career_interest);
+                        if (!empty($edu) && $edu !== '-') {
+                            $studyingCount++;
+                        } elseif (!empty($career) && $career !== '-') {
+                            $workingCount++;
+                        } else {
+                            $otherCount++;
+                        }
+                    }
+                }
+
+                // Add students who had no records in personnel as 'other'
+                $total = count($students);
+                $foundRecordsCount = $studyingCount + $workingCount + $otherCount;
+                if ($total > $foundRecordsCount) {
+                    $otherCount += ($total - $foundRecordsCount);
+                }
+
+                $summaryData[] = [
+                    'year_finish' => $keyYear,
+                    'total_graduates' => $total,
+                    'studying' => $studyingCount,
+                    'working' => $workingCount,
+                    'other' => $otherCount,
+                    'studying_percent' => $total > 0 ? round(($studyingCount / $total) * 100, 1) : 0,
+                    'working_percent' => $total > 0 ? round(($workingCount / $total) * 100, 1) : 0,
+                    'other_percent' => $total > 0 ? round(($otherCount / $total) * 100, 1) : 0,
+                ];
+            }
+
+            return $this->response->setJSON([
+                'status' => 'success',
+                'description' => 'ข้อมูลสรุปสถิติปลายทางของผู้สำเร็จการศึกษา แยกตามปีการศึกษา',
+                'data' => $summaryData
+            ]);
+        }
+
+        // If a specific year is requested, return the detailed statistics of that year!
+        $students = $this->db->table('tb_students')
+            ->select('StudentID, StudentCode, StudentPrefix, StudentFirstName, StudentLastName, StudentClass, StudentIDNumber, YearFinish')
+            ->where('YearFinish', $year)
+            ->orderBy('StudentClass', 'ASC')
+            ->orderBy('StudentNumber', 'ASC')
+            ->get()->getResult();
+
+        $studentIds = array_column($students, 'StudentIDNumber');
+        $cleanedStudentIds = array_map(function($id) {
+            return str_replace('-', '', $id);
+        }, $studentIds);
+
+        $personnelData = [];
+        if (!empty($cleanedStudentIds)) {
+            $personnelDataRaw = $this->DBpersonnel->table('tb_students')
+                ->select("REPLACE(stu_iden, '-', '') as clean_iden, stu_future_education, stu_career_interest")
+                ->whereIn("REPLACE(stu_iden, '-', '')", $cleanedStudentIds)
+                ->get()->getResult();
+            
+            foreach ($personnelDataRaw as $p) {
+                $personnelData[$p->clean_iden] = [
+                    'future_education' => $p->stu_future_education,
+                    'career_interest' => $p->stu_career_interest
+                ];
+            }
+        }
+
+        $data = [];
+        $studyingCount = 0;
+        $workingCount = 0;
+        $otherCount = 0;
+
+        foreach ($students as $index => $s) {
+            $idenCleaned = str_replace('-', '', $s->StudentIDNumber);
+            $edu = isset($personnelData[$idenCleaned]) ? $personnelData[$idenCleaned]['future_education'] : '';
+            $career = isset($personnelData[$idenCleaned]) ? $personnelData[$idenCleaned]['career_interest'] : '';
+
+            $edu = trim($edu);
+            $career = trim($career);
+
+            $status = 'ยังไม่ระบุ';
+            if (!empty($edu) && $edu !== '-') {
+                $status = 'ศึกษาต่อ';
+                $studyingCount++;
+            } elseif (!empty($career) && $career !== '-') {
+                $status = 'ทำงาน';
+                $workingCount++;
+            } else {
+                $otherCount++;
+            }
+
+            $data[] = [
+                'index' => $index + 1,
+                'student_code' => $s->StudentCode,
+                'student_iden' => $s->StudentIDNumber,
+                'fullname' => $s->StudentPrefix . $s->StudentFirstName . ' ' . $s->StudentLastName,
+                'class' => $s->StudentClass,
+                'status' => $status,
+                'destination' => $status === 'ศึกษาต่อ' ? $edu : ($status === 'ทำงาน' ? $career : '-'),
+                'year_finish' => $s->YearFinish
+            ];
+        }
+
+        $total = count($students);
+
+        return $this->response->setJSON([
+            'status' => 'success',
+            'year' => $year,
+            'summary' => [
+                'total' => $total,
+                'studying' => $studyingCount,
+                'working' => $workingCount,
+                'other' => $otherCount,
+                'studying_percent' => $total > 0 ? round(($studyingCount / $total) * 100, 1) : 0,
+                'working_percent' => $total > 0 ? round(($workingCount / $total) * 100, 1) : 0,
+                'other_percent' => $total > 0 ? round(($otherCount / $total) * 100, 1) : 0,
+            ],
+            'students' => $data
+        ]);
+    }
+
     public function AdminReportEnrollMain(){
         $data['title'] = "รายงานการรับสมัครนักเรียน"; 
         $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();

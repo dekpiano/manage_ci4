@@ -23,6 +23,11 @@ class AdminAuthFilter implements FilterInterface
             $session = session();
             $session->set('admin_status', $check_status_data->admin_rloes_status);
             $session->set('admin_roles', $check_status_data->admin_rloes_nanetype);
+            
+            // If user is a superadmin, grant them access to all academic menus automatically
+            if ($check_status_data->admin_rloes_status === 'superadmin') {
+                $session->set('CheckrloesAcademic', 'งานทะเบียน|งานวัดและประเมินผล|งานหลักสูตร|งานวิจัย|งานกิจกรรมพัฒนาผู้เรียน|งานแนะแนว');
+            }
         }
 
         if (empty($check_status_data) || (! in_array($check_status_data->admin_rloes_status, ["admin", "manager", "superadmin"]))) {
