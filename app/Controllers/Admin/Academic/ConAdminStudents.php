@@ -447,12 +447,23 @@ class ConAdminStudents extends BaseController
             if (isset($columns[$orderColumn]['data'])) {
                 $orderData = $columns[$orderColumn]['data'];
                 if ($orderData === 'StudentNumber') {
+                    $builder->orderBy("CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(StudentClass, 'ม.', -1), '/', 1) AS UNSIGNED)", 'asc', false);
+                    $builder->orderBy("CAST(SUBSTRING_INDEX(StudentClass, '/', -1) AS UNSIGNED)", 'asc', false);
                     $builder->orderBy('CAST(StudentNumber AS UNSIGNED)', $orderDir, false);
                 } elseif ($orderData === 'StudentClass') {
-                    $builder->orderBy('CAST(SUBSTRING(StudentClass, LOCATE(".", StudentClass) + 1) AS UNSIGNED)', $orderDir, false);
+                    $builder->orderBy("CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(StudentClass, 'ม.', -1), '/', 1) AS UNSIGNED)", $orderDir, false);
+                    $builder->orderBy("CAST(SUBSTRING_INDEX(StudentClass, '/', -1) AS UNSIGNED)", $orderDir, false);
+                    $builder->orderBy("CAST(StudentNumber AS UNSIGNED)", 'asc', false);
                 } else {
                     $builder->orderBy($orderData, $orderDir);
+                    $builder->orderBy("CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(StudentClass, 'ม.', -1), '/', 1) AS UNSIGNED)", 'asc', false);
+                    $builder->orderBy("CAST(SUBSTRING_INDEX(StudentClass, '/', -1) AS UNSIGNED)", 'asc', false);
+                    $builder->orderBy("CAST(StudentNumber AS UNSIGNED)", 'asc', false);
                 }
+            } else {
+                $builder->orderBy("CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(StudentClass, 'ม.', -1), '/', 1) AS UNSIGNED)", 'asc', false);
+                $builder->orderBy("CAST(SUBSTRING_INDEX(StudentClass, '/', -1) AS UNSIGNED)", 'asc', false);
+                $builder->orderBy("CAST(StudentNumber AS UNSIGNED)", 'asc', false);
             }
 
             $builder->limit($length, $start);
@@ -469,7 +480,7 @@ class ConAdminStudents extends BaseController
                     "StudentStudyLine" => $record->StudentStudyLine,
                     "StudentStatus" => $record->StudentStatus,
                     "StudentBehavior" => $record->StudentBehavior,
-                    "StudentSex" => $record->StudentSex
+                    "StudentSex" => in_array($record->StudentPrefix, ['เด็กชาย', 'นาย']) ? 'ชาย' : 'หญิง'
                 );
             }
             $output = array(
@@ -726,10 +737,102 @@ class ConAdminStudents extends BaseController
     }
 
     public function AdminStudentsData(){
-        $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();
+        $db = \Config\Database::connect();
+        
+        // 1. Total active students (ปกติ)
+        $totalActive = $db->table('tb_students')
+            ->where('StudentStatus', '1/ปกติ')
+            ->countAllResults();
+
+        // 2. Gender distribution of active students by prefix
+        $maleCount = $db->table('tb_students')
+            ->where('StudentStatus', '1/ปกติ')
+            ->whereIn('StudentPrefix', ['เด็กชาย', 'นาย'])
+            ->countAllResults();
+            
+        $femaleCount = $db->table('tb_students')
+            ->where('StudentStatus', '1/ปกติ')
+            ->whereNotIn('StudentPrefix', ['เด็กชาย', 'นาย'])
+            ->countAllResults();
+
+        // 3. Lower & Upper Secondary Breakdown
+        $lowerSecCount = $db->table('tb_students')
+            ->where('StudentStatus', '1/ปกติ')
+            ->groupStart()
+                ->like('StudentClass', 'ม.1', 'after')
+                ->orLike('StudentClass', 'ม.2', 'after')
+                ->orLike('StudentClass', 'ม.3', 'after')
+            ->groupEnd()
+            ->countAllResults();
+
+        $upperSecCount = $db->table('tb_students')
+            ->where('StudentStatus', '1/ปกติ')
+            ->groupStart()
+                ->like('StudentClass', 'ม.4', 'after')
+                ->orLike('StudentClass', 'ม.5', 'after')
+                ->orLike('StudentClass', 'ม.6', 'after')
+            ->groupEnd()
+            ->countAllResults();
+
+        // 4. Behavioral Risk (ปกติ, ขาดเรียนนาน, จำหน่าย)
+        $normalBehavior = $db->table('tb_students')
+            ->where('StudentStatus', '1/ปกติ')
+            ->where('StudentBehavior', 'ปกติ')
+            ->countAllResults();
+
+        $riskBehavior = $db->table('tb_students')
+            ->where('StudentStatus', '1/ปกติ')
+            ->where('StudentBehavior', 'ขาดเรียนนาน')
+            ->countAllResults();
+
+        $dismissedBehavior = $db->table('tb_students')
+            ->where('StudentBehavior', 'จำหน่าย')
+            ->countAllResults();
+
+        // 5. ดึงรายชื่อจังหวัดพร้อมจำนวนนักเรียนชาย/หญิง จากทะเบียนประวัติ โดยใช้ LEFT JOIN เพื่อให้สถิติตรงกัน 100% กับหน้าหลัก
+        $provinces = $this->db->table('tb_students AS academic')
+            ->select('IFNULL(NULLIF(NULLIF(personnel.stu_hProvince, ""), "-"), "ไม่ระบุจังหวัด") AS stu_hProvince, 
+                      COUNT(academic.StudentID) AS total_count,
+                      SUM(CASE WHEN academic.StudentPrefix IN ("เด็กชาย", "นาย") THEN 1 ELSE 0 END) AS male_count,
+                      SUM(CASE WHEN academic.StudentPrefix NOT IN ("เด็กชาย", "นาย") THEN 1 ELSE 0 END) AS female_count')
+            ->join($this->DBpersonnel->getDatabase() . '.tb_students AS personnel', "academic.StudentIDNumber IS NOT NULL AND academic.StudentIDNumber != '' AND REPLACE(personnel.stu_iden, '-', '') = academic.StudentIDNumber", 'left')
+            ->where('academic.StudentStatus', '1/ปกติ')
+            ->groupBy('stu_hProvince')
+            ->orderBy('CASE WHEN stu_hProvince = "ไม่ระบุจังหวัด" THEN 1 ELSE 0 END', 'ASC', false)
+            ->orderBy('stu_hProvince', 'ASC')
+            ->get()->getResult();
+
+
+        $topProvinces = $this->db->table('tb_students AS academic')
+            ->select('IFNULL(NULLIF(NULLIF(personnel.stu_hProvince, ""), "-"), "ไม่ระบุจังหวัด") AS stu_hProvince, 
+                      COUNT(academic.StudentID) AS count, 
+                      SUM(CASE WHEN academic.StudentPrefix IN ("เด็กชาย", "นาย") THEN 1 ELSE 0 END) AS male,
+                      SUM(CASE WHEN academic.StudentPrefix NOT IN ("เด็กชาย", "นาย") THEN 1 ELSE 0 END) AS female')
+            ->join($this->DBpersonnel->getDatabase() . '.tb_students AS personnel', "academic.StudentIDNumber IS NOT NULL AND academic.StudentIDNumber != '' AND REPLACE(personnel.stu_iden, '-', '') = academic.StudentIDNumber", 'left')
+            ->where('academic.StudentStatus', '1/ปกติ')
+            ->groupBy('stu_hProvince')
+            ->orderBy('count', 'DESC')
+            ->limit(3)
+            ->get()->getResult();
+
+        $data['checkOnOff'] = $db->table('tb_register_onoff')->select('*')->get()->getResult();
         $data['class_list'] = $this->classroom->ListRoom(); // Include class list for filters
         $data['title'] = "ข้อมูลนักเรียนสำหรับ LEC";
-        $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
+        $data['SchoolYear'] = $db->table('tb_schoolyear')->get()->getRow();
+        $data['provinces'] = $provinces;
+        $data['top_provinces'] = $topProvinces;
+        
+        $data['stats'] = [
+            'total_active' => $totalActive,
+            'male' => $maleCount,
+            'female' => $femaleCount,
+            'lower_sec' => $lowerSecCount,
+            'upper_sec' => $upperSecCount,
+            'behavior_normal' => $normalBehavior,
+            'behavior_risk' => $riskBehavior,
+            'behavior_dismissed' => $dismissedBehavior
+        ];
+
         echo view('admin/Academic/AdminStudents/AdminStudentsDataLEC', $data);
     }
 
@@ -737,31 +840,55 @@ class ConAdminStudents extends BaseController
     {
         try {
             $builder = $this->db->table('tb_students');
-            $builder->select('StudentID, StudentNumber, StudentClass, StudentCode, StudentPrefix, StudentFirstName, StudentLastName, CONCAT(StudentPrefix, StudentFirstName, " ", StudentLastName) AS Fullname, StudentStatus, StudentBehavior, StudentStudyLine, StudentSex');
+            
+            // Left join กับตารางทะเบียนประวัติ เสมอเพื่อดึงข้อมูลจังหวัด/อำเภอ/ตำบล
+            $builder->join($this->DBpersonnel->getDatabase() . '.tb_students AS personnel', "tb_students.StudentIDNumber IS NOT NULL AND tb_students.StudentIDNumber != '' AND REPLACE(personnel.stu_iden, '-', '') = tb_students.StudentIDNumber", 'left');
+            
+            $builder->select('tb_students.StudentID, tb_students.StudentNumber, tb_students.StudentClass, tb_students.StudentCode, tb_students.StudentPrefix, tb_students.StudentFirstName, tb_students.StudentLastName, CONCAT(tb_students.StudentPrefix, tb_students.StudentFirstName, " ", tb_students.StudentLastName) AS Fullname, tb_students.StudentStatus, tb_students.StudentBehavior, tb_students.StudentStudyLine, tb_students.StudentSex, personnel.stu_hProvince AS stu_province, personnel.stu_hDistrict AS stu_district, personnel.stu_hTambon AS stu_tambon');
 
             // Filters from request
             $classFilter = $this->request->getPost('classFilter');
             if (!empty($classFilter)) {
                 if (strpos($classFilter, '/') === false) {
-                    $builder->like('StudentClass', $classFilter . '/', 'after');
+                    $builder->like('tb_students.StudentClass', $classFilter . '/', 'after');
                 } else {
-                    $builder->where('StudentClass', $classFilter);
+                    $builder->where('tb_students.StudentClass', $classFilter);
                 }
             }
 
             $statusFilter = $this->request->getPost('statusFilter');
             if (!empty($statusFilter)) {
-                $builder->where('StudentStatus', $statusFilter);
+                $builder->where('tb_students.StudentStatus', $statusFilter);
             }
 
             $behaviorFilter = $this->request->getPost('behaviorFilter');
             if (!empty($behaviorFilter)) {
-                $builder->where('StudentBehavior', $behaviorFilter);
+                $builder->where('tb_students.StudentBehavior', $behaviorFilter);
             }
 
             $genderFilter = $this->request->getPost('genderFilter');
             if (!empty($genderFilter)) {
-                $builder->where('StudentSex', $genderFilter);
+                if ($genderFilter === 'ชาย') {
+                    $builder->whereIn('tb_students.StudentPrefix', ['เด็กชาย', 'นาย']);
+                } elseif ($genderFilter === 'หญิง') {
+                    $builder->whereNotIn('tb_students.StudentPrefix', ['เด็กชาย', 'นาย']);
+                }
+            }
+
+            // ตัวกรองที่อยู่ (จังหวัด, อำเภอ, ตำบล)
+            $provinceFilter = $this->request->getPost('provinceFilter');
+            if (!empty($provinceFilter)) {
+                $builder->where('personnel.stu_hProvince', $provinceFilter);
+            }
+
+            $districtFilter = $this->request->getPost('districtFilter');
+            if (!empty($districtFilter)) {
+                $builder->where('personnel.stu_hDistrict', $districtFilter);
+            }
+
+            $tambonFilter = $this->request->getPost('tambonFilter');
+            if (!empty($tambonFilter)) {
+                $builder->where('personnel.stu_hTambon', $tambonFilter);
             }
 
             $draw = $this->request->getPost('draw');
@@ -785,10 +912,10 @@ class ConAdminStudents extends BaseController
 
             if (!empty($searchValue)) {
                 $builder->groupStart()
-                        ->orLike('StudentCode', $searchValue)
-                        ->orLike('StudentFirstName', $searchValue)
-                        ->orLike('StudentLastName', $searchValue)
-                        ->orLike('StudentClass', $searchValue)
+                        ->orLike('tb_students.StudentCode', $searchValue)
+                        ->orLike('tb_students.StudentFirstName', $searchValue)
+                        ->orLike('tb_students.StudentLastName', $searchValue)
+                        ->orLike('tb_students.StudentClass', $searchValue)
                         ->groupEnd();
             }
 
@@ -797,16 +924,132 @@ class ConAdminStudents extends BaseController
             if (isset($columns[$orderColumn]['data'])) {
                 $orderData = $columns[$orderColumn]['data'];
                 if ($orderData === 'StudentNumber') {
-                    $builder->orderBy('CAST(StudentNumber AS UNSIGNED)', $orderDir, false);
+                    $builder->orderBy("CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(tb_students.StudentClass, 'ม.', -1), '/', 1) AS UNSIGNED)", 'asc', false);
+                    $builder->orderBy("CAST(SUBSTRING_INDEX(tb_students.StudentClass, '/', -1) AS UNSIGNED)", 'asc', false);
+                    $builder->orderBy('CAST(tb_students.StudentNumber AS UNSIGNED)', $orderDir, false);
                 } elseif ($orderData === 'StudentClass') {
-                    $builder->orderBy('CAST(SUBSTRING(StudentClass, LOCATE(".", StudentClass) + 1) AS UNSIGNED)', $orderDir, false);
+                    $builder->orderBy("CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(tb_students.StudentClass, 'ม.', -1), '/', 1) AS UNSIGNED)", $orderDir, false);
+                    $builder->orderBy("CAST(SUBSTRING_INDEX(tb_students.StudentClass, '/', -1) AS UNSIGNED)", $orderDir, false);
+                    $builder->orderBy("CAST(tb_students.StudentNumber AS UNSIGNED)", 'asc', false);
                 } else {
-                    $builder->orderBy($orderData, $orderDir);
+                    $builder->orderBy('tb_students.'.$orderData, $orderDir);
+                    $builder->orderBy("CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(tb_students.StudentClass, 'ม.', -1), '/', 1) AS UNSIGNED)", 'asc', false);
+                    $builder->orderBy("CAST(SUBSTRING_INDEX(tb_students.StudentClass, '/', -1) AS UNSIGNED)", 'asc', false);
+                    $builder->orderBy("CAST(tb_students.StudentNumber AS UNSIGNED)", 'asc', false);
                 }
             } else {
-                $builder->orderBy('StudentClass', 'asc')
-                        ->orderBy('CAST(StudentNumber AS UNSIGNED)', 'asc', false);
+                $builder->orderBy("CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(tb_students.StudentClass, 'ม.', -1), '/', 1) AS UNSIGNED)", 'asc', false);
+                $builder->orderBy("CAST(SUBSTRING_INDEX(tb_students.StudentClass, '/', -1) AS UNSIGNED)", 'asc', false);
+                $builder->orderBy("CAST(tb_students.StudentNumber AS UNSIGNED)", 'asc', false);
             }
+
+            // Clone builder for real-time dynamic dashboard statistics
+            $statsBuilder = clone $builder;
+            $statsList = $statsBuilder->get()->getResult();
+
+            $statMale = 0;
+            $statFemale = 0;
+            $statLowerSec = 0;
+            $statUpperSec = 0;
+            $statBehaviorNormal = 0;
+            $statBehaviorRisk = 0;
+            $statBehaviorDismissed = 0;
+            $statTotalActive = 0;
+            $provinceStats = [];
+
+            foreach ($statsList as $item) {
+                $statTotalActive++;
+
+                // Sex determined by prefix
+                $isMale = in_array($item->StudentPrefix, ['เด็กชาย', 'นาย']);
+                if ($isMale) {
+                    $statMale++;
+                } else {
+                    $statFemale++;
+                }
+
+                // Level (ม.ต้น vs ม.ปลาย)
+                $cls = $item->StudentClass;
+                if (!empty($cls)) {
+                    if (strpos($cls, 'ม.1') !== false || strpos($cls, 'ม.2') !== false || strpos($cls, 'ม.3') !== false) {
+                        $statLowerSec++;
+                    } elseif (strpos($cls, 'ม.4') !== false || strpos($cls, 'ม.5') !== false || strpos($cls, 'ม.6') !== false) {
+                        $statUpperSec++;
+                    }
+                }
+
+                // Behavior
+                if ($item->StudentBehavior === 'ปกติ' || empty($item->StudentBehavior)) {
+                    $statBehaviorNormal++;
+                } elseif ($item->StudentBehavior === 'ขาดเรียนนาน') {
+                    $statBehaviorRisk++;
+                } elseif ($item->StudentBehavior === 'จำหน่าย') {
+                    $statBehaviorDismissed++;
+                }
+
+                // Province count & sex breakdown
+                $prov = trim($item->stu_province ?? '');
+                if (empty($prov) || $prov === '-' || $prov === 'ไม่ระบุ') {
+                    $prov = 'ไม่ระบุจังหวัด';
+                }
+                
+                if (!isset($provinceStats[$prov])) {
+                    $provinceStats[$prov] = [
+                        'count' => 0,
+                        'male' => 0,
+                        'female' => 0
+                    ];
+                }
+                $provinceStats[$prov]['count']++;
+                if ($isMale) {
+                    $provinceStats[$prov]['male']++;
+                } else {
+                    $provinceStats[$prov]['female']++;
+                }
+            }
+
+            uasort($provinceStats, function($a, $b) {
+                return $b['count'] <=> $a['count'];
+            });
+
+            $top3Provinces = [];
+            foreach (array_slice($provinceStats, 0, 3, true) as $provName => $pStat) {
+                $top3Provinces[] = [
+                    'province' => $provName,
+                    'count' => $pStat['count'],
+                    'male' => $pStat['male'],
+                    'female' => $pStat['female'],
+                    'percent' => $statTotalActive > 0 ? round(($pStat['count'] / $statTotalActive) * 100, 1) : 0
+                ];
+            }
+
+            $allProvincesList = [];
+            foreach ($provinceStats as $pName => $pStat) {
+                $allProvincesList[] = [
+                    'province' => $pName,
+                    'count' => $pStat['count'],
+                    'male' => $pStat['male'],
+                    'female' => $pStat['female']
+                ];
+            }
+            usort($allProvincesList, function($a, $b) {
+                if ($a['province'] === 'ไม่ระบุจังหวัด') return 1;
+                if ($b['province'] === 'ไม่ระบุจังหวัด') return -1;
+                return strcmp($a['province'], $b['province']);
+            });
+
+            $statsData = [
+                'total_active' => $statTotalActive,
+                'male' => $statMale,
+                'female' => $statFemale,
+                'lower_sec' => $statLowerSec,
+                'upper_sec' => $statUpperSec,
+                'behavior_normal' => $statBehaviorNormal,
+                'behavior_risk' => $statBehaviorRisk,
+                'behavior_dismissed' => $statBehaviorDismissed,
+                'top_provinces' => $top3Provinces,
+                'provinces_all' => $allProvincesList
+            ];
 
             $length = ($length !== null) ? intval($length) : 10;
             $start = ($start !== null) ? intval($start) : 0;
@@ -825,7 +1068,10 @@ class ConAdminStudents extends BaseController
                     "StudentStudyLine" => $record->StudentStudyLine ?: '-',
                     "StudentStatus" => $record->StudentStatus,
                     "StudentBehavior" => $record->StudentBehavior,
-                    "StudentSex" => $record->StudentSex
+                    "StudentSex" => in_array($record->StudentPrefix, ['เด็กชาย', 'นาย']) ? 'ชาย' : 'หญิง',
+                    "stu_province" => $record->stu_province,
+                    "stu_district" => $record->stu_district,
+                    "stu_tambon" => $record->stu_tambon
                 );
             }
             $output = array(
@@ -833,6 +1079,7 @@ class ConAdminStudents extends BaseController
                 "recordsTotal" => intval($totalRecords),
                 "recordsFiltered" => intval($filteredRecords),
                 "data" =>  $data,           
+                "stats" => $statsData
             );
 
             return $this->response->setJSON($output);
@@ -844,6 +1091,190 @@ class ConAdminStudents extends BaseController
                 'recordsFiltered' => 0,
                 'data' => [],
                 'error' => 'เกิดข้อผิดพลาดในการดึงข้อมูลนักเรียน: ' . $e->getMessage() . ' (ไฟล์: ' . basename($e->getFile()) . ', บรรทัดที่: ' . $e->getLine() . ')'
+            ]);
+        }
+    }
+
+    public function getDistrictsByProvince()
+    {
+        try {
+            $province = $this->request->getPost('province');
+            if (empty($province)) {
+                return $this->response->setJSON([]);
+            }
+            $districts = $this->DBpersonnel->table('tb_students')
+                ->select('stu_hDistrict')
+                ->where('stu_hProvince', $province)
+                ->where('stu_hDistrict IS NOT NULL')
+                ->where('stu_hDistrict !=', '')
+                ->where('stu_hDistrict !=', '-')
+                ->groupBy('stu_hDistrict')
+                ->orderBy('stu_hDistrict', 'ASC')
+                ->get()->getResult();
+            return $this->response->setJSON($districts);
+        } catch (\Throwable $e) {
+            log_message('error', 'Error in getDistrictsByProvince: ' . $e->getMessage());
+            return $this->response->setStatusCode(500)->setJSON(['error' => $e->getMessage()]);
+        }
+    }
+
+    public function getTambonsByDistrict()
+    {
+        try {
+            $province = $this->request->getPost('province');
+            $district = $this->request->getPost('district');
+            if (empty($province) || empty($district)) {
+                return $this->response->setJSON([]);
+            }
+            $tambons = $this->DBpersonnel->table('tb_students')
+                ->select('stu_hTambon')
+                ->where('stu_hProvince', $province)
+                ->where('stu_hDistrict', $district)
+                ->where('stu_hTambon IS NOT NULL')
+                ->where('stu_hTambon !=', '')
+                ->where('stu_hTambon !=', '-')
+                ->groupBy('stu_hTambon')
+                ->orderBy('stu_hTambon', 'ASC')
+                ->get()->getResult();
+            return $this->response->setJSON($tambons);
+        } catch (\Throwable $e) {
+            log_message('error', 'Error in getTambonsByDistrict: ' . $e->getMessage());
+            return $this->response->setStatusCode(500)->setJSON(['error' => $e->getMessage()]);
+        }
+    }
+
+    public function getAddressListForCleansing()
+    {
+        try {
+            $type = $this->request->getPost('type') ?: 'province';
+            $search = $this->request->getPost('search') ?: '';
+
+            $field = 'stu_hProvince';
+            if ($type === 'district') {
+                $field = 'stu_hDistrict';
+            } elseif ($type === 'tambon') {
+                $field = 'stu_hTambon';
+            }
+
+            $builder = $this->DBpersonnel->table('tb_students')
+                ->select("$field AS name, COUNT(stu_id) AS student_count")
+                ->where("$field IS NOT NULL")
+                ->where("$field !=", '')
+                ->where("$field !=", '-')
+                ->groupBy($field)
+                ->orderBy('student_count', 'DESC');
+
+            if (!empty($search)) {
+                $builder->like($field, $search);
+            }
+
+            $result = $builder->get()->getResult();
+            return $this->response->setJSON($result);
+        } catch (\Throwable $e) {
+            log_message('error', 'Error in getAddressListForCleansing: ' . $e->getMessage());
+            return $this->response->setStatusCode(500)->setJSON(['error' => $e->getMessage()]);
+        }
+    }
+
+    public function cleanAddressBulk()
+    {
+        try {
+            $type = $this->request->getPost('type');
+            $oldValue = trim($this->request->getPost('old_value') ?? '');
+            $newValue = trim($this->request->getPost('new_value') ?? '');
+
+            if (empty($type) || empty($oldValue) || empty($newValue)) {
+                return $this->response->setJSON([
+                    'status' => 'error', 
+                    'message' => 'กรุณากรอกข้อมูลให้ครบถ้วนและไม่เป็นช่องว่าง'
+                ]);
+            }
+
+            if ($oldValue === $newValue) {
+                return $this->response->setJSON([
+                    'status' => 'error',
+                    'message' => 'คำสะกดคำใหม่เหมือนกับคำสะกดเดิม โปรดกรอกคำใหม่ที่ต่างกันครับ'
+                ]);
+            }
+
+            $affectedRows = 0;
+
+            // === Helper: ฟังก์ชันอัปเดตรายฟิลด์พร้อมดักจับ Exception ===
+            $safeUpdate = function($db, $table, $field, $oldVal, $newVal, $label) use (&$affectedRows) {
+                try {
+                    $db->table($table)->where($field, $oldVal)->update([$field => $newVal]);
+                    $err = $db->error();
+                    if ($err && $err['code'] != 0) {
+                        return $label . ' ผิดพลาด: [' . $err['code'] . '] ' . $err['message'];
+                    }
+                    $affectedRows += $db->affectedRows();
+                    return null; // สำเร็จ
+                } catch (\Throwable $e) {
+                    return $label . ' ผิดพลาด: ' . $e->getMessage();
+                }
+            };
+
+            // --- 1. จัดการฐานข้อมูลทะเบียนประวัติ (personnel -> tb_students) ---
+            if ($type === 'province') {
+                // ที่อยู่ทะเบียนบ้าน
+                $errMsg = $safeUpdate($this->DBpersonnel, 'tb_students', 'stu_hProvince', $oldValue, $newValue, 'ฐานข้อมูลทะเบียนประวัติ (ที่อยู่ทะเบียนบ้าน: stu_hProvince)');
+                if ($errMsg) return $this->response->setJSON(['status' => 'error', 'message' => $errMsg]);
+
+                // ที่อยู่ปัจจุบัน
+                $errMsg = $safeUpdate($this->DBpersonnel, 'tb_students', 'stu_cProvince', $oldValue, $newValue, 'ฐานข้อมูลทะเบียนประวัติ (ที่อยู่ปัจจุบัน: stu_cProvince)');
+                if ($errMsg) return $this->response->setJSON(['status' => 'error', 'message' => $errMsg]);
+
+                // จังหวัดโรงเรียนเดิม
+                $errMsg = $safeUpdate($this->DBpersonnel, 'tb_students', 'stu_schoolProvince', $oldValue, $newValue, 'ฐานข้อมูลทะเบียนประวัติ (จังหวัดโรงเรียนเดิม: stu_schoolProvince)');
+                if ($errMsg) return $this->response->setJSON(['status' => 'error', 'message' => $errMsg]);
+
+            } elseif ($type === 'district') {
+                // อำเภอตามทะเบียนบ้าน
+                $errMsg = $safeUpdate($this->DBpersonnel, 'tb_students', 'stu_hDistrict', $oldValue, $newValue, 'ฐานข้อมูลทะเบียนประวัติ (อำเภอทะเบียนบ้าน: stu_hDistrict)');
+                if ($errMsg) return $this->response->setJSON(['status' => 'error', 'message' => $errMsg]);
+
+                // อำเภอตามที่อยู่ปัจจุบัน
+                $errMsg = $safeUpdate($this->DBpersonnel, 'tb_students', 'stu_cDistrict', $oldValue, $newValue, 'ฐานข้อมูลทะเบียนประวัติ (อำเภอที่อยู่ปัจจุบัน: stu_cDistrict)');
+                if ($errMsg) return $this->response->setJSON(['status' => 'error', 'message' => $errMsg]);
+
+            } elseif ($type === 'tambon') {
+                // ตำบลตามทะเบียนบ้าน
+                $errMsg = $safeUpdate($this->DBpersonnel, 'tb_students', 'stu_hTambon', $oldValue, $newValue, 'ฐานข้อมูลทะเบียนประวัติ (ตำบลทะเบียนบ้าน: stu_hTambon)');
+                if ($errMsg) return $this->response->setJSON(['status' => 'error', 'message' => $errMsg]);
+
+                // ตำบลตามที่อยู่ปัจจุบัน (สะกดด้วย stu_cTumbao)
+                $errMsg = $safeUpdate($this->DBpersonnel, 'tb_students', 'stu_cTumbao', $oldValue, $newValue, 'ฐานข้อมูลทะเบียนประวัติ (ตำบลที่อยู่ปัจจุบัน: stu_cTumbao)');
+                if ($errMsg) return $this->response->setJSON(['status' => 'error', 'message' => $errMsg]);
+            }
+
+            // --- 2. จัดการฐานข้อมูลการรับสมัครเรียน (admission -> tb_recruitstudent) ---
+            if ($type === 'province') {
+                // จังหวัดที่อยู่ใบสมัคร
+                $errMsg = $safeUpdate($this->DBadmission, 'tb_recruitstudent', 'recruit_province', $oldValue, $newValue, 'ฐานข้อมูลการรับสมัครเรียน (จังหวัดที่อยู่ใบสมัคร: recruit_province)');
+                if ($errMsg) return $this->response->setJSON(['status' => 'error', 'message' => $errMsg]);
+
+            } elseif ($type === 'district') {
+                // อำเภอในใบสมัคร
+                $errMsg = $safeUpdate($this->DBadmission, 'tb_recruitstudent', 'recruit_district', $oldValue, $newValue, 'ฐานข้อมูลการรับสมัครเรียน (อำเภอในใบสมัคร: recruit_district)');
+                if ($errMsg) return $this->response->setJSON(['status' => 'error', 'message' => $errMsg]);
+
+            } elseif ($type === 'tambon') {
+                // ตำบลในใบสมัคร
+                $errMsg = $safeUpdate($this->DBadmission, 'tb_recruitstudent', 'recruit_tambon', $oldValue, $newValue, 'ฐานข้อมูลการรับสมัครเรียน (ตำบลในใบสมัคร: recruit_tambon)');
+                if ($errMsg) return $this->response->setJSON(['status' => 'error', 'message' => $errMsg]);
+            }
+
+            return $this->response->setJSON([
+                'status' => 'success',
+                'message' => 'ล้างข้อมูลและอัปเดตคำสะกดที่ถูกต้องเรียบร้อยแล้วครับ!',
+                'affected_rows' => $affectedRows
+            ]);
+
+        } catch (\Throwable $e) {
+            log_message('error', 'Error in cleanAddressBulk: ' . $e->getMessage());
+            return $this->response->setJSON([
+                'status' => 'error',
+                'message' => 'เกิดข้อผิดพลาดในการประมวลผลเซิร์ฟเวอร์: ' . $e->getMessage()
             ]);
         }
     }
@@ -863,6 +1294,9 @@ class ConAdminStudents extends BaseController
         $statusFilter = $this->request->getGet('statusFilter');
         $behaviorFilter = $this->request->getGet('behaviorFilter');
         $genderFilter = $this->request->getGet('genderFilter');
+        $provinceFilter = $this->request->getGet('provinceFilter');
+        $districtFilter = $this->request->getGet('districtFilter');
+        $tambonFilter = $this->request->getGet('tambonFilter');
         $exportFormat = $this->request->getGet('format') ?: 'excel'; // excel or csv
 
         // Get selected columns as array
@@ -917,7 +1351,7 @@ class ConAdminStudents extends BaseController
             'StudentPrefix'       => 'tb_students.StudentPrefix',
             'StudentFirstName'    => 'tb_students.StudentFirstName',
             'StudentLastName'     => 'tb_students.StudentLastName',
-            'StudentSex'          => 'tb_students.StudentSex',
+            'StudentSex'          => 'CASE WHEN tb_students.StudentPrefix IN ("เด็กชาย", "นาย") THEN "ชาย" ELSE "หญิง" END AS StudentSex',
             'StudentDateBirth'    => 'tb_students.StudentDateBirth',
             'StudentDateEntrance' => 'tb_students.StudentDateEntrance',
             'StudentClass'        => 'tb_students.StudentClass',
@@ -951,11 +1385,13 @@ class ConAdminStudents extends BaseController
         // Query students
         $builder = $this->db->table('tb_students');
         
+        $dbPersonnelName = $this->DBpersonnel->getDatabase();
+        
         // Left join to personnel.tb_students and tb_parent (Only match on non-empty ID card numbers to avoid blank matches)
-        $builder->join('skjacth_personnel.tb_students AS personnel', "tb_students.StudentIDNumber IS NOT NULL AND tb_students.StudentIDNumber != '' AND REPLACE(personnel.stu_iden, '-', '') = tb_students.StudentIDNumber", 'left');
-        $builder->join('skjacth_personnel.tb_parent AS father', "father.par_stuID = personnel.stu_iden AND father.par_relation = 'บิดา'", 'left');
-        $builder->join('skjacth_personnel.tb_parent AS mother', "mother.par_stuID = personnel.stu_iden AND mother.par_relation = 'มารดา'", 'left');
-        $builder->join('skjacth_personnel.tb_parent AS guardian', "guardian.par_stuID = personnel.stu_iden AND guardian.par_relation = 'ผู้ปกครอง'", 'left');
+        $builder->join($dbPersonnelName . '.tb_students AS personnel', "tb_students.StudentIDNumber IS NOT NULL AND tb_students.StudentIDNumber != '' AND REPLACE(personnel.stu_iden, '-', '') = tb_students.StudentIDNumber", 'left');
+        $builder->join($dbPersonnelName . '.tb_parent AS father', "father.par_stuID = personnel.stu_iden AND father.par_relation = 'บิดา'", 'left');
+        $builder->join($dbPersonnelName . '.tb_parent AS mother', "mother.par_stuID = personnel.stu_iden AND mother.par_relation = 'มารดา'", 'left');
+        $builder->join($dbPersonnelName . '.tb_parent AS guardian', "guardian.par_stuID = personnel.stu_iden AND guardian.par_relation = 'ผู้ปกครอง'", 'left');
 
         // Build selection list using dbExpressions mapping
         $selects = ['tb_students.StudentID'];
@@ -982,7 +1418,20 @@ class ConAdminStudents extends BaseController
             $builder->where('tb_students.StudentBehavior', $behaviorFilter);
         }
         if (!empty($genderFilter)) {
-            $builder->where('tb_students.StudentSex', $genderFilter);
+            if ($genderFilter === 'ชาย') {
+                $builder->whereIn('tb_students.StudentPrefix', ['เด็กชาย', 'นาย']);
+            } elseif ($genderFilter === 'หญิง') {
+                $builder->whereNotIn('tb_students.StudentPrefix', ['เด็กชาย', 'นาย']);
+            }
+        }
+        if (!empty($provinceFilter)) {
+            $builder->where('personnel.stu_hProvince', $provinceFilter);
+        }
+        if (!empty($districtFilter)) {
+            $builder->where('personnel.stu_hDistrict', $districtFilter);
+        }
+        if (!empty($tambonFilter)) {
+            $builder->where('personnel.stu_hTambon', $tambonFilter);
         }
 
         // Group by StudentID and sort

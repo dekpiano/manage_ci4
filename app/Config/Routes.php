@@ -121,6 +121,10 @@ $routes->get('Admin/Acade/Registration/Students', [ConAdminStudents::class, 'Adm
 $routes->get('Admin/Acade/Registration/Students/Data', [ConAdminStudents::class, 'AdminStudentsData']);
 $routes->post('Admin/Acade/Registration/Students/DataShow', [ConAdminStudents::class, 'AdminStudentsLECShow']);
 $routes->get('Admin/Acade/Registration/Students/DataExport', [ConAdminStudents::class, 'AdminStudentsLECExport']);
+$routes->post('Admin/Acade/Registration/Students/GetDistricts', [ConAdminStudents::class, 'getDistrictsByProvince']);
+$routes->post('Admin/Acade/Registration/Students/GetTambons', [ConAdminStudents::class, 'getTambonsByDistrict']);
+$routes->post('Admin/Acade/Registration/Students/AddressList', [ConAdminStudents::class, 'getAddressListForCleansing']);
+$routes->post('Admin/Acade/Registration/Students/AddressClean', [ConAdminStudents::class, 'cleanAddressBulk']);
 $routes->get('Admin/Acade/Registration/Students/Lifecycle', [ConAdminStudents::class, 'AdminStudentsLifecycle']);
 $routes->get('Admin/Acade/Registration/Students/Add', [ConAdminStudents::class, 'AdminStudentsAdd']);
 

@@ -110,6 +110,10 @@ class ConAdminCheckPlan extends BaseController
     public function getPlanDetails($planId)
     {
         $planDetails = $this->ModAdminCheckPlan->getPlanDetailsById($planId);
+        if ($planDetails && isset($planDetails->seplan_createdate)) {
+            helper('year');
+            $planDetails->seplan_createdate = thai_date_format($planDetails->seplan_createdate, 'medium');
+        }
         return $this->response->setJSON($planDetails);
     }
 
