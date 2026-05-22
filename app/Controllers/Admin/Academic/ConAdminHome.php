@@ -114,7 +114,12 @@ class ConAdminHome extends BaseController
     {
         $year = $this->request->getPost('year');
         if (!empty($year)) {
+            // 1. บันทึกลง session สำหรับใช้งานทันที
             session()->set('admin_selected_year', $year);
+
+            // 2. บันทึกลง tb_schoolyear ในฐานข้อมูล เพื่อให้คงอยู่หลัง logout/login
+            $this->db->table('tb_schoolyear')->where('schyear_id', 1)->update(['schyear_year' => $year]);
+
             return $this->response->setJSON(['status' => 'success', 'year' => $year]);
         }
         return $this->response->setJSON(['status' => 'error', 'message' => 'Year is required']);

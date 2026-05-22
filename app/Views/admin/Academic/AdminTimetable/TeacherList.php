@@ -65,7 +65,7 @@
                 <div class="teacher-item-micro d-flex align-items-center shadow-none">
                     <div class="avatar avatar-micro me-2">
                         <?php if($t->pers_img): ?>
-                            <img src="https://academic.skj.ac.th/uploads/personnel/<?= $t->pers_img ?>" alt="Avatar" class="rounded-circle object-fit-cover border">
+                            <img src="https://personnel.skj.ac.th/uploads/admin/Personnal/<?= $t->pers_img ?>" alt="Avatar" class="rounded-circle object-fit-cover border">
                         <?php else: ?>
                             <span class="avatar-initial rounded-circle bg-label-success" style="font-size: 0.8rem;">
                                 <?= mb_substr($t->pers_firstname, 0, 1) ?>

@@ -159,6 +159,7 @@
                                     <input type="number" class="form-control text-center fw-bold" name="hours_per_week" id="hours_per_week" value="<?= isset($assignment) ? $assignment->hours_per_week : '2' ?>" min="1" max="10" required style="height: 50px; border-radius: 0.75rem 0 0 0.75rem;">
                                     <span class="input-group-text bg-light text-muted fw-bold px-3" style="border-radius: 0 0.75rem 0.75rem 0;">คาบ</span>
                                 </div>
+                                <div id="hours_calc_info" class="small mt-2 fw-semibold d-flex flex-wrap align-items-center" style="color: #15a362 !important; font-size: 0.75rem;"></div>
                             </div>
                         </div>
 
@@ -519,8 +520,26 @@ $(document).ready(function() {
         $split.trigger('change');
     }
 
-    $('#hours_per_week').on('input change', updateSplitOptions);
+    function updateHoursCalcInfo() {
+        const hours = parseInt($('#hours_per_week').val()) || 0;
+        const classes = $('select[name="class_name[]"]').val() || [];
+        const classCount = classes.length || 1;
+        const totalPeriods = hours * classCount;
+        
+        let infoText = '<i class="bx bx-calculator me-1"></i> รวมภาระงานสอนทั้งสิ้น ' + totalPeriods + ' คาบ/สัปดาห์';
+        if (classes.length > 1) {
+            infoText += ' <small class="text-muted ms-1" style="font-size: 0.65rem;">(คิดจาก ' + hours + ' คาบ × ' + classCount + ' ห้องเรียน)</small>';
+        }
+        $('#hours_calc_info').html(infoText);
+    }
+
+    $('#hours_per_week').on('input change', function() {
+        updateSplitOptions();
+        updateHoursCalcInfo();
+    });
+    $('select[name="class_name[]"]').on('change', updateHoursCalcInfo);
     updateSplitOptions();
+    updateHoursCalcInfo();
 
     // Form Submit
     $('#formAddAssignment').on('submit', function(e) {

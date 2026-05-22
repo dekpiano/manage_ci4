@@ -50,6 +50,11 @@ class Auth extends BaseController
             }
 // ... (rest of session data)
 
+            // ดึงปีการศึกษาเริ่มต้นจาก tb_schoolyear เพื่อ set ลง session ตอน login
+            $db = \Config\Database::connect();
+            $schoolYear = $db->table('tb_schoolyear')->get()->getRow();
+            $defaultYear = $schoolYear->schyear_year ?? '';
+
             $sessionData = [
                 'login_id' => $result->pers_id,
                 'pers_learning' => $result->pers_learning,
@@ -62,6 +67,7 @@ class Auth extends BaseController
                 'CheckrloesAcademic' => $status === 'superadmin' ? 'งานทะเบียน|งานวัดและประเมินผล|งานหลักสูตร|งานวิจัย|งานกิจกรรมพัฒนาผู้เรียน|งานแนะแนว' : (string)($result->academic_nanetype ?? ''),
                 'CheckrloesGeneral' => (string)($result->general_nanetype ?? ''),
                 'isLoggedIn' => true,
+                'admin_selected_year' => $defaultYear,
             ];
             session()->set($sessionData);
             return redirect()->to(base_url('Admin/Home'));
@@ -128,6 +134,11 @@ class Auth extends BaseController
                 ];
                 $this->model->Update_user_data($user_data, $email);
 
+                // ดึงปีการศึกษาเริ่มต้นจาก tb_schoolyear เพื่อ set ลง session ตอน login
+                $db = \Config\Database::connect();
+                $schoolYear = $db->table('tb_schoolyear')->get()->getRow();
+                $defaultYear = $schoolYear->schyear_year ?? '';
+
                 $sessionData = [
                     'login_id' => $result->pers_id,
                     'pers_learning' => $result->pers_learning,
@@ -140,6 +151,7 @@ class Auth extends BaseController
                     'CheckrloesAcademic' => $status === 'superadmin' ? 'งานทะเบียน|งานวัดและประเมินผล|งานหลักสูตร|งานวิจัย|งานกิจกรรมพัฒนาผู้เรียน|งานแนะแนว' : (string)($result->academic_nanetype ?? ''),
                     'CheckrloesGeneral' => (string)($result->general_nanetype ?? ''),
                     'isLoggedIn' => true,
+                    'admin_selected_year' => $defaultYear,
                 ];
                 session()->set($sessionData);
                 return redirect()->to(base_url('Admin/Home'));

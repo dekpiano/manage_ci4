@@ -315,22 +315,39 @@ class ConAdminTimetable extends BaseController
                                 ->select('tb_timetable_assignments.*, tb_timetable_subjects.tsub_code, tb_timetable_subjects.tsub_name')
                                 ->join('tb_timetable_subjects', 'tb_timetable_subjects.tsub_id = tb_timetable_assignments.subject_id', 'left')
                                 ->where('tb_timetable_assignments.term', $term)->where('tb_timetable_assignments.year', $year)
+                                ->orderBy('tb_timetable_subjects.tsub_code', 'ASC')
+                                ->orderBy('tb_timetable_assignments.class_name', 'ASC')
                                 ->get()->getResult();
         
         $grouped = [];
         foreach($raw_assignments as $row) {
-            // Grouping key: if group_id exists, use it as primary key, otherwise group by subject_id
-            $key = $row->group_id ? 'G_'.$row->group_id : 'S_'.$row->subject_id;
-            
             if (!$row->tsub_name) {
                 $row->tsub_name = "ไม่พบข้อมูลวิชา (ID: " . $row->subject_id . ")";
                 $row->tsub_code = "???";
             }
 
+            // 🚨 คลีน teacher_id และจัดเรียง เพื่อลดความซ้ำซ้อนและป้องกันการจัดกลุ่มพลาดจากช่องว่างหรือลำดับสลับ
+            $clean_teacher_id = '';
+            if (!empty($row->teacher_id)) {
+                $tIds = explode(',', $row->teacher_id);
+                $tIds = array_map('trim', $tIds);
+                $tIds = array_filter($tIds);
+                sort($tIds);
+                $clean_teacher_id = implode(',', $tIds);
+            }
+
+            // Grouping key: 
+            // 1. หากเป็นกลุ่มเรียนร่วมใช้ G_{group_id} 
+            // 2. หากเป็นวิชาทั่วไป จัดกลุ่มตาม รหัสวิชา (tsub_code) + ครูผู้สอน + จำนวนคาบ + รูปแบบการหั่นคาบ เพื่อให้ครูคนเดิมสอนรหัสวิชาเดิมยุบรวมกลุ่มห้องเรียนได้คงเส้นคงวาและปลอดภัย
+            $pref_time = $row->preferred_time ?: 'NONE';
+            $key = $row->group_id 
+                ? 'G_'.$row->group_id 
+                : 'C_'.$row->tsub_code.'_T_'.$clean_teacher_id.'_H_'.$row->hours_per_week.'_S_'.$row->period_split.'_P_'.$pref_time;
+            
             if(!isset($grouped[$key])) {
                 $grouped[$key] = [
                     'data' => $row,
-                    'subjects' => [], // New: Store all subjects in group
+                    'subjects' => [], // Store all subjects in group
                     'teachers' => [],
                     'classes' => [],
                     'ids' => []
@@ -473,6 +490,14 @@ class ConAdminTimetable extends BaseController
                 ->get()->getResult();
             $log[] = "ดึงข้อมูลมอบหมายงานสอน " . count($assignments) . " รายการ";
 
+            // Map each assignment ID to its learning group prefix (e.g. 'ค', 'ว', 'ท')
+            $assign_subject_group = [];
+            foreach ($assignments as $a) {
+                $code = !empty($a->tsub_code) ? trim($a->tsub_code) : '';
+                $group_prefix = ($code !== '') ? mb_substr($code, 0, 1) : '';
+                $assign_subject_group[$a->assign_id] = $group_prefix;
+            }
+
             // Initialize Teacher Name Map for Logging/Reporting
             $all_teachers = $this->db_personnel->table('tb_personnel')->select('pers_id, pers_prefix, pers_firstname, pers_lastname')->get()->getResult();
             $teacher_name_map = [];
@@ -481,7 +506,7 @@ class ConAdminTimetable extends BaseController
             }
 
             // Busy Maps Initialization
-            $busy_teachers = []; $busy_classes = []; $room_busy = [];
+            $busy_teachers = []; $busy_classes = []; $room_busy = []; $class_slot_group = [];
             
             // Try to get locked slots, checking if room_name column exists in the joined table
             $locked_slots_query = $this->db_timetable->table('tb_timetable_data')
@@ -501,6 +526,11 @@ class ConAdminTimetable extends BaseController
                 $rName = $slot->room_name ?? null;
                 if (!empty($rName)) $room_busy[$rName][$slot->day][$slot->period] = true;
                 foreach (explode(',', $slot->teacher_id) as $tid) { if(!empty($tid)) $busy_teachers[trim($tid)][$slot->day][$slot->period] = true; }
+                
+                // Add to class_slot_group
+                if (isset($assign_subject_group[$slot->assign_id])) {
+                    $class_slot_group[$slot->class_name][$slot->day][$slot->period] = $assign_subject_group[$slot->assign_id];
+                }
             }
 
             // Load Teacher/Room Busy Constraints (Step 3)
@@ -520,11 +550,38 @@ class ConAdminTimetable extends BaseController
             $master_slots = $this->db_timetable->table('tb_timetable_config_master_slots')->where(['term' => $term, 'year' => $year])->get()->getResult();
             $master_map = []; foreach($master_slots as $ms) $master_map[$ms->level_group][$ms->day][$ms->period] = true;
 
+            // 📖 Load academic subjects to identify core/elective types
+            $subject_types = [];
+            try {
+                $academic_subs = $this->db->table('tb_subjects')
+                    ->select('SubjectCode, SubjectType')
+                    ->where('SubjectYear', $selectedYear)
+                    ->get()->getResult();
+                foreach ($academic_subs as $sub) {
+                    $subject_types[trim($sub->SubjectCode)] = trim($sub->SubjectType);
+                }
+            } catch (\Exception $e) {
+                $log[] = "⚠️ ไม่สามารถโหลดข้อมูลประเภทวิชาได้: " . $e->getMessage();
+            }
+
             // 🤖 AI Processing Loop
             $log[] = "--- เริ่มต้นการค้นหาช่องว่างด้วย AI ---";
             $success_count = 0; $fail_count = 0; $failed_list = [];
             
             $grouped = []; foreach($assignments as $a) { $k = $a->group_id ?: 'S_'.$a->assign_id; $grouped[$k]['assignments'][] = $a; }
+
+            // 🚀 FIX #2: Priority Ordering — วิชาชั่วโมงมาก/บล็อคใหญ่จัดก่อน
+            // เรียงตาม hours_per_week มากไปน้อย + จำนวนครูมากไปน้อย เพื่อให้วิชาที่ยากจัดได้ช่องก่อน
+            uasort($grouped, function($a, $b) {
+                $hoursA = $a['assignments'][0]->hours_per_week ?? 0;
+                $hoursB = $b['assignments'][0]->hours_per_week ?? 0;
+                if ($hoursB != $hoursA) return $hoursB - $hoursA;
+                // ถ้าชั่วโมงเท่ากัน เรียงตามจำนวนครู (มากกว่า = ยากจัดกว่า)
+                $tCountA = count(array_unique(array_filter(explode(',', implode(',', array_column($a['assignments'], 'teacher_id'))))));
+                $tCountB = count(array_unique(array_filter(explode(',', implode(',', array_column($b['assignments'], 'teacher_id'))))));
+                return $tCountB - $tCountA;
+            });
+            $log[] = "จัดเรียงลำดับ: วิชาชั่วโมงมาก/ครูมากจัดก่อน (" . count($grouped) . " กลุ่ม)";
 
             foreach ($grouped as $group) {
                 $base = $group['assignments'][0];
@@ -532,6 +589,19 @@ class ConAdminTimetable extends BaseController
                 $teacher_ids = []; foreach($group['assignments'] as $a) $teacher_ids = array_merge($teacher_ids, explode(',', $a->teacher_id));
                 $teacher_ids = array_unique(array_filter($teacher_ids));
                 $room_name = $base->room_name ?? null;
+                
+                // Check if this is a core subject (วิชาหลัก/พื้นฐาน)
+                $is_core = false;
+                $s_code = trim($base->tsub_code);
+                if (isset($subject_types[$s_code])) {
+                    $sType = $subject_types[$s_code];
+                    if (mb_strpos($sType, 'พื้นฐาน') !== false) {
+                        $is_core = true;
+                    }
+                }
+                if (!$is_core && (mb_strpos($base->tsub_name, 'พื้นฐาน') !== false || mb_strpos($base->tsub_name, 'หลัก') !== false)) {
+                    $is_core = true;
+                }
                 
                 // 🍱 DETERMINING GROUP BREAKS & MASTER SLOTS (Support Mixed Levels)
                 $group_blocked_periods = [];
@@ -580,48 +650,207 @@ class ConAdminTimetable extends BaseController
                 foreach($locked_d as $ld) $days_used[] = $ld->day;
 
                 foreach ($final_splits as $size) {
-                    $placed = false; $av_days = array_values(array_diff($days, $days_used)); if(empty($av_days)) $av_days = $days; shuffle($av_days);
-                    $conflict_reasons = [];
-                    foreach ($av_days as $d) {
-                        $p_starts = range(1, $max_period - $size + 1);
-                        $pref_time = $base->preferred_time ?? null;
-                        if($pref_time == 'MORNING') $p_starts = array_filter($p_starts, fn($p) => ($p+$size-1) < $lunch_p);
-                        else if($pref_time == 'AFTERNOON') $p_starts = array_filter($p_starts, fn($p) => $p > $lunch_p);
-                        shuffle($p_starts);
+                    $placed = false;
+                    
+                    // ปรับปรุงเงื่อนไขแบบลำดับขั้น (Multi-stage Fallback)
+                    // รอบ 1: หลีกเลี่ยงกลุ่มสาระเดียวกันอยู่ติดกัน (avoid_same_group = true)
+                    // รอบ 2: หากจัดไม่ได้ ให้ผ่อนปรนอนุญาตให้อยู่ติดกันได้ (avoid_same_group = false)
+                    $attempts = [];
+                    if ($is_core) {
+                        $attempts[] = ['limit_to_7' => true, 'avoid_same_group' => true];
+                        $attempts[] = ['limit_to_7' => true, 'avoid_same_group' => false];
+                        $attempts[] = ['limit_to_7' => false, 'avoid_same_group' => true];
+                        $attempts[] = ['limit_to_7' => false, 'avoid_same_group' => false];
+                    } else {
+                        $attempts[] = ['limit_to_7' => false, 'avoid_same_group' => true];
+                        $attempts[] = ['limit_to_7' => false, 'avoid_same_group' => false];
+                    }
 
-                        foreach ($p_starts as $ps) {
-                            $pe = $ps + $size - 1; $free = true; $l_conf = [];
-                            for ($p = $ps; $p <= $pe; $p++) {
-                                if(isset($group_blocked_periods[$p])) { $free = false; $l_conf[] = "คาบ $p ติดพัก/กิจกรรมของสมาชิกในกลุ่ม"; break; }
-                                if(isset($group_blocked_master[$d][$p])) { $free = false; $l_conf[] = "วัน$d คาบ $p ติดกิจกรรมของสมาชิกในกลุ่ม"; break; }
-                                foreach($class_names as $cn) if(isset($busy_classes[$cn][$d][$p])) { $free = false; $l_conf[] = "ห้อง $cn ไม่ว่าง"; break; }
-                                if(!$free) break;
-                                foreach($teacher_ids as $tid) if(isset($busy_teachers[$tid][$d][$p])) { $free = false; $l_conf[] = "ครู ".($teacher_name_map[$tid]??$tid)." ติดสอน"; break; }
-                                if(!$free) break;
-                                if($room_name && isset($room_busy[$room_name][$d][$p])) { $free = false; $l_conf[] = "ห้องเรียน $room_name ไม่ว่าง"; break; }
+                    foreach ($attempts as $attemptOpt) {
+                        $limit_to_7 = $attemptOpt['limit_to_7'];
+                        $avoid_same_group = $attemptOpt['avoid_same_group'];
+                        $av_days = array_values(array_diff($days, $days_used)); 
+                        if(empty($av_days)) $av_days = $days; 
+                        shuffle($av_days);
+                        
+                        $conflict_reasons = [];
+                        foreach ($av_days as $d) {
+                            $p_starts = range(1, $max_period - $size + 1);
+                            
+                            // หากเป็นวิชาหลักและอยู่ในรอบพยายาม 1-7 ให้คัดเฉพาะคาบเริ่มที่ทำให้เรียนจบในคาบ 7 (pe <= 7)
+                            if ($limit_to_7) {
+                                $p_starts = array_filter($p_starts, fn($p) => ($p + $size - 1) <= 7);
                             }
-                            if ($free) {
+                            
+                            $pref_time = $base->preferred_time ?? null;
+                            if($pref_time == 'MORNING') $p_starts = array_filter($p_starts, fn($p) => ($p+$size-1) < $lunch_p);
+                            else if($pref_time == 'AFTERNOON') $p_starts = array_filter($p_starts, fn($p) => $p > $lunch_p);
+                            shuffle($p_starts);
+
+                            foreach ($p_starts as $ps) {
+                                $pe = $ps + $size - 1; $free = true; $l_conf = [];
                                 for ($p = $ps; $p <= $pe; $p++) {
-                                    foreach($group['assignments'] as $asgn) {
-                                        $this->db_timetable->table('tb_timetable_data')->insert(['assign_id'=>$asgn->assign_id, 'day'=>$d, 'period'=>$p, 'term'=>$term, 'year'=>$year, 'is_locked'=>0]);
-                                        $busy_classes[$asgn->class_name][$d][$p] = true;
-                                        if($room_name) $room_busy[$room_name][$d][$p] = true;
+                                    if(isset($group_blocked_periods[$p])) { $free = false; $l_conf[] = "คาบ $p ติดพัก/กิจกรรมของสมาชิกในกลุ่ม"; break; }
+                                    if(isset($group_blocked_master[$d][$p])) { $free = false; $l_conf[] = "วัน$d คาบ $p ติดกิจกรรมของสมาชิกในกลุ่ม"; break; }
+                                    foreach($class_names as $cn) if(isset($busy_classes[$cn][$d][$p])) { $free = false; $l_conf[] = "ห้อง $cn ไม่ว่าง"; break; }
+                                    if(!$free) break;
+                                    foreach($teacher_ids as $tid) if(isset($busy_teachers[$tid][$d][$p])) { $free = false; $l_conf[] = "ครู ".($teacher_name_map[$tid]??$tid)." ติดสอน"; break; }
+                                    if(!$free) break;
+                                    if($room_name && isset($room_busy[$room_name][$d][$p])) { $free = false; $l_conf[] = "ห้องเรียน $room_name ไม่ว่าง"; break; }
+                                }
+                                
+                                // 🚨 หลีกเลี่ยงการจัดตารางวิชากลุ่มสาระเดียวกันเรียนติดกันในวันเดียวกันสำหรับห้องเรียนใด ๆ
+                                if ($free && $avoid_same_group) {
+                                    $current_group = $assign_subject_group[$base->assign_id] ?? '';
+                                    if ($current_group !== '') {
+                                        foreach ($class_names as $cn) {
+                                            // ตรวจคาบก่อนหน้า (ps - 1)
+                                            $prev_p = $ps - 1;
+                                            if ($prev_p >= 1 && isset($class_slot_group[$cn][$d][$prev_p])) {
+                                                if ($class_slot_group[$cn][$d][$prev_p] === $current_group) {
+                                                    $free = false;
+                                                    $l_conf[] = "ห้อง $cn เรียนกลุ่มสาระเดียวกันติดกัน (คาบก่อนหน้าคือกลุ่มสาระ $current_group)";
+                                                    break;
+                                                }
+                                            }
+                                            // ตรวจคาบถัดไป (pe + 1)
+                                            $next_p = $pe + 1;
+                                            if ($next_p <= $max_period && isset($class_slot_group[$cn][$d][$next_p])) {
+                                                if ($class_slot_group[$cn][$d][$next_p] === $current_group) {
+                                                    $free = false;
+                                                    $l_conf[] = "ห้อง $cn เรียนกลุ่มสาระเดียวกันติดกัน (คาบถัดไปคือกลุ่มสาระ $current_group)";
+                                                    break;
+                                                }
+                                            }
+                                        }
                                     }
                                 }
-                                $placed = true; $days_used[] = $d; $success_count += $size; break;
-                            } else $conflict_reasons = array_unique(array_merge($conflict_reasons, $l_conf));
+
+                                if ($free) {
+                                    for ($p = $ps; $p <= $pe; $p++) {
+                                        foreach($group['assignments'] as $asgn) {
+                                            $this->db_timetable->table('tb_timetable_data')->insert(['assign_id'=>$asgn->assign_id, 'day'=>$d, 'period'=>$p, 'term'=>$term, 'year'=>$year, 'is_locked'=>0]);
+                                            $busy_classes[$asgn->class_name][$d][$p] = true;
+                                            if($room_name) $room_busy[$room_name][$d][$p] = true;
+                                            // 🚨 FIX #1: อัพเดต $busy_teachers ด้วย! (สาเหตุหลักที่ครูซ้ำ)
+                                            foreach(explode(',', $asgn->teacher_id) as $fix_tid) {
+                                                $fix_tid = trim($fix_tid);
+                                                if (!empty($fix_tid)) {
+                                                    $busy_teachers[$fix_tid][$d][$p] = true;
+                                                }
+                                            }
+                                            // Update class_slot_group as well!
+                                            if (isset($assign_subject_group[$asgn->assign_id])) {
+                                                $class_slot_group[$asgn->class_name][$d][$p] = $assign_subject_group[$asgn->assign_id];
+                                            }
+                                        }
+                                    }
+                                    $placed = true; $days_used[] = $d; $success_count += $size;
+                                    
+                                    // บันทึก Log สำหรับวิชาหลัก
+                                    if ($is_core) {
+                                        if ($pe > 7) {
+                                            $log[] = "⚠️ วิชาหลัก {$base->tsub_code} ({$base->tsub_name}) ห้อง " . implode(',', $class_names) . " จำเป็นต้องจัดนอกคาบ 1-7 (ได้ วัน{$d} คาบ {$ps}-{$pe}) เนื่องจากติดข้อจำกัดอื่นหนาแน่น";
+                                        } else {
+                                            $log[] = "🟢 จัดวิชาหลัก {$base->tsub_code} ({$base->tsub_name}) ห้อง " . implode(',', $class_names) . " ลงในช่วงคาบ 1-7 สำเร็จ (วัน{$d} คาบ {$ps}-{$pe})";
+                                        }
+                                    }
+                                    break 2; // ออกลูป d และ ps
+                                } else $conflict_reasons = array_unique(array_merge($conflict_reasons, $l_conf));
+                            }
                         }
-                        if ($placed) break;
+                        if ($placed) break; // ออกลูป attempts
                     }
                     if (!$placed) { $fail_count++; $failed_list[] = ['class_name'=>$base->class_name, 'subject_code'=>$base->tsub_code, 'subject_name'=>$base->tsub_name, 'teacher_name'=>implode(', ', array_map(fn($id) => $teacher_name_map[$id] ?? $id, $teacher_ids)), 'block_size'=>$size, 'reasons'=>array_slice($conflict_reasons,0,5)]; }
                 }
             }
+
+            // 📊 FIX #3: Conflict Summary Log
+            $log[] = "--- สรุปผลการจัดตาราง ---";
+            $log[] = "✅ จัดสำเร็จ: $success_count คาบ";
+            $log[] = "❌ จัดไม่ได้: $fail_count รายการ";
 
             if ($fail_count > 0) {
                 $this->db_timetable->transRollback();
                 $log[] = "🚨 ประมวลผลไม่สมบูรณ์: พบวิชาที่จัดลงไม่ได้ $fail_count รายการ";
                 return $this->response->setJSON(['status'=>'error', 'message'=>"จัดไม่ได้ $fail_count รายการ", 'failed_list'=>$failed_list, 'processing_log'=>$log]);
             }
+
+            // 🛡️ FIX #4: Post-Processing Validation — ตรวจซ้ำว่าไม่มีครูซ้ำจริงก่อน commit
+            $log[] = "--- กำลังตรวจสอบความถูกต้อง (Post-Validation) ---";
+            $conflictQuery = $this->db_timetable->query("
+                SELECT d1.day, d1.period, a1.teacher_id, COUNT(*) as cnt
+                FROM tb_timetable_data d1
+                JOIN tb_timetable_assignments a1 ON a1.assign_id = d1.assign_id
+                WHERE d1.term = ? AND d1.year = ?
+                  AND a1.group_id IS NULL
+                GROUP BY d1.day, d1.period, a1.teacher_id
+                HAVING cnt > 1
+            ", [$term, $year]);
+            $teacherConflicts = $conflictQuery->getResult();
+
+            // ตรวจสอบครูที่อยู่ใน FIND_IN_SET (ครูสอนหลาย assignment แต่ไม่ใช่ group)
+            $allSlots = $this->db_timetable->table('tb_timetable_data')
+                ->select('tb_timetable_data.day, tb_timetable_data.period, tb_timetable_assignments.teacher_id, tb_timetable_assignments.assign_id, tb_timetable_assignments.group_id')
+                ->join('tb_timetable_assignments', 'tb_timetable_assignments.assign_id = tb_timetable_data.assign_id')
+                ->where(['tb_timetable_data.term' => $term, 'tb_timetable_data.year' => $year])
+                ->get()->getResult();
+
+            $slotTeacherMap = []; // day_period => [teacher_id => [assign sources]]
+            foreach ($allSlots as $slot) {
+                $key = $slot->day . '_' . $slot->period;
+                $tids = explode(',', $slot->teacher_id);
+                foreach ($tids as $tid) {
+                    $tid = trim($tid);
+                    if (empty($tid)) continue;
+                    $slotTeacherMap[$key][$tid][] = $slot->assign_id;
+                }
+            }
+
+            $duplicateTeachers = [];
+            foreach ($slotTeacherMap as $slotKey => $teachersInSlot) {
+                foreach ($teachersInSlot as $tid => $assignIds) {
+                    // ครูซ้ำ = มี assign_id ต่างกันในเวลาเดียวกัน (ยกเว้น group เดียวกัน)
+                    $uniqueAssigns = array_unique($assignIds);
+                    if (count($uniqueAssigns) > 1) {
+                        // ตรวจสอบว่าเป็น group เดียวกันหรือไม่
+                        $groupIds = [];
+                        foreach ($allSlots as $s) {
+                            if (in_array($s->assign_id, $uniqueAssigns) && $s->day . '_' . $s->period === $slotKey) {
+                                $groupIds[] = $s->group_id;
+                            }
+                        }
+                        $groupIds = array_unique(array_filter($groupIds));
+                        // ถ้ามี group_id เดียวกันทั้งหมด = ไม่ซ้ำ (เรียนรวม)
+                        if (count($groupIds) <= 1 && !empty($groupIds)) continue;
+                        
+                        $duplicateTeachers[] = [
+                            'slot' => $slotKey,
+                            'teacher' => $teacher_name_map[$tid] ?? $tid,
+                            'assign_ids' => $uniqueAssigns
+                        ];
+                    }
+                }
+            }
+
+            if (!empty($duplicateTeachers)) {
+                $this->db_timetable->transRollback();
+                $conflictDetails = [];
+                foreach ($duplicateTeachers as $dup) {
+                    list($dupDay, $dupPeriod) = explode('_', $dup['slot']);
+                    $conflictDetails[] = "ครู {$dup['teacher']} ซ้ำที่ วัน{$dupDay} คาบ{$dupPeriod}";
+                }
+                $log[] = "🚨 Post-Validation FAILED: พบครูซ้ำ " . count($duplicateTeachers) . " จุด";
+                foreach ($conflictDetails as $cd) $log[] = "  - $cd";
+                return $this->response->setJSON([
+                    'status' => 'error',
+                    'message' => 'Post-Validation พบครูซ้ำ ' . count($duplicateTeachers) . ' จุด กรุณาตรวจสอบ',
+                    'conflicts' => $conflictDetails,
+                    'processing_log' => $log
+                ]);
+            }
+
+            $log[] = "✅ Post-Validation ผ่าน: ไม่พบครูซ้ำ";
 
             $this->db_timetable->transComplete();
             $log[] = "✅ ประมวลผลสำเร็จ 100%!";

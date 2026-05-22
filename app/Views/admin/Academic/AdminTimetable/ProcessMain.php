@@ -438,6 +438,22 @@
                         </div>
                     </div>
                 </div>
+                <!-- Search and summary bar -->
+                <div class="px-4 py-3 bg-light border-bottom d-flex align-items-center justify-content-between flex-wrap gap-3">
+                    <div class="input-group input-group-merge" style="max-width: 450px;">
+                        <span class="input-group-text text-muted"><i class="bx bx-search fs-4"></i></span>
+                        <input type="text" class="form-control" id="searchAssignmentInput" placeholder="ค้นหา วิชา, รหัสวิชา, หรือชื่อครูผู้สอน...">
+                        <button class="btn btn-outline-secondary" type="button" id="btnClearSearch" style="display: none; border-color: #d9dee3;"><i class="bx bx-x fs-4"></i></button>
+                    </div>
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="badge p-2 px-3 rounded-pill border fs-6 shadow-xs" style="color: #15a362 !important; background-color: #e8f7f0 !important; border-color: #c3ebd6 !important;">
+                            <i class="bx bx-book-open me-2" style="color: #15a362 !important;"></i>วิชาที่พบ: <span id="filteredSubjectCount" class="fw-bold">0</span> วิชา
+                        </div>
+                        <div class="badge bg-label-primary p-2 px-3 rounded-pill border border-primary-subtle fs-6 shadow-xs">
+                            <i class="bx bx-time-five me-2"></i>ภาระงานสอนรวม: <span id="filteredPeriodCount" class="fw-bold">0</span> คาบ
+                        </div>
+                    </div>
+                </div>
                 <div class="table-responsive" style="max-height: 500px;" id="assignmentListContainer">
                     <table class="table table-hover align-middle mb-0">
                         <thead class="bg-label-secondary sticky-top">
@@ -458,8 +474,24 @@
                                     <img src="<?= base_url('assets/img/illustrations/empty-box.png') ?>" width="100" class="mb-3 d-block mx-auto opacity-50">
                                     ยังไม่มีข้อมูลการมอบหมาย
                                 </td></tr>
-                            <?php else: foreach($assignments as $g): $a = $g['data']; $tNames = array_column($g['teachers'], 'name'); ?>
-                                <tr>
+                            <?php else: foreach($assignments as $g): 
+                                $a = $g['data']; 
+                                $tNames = array_column($g['teachers'], 'name');
+                                
+                                $search_texts = [];
+                                foreach ($g['subjects'] as $sub) {
+                                    $search_texts[] = $sub['code'];
+                                    $search_texts[] = $sub['name'];
+                                }
+                                foreach ($g['teachers'] as $t) {
+                                    $search_texts[] = $t['name'];
+                                }
+                                $search_str = mb_strtolower(implode(' ', $search_texts));
+                                
+                                $class_count = count($g['classes']);
+                                $total_hours = $a->group_id ? $a->hours_per_week : ($a->hours_per_week * $class_count);
+                            ?>
+                                <tr class="assignment-row align-middle" data-search="<?= esc($search_str) ?>" data-hours="<?= $total_hours ?>">
                                     <td class="text-center">
                                         <input class="form-check-input assign-checkbox" type="checkbox" value="<?= implode(',', $g['ids']) ?>">
                                     </td>
@@ -481,7 +513,38 @@
                                             <span class="badge bg-label-info mb-1 rounded-pill"><?= $cls ?></span>
                                         <?php endforeach; ?>
                                     </td>
-                                    <td class="text-center fw-bold text-primary"><?= $a->hours_per_week ?> คาบ</td>
+                                    <td class="text-center">
+                                        <?php 
+                                        $class_count = count($g['classes']);
+                                        if ($a->group_id) {
+                                            // เรียนรวม/สอนควบ: นับเป็นคาบปกติเพราะสอนพร้อมกันในเวลาเดียว
+                                            $total_hours = $a->hours_per_week;
+                                            ?>
+                                            <span class="fw-bold text-primary fs-6"><?= $total_hours ?> คาบ</span>
+                                            <small class="text-success d-block fw-semibold" style="font-size: 0.7rem;">
+                                                <i class="bx bx-package me-1" style="font-size: 0.8rem;"></i>สอนควบ <?= $class_count ?> ห้อง
+                                            </small>
+                                            <small class="text-muted d-block" style="font-size: 0.65rem;">
+                                                (คิดภาระงานรวม <?= $total_hours ?> คาบ)
+                                            </small>
+                                            <?php
+                                        } else if ($class_count > 1) {
+                                            // สอนแยกห้อง: คาบสอนรวม = คาบต่อห้อง * จำนวนห้อง
+                                            $total_hours = $a->hours_per_week * $class_count;
+                                            ?>
+                                            <span class="fw-bold text-success fs-6" style="color: #15a362 !important;">รวม <?= $total_hours ?> คาบ</span>
+                                            <small class="text-muted d-block" style="font-size: 0.7rem;">
+                                                (<?= $a->hours_per_week ?> คาบ × <?= $class_count ?> ห้อง)
+                                            </small>
+                                            <?php
+                                        } else {
+                                            // สอนห้องเดียวปกติ
+                                            ?>
+                                            <span class="fw-bold text-primary fs-6"><?= $a->hours_per_week ?> คาบ</span>
+                                            <?php
+                                        }
+                                        ?>
+                                    </td>
                                     <td class="text-center">
                                         <span class="badge bg-label-warning rounded-pill"><?= $a->period_split ?: 'ยังไม่ได้กำหนด' ?></span>
                                     </td>
@@ -809,6 +872,7 @@
                             <input type="number" class="form-control fw-bold" name="hours_per_week" id="wizard_hours_per_week" value="2" min="1" max="10" required>
                             <span class="input-group-text bg-light text-muted fw-bold">คาบ</span>
                         </div>
+                        <div id="wizard_hours_calc_info" class="small mt-1 fw-semibold d-flex flex-wrap align-items-center" style="color: #15a362 !important; font-size: 0.75rem;"></div>
                     </div>
                 </div>
 
@@ -1380,6 +1444,9 @@ window.refreshAssignmentList = function() {
         const newList = $(html).find('#assignmentListContainer').html();
         $('#assignmentListContainer').html(newList);
         refreshOverallProgress();
+        if (typeof window.filterAssignments === 'function') {
+            window.filterAssignments();
+        }
     });
 };
 
@@ -1774,8 +1841,26 @@ $(document).ready(function() {
         $split.trigger('change');
     }
 
-    $('#wizard_hours_per_week').on('input change', updateSplitOptions);
+    function updateHoursCalcInfo() {
+        const hours = parseInt($('#wizard_hours_per_week').val()) || 0;
+        const classes = $('#modalAddAssignment select[name="class_names[]"]').val() || [];
+        const classCount = classes.length || 1;
+        const totalPeriods = hours * classCount;
+        
+        let infoText = '<i class="bx bx-calculator me-1"></i> รวมภาระงานสอนทั้งสิ้น ' + totalPeriods + ' คาบ/สัปดาห์';
+        if (classes.length > 1) {
+            infoText += ' <small class="text-muted ms-1" style="font-size: 0.65rem;">(คิดจาก ' + hours + ' คาบ × ' + classCount + ' ห้องเรียน)</small>';
+        }
+        $('#wizard_hours_calc_info').html(infoText);
+    }
+
+    $('#wizard_hours_per_week').on('input change', function() {
+        updateSplitOptions();
+        updateHoursCalcInfo();
+    });
+    $('#modalAddAssignment select[name="class_names[]"]').on('change', updateHoursCalcInfo);
     updateSplitOptions(); // Initial call
+    updateHoursCalcInfo(); // Initial call
 
     // 🚀 Suggested Teachers Logic
     const $teacherSelect = $('#modal_teacher_id');
@@ -2624,6 +2709,59 @@ $(document).ready(function() {
             }
         });
     });
+
+    // --- 🔍 Timetable Assignment Filter ---
+    window.filterAssignments = function() {
+        let searchVal = $('#searchAssignmentInput').val() || '';
+        searchVal = searchVal.trim().toLowerCase();
+        
+        let words = searchVal.split(/\s+/).filter(w => w.length > 0);
+        let totalHours = 0;
+        let visibleCount = 0;
+        
+        if (words.length === 0) {
+            $('#btnClearSearch').hide();
+            $('.assignment-row').show();
+            $('.assignment-row').each(function() {
+                totalHours += parseFloat($(this).data('hours')) || 0;
+                visibleCount++;
+            });
+        } else {
+            $('#btnClearSearch').show();
+            $('.assignment-row').each(function() {
+                let rowSearchText = $(this).data('search') || '';
+                let isMatch = true;
+                for (let i = 0; i < words.length; i++) {
+                    if (rowSearchText.indexOf(words[i]) === -1) {
+                        isMatch = false;
+                        break;
+                    }
+                }
+                if (isMatch) {
+                    $(this).show();
+                    totalHours += parseFloat($(this).data('hours')) || 0;
+                    visibleCount++;
+                } else {
+                    $(this).hide();
+                }
+            });
+        }
+        
+        $('#filteredSubjectCount').text(visibleCount);
+        $('#filteredPeriodCount').text(totalHours);
+    };
+
+    $(document).on('input', '#searchAssignmentInput', function() {
+        window.filterAssignments();
+    });
+
+    $(document).on('click', '#btnClearSearch', function() {
+        $('#searchAssignmentInput').val('');
+        window.filterAssignments();
+    });
+
+    // Run initial filter calculation
+    window.filterAssignments();
 });
 function resetAllData() {
     Swal.fire({

@@ -270,11 +270,38 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
 $(document).on('change', '#onoff_year, [name="keyYear"], #CheckYearMain, #selectYear, #schyear_year_sidebar', function() {
     var selectedYear = $(this).val();
     if (selectedYear) {
-        $.post("<?= site_url('Admin/SetSelectedYear') ?>", { 
-            year: selectedYear,
-            "<?= csrf_token() ?>": "<?= csrf_hash() ?>"
-        }, function() {
-            location.reload();
+        $.ajax({
+            url: "<?= site_url('Admin/SetSelectedYear') ?>",
+            type: 'POST',
+            data: { 
+                year: selectedYear,
+                "<?= csrf_token() ?>": "<?= csrf_hash() ?>"
+            },
+            dataType: 'json',
+            success: function(response) {
+                if (response.status === 'success') {
+                    location.reload();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'ไม่สามารถบันทึกปีการศึกษาได้',
+                        text: response.message || 'กรุณาลองใหม่อีกครั้ง',
+                        customClass: { popup: 'swal2-popup-on-top' }
+                    });
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('SetSelectedYear Error:', status, error, xhr.responseText);
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'เกิดข้อผิดพลาด',
+                    text: 'ไม่สามารถเปลี่ยนปีการศึกษาได้ กรุณา Refresh หน้าใหม่แล้วลองอีกครั้ง',
+                    confirmButtonColor: '#15a362',
+                    customClass: { popup: 'swal2-popup-on-top' }
+                }).then(() => {
+                    location.reload();
+                });
+            }
         });
     }
 });
