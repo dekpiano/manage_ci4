@@ -103,7 +103,7 @@
                 </div>
                 <div class="modal-footer bg-light">
                     <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">ยกเลิก</button>
-                    <button type="submit" class="btn btn-primary btn-sm">
+                    <button type="button" class="btn btn-primary btn-sm" data-bs-dismiss="modal">
                         <i class="bi bi-save me-1"></i> บันทึกการตั้งค่า
                     </button>
                 </div>

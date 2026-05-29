@@ -47,8 +47,8 @@ class ModAdminClubs extends Model
                     'c_onoff_term' => $term,
                     'c_onoff_for'  => $target,
                     'c_onoff_status' => 0,
-                    'c_onoff_regisstart' => null,
-                    'c_onoff_regisend' => null
+                    'c_onoff_regisstart' => '0000-00-00 00:00:00',
+                    'c_onoff_regisend' => '0000-00-00 00:00:00'
                 ];
                 $insert_data[] = $new_row_data;
                 // Create a standard object to return

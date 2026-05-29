@@ -197,16 +197,46 @@ class ConAdminDevelopStudents extends BaseController
         $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
         $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();
 
-        $activeYear = $data['CheckOnoffClubParsed'][0];
-        $activeTerm = $data['CheckOnoffClubParsed'][1];
+        // รับค่าปีการศึกษา/ภาคเรียนจาก GET params (สำหรับดูข้อมูลย้อนหลัง)
+        $filterYear = $this->request->getGet('year');
+        $filterTerm = $this->request->getGet('term');
+
+        // ถ้ามีค่ากรอง ให้ใช้ค่านั้น ถ้าไม่มีให้ใช้ค่า active config
+        $activeYear = !empty($filterYear) ? $filterYear : $data['CheckOnoffClubParsed'][0];
+        $activeTerm = !empty($filterTerm) ? $filterTerm : $data['CheckOnoffClubParsed'][1];
+
+        // ส่งค่ากรองปัจจุบันไปยัง View
+        $data['filterYear'] = $activeYear;
+        $data['filterTerm'] = $activeTerm;
+        $data['isViewingHistory'] = (!empty($filterYear) && ($filterYear != $data['CheckOnoffClubParsed'][0] || $filterTerm != $data['CheckOnoffClubParsed'][1]));
 
         // --- Data for Settings Modal ---
-        $current_year = $activeYear; // Use activeYear from AllData()
-        $current_term = $activeTerm; // Use activeTerm from AllData()
+        $current_year = $data['CheckOnoffClubParsed'][0];
+        $current_term = $data['CheckOnoffClubParsed'][1];
         $data['current_year'] = $current_year;
-        $data['current_term'] = $current_term; // Pass current term to view
-        $data['onoff_status'] = $this->ModAdminClubs->get_onoff_status($current_year, $current_term); // Pass term to model
+        $data['current_term'] = $current_term;
+        $data['onoff_status'] = $this->ModAdminClubs->get_onoff_status($current_year, $current_term);
         // --- End Data for Settings Modal ---
+
+        // ดึงรายการปี/เทอมทั้งหมดสำหรับ Dropdown กรอง
+        $yearAllFromDB = $this->ClubsViweYearAll();
+
+        // ตรวจสอบว่าปีปัจจุบัน (active config) อยู่ในรายการหรือไม่ ถ้าไม่มีให้เพิ่มเข้าไป
+        $currentExists = false;
+        foreach ($yearAllFromDB as $yt) {
+            if ($yt['club_year'] == $current_year && $yt['club_trem'] == $current_term) {
+                $currentExists = true;
+                break;
+            }
+        }
+        if (!$currentExists) {
+            // เพิ่มปีปัจจุบันเข้าไปด้านบนสุดของรายการ
+            array_unshift($yearAllFromDB, [
+                'club_year' => $current_year,
+                'club_trem' => $current_term,
+            ]);
+        }
+        $data['YearAll'] = $yearAllFromDB;
 
         // ชื่อตารางชุมนุม
         $data['TotalClubs'] = $this->db->table('tb_clubs')
@@ -217,11 +247,11 @@ class ConAdminDevelopStudents extends BaseController
         $data['TotalStudent'] = $this->db->table('tb_club_members')
                                         ->select('COUNT(tb_club_members.member_student_id) AS StudentAll')
                                         ->join('tb_clubs', 'tb_club_members.member_club_id = tb_clubs.club_id')
-                                        ->join('tb_students', 'tb_club_members.member_student_id = tb_students.StudentID') // New JOIN
+                                        ->join('tb_students', 'tb_club_members.member_student_id = tb_students.StudentID')
                                         ->where('tb_clubs.club_year', $activeYear)
                                         ->where('tb_clubs.club_trem', $activeTerm)
-                                        ->where('tb_club_members.member_status', 'active') // New WHERE
-                                        ->where('tb_students.StudentStatus', '1/ปกติ') // New WHERE
+                                        ->where('tb_club_members.member_status', 'active')
+                                        ->where('tb_students.StudentStatus', '1/ปกติ')
                                         ->get()->getResult();
         // นับจำนวนครู
         $data['TotalTeacher'] = $this->db->table('tb_clubs')
@@ -758,18 +788,8 @@ class ConAdminDevelopStudents extends BaseController
         if (! empty($weeks)) {
             log_message('debug', 'ClubGetWeeksToUpdate: Found ' . count($weeks) . ' weeks.');
             
-            // Map weeks and convert B.E. back to A.D. for HTML5 date inputs
-            $formattedWeeks = array_map(function($week) {
-                if (!empty($week['tcs_start_date']) && strpos($week['tcs_start_date'], '/') !== false) {
-                    $parts = explode('/', $week['tcs_start_date']);
-                    if (count($parts) === 3) {
-                        // dd/mm/yyyy (B.E.) -> yyyy-mm-dd (A.D.)
-                        $ad_year = (int)$parts[2] - 543;
-                        $week['tcs_start_date'] = $ad_year . '-' . $parts[1] . '-' . $parts[0];
-                    }
-                }
-                return $week;
-            }, $weeks);
+            // tcs_start_date is DATE column (Y-m-d format) - send directly to frontend
+            $formattedWeeks = $weeks;
 
             return $this->response->setJSON(['status' => 'success', 'data' => $formattedWeeks]);
         } else {
@@ -798,31 +818,37 @@ class ConAdminDevelopStudents extends BaseController
         log_message('debug', 'ClubCreateWeeks: c_onoff_year is ' . $academicYear . ' and c_onoff_term is ' . $CheckYear->c_onoff_term);
         $academicTerm = $CheckYear->c_onoff_term;
 
-        $CheckYeaDuplicater = $this->db->table('tb_club_settings_schedule')
-                                        ->where('tcs_academic_year', $academicYear)
-                                        ->where('tcs_academic_trem', $academicTerm)
-                                        ->get()->getRow();
+        try {
+            $CheckYeaDuplicater = $this->db->table('tb_club_settings_schedule')
+                                            ->where('tcs_academic_year', $academicYear)
+                                            ->where('tcs_academic_trem', $academicTerm)
+                                            ->get()->getRow();
 
-        if (! $CheckYeaDuplicater) {
-            log_message('debug', 'ClubCreateWeeks: No existing weeks found, creating new ones.');
-            $data = [];
-            for ($i = 0; $i < 20; $i++) {
-                $data[] = [
-                    'tcs_academic_year' => $academicYear,
-                    'tcs_academic_trem' => $academicTerm,
-                    'tcs_week_number'   => $i + 1,
-                    'tcs_week_status'   => 'เปิด',
-                ];
+            if (! $CheckYeaDuplicater) {
+                log_message('debug', 'ClubCreateWeeks: No existing weeks found, creating new ones.');
+                $data = [];
+                for ($i = 0; $i < 20; $i++) {
+                    $data[] = [
+                        'tcs_academic_year' => $academicYear,
+                        'tcs_academic_trem' => $academicTerm,
+                        'tcs_week_number'   => $i + 1,
+                        'tcs_week_status'   => 'เปิด',
+                        'tcs_start_date'    => date('Y-m-d'), // ใส่วันที่ปัจจุบันเป็นค่าเริ่มต้น (DATE column)
+                    ];
+                }
+
+                // บันทึกข้อมูล
+                $this->db->table('tb_club_settings_schedule')->insertBatch($data);
+                log_message('debug', 'ClubCreateWeeks: Successfully inserted 20 weeks.');
+
+                return $this->response->setJSON(['status' => 'success', 'message' => 'เพิ่มข้อมูลสัปดาห์สำเร็จ']);
+            } else {
+                log_message('debug', 'ClubCreateWeeks: Weeks already exist for academic year ' . $academicYear . ' term ' . $academicTerm);
+                return $this->response->setJSON(['status' => 'success', 'message' => 'เคยเพิ่มข้อมูลแล้ว']);
             }
-
-            // บันทึกข้อมูล
-            $this->db->table('tb_club_settings_schedule')->insertBatch($data);
-            log_message('debug', 'ClubCreateWeeks: Successfully inserted 20 weeks.');
-
-            return $this->response->setJSON(['status' => 'success', 'message' => 'เพิ่มข้อมูลสัปดาห์สำเร็จ']);
-        } else {
-            log_message('debug', 'ClubCreateWeeks: Weeks already exist for academic year ' . $academicYear . ' term ' . $academicTerm);
-            return $this->response->setJSON(['status' => 'success', 'message' => 'เคยเพิ่มข้อมูลแล้ว']);
+        } catch (\Throwable $e) {
+            log_message('error', 'ClubCreateWeeks error: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
+            return $this->response->setJSON(['status' => 'error', 'message' => $e->getMessage()]);
         }
     }
 
@@ -854,12 +880,8 @@ class ConAdminDevelopStudents extends BaseController
         $id = $this->request->getPost('id'); // รับค่า ID
         $date = $this->request->getPost('date'); // รับค่าวันที่ใหม่ในรูปแบบ Y-m-d
 
-        // Convert incoming Gregorian date (from input type="date") to B.E. (dd/mm/yyyy)
-        $formatted_date = $date;
-        if (!empty($date)) {
-            $d = new \DateTime($date);
-            $formatted_date = $d->format('d/m/') . ((int)$d->format('Y') + 543);
-        }
+        // tcs_start_date is DATE column - save in Y-m-d format directly
+        $formatted_date = $date; // Already in Y-m-d from input type="date"
 
         $result = $this->db->table('tb_club_settings_schedule')
                             ->where('tcs_academic_year', $academicYear)
@@ -873,6 +895,26 @@ class ConAdminDevelopStudents extends BaseController
                 return $this->response->setJSON(['status' => 'error', 'message' => 'ไม่สามารถอัปเดตได้']);
             }
     }
+
+    public function ClubUpdateStatus()
+    {
+        if ($this->request->isAJAX()) {
+            $id = $this->request->getPost('id');
+            $status = $this->request->getPost('status');
+
+            if (!empty($id) && in_array($status, ['เปิด', 'ปิด'])) {
+                $result = $this->db->table('tb_club_settings_schedule')
+                                   ->where('tcs_schedule_id', $id)
+                                   ->update(['tcs_week_status' => $status]);
+                if ($result) {
+                    return $this->response->setJSON(['status' => 'success']);
+                }
+            }
+            return $this->response->setJSON(['status' => 'error', 'message' => 'ไม่สามารถอัปเดตสถานะได้']);
+        }
+        return redirect()->to(base_url());
+    }
+
 
     public function ClubGetAcademicYears()
     {

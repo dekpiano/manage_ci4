@@ -60,24 +60,58 @@ $tchCfg = $getStatusConfig($teacherStatus);
         </div>
     </div>
 
-    <!-- Summary Banner (Info Only) -->
+    <!-- Summary Banner with Year/Term Filter -->
     <div class="row mb-4">
         <div class="col-12">
-            <div class="card bg-primary bg-gradient border-0 shadow-sm position-relative overflow-hidden" style="min-height: 100px;">
+            <div class="card <?= ($isViewingHistory ?? false) ? 'bg-secondary' : 'bg-primary' ?> bg-gradient border-0 shadow-sm position-relative overflow-hidden" style="min-height: 100px;">
                 <div class="card-body p-4 position-relative z-1">
-                    <div class="d-flex align-items-center text-white">
-                        <div class="avatar avatar-md me-3">
-                            <span class="avatar-initial rounded bg-white text-primary shadow-sm"><i class="bx bxs-graduation fs-3"></i></span>
+                    <div class="d-flex align-items-center justify-content-between flex-column flex-md-row gap-3">
+                        <div class="d-flex align-items-center text-white">
+                            <div class="avatar avatar-md me-3">
+                                <span class="avatar-initial rounded bg-white <?= ($isViewingHistory ?? false) ? 'text-secondary' : 'text-primary' ?> shadow-sm">
+                                    <i class="bx <?= ($isViewingHistory ?? false) ? 'bx-history' : 'bxs-graduation' ?> fs-3"></i>
+                                </span>
+                            </div>
+                            <div>
+                                <h4 class="mb-0 text-white fw-bold">
+                                    ปีการศึกษา <?= esc($filterYear) ?> ภาคเรียนที่ <?= esc($filterTerm) ?>
+                                </h4>
+                                <p class="mb-0 opacity-75">
+                                    <?php if ($isViewingHistory ?? false): ?>
+                                        <i class="bx bx-info-circle me-1"></i>กำลังดูข้อมูลย้อนหลัง (ปัจจุบัน: <?= esc($CheckOnoffClubParsed[0]) ?>/<?= esc($CheckOnoffClubParsed[1]) ?>)
+                                    <?php else: ?>
+                                        สถานะและกำหนดการลงทะเบียนชุมนุมประจำภาคเรียน
+                                    <?php endif; ?>
+                                </p>
+                            </div>
                         </div>
-                        <div>
-                            <h4 class="mb-0 text-white fw-bold">ปีการศึกษา <?= esc($ExYearClub[0]) ?> ภาคเรียนที่ <?= esc($ExYearClub[1]) ?></h4>
-                            <p class="mb-0 opacity-75">สถานะและกำหนดการลงทะเบียนชุมนุมประจำภาคเรียน</p>
+                        <!-- Year/Term Filter -->
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="input-group input-group-sm" style="min-width: 250px;">
+                                <span class="input-group-text bg-white border-0 text-muted"><i class="bx bx-filter-alt"></i></span>
+                                <select class="form-select form-select-sm bg-white border-0 fw-semibold text-dark shadow-sm" id="filterYearTerm" style="cursor: pointer;">
+                                    <?php if (!empty($YearAll)): ?>
+                                        <?php foreach ($YearAll as $yt): ?>
+                                            <option value="<?= esc($yt['club_year']) ?>|<?= esc($yt['club_trem']) ?>"
+                                                <?= ($yt['club_year'] == $filterYear && $yt['club_trem'] == $filterTerm) ? 'selected' : '' ?>>
+                                                ปี <?= esc($yt['club_year']) ?> / เทอม <?= esc($yt['club_trem']) ?>
+                                                <?= ($yt['club_year'] == $CheckOnoffClubParsed[0] && $yt['club_trem'] == $CheckOnoffClubParsed[1]) ? ' ★ ปัจจุบัน' : '' ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    <?php endif; ?>
+                                </select>
+                            </div>
+                            <?php if ($isViewingHistory ?? false): ?>
+                                <a href="<?= site_url('Admin/Acade/DevelopStudents/Clubs/Main') ?>" class="btn btn-sm btn-light fw-bold text-nowrap shadow-sm">
+                                    <i class="bx bx-arrow-back me-1"></i>กลับปัจจุบัน
+                                </a>
+                            <?php endif; ?>
                         </div>
                     </div>
                 </div>
                 <!-- Abstract Decor -->
                 <div class="position-absolute top-50 end-0 translate-middle-y opacity-25 pe-5">
-                    <i class="bx bx-bar-chart-alt-2 text-white" style="font-size: 8rem;"></i>
+                    <i class="bx <?= ($isViewingHistory ?? false) ? 'bx-history' : 'bx-bar-chart-alt-2' ?> text-white" style="font-size: 8rem;"></i>
                 </div>
             </div>
         </div>
@@ -323,6 +357,14 @@ $(document).ready(function() {
     // Add global SweetAlert2 z-index fix
     $('head').append('<style>.swal2-container { z-index: 99999 !important; }</style>');
 
+    // Year/Term Filter Handler
+    $('#filterYearTerm').on('change', function() {
+        const val = $(this).val().split('|');
+        const year = val[0];
+        const term = val[1];
+        window.location.href = '<?= site_url('Admin/Acade/DevelopStudents/Clubs/Main') ?>?year=' + encodeURIComponent(year) + '&term=' + encodeURIComponent(term);
+    });
+
     // Reload page when specific setting modals are closed to refresh dashboard stats
     $('#ModalClubSetYear, #modalClubStudentSettings, #modalClubTeacherSettings, #modalClubSystemSettings').on('hidden.bs.modal', function() {
         window.location.reload();
@@ -434,7 +476,24 @@ $(document).ready(function() {
 
     // Academic Year Handlers
     $(document).on('click', '#MenuSetYear', function () { $('#ModalClubSetYear').modal('show'); });
-    $(document).on('click', '#MenuSetDateAttendancer', function () { $('#ClubSetDateAttendance').modal('show'); });
+    $(document).on('click', '#MenuSetDateAttendancer', function () { 
+        $.ajax({
+            url: '<?= site_url('admin/academic/ConAdminDevelopStudents/ClubCreateWeeks') ?>',
+            type: 'GET',
+            dataType: 'json',
+            success: function (response) {
+                if (response.status === 'success') {
+                    loadWeeksData();
+                    $('#ClubSetDateAttendance').modal('show');
+                } else {
+                    Swal.fire({ icon: 'error', title: 'ผิดพลาด!', text: response.message || 'ไม่สามารถเริ่มต้นตั้งค่าตารางเช็คชื่อได้' });
+                }
+            },
+            error: function () {
+                Swal.fire({ icon: 'error', title: 'ผิดพลาด!', text: 'เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์' });
+            }
+        });
+    });
 
     // Handle Weeks / Attendance Data (Existing dynamic loading)
     function loadWeeksData() {
@@ -449,7 +508,7 @@ $(document).ready(function() {
                         let checked = (week.tcs_week_status == "เปิด") ? "checked" : "";
                         rows += `<tr>
                             <td>สัปดาห์ที่ ${index + 1}</td>
-                            <td><input type="date" class="form-control tcs_academic_year" id="tcs_academic_year${index + 1}" data-id="${week.tcs_schedule_id}"></td>
+                            <td><input type="date" class="form-control tcs_academic_year" id="tcs_academic_year${index + 1}" data-id="${week.tcs_schedule_id}" value="${week.tcs_start_date || ''}"></td>
                             <td>
                                 <div class="form-check form-switch d-flex">
                                     <input class="form-check-input status-btn" type="checkbox" data-status="${week.tcs_week_status}" data-id="${week.tcs_schedule_id}" ${checked}>
@@ -490,6 +549,87 @@ $(document).ready(function() {
             }
         });
     });
+
+    // Save status when toggled
+    $(document).on('change', '.status-btn', function() {
+        const checkbox = $(this);
+        const id = checkbox.data('id');
+        const currentStatus = checkbox.data('status');
+        const newStatus = (currentStatus === 'เปิด') ? 'ปิด' : 'เปิด';
+
+        $.ajax({
+            url: '<?= site_url('admin/academic/ConAdminDevelopStudents/ClubUpdateStatus') ?>',
+            type: 'POST',
+            data: {
+                '<?= csrf_token() ?>': '<?= csrf_hash() ?>',
+                id: id,
+                status: newStatus
+            },
+            dataType: 'json',
+            success: function(response) {
+                if (response.status === 'success') {
+                    checkbox.data('status', newStatus);
+                    const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 1500, timerProgressBar: true });
+                    Toast.fire({ icon: 'success', title: 'อัปเดตสถานะสำเร็จ' });
+                } else {
+                    checkbox.prop('checked', !checkbox.prop('checked'));
+                    Swal.fire({ icon: 'error', title: 'ผิดพลาด!', text: response.message || 'ไม่สามารถบันทึกได้' });
+                }
+            },
+            error: function() {
+                checkbox.prop('checked', !checkbox.prop('checked'));
+                Swal.fire({ icon: 'error', title: 'ผิดพลาด!', text: 'เกิดข้อผิดพลาดในการเชื่อมต่อ' });
+            }
+        });
+    });
+
+    // Handle Year Form AJAX submission
+    $(document).on('submit', '#FormClubSetOnoffYear', function (e) {
+        e.preventDefault();
+        const c_onoff_term = $('#c_onoff_term').val();
+        const c_onoff_year = $('#c_onoff_year').val();
+
+        if (!c_onoff_term || !c_onoff_year) {
+            Swal.fire({ icon: 'warning', title: 'แจ้งเตือน', text: 'กรุณากรอกข้อมูลให้ครบถ้วน' });
+            return;
+        }
+
+        $.ajax({
+            url: '<?= site_url('admin/academic/ConAdminDevelopStudents/ClubSetOnoffYear') ?>',
+            type: 'POST',
+            dataType: 'json',
+            data: {
+                '<?= csrf_token() ?>': '<?= csrf_hash() ?>',
+                c_onoff_term: c_onoff_term,
+                c_onoff_year: c_onoff_year
+            },
+            success: function (response) {
+                if (response.status === 'success') {
+                    $('#ModalClubSetYear').modal('hide');
+                    Swal.fire({
+                        title: "สำเร็จ!",
+                        text: response.message,
+                        icon: "success",
+                    }).then((result) => {
+                        window.location.reload();
+                    });
+                } else {
+                    Swal.fire({ icon: "error", title: "ผิดพลาด!", text: response.message });
+                }
+            },
+            error: function () {
+                Swal.fire({ icon: "error", title: "ผิดพลาด!", text: "เกิดข้อผิดพลาดในการบันทึกข้อมูล" });
+            }
+        });
+    });
+
+    // Prevent traditional submit on Attendance Form
+    $(document).on('submit', '#FormClubSetDateAttendance', function (e) {
+        e.preventDefault();
+        $('#ClubSetDateAttendance').modal('hide');
+    });
+
 });
 </script>
 <?= $this->endSection() ?>
+
