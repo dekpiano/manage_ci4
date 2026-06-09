@@ -61,6 +61,17 @@
             </a>
         </div>
 
+        <!-- System 5: ผลงานการแข่งขัน (Public View & Register Gateway) -->
+        <div class="col-6 col-md-4 col-lg-3">
+            <a href="<?= base_url('competition/show') ?>" class="sys-card p-4 transition-all" style="border: 1px solid rgba(21, 163, 98, 0.3); background-color: rgba(255, 255, 255, 0.98);">
+                <div class="sys-icon bg-label-warning mb-3" style="background-color: rgba(255, 193, 7, 0.1); color: #ffc107;">
+                    <i class='bx bx-trophy fs-2' style="color: #ffc107;"></i>
+                </div>
+                <h6 class="fw-bold mb-1 mt-2" style="color: #1b5e20;">ผลงานการแข่งขัน</h6>
+                <p class="small text-muted mb-0">ดูสถิติ/เกียรติบัตร & บันทึกข้อมูล</p>
+            </a>
+        </div>
+
          <!-- System 7: ประกันคุณภาพ -->
          <div class="col-6 col-md-4 col-lg-3">
             <a href="https://sites.google.com/skj.ac.th/skj68/home" target="_blank" class="sys-card p-4 transition-all">

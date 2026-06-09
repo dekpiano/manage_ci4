@@ -42,6 +42,12 @@
                             <div class="text-truncate" data-i18n="Basic">รายชื่อนักเรียน</div>
                         </a>
                     </li>
+                    <li class="menu-item <?= ($uri->getTotalSegments() >= 2 && $uri->getSegment(2) == 'competition' ? 'active' : null) ?>">
+                        <a href="<?=base_url('competition/show');?>" class="menu-link">
+                            <i class="menu-icon tf-icons bx bx-trophy" style="color: #15a362 !important;"></i>
+                            <div class="text-truncate" data-i18n="Basic" style="font-weight: 700; color: #1b5e20;">ผลงานการแข่งขัน</div>
+                        </a>
+                    </li>
                     <li class="menu-header small text-uppercase">
                     <span class="menu-header-text">ประกันคุณภาพ</span>
                     </li>

@@ -203,6 +203,22 @@ $routes->get('admin/academic/checkplan/plandetails/(:segment)', [ConAdminCheckPl
 $routes->get('admin/academic/api', [\App\Controllers\Admin\Academic\ConAdminApi::class, 'index']);
 $routes->get('admin/academic/report/checkplan', [ConAdminCheckPlan::class, 'report']);
 
+// Routes for Competition Tracking System
+$routes->get('competition/show', '\App\Controllers\Admin\Academic\ConCompetition::show');
+$routes->group('admin/academic/competition', function($routes) {
+    $routes->get('', '\App\Controllers\Admin\Academic\ConCompetition::index');
+    $routes->get('create', '\App\Controllers\Admin\Academic\ConCompetition::create');
+    $routes->get('edit/(:num)', '\App\Controllers\Admin\Academic\ConCompetition::edit/$1');
+    $routes->post('save', '\App\Controllers\Admin\Academic\ConCompetition::save');
+    $routes->post('update/(:num)', '\App\Controllers\Admin\Academic\ConCompetition::save/$1');
+    $routes->get('delete/(:num)', '\App\Controllers\Admin\Academic\ConCompetition::delete/$1');
+    $routes->get('detail/(:num)', '\App\Controllers\Admin\Academic\ConCompetition::getDetail/$1');
+    $routes->get('search-students', '\App\Controllers\Admin\Academic\ConCompetition::searchStudents');
+    $routes->get('search-teachers', '\App\Controllers\Admin\Academic\ConCompetition::searchTeachers');
+    $routes->post('update-status', '\App\Controllers\Admin\Academic\ConCompetition::updateStatus');
+    $routes->post('upload_proxy', '\App\Controllers\Admin\Academic\ConCompetition::upload_proxy');
+});
+
 // Timetable Management System
 $routes->get('db-check', 'DbCheck::index');
 
@@ -414,7 +430,8 @@ $routes->addRedirect('LoginAdmin', 'Auth/login');
 $routes->addRedirect('Logout', 'Auth/logout');
 $routes->addRedirect('LoginMenager', 'Auth/login');
 $routes->addRedirect('LogoutTeacher', 'Auth/logout');
-$routes->addRedirect('LoginTeacher', 'Auth/login');
+$routes->get('LoginTeacher', '\App\Controllers\Auth::loginTeacher');
+$routes->get('Auth/teacherCallback', '\App\Controllers\Auth::teacherCallback');
 $routes->addRedirect('LoginMenager_callback', 'Auth/googleLogin');
 
 // User

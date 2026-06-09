@@ -8,8 +8,28 @@ use CodeIgniter\HTTP\ResponseInterface;
 
 class AdminAuthFilter implements FilterInterface
 {
+    /**
+     * URI patterns that are allowed without authentication.
+     * These match the 'except' list in app/Config/Filters.php.
+     */
+    protected array $publicExcept = [
+        'LoginAdmin',
+        'admin/academic/competition/detail',
+        'Admin/academic/competition/detail',
+    ];
+
     public function before(RequestInterface $request, $arguments = null)
     {
+        $uri = trim($request->getPath(), '/');
+
+        // Allow listed public URIs without authentication
+        foreach ($this->publicExcept as $except) {
+            $except = trim($except, '/');
+            if ($uri === $except || str_starts_with($uri, $except . '/')) {
+                return; // skip auth check
+            }
+        }
+
         // Check if user is logged in
         if (empty(session()->get('fullname'))) {
             return redirect()->to(base_url('LoginAdmin'));

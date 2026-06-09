@@ -435,6 +435,11 @@
                         <div data-i18n="รายงานการส่งแผน">รายงานการส่งแผน</div>
                     </a>
                 </li>
+                <li class="menu-item <?= ($s3 == 'competition' ? 'active' : '') ?>">
+                    <a href="<?=base_url('admin/academic/competition');?>" class="menu-link">
+                        <div data-i18n="ผลงานการแข่งขัน">ผลงานการแข่งขัน</div>
+                    </a>
+                </li>
             </ul>
         </li>
         <?php endif; ?>

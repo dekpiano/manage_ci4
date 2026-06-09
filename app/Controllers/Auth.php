@@ -166,4 +166,109 @@ class Auth extends BaseController
         session()->destroy();
         return redirect()->to(base_url('/'));
     }
+
+    /**
+     * สำหรับล็อกอินครูบันทึกผลงานการแข่งขันโดยเฉพาะ
+     */
+    public function loginTeacher()
+    {
+        if (session()->get('login_id')) {
+            return redirect()->to(base_url('admin/academic/competition'));
+        }
+
+        $config = config('Google');
+        $params = [
+            'client_id'     => $config->clientId,
+            'redirect_uri'  => base_url('Auth/teacherCallback'),
+            'response_type' => 'code',
+            'scope'         => 'email profile openid',
+            'access_type'   => 'online',
+            'prompt'        => 'select_account'
+        ];
+        return redirect()->to('https://accounts.google.com/o/oauth2/v2/auth?' . http_build_query($params));
+    }
+
+    /**
+     * Google Callback สำหรับการเข้าบันทึกผลงานครูโดยเฉพาะ
+     */
+    public function teacherCallback()
+    {
+        $code = $this->request->getVar('code');
+        if (!$code) {
+            return redirect()->to(base_url('competition/show'))->with('error', 'การยืนยันตัวตนล้มเหลว (Missing Code)');
+        }
+
+        $config = config('Google');
+        $curl = \Config\Services::curlrequest();
+
+        try {
+            $response = $curl->post('https://oauth2.googleapis.com/token', [
+                'form_params' => [
+                    'code'          => $code,
+                    'client_id'     => $config->clientId,
+                    'client_secret' => $config->clientSecret,
+                    'redirect_uri'  => base_url('Auth/teacherCallback'),
+                    'grant_type'    => 'authorization_code',
+                ],
+            ]);
+            $tokens = json_decode($response->getBody(), true);
+
+            $response = $curl->get('https://www.googleapis.com/oauth2/v3/userinfo', [
+                'headers' => [
+                    'Authorization' => 'Bearer ' . $tokens['access_token'],
+                ],
+            ]);
+            $payload = json_decode($response->getBody(), true);
+
+        } catch (\Exception $e) {
+            return redirect()->to(base_url('competition/show'))->with('error', 'การเชื่อมต่อกับ Google ล้มเหลว: ' . $e->getMessage());
+        }
+
+        if (!$payload || !isset($payload['email'])) {
+            return redirect()->to(base_url('competition/show'))->with('error', 'ไม่สามารถดึงข้อมูลอีเมลได้');
+        }
+
+        $email = $payload['email'];
+        $google_sub = $payload['sub'];
+
+        if ($this->model->check_login_teacher($email) >= 1) {
+            $result = $this->model->fetch_teacher_login($email);
+            
+            if ($result) {
+                $status = $result->academic_status ?: 'teacher'; // fallback เป็นครูปกติ
+
+                $current_datetime = date('Y-m-d H:i:s');
+                $user_data = [
+                    'updated_at' => $current_datetime,
+                    'login_oauth_uid' => $google_sub
+                ];
+                $this->model->Update_user_data($user_data, $email);
+
+                $db = \Config\Database::connect();
+                $schoolYear = $db->table('tb_schoolyear')->get()->getRow();
+                $defaultYear = $schoolYear->schyear_year ?? '';
+
+                $sessionData = [
+                    'login_id' => $result->pers_id,
+                    'pers_learning' => $result->pers_learning,
+                    'fullname' => $result->pers_prefix . $result->pers_firstname . ' ' . $result->pers_lastname,
+                    'status' => $status,
+                    'admin_rloes_status' => $status,
+                    'img' => $result->pers_img,
+                    'groupleade' => $result->pers_groupleade,
+                    'pers_position' => $result->pers_position,
+                    'CheckrloesAcademic' => (string)($result->academic_nanetype ?? ''),
+                    'CheckrloesGeneral' => (string)($result->general_nanetype ?? ''),
+                    'isLoggedIn' => true,
+                    'admin_selected_year' => $defaultYear,
+                ];
+                session()->set($sessionData);
+                
+                // ส่งต่อไปหน้าจัดการบันทึกผลงานแข่งขัน (หลังบ้านครู) โดยไม่เข้าหน้าแรกของ Admin
+                return redirect()->to(base_url('admin/academic/competition'))->with('success', 'เข้าสู่ระบบสำเร็จ');
+            }
+        }
+        
+        return redirect()->to(base_url('competition/show'))->with('error', "ไม่พบอีเมล $email ในระบบ หรือคุณไม่มีสิทธิ์เข้าใช้งาน");
+    }
 }

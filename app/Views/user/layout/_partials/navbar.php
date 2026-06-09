@@ -68,7 +68,7 @@
                                                 <span class="fw-semibold fs-7"><?= session()->get('fullname') ?></span>
                                             </div>
                                             <div class="avatar avatar-online">
-                                                <img src="<?= session()->get('img') ? base_url('uploads/personnel/'.session()->get('img')) : base_url('assets/img/avatars/1.png') ?>" alt
+                                                <img src="<?= session()->get('img') ? 'https://personnel.skj.ac.th/uploads/admin/Personnal/'.session()->get('img') : base_url('assets/img/avatars/1.png') ?>" alt
                                                     class="w-px-40 h-auto rounded-circle border border-2 border-success" />
                                             </div>
                                         </div>

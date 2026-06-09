@@ -85,6 +85,8 @@ class Filters extends BaseConfig
             ],
             'except' => [
                 'LoginAdmin',
+                'admin/academic/competition/detail/*',
+                'Admin/academic/competition/detail/*',
             ]
         ],
     ];
