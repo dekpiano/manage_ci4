@@ -122,6 +122,19 @@
         color: #566a7f;
         font-size: 1.05rem;
     }
+
+    /* SweetAlert2 On Top Always */
+    .swal2-container {
+        z-index: 99999 !important;
+    }
+
+    /* Green highlight when saved successfully */
+    .adjust-number-input.save-success {
+        border-color: var(--primary-green) !important;
+        background-color: rgba(21, 163, 98, 0.1) !important;
+        color: var(--primary-green) !important;
+        box-shadow: 0 0 0 0.25rem rgba(21, 163, 98, 0.1) !important;
+    }
 </style>
 
 <div class="container-xxl flex-grow-1 container-p-y">
@@ -136,7 +149,7 @@
                     </ol>
                 </nav>
                 <h2 class="header-title mb-1 text-white">✨ จัดการเลขที่นักเรียนรายห้องเรียน</h2>
-                <p class="header-subtitle mb-0">ปรับเลขที่นักเรียน (สถานะ: ปกติ) สะดวก รวดเร็ว พร้อมระบบรันเลขที่อัตโนมัติ</p>
+                <p class="header-subtitle mb-0">ปรับเลขที่นักเรียน (สถานะ: ปกติ) สะดวก รวดเร็ว</p>
             </div>
             <div class="d-none d-md-block">
                 <i class="bx bx-list-ol bx-lg text-white opacity-50"></i>
@@ -167,9 +180,6 @@
                             </div>
                         </div>
                         <div class="ms-auto d-flex gap-2">
-                            <button type="button" id="sortByNameBtn" class="btn btn-outline-success">
-                                <i class="bx bx-sort-a-z me-1"></i> เรียงตามชื่อ (Auto Number)
-                            </button>
                             <button type="button" id="saveNumbersBtnHeader" class="btn btn-success px-4">
                                 <i class="bx bx-save me-1"></i> บันทึกข้อมูล
                             </button>
@@ -190,7 +200,7 @@
                         <th width="15%">รหัสประจำตัว</th>
                         <th width="40%">ชื่อ - นามสกุล</th>
                         <th width="15%" class="text-center">สถานะ</th>
-                        <th width="20%" class="pe-4 text-center">รันเลขที่ใหม่</th>
+                        <th width="20%" class="pe-4 text-center">ระบุเลขที่</th>
                     </tr>
                 </thead>
                 <tbody id="studentTableBody">
@@ -230,6 +240,13 @@
 <script>
 $(document).ready(function() {
     let currentStudents = [];
+    const Toast = Swal.mixin({
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true
+    });
 
     // Initialize Select2 for classroom selector
     $('#classroomSelector').select2({
@@ -289,7 +306,7 @@ $(document).ready(function() {
             const row = $(`
                 <tr class="student-row">
                     <td class="ps-4 text-center">
-                        <span class="badge bg-label-secondary font-monospace" style="width: 32px">${s.StudentNumber || '-'}</span>
+                        <span class="badge bg-label-secondary font-monospace current-number-badge" style="width: 32px">${s.StudentNumber || '-'}</span>
                     </td>
                     <td><span class="text-primary fw-bold font-monospace">${s.StudentCode}</span></td>
                     <td class="fw-medium text-dark">${s.StudentPrefix}${s.StudentFirstName} ${s.StudentLastName}</td>
@@ -304,55 +321,62 @@ $(document).ready(function() {
         });
     }
 
-    // --- Sort by Name (Automatic Numbering) ---
-    $('#sortByNameBtn').on('click', function() {
-        if (currentStudents.length === 0) return;
+    // --- Duplicate Number Check & Autosave on Change ---
+    $(document).on('input', '.adjust-number-input', function() {
+        $(this).removeClass('save-success border-success');
+        validateDuplicates();
+    });
 
-        Swal.fire({
-            title: 'เรียงตามชื่อตัวอักษร?',
-            text: "ระบบจะรันเลขที่ใหม่ 1 ถึง " + currentStudents.length + " ตามลำดับชื่อ ก-ฮ",
-            icon: 'info',
-            showCancelButton: true,
-            confirmButtonText: 'ตกลง, เรียงลำดับ',
-            cancelButtonText: 'ยกเลิก'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                // Sort currentStudents array
-                currentStudents.sort((a, b) => {
-                    const nameA = (a.StudentPrefix + a.StudentFirstName + ' ' + a.StudentLastName).trim();
-                    const nameB = (b.StudentPrefix + b.StudentFirstName + ' ' + b.StudentLastName).trim();
-                    return nameA.localeCompare(nameB, 'th');
-                });
+    $(document).on('change', '.adjust-number-input', function() {
+        const input = $(this);
+        const id = input.data('id');
+        const val = input.val();
 
-                renderTable(currentStudents);
+        input.removeClass('save-success border-success is-valid');
+
+        const trimmed = val !== undefined && val !== null ? val.toString().trim() : '';
+        
+        // Re-validate duplicates
+        validateDuplicates();
+
+        // If THIS specific input has a duplicate error, do not auto-save it
+        if (input.hasClass('border-danger')) {
+            return;
+        }
+
+        const numbers = {};
+        numbers[id] = trimmed;
+
+        $.post("<?= base_url('Admin/Acade/Registration/Students/AdjustNumberUpdate') ?>", { numbers: numbers }, function(res) {
+            if (res.status === 'success') {
+                input.addClass('save-success is-valid');
+                input.closest('tr').find('.current-number-badge').text(trimmed || '-');
                 
-                // Auto-fill inputs
-                $('.adjust-number-input').each(function(index) {
-                    $(this).val(index + 1);
-                });
+                // Show inline checkmark
+                let indicator = input.parent().find('.save-indicator');
+                if (indicator.length === 0) {
+                    input.after('<div class="save-indicator text-success mt-1 fw-bold" style="font-size: 0.75rem;"><i class="bx bx-check-circle me-1"></i>บันทึกแล้ว</div>');
+                    indicator = input.parent().find('.save-indicator');
+                } else {
+                    indicator.show();
+                }
+                setTimeout(() => { 
+                    indicator.fadeOut(); 
+                    input.removeClass('is-valid'); 
+                }, 2500);
 
-                validateDuplicates();
-
+            } else {
                 Toast.fire({
-                    icon: 'success',
-                    title: 'เรียงลำดับใหม่แล้ว (ยังไม่ได้บันทึก)'
+                    icon: 'error',
+                    title: 'เกิดข้อผิดพลาด: ' + res.message
                 });
             }
+        }).fail(function() {
+            Toast.fire({
+                icon: 'error',
+                title: 'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้'
+            });
         });
-    });
-
-    // --- Save Data ---
-    const Toast = Swal.mixin({
-        toast: true,
-        position: 'top-end',
-        showConfirmButton: false,
-        timer: 3000,
-        timerProgressBar: true
-    });
-
-    // --- Duplicate Number Check ---
-    $(document).on('input', '.adjust-number-input', function() {
-        validateDuplicates();
     });
 
     function validateDuplicates() {
@@ -366,19 +390,25 @@ $(document).ready(function() {
 
         inputs.each(function() {
             const val = $(this).val();
-            if (val && val !== '') {
-                if (values[val]) {
-                    values[val].push($(this));
-                    duplicateFound = true;
-                } else {
-                    values[val] = [$(this)];
+            if (val !== undefined && val !== null) {
+                const trimmed = val.toString().trim();
+                const numVal = parseInt(trimmed, 10);
+                if (trimmed !== '' && !isNaN(numVal) && numVal > 0) {
+                    if (values[trimmed]) {
+                        values[trimmed].push($(this));
+                        duplicateFound = true;
+                    } else {
+                        values[trimmed] = [$(this)];
+                    }
                 }
             }
         });
 
+        let actualDuplicateFound = false;
         if (duplicateFound) {
             for (const val in values) {
                 if (values[val].length > 1) {
+                    actualDuplicateFound = true;
                     values[val].forEach(input => {
                         input.addClass('border-danger text-danger');
                         if (input.parent().find('.duplicate-error').length === 0) {
@@ -387,15 +417,14 @@ $(document).ready(function() {
                     });
                 }
             }
-            
+        }
+
+        if (actualDuplicateFound) {
             $('#saveNumbersBtn, #saveNumbersBtnHeader, #saveNumbersBtnFab').prop('disabled', true);
-            
-            Toast.fire({
-                icon: 'error',
-                title: 'พบเลขที่ซ้ำกันในห้องนี้! กรุณาตรวจสอบก่อนบันทึก'
-            });
         }
     }
+
+    // (saveNumbersSilent removed as requested)
 
     function saveNumbers() {
         const numbers = {};
@@ -407,12 +436,16 @@ $(document).ready(function() {
             const id = $(this).data('id');
             const val = $(this).val();
             
-            if (val && val !== '') {
-                if (seenValues.has(val)) {
-                    duplicateCheck = true;
+            if (val !== undefined && val !== null) {
+                const trimmed = val.toString().trim();
+                const numVal = parseInt(trimmed, 10);
+                if (trimmed !== '' && !isNaN(numVal) && numVal > 0) {
+                    if (seenValues.has(trimmed)) {
+                        duplicateCheck = true;
+                    }
+                    seenValues.add(trimmed);
                 }
-                seenValues.add(val);
-                numbers[id] = val;
+                numbers[id] = trimmed;
                 hasChanges = true;
             }
         });
@@ -442,14 +475,20 @@ $(document).ready(function() {
 
                 $.post("<?= base_url('Admin/Acade/Registration/Students/AdjustNumberUpdate') ?>", { numbers: numbers }, function(res) {
                     if (res.status === 'success') {
+                        // Mark inputs as saved successfully
+                        $('.adjust-number-input').each(function() {
+                            const val = $(this).val();
+                            const row = $(this).closest('tr');
+                            row.find('.current-number-badge').text(val || '-');
+                            $(this).addClass('save-success');
+                        });
+
                         Swal.fire({
                             icon: 'success',
                             title: 'สำเร็จ!',
                             text: res.message,
                             timer: 1500,
                             showConfirmButton: false
-                        }).then(() => {
-                            loadStudents($('#classroomSelector').val());
                         });
                     } else {
                         Swal.fire('ผิดพลาด!', res.message, 'error');

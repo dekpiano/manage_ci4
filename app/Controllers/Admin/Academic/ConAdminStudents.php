@@ -2024,19 +2024,20 @@ class ConAdminStudents extends BaseController
         $numbers = $this->request->getPost('numbers'); // Array [student_id => number]
         if (empty($numbers)) return $this->response->setJSON(['status' => 'error', 'message' => 'ไม่มีข้อมูลสำหรับอัปเดต']);
         
-        $this->db->transStart();
+        $this->db->transBegin();
         try {
             foreach ($numbers as $studentID => $newNumber) {
                 $this->db->table('tb_students')
                     ->where('StudentID', $studentID)
                     ->update(['StudentNumber' => $newNumber]);
             }
-            $this->db->transComplete();
             
             if ($this->db->transStatus() === false) {
-                throw new \Exception("Database error during update.");
+                $this->db->transRollback();
+                return $this->response->setJSON(['status' => 'error', 'message' => 'ไม่สามารถทำรายการในฐานข้อมูลได้']);
             }
             
+            $this->db->transCommit();
             return $this->response->setJSON(['status' => 'success', 'message' => 'ปรับปรุงเลขที่นักเรียนเรียบร้อยแล้ว']);
         } catch (\Exception $e) {
             $this->db->transRollback();
