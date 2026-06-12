@@ -158,10 +158,22 @@
                     </div>
 
                     <div class="row g-3 mb-4">
-                        <div class="col-12">
+                        <div class="col-6">
                             <div class="form-floating">
                                 <input type="number" class="form-control" id="club_max_participants" name="club_max_participants" placeholder="รับจำนวน" required min="1">
                                 <label for="club_max_participants">จำนวนนักเรียนที่รับ (คน)</label>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="form-floating">
+                                <select class="form-select" id="club_level" name="club_level" required>
+                                    <option value="" disabled selected>เลือกกลุ่มระดับชั้น</option>
+                                    <option value="ม.ต้น">ม.ต้น</option>
+                                    <option value="ม.ปลาย">ม.ปลาย</option>
+                                    <option value="ม.ต้น และ ม.ปลาย">ม.ต้น และ ม.ปลาย</option>
+                                    <option value="ม.ต้น หรือ ม.ปลาย">ม.ต้น หรือ ม.ปลาย</option>
+                                </select>
+                                <label for="club_level">ระดับชั้นที่รับ</label>
                             </div>
                         </div>
                     </div>
@@ -373,6 +385,7 @@ $(document).ready(function() {
         $('#ModalAddClubs').modal('show');
         $('#FormAddClubs')[0].reset();
         $('#club_id').val('');
+        $('#club_level').val('');
         $('#club_faculty_advisor').val(null).trigger('change');
         $('#clubModalLabel').html('<i class="bx bx-plus-circle me-2"></i>เพิ่มชุมนุมใหม่');
 
@@ -441,6 +454,7 @@ $(document).ready(function() {
                 $('#club_name').val(data.club_name);
                 $('#club_description').val(data.club_description);
                 $('#club_max_participants').val(data.club_max_participants);
+                $('#club_level').val(data.club_level);
                 
                 // Init Select2 with preselected data
                 if ($('#club_faculty_advisor').data('select2')) {

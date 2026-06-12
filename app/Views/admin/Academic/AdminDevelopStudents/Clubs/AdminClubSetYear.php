@@ -14,10 +14,27 @@
                         <div class="col-12">
                             <div class="form-floating form-floating-outline">
                                 <select class="form-select" id="c_onoff_year" name="c_onoff_year" required>
-                                  
-                                    <?php for($i=(date('Y')+543); $i<=(date('Y')+543)+1; $i++): ?>
-                                    <option value="<?=$i;?>"><?=$i;?></option>
-                                    <?php endfor; ?>
+                                    <?php
+                                    $uniqueYears = [];
+                                    if (!empty($YearAll)) {
+                                        foreach ($YearAll as $y) {
+                                            if (!empty($y['club_year'])) {
+                                                $uniqueYears[] = intval($y['club_year']);
+                                            }
+                                        }
+                                    }
+                                    // Also include current year and next year
+                                    $currentYearBE = date('Y') + 543;
+                                    $uniqueYears[] = $currentYearBE;
+                                    $uniqueYears[] = $currentYearBE + 1;
+
+                                    $uniqueYears = array_unique($uniqueYears);
+                                    rsort($uniqueYears);
+
+                                    foreach ($uniqueYears as $yearVal):
+                                    ?>
+                                    <option value="<?=$yearVal;?>" <?= ($yearVal == ($current_year ?? '')) ? 'selected' : ''; ?>><?=$yearVal;?></option>
+                                    <?php endforeach; ?>
                                 </select>
                                 <label for="c_onoff_year">ปีการศึกษา</label>
                             </div>
@@ -26,8 +43,8 @@
                         <div class="col-12">
                             <div class="form-floating form-floating-outline">
                                 <select class="form-select" id="c_onoff_term" name="c_onoff_term" required>
-                                    <option value="1">1</option>
-                                    <option value="2">2</option>
+                                    <option value="1" <?= (($current_term ?? '') == '1') ? 'selected' : ''; ?>>1</option>
+                                    <option value="2" <?= (($current_term ?? '') == '2') ? 'selected' : ''; ?>>2</option>
                                 </select>
                                 <label for="c_onoff_term">ภาคเรียน</label>
                             </div>

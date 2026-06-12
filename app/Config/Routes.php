@@ -66,9 +66,9 @@ $routes->post('Admin/Academic/ConAdminRegisRepeat/getDashboardStats', [\App\Cont
 
 // Routes for ConAdminDevelopStudents (Clubs Management)
 $routes->get('Admin/Acade/DevelopStudents/Clubs/Main', [ConAdminDevelopStudents::class, 'ClubsMain']);
-$routes->post('admin/academic/developstudents/update_onoff_status', [ConAdminDevelopStudents::class, 'updateClubOnoffStatus']);
-$routes->post('admin/academic/developstudents/update_onoff_dates', [ConAdminDevelopStudents::class, 'updateClubOnoffDates']);
-$routes->post('admin/academic/developstudents/update_schedule', [ConAdminDevelopStudents::class, 'ClubUpdateSchedule']);
+$routes->match(['get', 'post'], 'admin/academic/developstudents/update_onoff_status', [ConAdminDevelopStudents::class, 'updateClubOnoffStatus']);
+$routes->match(['get', 'post'], 'admin/academic/developstudents/update_onoff_dates', [ConAdminDevelopStudents::class, 'updateClubOnoffDates']);
+$routes->match(['get', 'post'], 'admin/academic/developstudents/update_schedule', [ConAdminDevelopStudents::class, 'ClubUpdateSchedule']);
 $routes->get('Admin/Acade/DevelopStudents/Clubs/All', [ConAdminDevelopStudents::class, 'ClubsAll']);
 $routes->get('admin/academic/ConAdminDevelopStudents/ClubsShow', [ConAdminDevelopStudents::class, 'ClubsShow']);
 $routes->post('admin/academic/ConAdminDevelopStudents/ClubsInsert', [ConAdminDevelopStudents::class, 'ClubsInsert']);

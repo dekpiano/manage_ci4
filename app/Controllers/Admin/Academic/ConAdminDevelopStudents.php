@@ -33,91 +33,83 @@ class ConAdminDevelopStudents extends BaseController
 
     public function updateClubOnoffStatus()
     {
-        if ($this->request->isAJAX()) {
-            $target = $this->request->getPost('target');
-            $status = $this->request->getPost('status');
-            // $year = $this->request->getPost('year'); // No longer directly from POST
-            // $term = $this->request->getPost('term'); // No longer directly from POST
+        $target = $this->request->getVar('target');
+        $status = $this->request->getVar('status');
 
-            // Fetch active config for club year/term
-            $activeConfig = $this->db->table('tb_club_onoff')
-                                        ->select('c_onoff_year, c_onoff_term')
-                                        ->where('c_onoff_for', 'active_config')
-                                        ->get()->getRow();
+        // Fetch active config for club year/term
+        $activeConfig = $this->db->table('tb_club_onoff')
+                                    ->select('c_onoff_year, c_onoff_term')
+                                    ->where('c_onoff_for', 'active_config')
+                                    ->get()->getRow();
 
-            if (empty($activeConfig) || empty($activeConfig->c_onoff_year) || empty($activeConfig->c_onoff_term)) {
-                return $this->response->setJSON(['success' => false, 'message' => 'ไม่พบปีการศึกษาหรือภาคเรียนที่ใช้งานอยู่']);
-            }
-
-            $raw_year = $activeConfig->c_onoff_year;
-            $term = $activeConfig->c_onoff_term;
-
-            // Extract only the year part
-            if (strpos($raw_year, '/') !== false) {
-                $parts = explode('/', $raw_year);
-                $year = end($parts);
-            } else {
-                $year = $raw_year;
-            }
-
-            // Add validation for term (still relevant for the fetched term)
-            if (empty($term) || !in_array($term, ['1', '2'])) {
-                return $this->response->setJSON(['success' => false, 'message' => 'ภาคเรียนไม่ถูกต้อง']);
-            }
-            if (in_array($target, ['student', 'teacher', 'system']) && in_array($status, [0, 1]) && !empty($year) && !empty($term)) {
-                $result = $this->ModAdminClubs->update_onoff_status($year, $term, $target, $status); // Pass term to model
-
-                if ($result) {
-                    $targetThai = '';
-                    if ($target === 'student') $targetThai = 'นักเรียน';
-                    if ($target === 'teacher') $targetThai = 'ครู';
-                    
-                    if ($target === 'system') {
-                        $message = $status == 1 ? 'ระบบถูกปิดปรับปรุงเรียบร้อยแล้ว' : 'ระบบเปิดใช้งานออนไลน์เรียบร้อยแล้ว';
-                    } else {
-                        $statusText = $status == 1 ? 'เปิด' : 'ปิด';
-                        $message = "อัปเดตสถานะสำหรับ {$targetThai} เป็น '{$statusText}' เรียบร้อยแล้ว";
-                    }
-
-                    return $this->response->setJSON(['success' => true, 'message' => $message]);
-                } else {
-                    return $this->response->setJSON(['success' => false, 'message' => 'ไม่สามารถบันทึกข้อมูลลงฐานข้อมูลได้']);
-                }
-            }
-            return $this->response->setJSON(['success' => false, 'message' => 'ข้อมูลที่ส่งมาไม่ถูกต้อง']);
+        if (empty($activeConfig) || empty($activeConfig->c_onoff_year) || empty($activeConfig->c_onoff_term)) {
+            return $this->response->setJSON(['success' => false, 'message' => 'ไม่พบปีการศึกษาหรือภาคเรียนที่ใช้งานอยู่']);
         }
-        return redirect()->to(base_url()); // Redirect if not AJAX
+
+        $raw_year = $activeConfig->c_onoff_year;
+        $term = $activeConfig->c_onoff_term;
+
+        // Extract only the year part
+        if (strpos($raw_year, '/') !== false) {
+            $parts = explode('/', $raw_year);
+            $year = end($parts);
+        } else {
+            $year = $raw_year;
+        }
+
+        // Add validation for term (still relevant for the fetched term)
+        if (empty($term) || !in_array($term, ['1', '2'])) {
+            return $this->response->setJSON(['success' => false, 'message' => 'ภาคเรียนไม่ถูกต้อง']);
+        }
+        if (in_array($target, ['student', 'teacher', 'system']) && in_array($status, [0, 1]) && !empty($year) && !empty($term)) {
+            $result = $this->ModAdminClubs->update_onoff_status($year, $term, $target, $status); // Pass term to model
+
+            if ($result) {
+                $targetThai = '';
+                if ($target === 'student') $targetThai = 'นักเรียน';
+                if ($target === 'teacher') $targetThai = 'ครู';
+                
+                if ($target === 'system') {
+                    $message = $status == 1 ? 'ระบบถูกปิดปรับปรุงเรียบร้อยแล้ว' : 'ระบบเปิดใช้งานออนไลน์เรียบร้อยแล้ว';
+                } else {
+                    $statusText = $status == 1 ? 'เปิด' : 'ปิด';
+                    $message = "อัปเดตสถานะสำหรับ {$targetThai} เป็น '{$statusText}' เรียบร้อยแล้ว";
+                }
+
+                return $this->response->setJSON(['success' => true, 'message' => $message]);
+            } else {
+                return $this->response->setJSON(['success' => false, 'message' => 'ไม่สามารถบันทึกข้อมูลลงฐานข้อมูลได้']);
+            }
+        }
+        return $this->response->setJSON(['success' => false, 'message' => 'ข้อมูลที่ส่งมาไม่ถูกต้อง']);
     }
 
     public function updateClubOnoffDates()
     {
-        if ($this->request->isAJAX()) {
-            $target = $this->request->getPost('target');
-            $startDate = $this->request->getPost('startDate');
-            $endDate = $this->request->getPost('endDate');
-            
-            // Get active year and term from DB
-            $activeConfig = $this->db->table('tb_club_onoff')->where('c_onoff_for', 'active_config')->get()->getRow();
-            if (empty($activeConfig) || empty($activeConfig->c_onoff_year) || empty($activeConfig->c_onoff_term)) {
-                return $this->response->setJSON(['success' => false, 'message' => 'ไม่พบการตั้งค่าปีการศึกษา']);
-            }
-            $year = $activeConfig->c_onoff_year;
-            $term = $activeConfig->c_onoff_term;
-
-            // Basic validation
-            if (!in_array($target, ['student', 'teacher', 'system'])) {
-                return $this->response->setJSON(['success' => false, 'message' => 'เป้าหมายไม่ถูกต้อง']);
-            }
-
-            $result = $this->ModAdminClubs->update_onoff_dates($year, $term, $target, $startDate, $endDate);
-
-            if ($result) {
-                return $this->response->setJSON(['success' => true, 'message' => 'อัปเดตวันที่สำเร็จ']);
-            } else {
-                return $this->response->setJSON(['success' => false, 'message' => 'อัปเดตวันที่ไม่สำเร็จ']);
-            }
+        $target = $this->request->getVar('target');
+        $startDate = $this->request->getVar('startDate');
+        $endDate = $this->request->getVar('endDate');
+        
+        // Get active year and term from DB
+        $activeConfig = $this->db->table('tb_club_onoff')->where('c_onoff_for', 'active_config')->get()->getRow();
+        if (empty($activeConfig) || empty($activeConfig->c_onoff_year) || empty($activeConfig->c_onoff_term)) {
+            return $this->response->setJSON(['success' => false, 'message' => 'ไม่พบการตั้งค่าปีการศึกษา']);
         }
-        return redirect()->to(base_url());
+        $year = $activeConfig->c_onoff_year;
+        $term = $activeConfig->c_onoff_term;
+
+        // Basic validation
+        if (!in_array($target, ['student', 'teacher', 'system'])) {
+            return $this->response->setJSON(['success' => false, 'message' => 'เป้าหมายไม่ถูกต้อง']);
+        }
+
+        $result = $this->ModAdminClubs->update_onoff_dates($year, $term, $target, $startDate, $endDate);
+
+        if ($result) {
+            return $this->response->setJSON(['success' => true, 'message' => 'อัปเดตวันที่สำเร็จ']);
+        } else {
+            return $this->response->setJSON(['success' => false, 'message' => 'อัปเดตวันที่ไม่สำเร็จ']);
+        }
     }
 
     protected function AllData()
@@ -172,20 +164,12 @@ class ConAdminDevelopStudents extends BaseController
         $data['formatted_teacher_regisend'] = isset($teacher_dates->c_onoff_regisend) ? $this->datethai->thai_date_and_time(strtotime($teacher_dates->c_onoff_regisend)) : '-';
 
         // Student Status Logic
-        if ($isSystemClosed) {
-            $data['StatusOnoffClubStudent'] = "ปิด";
-        } else {
-            $data['StatusOnoffClubStudent'] = (isset($student_dates->c_onoff_status) && $student_dates->c_onoff_status == 1 && (!isset($student_dates->c_onoff_regisend) || $student_dates->c_onoff_regisend > date("Y-m-d H:i:s"))) ? "เปิด" : "ปิด";
-        }
+        $data['StatusOnoffClubStudent'] = (isset($student_dates->c_onoff_status) && $student_dates->c_onoff_status == 1 && (!isset($student_dates->c_onoff_regisend) || $student_dates->c_onoff_regisend > date("Y-m-d H:i:s"))) ? "เปิด" : "ปิด";
 
         // Teacher Status Logic: More flexible, priorities manual status if set to 1
-        if ($isSystemClosed) {
-            $data['StatusOnoffClubTeacher'] = "ปิด";
-        } else {
-            // For teachers, we focus on the manual status first. If it's 1, it's open unless the system is closed.
-            // Dates are informative but status toggle is the primary control for teachers.
-            $data['StatusOnoffClubTeacher'] = (isset($teacher_dates->c_onoff_status) && $teacher_dates->c_onoff_status == 1) ? "เปิด" : "ปิด";
-        }
+        // For teachers, we focus on the manual status first. If it's 1, it's open.
+        // Dates are informative but status toggle is the primary control for teachers.
+        $data['StatusOnoffClubTeacher'] = (isset($teacher_dates->c_onoff_status) && $teacher_dates->c_onoff_status == 1) ? "เปิด" : "ปิด";
 
         return $data;
     }
@@ -359,6 +343,7 @@ class ConAdminDevelopStudents extends BaseController
             'club_year' => 'required|numeric|exact_length[4]',
             'club_trem' => 'required|numeric|in_list[1,2]',
             'club_max_participants' => 'required|numeric|greater_than[0]',
+            'club_level' => 'required',
             'advisors' => 'required', // Will be checked after json_decode
         ];
 
@@ -372,7 +357,7 @@ class ConAdminDevelopStudents extends BaseController
         }
 
         $d_est = new \DateTime();
-        $date_est = $d_est->format('d/m/') . ((int)$d_est->format('Y') + 543);
+        $date_est = $d_est->format('Y-m-d');
         
         $data = [
             'club_name'             => $this->request->getPost('club_name'),
@@ -381,6 +366,7 @@ class ConAdminDevelopStudents extends BaseController
             'club_year'             => $this->request->getPost('club_year'),
             'club_trem'             => $this->request->getPost('club_trem'),
             'club_max_participants' => $this->request->getPost('club_max_participants'),
+            'club_level'            => $this->request->getPost('club_level'),
             'club_status'           => 'open',
             'club_established_date' => $date_est,
         ];
@@ -421,6 +407,7 @@ class ConAdminDevelopStudents extends BaseController
             'club_year' => 'required|numeric|exact_length[4]',
             'club_trem' => 'required|numeric|in_list[1,2]',
             'club_max_participants' => 'required|numeric|greater_than[0]',
+            'club_level' => 'required',
             'advisors' => 'required', // Will be checked after json_decode
         ];
 
@@ -444,6 +431,7 @@ class ConAdminDevelopStudents extends BaseController
             'club_year'             => $this->request->getPost('club_year'),
             'club_trem'             => $this->request->getPost('club_trem'),
             'club_max_participants' => $this->request->getPost('club_max_participants'),
+            'club_level'            => $this->request->getPost('club_level'),
         ];
         $id = $this->request->getPost('club_id');
         log_message('debug', 'ClubsUpdate data for update: ' . json_encode($data) . ' for club_id: ' . $id);
@@ -492,7 +480,9 @@ class ConAdminDevelopStudents extends BaseController
 
     public function ClubsTeacherList()
     {
-        $teachers = $this->DBpersonnel->table('tb_personnel')
+        $searchTerm = $this->request->getGet('q') ?? $this->request->getGet('term') ?? '';
+
+        $builder = $this->DBpersonnel->table('tb_personnel')
                                     ->select('pers_id, CONCAT(pers_prefix,pers_firstname," ",pers_lastname) AS FullName')
                                     ->where('pers_status', 'กำลังใช้งาน')
                                     ->groupStart()
@@ -500,8 +490,16 @@ class ConAdminDevelopStudents extends BaseController
                                         ->orWhere('pers_position', 'posi_004')
                                         ->orWhere('pers_position', 'posi_005')
                                         ->orWhere('pers_position', 'posi_006')
-                                    ->groupEnd()
-                                    ->get()->getResultArray();
+                                    ->groupEnd();
+
+        if (!empty($searchTerm)) {
+            $builder->groupStart()
+                    ->like('pers_firstname', $searchTerm)
+                    ->orLike('pers_lastname', $searchTerm)
+                    ->groupEnd();
+        }
+
+        $teachers = $builder->get()->getResultArray();
         return $this->response->setJSON($teachers);
     }
 
