@@ -2,13 +2,62 @@
 
 <?= $this->section('content') ?>
 <div class="container-xxl flex-grow-1 container-p-y">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h4 class="fw-bold py-3 mb-0">
-            <span class="text-muted fw-light">วิชาการ /</span> ผลงานการแข่งขันของโรงเรียน
-        </h4>
-        <a href="<?= base_url('admin/academic/competition/create') ?>" class="btn btn-success" style="background-color: #15a362; border-color: #15a362;">
-            <i class="bx bx-plus me-1"></i> บันทึกผลงานใหม่
-        </a>
+    <!-- Intro.js Styles -->
+    <link rel="stylesheet" href="https://unpkg.com/intro.js/minified/introjs.min.css">
+    <style>
+        .introjs-donebutton, .introjs-nextbutton {
+            background-color: #15a362 !important;
+            background-image: none !important;
+            border-color: #15a362 !important;
+            text-shadow: none !important;
+            color: #fff !important;
+            box-shadow: none !important;
+        }
+        .introjs-donebutton:hover, .introjs-nextbutton:hover {
+            background-color: #11824e !important;
+            border-color: #11824e !important;
+        }
+        .introjs-prevbutton {
+            text-shadow: none !important;
+            box-shadow: none !important;
+        }
+        .introjs-bullets ul li a.active {
+            background: #15a362 !important;
+        }
+        .introjs-tooltip {
+            border: 2px solid #15a362 !important;
+            border-radius: 8px !important;
+            font-family: 'K2D', sans-serif !important;
+        }
+        .introjs-arrow.top-middle, .introjs-arrow.top, .introjs-arrow.top-right {
+            border-bottom-color: #15a362 !important;
+        }
+        .introjs-arrow.bottom, .introjs-arrow.bottom-middle, .introjs-arrow.bottom-right {
+            border-top-color: #15a362 !important;
+        }
+        .introjs-arrow.left, .introjs-arrow.left-bottom, .introjs-arrow.left-middle {
+            border-right-color: #15a362 !important;
+        }
+        .introjs-arrow.right, .introjs-arrow.right-bottom, .introjs-arrow.right-middle {
+            border-left-color: #15a362 !important;
+        }
+    </style>
+
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3">
+        <div id="tourAdminHeader">
+            <h4 class="fw-bold py-2 mb-0" style="color: #1b5e20;">
+                <span class="text-muted fw-light">วิชาการ /</span> จัดการผลงานการแข่งขันของโรงเรียน
+            </h4>
+            <small class="text-muted">ระบบหลังบ้านสำหรับครูและผู้ดูแลระบบในการบันทึก อนุมัติ และปรับปรุงผลงาน</small>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+            <button id="btnStartAdminTour" class="btn btn-outline-success" style="color: #15a362; border-color: #15a362;">
+                <i class="bx bx-help-circle me-1"></i> แนะนำการใช้งาน
+            </button>
+            <a id="btnCreateComp" href="<?= base_url('admin/academic/competition/create') ?>" class="btn btn-success" style="background-color: #15a362; border-color: #15a362;">
+                <i class="bx bx-plus me-1"></i> บันทึกผลงานใหม่
+            </a>
+        </div>
     </div>
 
     <?php if (session()->getFlashdata('success')): ?>
@@ -25,7 +74,7 @@
         </div>
     <?php endif; ?>
 
-    <div class="card">
+    <div class="card shadow-sm border-0" id="tourAdminTableCard">
         <div class="card-header d-flex justify-content-between align-items-center border-bottom mb-3">
             <h5 class="card-title mb-0">รายการบันทึกผลงานทั้งหมด</h5>
         </div>
@@ -384,6 +433,62 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     });
+
+    // Intro.js Admin Tour
+    const btnStartAdminTour = document.getElementById('btnStartAdminTour');
+    if (btnStartAdminTour) {
+        btnStartAdminTour.addEventListener('click', function() {
+            introJs().setOptions({
+                steps: [
+                    {
+                        title: '🔑 ระบบจัดการผลงานการแข่งขัน',
+                        intro: 'ยินดีต้อนรับเข้าสู่หน้ารวมและจัดการข้อมูลผลการแข่งขันหลังบ้านครับ'
+                    },
+                    {
+                        element: '#tourAdminHeader',
+                        title: '📌 ภาพรวมระบบจัดการ',
+                        intro: 'หน้านี้ใช้สำหรับให้คุณครูและผู้ดูแลระบบทำการเพิ่มข้อมูล อนุมัติ หรือตีกลับผลงานที่ส่งเข้ามาแก้ไขครับ',
+                        position: 'bottom'
+                    },
+                    {
+                        element: '#btnCreateComp',
+                        title: '➕ บันทึกผลงานการแข่งขันใหม่',
+                        intro: 'หากต้องการบันทึกข้อมูลการแข่งขันของนักเรียนเพิ่มเติม ให้กดที่ปุ่มนี้เพื่อเปิดฟอร์มสำหรับกรอกข้อมูลและระบุเกียรติบัตรครับ',
+                        position: 'bottom'
+                    },
+                    {
+                        element: '#tourAdminTableCard',
+                        title: '📂 ตารางรายการผลงานทั้งหมด',
+                        intro: 'ตารางรวบรวมรายการที่คุณครูบันทึกเข้ามา พร้อมคอลัมน์สถานะ (อนุมัติแล้ว/รอตรวจสอบ/ตีกลับให้แก้ไข)',
+                        position: 'top'
+                    },
+                    {
+                        element: document.querySelector('.btn-view-detail'),
+                        title: '👁️ ดูข้อมูลเชิงลึก',
+                        intro: 'คลิกเพื่อตรวจสอบรายละเอียดการแข่งขัน รายชื่อผู้เข้าร่วม เกียรติบัตร และภาพประกอบ (สำหรับ Admin จะสามารถอนุมัติหรือตีกลับจากตรงนี้ได้)',
+                        position: 'bottom'
+                    },
+                    {
+                        element: document.querySelector('.btn-outline-warning'),
+                        title: '✏️ แก้ไขข้อมูล',
+                        intro: 'คลิกที่ปุ่มนี้เพื่อเข้าไปปรับปรุงรายละเอียด หรือแก้ไขรายการการแข่งขันที่ถูกตีกลับ',
+                        position: 'bottom'
+                    },
+                    {
+                        element: document.querySelector('.btn-outline-danger'),
+                        title: '🗑️ ลบรายการ',
+                        intro: 'หากบันทึกข้อมูลผิดพลาดและต้องการเอาออกจากระบบ สามารถใช้ปุ่มนี้ในการลบข้อมูลได้ครับ (ต้องได้รับการยืนยันอีกครั้ง)',
+                        position: 'bottom'
+                    }
+                ],
+                nextLabel: 'ถัดไป ›',
+                prevLabel: '‹ ย้อนกลับ',
+                doneLabel: 'เสร็จสิ้น 🏁',
+                dontShowAgain: false
+            }).start();
+        });
+    }
 });
 </script>
+<script src="https://unpkg.com/intro.js/minified/intro.min.js"></script>
 <?= $this->endSection() ?>

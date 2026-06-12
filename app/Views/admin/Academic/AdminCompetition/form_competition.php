@@ -49,6 +49,33 @@
         box-shadow: 0 0 0.25rem rgba(21, 163, 98, 0.25) !important;
     }
 
+    /* ตกแต่งส่วน Dropdown ของ Select2 */
+    .select2-container--bootstrap-5 .select2-dropdown {
+        border: 1px solid #d9dee3 !important;
+        border-radius: 0.375rem !important;
+        box-shadow: 0 0.25rem 1rem rgba(161, 172, 184, 0.15) !important;
+        z-index: 99999 !important;
+    }
+    .select2-container--bootstrap-5 .select2-results__option--highlighted[aria-selected] {
+        background-color: #15a362 !important;
+        color: #fff !important;
+    }
+    .select2-container--bootstrap-5 .select2-results__option[aria-selected=true] {
+        background-color: #f0faf5 !important;
+        color: #15a362 !important;
+        font-weight: 600;
+    }
+    .select2-container--bootstrap-5 .select2-search__field {
+        border: 1px solid #d9dee3 !important;
+        border-radius: 0.375rem !important;
+        padding: 0.4375rem 0.875rem !important;
+    }
+    .select2-container--bootstrap-5 .select2-search__field:focus {
+        border-color: #15a362 !important;
+        box-shadow: 0 0 0.25rem rgba(21, 163, 98, 0.25) !important;
+        outline: 0 !important;
+    }
+
     /* สไตล์การ์ดผู้เข้าร่วม (นักเรียน/ครู) */
     .participant-card {
         background: #fcfdfd;
@@ -88,6 +115,10 @@
         border-radius: 0.25rem;
         padding: 8px 12px;
         margin-top: 5px;
+    }
+    /* บังคับ SweetAlert2 อยู่ระดับบนสุดตามกฎ UX */
+    .swal2-container {
+        z-index: 999999 !important;
     }
 </style>
 <?= $this->endSection() ?>

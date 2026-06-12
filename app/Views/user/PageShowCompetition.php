@@ -2,21 +2,65 @@
 
 <?= $this->section('content') ?>
 <div class="container-xxl flex-grow-1 container-p-y">
+    <!-- Intro.js Styles -->
+    <link rel="stylesheet" href="https://unpkg.com/intro.js/minified/introjs.min.css">
+    <style>
+        .introjs-donebutton, .introjs-nextbutton {
+            background-color: #15a362 !important;
+            background-image: none !important;
+            border-color: #15a362 !important;
+            text-shadow: none !important;
+            color: #fff !important;
+            box-shadow: none !important;
+        }
+        .introjs-donebutton:hover, .introjs-nextbutton:hover {
+            background-color: #11824e !important;
+            border-color: #11824e !important;
+        }
+        .introjs-prevbutton {
+            text-shadow: none !important;
+            box-shadow: none !important;
+        }
+        .introjs-bullets ul li a.active {
+            background: #15a362 !important;
+        }
+        .introjs-tooltip {
+            border: 2px solid #15a362 !important;
+            border-radius: 8px !important;
+            font-family: 'K2D', sans-serif !important;
+        }
+        .introjs-arrow.top-middle, .introjs-arrow.top, .introjs-arrow.top-right {
+            border-bottom-color: #15a362 !important;
+        }
+        .introjs-arrow.bottom, .introjs-arrow.bottom-middle, .introjs-arrow.bottom-right {
+            border-top-color: #15a362 !important;
+        }
+        .introjs-arrow.left, .introjs-arrow.left-bottom, .introjs-arrow.left-middle {
+            border-right-color: #15a362 !important;
+        }
+        .introjs-arrow.right, .introjs-arrow.right-bottom, .introjs-arrow.right-middle {
+            border-left-color: #15a362 !important;
+        }
+    </style>
+
     <!-- Header Section with Login Call-to-Action -->
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3">
-        <div>
+        <div id="tourHeader">
             <h4 class="fw-bold py-2 mb-0" style="color: #1b5e20;">
                 <span class="text-muted fw-light">วิชาการ /</span> ผลงานและรางวัลการแข่งขันของโรงเรียน
             </h4>
             <small class="text-muted">รวบรวมเกียรติยศและความภาคภูมิใจของบุคลากรและนักเรียน โรงเรียนสวนกุหลาบวิทยาลัย ปทุมธานี</small>
         </div>
-        <div>
+        <div class="d-flex flex-wrap gap-2">
+            <button id="btnStartTour" class="btn btn-outline-success" style="color: #15a362; border-color: #15a362;">
+                <i class="bx bx-help-circle me-1"></i> แนะนำการใช้งาน
+            </button>
             <?php if (session()->get('login_id')): ?>
-                <a href="<?= base_url('admin/academic/competition') ?>" class="btn btn-success" style="background-color: #15a362; border-color: #15a362;">
+                <a id="btnDashboard" href="<?= base_url('admin/academic/competition') ?>" class="btn btn-success" style="background-color: #15a362; border-color: #15a362;">
                     <i class="bx bx-dashboard me-1"></i> เข้าสู่หน้าจัดการผลงาน
                 </a>
             <?php else: ?>
-                <a href="<?= base_url('LoginTeacher') ?>" class="btn btn-primary">
+                <a id="btnLoginTeacher" href="<?= base_url('LoginTeacher') ?>" class="btn btn-primary">
                     <i class="bx bx-log-in-circle me-1"></i> เข้าสู่ระบบสำหรับครูเพื่อบันทึกผลงาน
                 </a>
             <?php endif; ?>
@@ -24,7 +68,7 @@
     </div>
 
     <!-- Filter & Statistics Cards -->
-    <div class="row g-4 mb-4">
+    <div class="row g-4 mb-4" id="tourStats">
         <!-- Card 1: จำนวนรายการแข่งขันทั้งหมด -->
         <div class="col-sm-6 col-md-4">
             <div class="card bg-white border-0 shadow-sm" style="border-left: 5px solid #15a362 !important;">
@@ -60,7 +104,7 @@
     </div>
 
     <!-- Main Content Table -->
-    <div class="card shadow-sm border-0">
+    <div class="card shadow-sm border-0" id="tourTableCard">
         <div class="card-header border-bottom d-flex justify-content-between align-items-center">
             <h5 class="card-title mb-0 fw-bold" style="color: #1b5e20;">ทำเนียบผลงานและรางวัลที่ได้รับ</h5>
         </div>
@@ -294,6 +338,56 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
         });
     });
+
+    // Intro.js Guided Tour Initialization
+    const btnStartTour = document.getElementById('btnStartTour');
+    if (btnStartTour) {
+        btnStartTour.addEventListener('click', function() {
+            introJs().setOptions({
+                steps: [
+                    {
+                        title: '👋 ยินดีต้อนรับ!',
+                        intro: 'นี่คือระบบทำเนียบผลงานการแข่งขันและรางวัลของโรงเรียนสวนกุหลาบวิทยาลัย ปทุมธานี ครับ'
+                    },
+                    {
+                        element: '#tourHeader',
+                        title: '📌 หน้าหลักผลงาน',
+                        intro: 'ส่วนนี้จะแสดงภาพรวมและหัวข้อการทำรายการสืบค้นผลงานและรางวัลที่ได้รับการบันทึกในระบบครับ',
+                        position: 'bottom'
+                    },
+                    {
+                        element: document.getElementById('btnDashboard') || document.getElementById('btnLoginTeacher'),
+                        title: '🔑 สำหรับคุณครูและบุคลากร',
+                        intro: 'คุณครูสามารถกดเข้าสู่ระบบ หรือไปยังหน้าจัดการหลังบ้าน เพื่อเพิ่มข้อมูลกิจกรรมการแข่งขัน รูปภาพ และเกียรติบัตรผ่านส่วนนี้ได้ทันทีครับ',
+                        position: 'bottom'
+                    },
+                    {
+                        element: '#tourStats',
+                        title: '📊 สถิติข้อมูล',
+                        intro: 'แสดงสรุปจำนวนรายการแข่งขันทั้งหมดที่ได้รับการอนุมัติ และปีการศึกษาล่าสุดในระบบครับ',
+                        position: 'bottom'
+                    },
+                    {
+                        element: '#tourTableCard',
+                        title: '🔍 ตารางทำเนียบเกียรติยศ',
+                        intro: 'คุณสามารถค้นหาข้อมูลด้วยการพิมพ์คำค้นหา (เช่น ชื่อนักเรียน, ชื่อกิจกรรม, ปีการศึกษา) ในตารางนี้ได้แบบเรียลไทม์',
+                        position: 'top'
+                    },
+                    {
+                        element: document.querySelector('.btn-view-public-detail'),
+                        title: '📄 ดูรายละเอียดเชิงลึก',
+                        intro: 'หากต้องการดูรายชื่อนักเรียน ครูผู้ฝึกสอน ไฟล์เกียรติบัตร หรือภาพถ่ายกิจกรรม ให้คลิกที่ปุ่ม <strong>"ดูข้อมูล"</strong> นี้ได้เลยครับ',
+                        position: 'left'
+                    }
+                ],
+                nextLabel: 'ถัดไป ›',
+                prevLabel: '‹ ย้อนกลับ',
+                doneLabel: 'เสร็จสิ้น 🏁',
+                dontShowAgain: false
+            }).start();
+        });
+    }
 });
 </script>
+<script src="https://unpkg.com/intro.js/minified/intro.min.js"></script>
 <?= $this->endSection() ?>
