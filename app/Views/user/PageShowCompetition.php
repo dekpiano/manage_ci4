@@ -5,7 +5,8 @@
     <!-- Intro.js Styles -->
     <link rel="stylesheet" href="https://unpkg.com/intro.js/minified/introjs.min.css">
     <style>
-        .introjs-donebutton, .introjs-nextbutton {
+        .introjs-donebutton,
+        .introjs-nextbutton {
             background-color: #15a362 !important;
             background-image: none !important;
             border-color: #15a362 !important;
@@ -13,50 +14,70 @@
             color: #fff !important;
             box-shadow: none !important;
         }
-        .introjs-donebutton:hover, .introjs-nextbutton:hover {
+
+        .introjs-donebutton:hover,
+        .introjs-nextbutton:hover {
             background-color: #11824e !important;
             border-color: #11824e !important;
         }
+
         .introjs-prevbutton {
             text-shadow: none !important;
             box-shadow: none !important;
         }
+
         .introjs-bullets ul li a.active {
             background: #15a362 !important;
         }
+
         .introjs-tooltip {
             border: 2px solid #15a362 !important;
             border-radius: 8px !important;
             font-family: 'K2D', sans-serif !important;
         }
-        .introjs-arrow.top-middle, .introjs-arrow.top, .introjs-arrow.top-right {
+
+        .introjs-arrow.top-middle,
+        .introjs-arrow.top,
+        .introjs-arrow.top-right {
             border-bottom-color: #15a362 !important;
         }
-        .introjs-arrow.bottom, .introjs-arrow.bottom-middle, .introjs-arrow.bottom-right {
+
+        .introjs-arrow.bottom,
+        .introjs-arrow.bottom-middle,
+        .introjs-arrow.bottom-right {
             border-top-color: #15a362 !important;
         }
-        .introjs-arrow.left, .introjs-arrow.left-bottom, .introjs-arrow.left-middle {
+
+        .introjs-arrow.left,
+        .introjs-arrow.left-bottom,
+        .introjs-arrow.left-middle {
             border-right-color: #15a362 !important;
         }
-        .introjs-arrow.right, .introjs-arrow.right-bottom, .introjs-arrow.right-middle {
+
+        .introjs-arrow.right,
+        .introjs-arrow.right-bottom,
+        .introjs-arrow.right-middle {
             border-left-color: #15a362 !important;
         }
     </style>
 
     <!-- Header Section with Login Call-to-Action -->
-    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3">
+    <div
+        class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3">
         <div id="tourHeader">
             <h4 class="fw-bold py-2 mb-0" style="color: #1b5e20;">
                 <span class="text-muted fw-light">วิชาการ /</span> ผลงานและรางวัลการแข่งขันของโรงเรียน
             </h4>
-            <small class="text-muted">รวบรวมเกียรติยศและความภาคภูมิใจของบุคลากรและนักเรียน โรงเรียนสวนกุหลาบวิทยาลัย ปทุมธานี</small>
+            <small class="text-muted">รวบรวมเกียรติยศและความภาคภูมิใจของบุคลากรและนักเรียน โรงเรียนสวนกุหลาบวิทยาลัย
+                (จิรประวัติ) นครสวรรค์</small>
         </div>
         <div class="d-flex flex-wrap gap-2">
             <button id="btnStartTour" class="btn btn-outline-success" style="color: #15a362; border-color: #15a362;">
                 <i class="bx bx-help-circle me-1"></i> แนะนำการใช้งาน
             </button>
             <?php if (session()->get('login_id')): ?>
-                <a id="btnDashboard" href="<?= base_url('admin/academic/competition') ?>" class="btn btn-success" style="background-color: #15a362; border-color: #15a362;">
+                <a id="btnDashboard" href="<?= base_url('admin/academic/competition') ?>" class="btn btn-success"
+                    style="background-color: #15a362; border-color: #15a362;">
                     <i class="bx bx-dashboard me-1"></i> เข้าสู่หน้าจัดการผลงาน
                 </a>
             <?php else: ?>
@@ -74,7 +95,8 @@
             <div class="card bg-white border-0 shadow-sm" style="border-left: 5px solid #15a362 !important;">
                 <div class="card-body py-3">
                     <div class="d-flex align-items-center">
-                        <div class="avatar bg-light-success p-2 rounded me-3" style="background-color: rgba(21, 163, 98, 0.1); color: #15a362;">
+                        <div class="avatar bg-light-success p-2 rounded me-3"
+                            style="background-color: rgba(21, 163, 98, 0.1); color: #15a362;">
                             <i class="bx bx-trophy fs-3"></i>
                         </div>
                         <div>
@@ -90,12 +112,13 @@
             <div class="card bg-white border-0 shadow-sm" style="border-left: 5px solid #ffb22b !important;">
                 <div class="card-body py-3">
                     <div class="d-flex align-items-center">
-                        <div class="avatar bg-light-warning p-2 rounded me-3" style="background-color: rgba(255, 178, 43, 0.1); color: #ffb22b;">
+                        <div class="avatar bg-light-warning p-2 rounded me-3"
+                            style="background-color: rgba(255, 178, 43, 0.1); color: #ffb22b;">
                             <i class="bx bx-star fs-3"></i>
                         </div>
                         <div>
                             <span class="d-block text-muted small">ปีการศึกษาล่าสุด</span>
-                            <h4 class="card-title mb-0 fw-bold"><?= date('Y')+543 ?></h4>
+                            <h4 class="card-title mb-0 fw-bold"><?= date('Y') + 543 ?></h4>
                         </div>
                     </div>
                 </div>
@@ -123,7 +146,8 @@
                 <tbody class="table-border-bottom-0">
                     <?php if (empty($competitions)): ?>
                         <tr>
-                            <td colspan="6" class="text-center py-4 text-muted">ยังไม่มีการบันทึกผลงานการแข่งขันที่ได้รับการอนุมัติในระบบ</td>
+                            <td colspan="6" class="text-center py-4 text-muted">
+                                ยังไม่มีการบันทึกผลงานการแข่งขันที่ได้รับการอนุมัติในระบบ</td>
                         </tr>
                     <?php else: ?>
                         <?php foreach ($competitions as $comp): ?>
@@ -131,21 +155,25 @@
                                 <td><?= esc($comp->comp_academic_year) ?>/<?= esc($comp->comp_term) ?></td>
                                 <td>
                                     <div class="fw-bold text-dark"><?= esc($comp->comp_name) ?></div>
-                                    <small class="text-muted"><i class="bx bx-map me-1"></i><?= esc($comp->comp_location ?: '-') ?></small>
+                                    <small class="text-muted"><i
+                                            class="bx bx-map me-1"></i><?= esc($comp->comp_location ?: '-') ?></small>
                                 </td>
                                 <td><?= esc($comp->comp_activity) ?></td>
                                 <td>
-                                    <span class="badge bg-label-success" style="color: #15a362; background-color: rgba(21, 163, 98, 0.1);"><?= esc($comp->comp_level) ?></span>
+                                    <span class="badge bg-label-success"
+                                        style="color: #15a362; background-color: rgba(21, 163, 98, 0.1);"><?= esc($comp->comp_level) ?></span>
                                 </td>
                                 <td>
-                                    <?php 
-                                        $d = strtotime($comp->comp_date);
-                                        $y = date('Y', $d) + 543;
-                                        echo date('d/m', $d) . '/' . $y;
+                                    <?php
+                                    $d = strtotime($comp->comp_date);
+                                    $y = date('Y', $d) + 543;
+                                    echo date('d/m', $d) . '/' . $y;
                                     ?>
                                 </td>
                                 <td class="text-center">
-                                    <button class="btn btn-sm btn-success btn-view-public-detail" data-id="<?= $comp->comp_id ?>" style="background-color: #15a362; border-color: #15a362;">
+                                    <button class="btn btn-sm btn-success btn-view-public-detail"
+                                        data-id="<?= $comp->comp_id ?>"
+                                        style="background-color: #15a362; border-color: #15a362;">
                                         <i class="bx bx-search-alt"></i> ดูข้อมูล
                                     </button>
                                 </td>
@@ -190,11 +218,14 @@
                         <label class="text-muted d-block small">สถานที่ / หน่วยงานผู้จัด</label>
                         <span id="pubDetLocation" class="fw-bold"></span>
                     </div>
-                    <div class="col-12"><hr class="my-1"></div>
-                    
+                    <div class="col-12">
+                        <hr class="my-1">
+                    </div>
+
                     <!-- รายชื่อผู้แข่ง -->
                     <div class="col-md-6">
-                        <h6 class="fw-bold"><i class="bx bx-user me-1 text-success"></i> นักเรียนที่เข้าร่วมการแข่งขัน</h6>
+                        <h6 class="fw-bold"><i class="bx bx-user me-1 text-success"></i> นักเรียนที่เข้าร่วมการแข่งขัน
+                        </h6>
                         <ul class="list-group list-group-flush" id="pubDetStudents"></ul>
                     </div>
 
@@ -204,7 +235,9 @@
                         <ul class="list-group list-group-flush" id="pubDetTeachers"></ul>
                     </div>
 
-                    <div class="col-12"><hr class="my-1"></div>
+                    <div class="col-12">
+                        <hr class="my-1">
+                    </div>
 
                     <!-- รางวัลที่ได้รับ -->
                     <div class="col-12">
@@ -228,166 +261,166 @@
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const viewButtons = document.querySelectorAll('.btn-view-public-detail');
-    const modalDetail = new bootstrap.Modal(document.getElementById('modalPublicDetail'));
-    
-    viewButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const id = this.getAttribute('data-id');
-            
-            fetch(`<?= base_url('admin/academic/competition/detail') ?>/${id}`)
-                .then(res => res.json())
-                .then(data => {
-                    if (data.status === 'success') {
-                        const comp = data.comp;
-                        
-                        document.getElementById('pubDetName').textContent = comp.comp_name;
-                        document.getElementById('pubDetActivity').textContent = comp.comp_activity;
-                        document.getElementById('pubDetLevel').textContent = comp.comp_level;
-                        document.getElementById('pubDetDate').textContent = data.thaiDate;
-                        document.getElementById('pubDetLocation').textContent = `${comp.comp_location || '-'} (${comp.comp_organizer || '-'})`;
-                        
-                        // นักเรียน
-                        const studentContainer = document.getElementById('pubDetStudents');
-                        studentContainer.innerHTML = '';
-                        if (data.students.length > 0) {
-                            data.students.forEach(st => {
-                                studentContainer.innerHTML += `
+    document.addEventListener('DOMContentLoaded', function () {
+        const viewButtons = document.querySelectorAll('.btn-view-public-detail');
+        const modalDetail = new bootstrap.Modal(document.getElementById('modalPublicDetail'));
+
+        viewButtons.forEach(button => {
+            button.addEventListener('click', function () {
+                const id = this.getAttribute('data-id');
+
+                fetch(`<?= base_url('admin/academic/competition/detail') ?>/${id}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            const comp = data.comp;
+
+                            document.getElementById('pubDetName').textContent = comp.comp_name;
+                            document.getElementById('pubDetActivity').textContent = comp.comp_activity;
+                            document.getElementById('pubDetLevel').textContent = comp.comp_level;
+                            document.getElementById('pubDetDate').textContent = data.thaiDate;
+                            document.getElementById('pubDetLocation').textContent = `${comp.comp_location || '-'} (${comp.comp_organizer || '-'})`;
+
+                            // นักเรียน
+                            const studentContainer = document.getElementById('pubDetStudents');
+                            studentContainer.innerHTML = '';
+                            if (data.students.length > 0) {
+                                data.students.forEach(st => {
+                                    studentContainer.innerHTML += `
                                     <li class="list-group-item px-0 py-1 d-flex align-items-center border-0">
                                         <i class="bx bx-chevron-right text-success me-1"></i>
                                         <span>${st.StudentCode} - ${st.StudentPrefix}${st.StudentFirstName} ${st.StudentLastName} (ม.${st.StudentClass}/${st.StudentNumber})</span>
                                     </li>`;
-                            });
-                        } else {
-                            studentContainer.innerHTML = '<li class="list-group-item text-muted px-0 py-1 border-0">ไม่มีข้อมูลรายชื่อ</li>';
-                        }
+                                });
+                            } else {
+                                studentContainer.innerHTML = '<li class="list-group-item text-muted px-0 py-1 border-0">ไม่มีข้อมูลรายชื่อ</li>';
+                            }
 
-                        // ครู
-                        const teacherContainer = document.getElementById('pubDetTeachers');
-                        teacherContainer.innerHTML = '';
-                        if (data.teachers.length > 0) {
-                            data.teachers.forEach(t => {
-                                teacherContainer.innerHTML += `
+                            // ครู
+                            const teacherContainer = document.getElementById('pubDetTeachers');
+                            teacherContainer.innerHTML = '';
+                            if (data.teachers.length > 0) {
+                                data.teachers.forEach(t => {
+                                    teacherContainer.innerHTML += `
                                     <li class="list-group-item px-0 py-1 d-flex align-items-center border-0">
                                         <i class="bx bx-chevron-right text-success me-1"></i>
                                         <span>${t.pers_prefix}${t.pers_firstname} ${t.pers_lastname}</span>
                                     </li>`;
-                            });
-                        } else {
-                            teacherContainer.innerHTML = '<li class="list-group-item text-muted px-0 py-1 border-0">ไม่มีข้อมูลรายชื่อ</li>';
-                        }
+                                });
+                            } else {
+                                teacherContainer.innerHTML = '<li class="list-group-item text-muted px-0 py-1 border-0">ไม่มีข้อมูลรายชื่อ</li>';
+                            }
 
-                        // รางวัล
-                        const awardsContainer = document.getElementById('pubDetAwards');
-                        awardsContainer.innerHTML = '';
-                        if (data.awards.length > 0) {
-                            data.awards.forEach(aw => {
-                                awardsContainer.innerHTML += `<span class="badge bg-success" style="background-color: #15a362 !important; font-size: 0.9rem;"><i class="bx bx-trophy me-1"></i>${aw}</span>`;
-                            });
-                        } else {
-                            awardsContainer.innerHTML = '<span class="text-muted">ไม่ระบุรางวัล</span>';
-                        }
+                            // รางวัล
+                            const awardsContainer = document.getElementById('pubDetAwards');
+                            awardsContainer.innerHTML = '';
+                            if (data.awards.length > 0) {
+                                data.awards.forEach(aw => {
+                                    awardsContainer.innerHTML += `<span class="badge bg-success" style="background-color: #15a362 !important; font-size: 0.9rem;"><i class="bx bx-trophy me-1"></i>${aw}</span>`;
+                                });
+                            } else {
+                                awardsContainer.innerHTML = '<span class="text-muted">ไม่ระบุรางวัล</span>';
+                            }
 
-                        // สื่อและไฟล์แนบ
-                        const mediaContainer = document.getElementById('pubDetMedia');
-                        mediaContainer.innerHTML = '';
-                        
-                        // แสดงเกียรติบัตร
-                        if (data.certs.length > 0) {
-                            data.certs.forEach(file => {
-                                const ext = file.split('.').pop().toLowerCase();
-                                const isImg = ['jpg', 'jpeg', 'png', 'gif'].includes(ext);
-                                const fileUrl = `https://skj.nsnpao.go.th/uploads/academic/competitions/certificates/${file}`;
-                                
-                                mediaContainer.innerHTML += `
+                            // สื่อและไฟล์แนบ
+                            const mediaContainer = document.getElementById('pubDetMedia');
+                            mediaContainer.innerHTML = '';
+
+                            // แสดงเกียรติบัตร
+                            if (data.certs.length > 0) {
+                                data.certs.forEach(file => {
+                                    const ext = file.split('.').pop().toLowerCase();
+                                    const isImg = ['jpg', 'jpeg', 'png', 'gif'].includes(ext);
+                                    const fileUrl = `https://skj.nsnpao.go.th/uploads/academic/competitions/certificates/${file}`;
+
+                                    mediaContainer.innerHTML += `
                                     <div class="col-md-4 text-center border p-2 rounded bg-light">
                                         <div class="small fw-semibold mb-1 text-truncate">เกียรติบัตร</div>
                                         ${isImg ? `<img src="${fileUrl}" class="img-fluid rounded mb-2" style="max-height: 80px;">` : `<i class="bx bxs-file-pdf text-danger display-6 mb-2"></i>`}
                                         <a href="${fileUrl}" target="_blank" class="btn btn-xs btn-outline-primary d-block w-100"><i class="bx bx-download me-1"></i>เปิดดูไฟล์</a>
                                     </div>`;
-                            });
-                        }
+                                });
+                            }
 
-                        // แสดงภาพกิจกรรม
-                        if (data.images.length > 0) {
-                            data.images.forEach(file => {
-                                const fileUrl = `https://skj.nsnpao.go.th/uploads/academic/competitions/images/${file}`;
-                                mediaContainer.innerHTML += `
+                            // แสดงภาพกิจกรรม
+                            if (data.images.length > 0) {
+                                data.images.forEach(file => {
+                                    const fileUrl = `https://skj.nsnpao.go.th/uploads/academic/competitions/images/${file}`;
+                                    mediaContainer.innerHTML += `
                                     <div class="col-md-4 text-center border p-2 rounded bg-light">
                                         <div class="small fw-semibold mb-1 text-truncate">ภาพกิจกรรม</div>
                                         <img src="${fileUrl}" class="img-fluid rounded mb-2" style="max-height: 80px; object-fit: cover; width: 100%;">
                                         <a href="${fileUrl}" target="_blank" class="btn btn-xs btn-outline-primary d-block w-100"><i class="bx bx-zoom-in me-1"></i>ดูรูปใหญ่</a>
                                     </div>`;
+                                });
+                            }
+
+                            if (data.certs.length === 0 && data.images.length === 0) {
+                                mediaContainer.innerHTML = '<div class="col-12 text-muted">ไม่มีไฟล์แนบและรูปภาพผลงาน</div>';
+                            }
+
+                            modalDetail.show();
+                        } else {
+                            Swal.fire({
+                                title: 'เกิดข้อผิดพลาด',
+                                text: 'ไม่สามารถดึงข้อมูลรายละเอียดได้',
+                                icon: 'error',
+                                confirmButtonColor: '#15a362'
                             });
                         }
+                    });
+            });
+        });
 
-                        if (data.certs.length === 0 && data.images.length === 0) {
-                            mediaContainer.innerHTML = '<div class="col-12 text-muted">ไม่มีไฟล์แนบและรูปภาพผลงาน</div>';
+        // Intro.js Guided Tour Initialization
+        const btnStartTour = document.getElementById('btnStartTour');
+        if (btnStartTour) {
+            btnStartTour.addEventListener('click', function () {
+                introJs().setOptions({
+                    steps: [
+                        {
+                            title: '👋 ยินดีต้อนรับ!',
+                            intro: 'นี่คือระบบทำเนียบผลงานการแข่งขันและรางวัลของโรงเรียนสวนกุหลาบวิทยาลัย ปทุมธานี ครับ'
+                        },
+                        {
+                            element: '#tourHeader',
+                            title: '📌 หน้าหลักผลงาน',
+                            intro: 'ส่วนนี้จะแสดงภาพรวมและหัวข้อการทำรายการสืบค้นผลงานและรางวัลที่ได้รับการบันทึกในระบบครับ',
+                            position: 'bottom'
+                        },
+                        {
+                            element: document.getElementById('btnDashboard') || document.getElementById('btnLoginTeacher'),
+                            title: '🔑 สำหรับคุณครูและบุคลากร',
+                            intro: 'คุณครูสามารถกดเข้าสู่ระบบ หรือไปยังหน้าจัดการหลังบ้าน เพื่อเพิ่มข้อมูลกิจกรรมการแข่งขัน รูปภาพ และเกียรติบัตรผ่านส่วนนี้ได้ทันทีครับ',
+                            position: 'bottom'
+                        },
+                        {
+                            element: '#tourStats',
+                            title: '📊 สถิติข้อมูล',
+                            intro: 'แสดงสรุปจำนวนรายการแข่งขันทั้งหมดที่ได้รับการอนุมัติ และปีการศึกษาล่าสุดในระบบครับ',
+                            position: 'bottom'
+                        },
+                        {
+                            element: '#tourTableCard',
+                            title: '🔍 ตารางทำเนียบเกียรติยศ',
+                            intro: 'คุณสามารถค้นหาข้อมูลด้วยการพิมพ์คำค้นหา (เช่น ชื่อนักเรียน, ชื่อกิจกรรม, ปีการศึกษา) ในตารางนี้ได้แบบเรียลไทม์',
+                            position: 'top'
+                        },
+                        {
+                            element: document.querySelector('.btn-view-public-detail'),
+                            title: '📄 ดูรายละเอียดเชิงลึก',
+                            intro: 'หากต้องการดูรายชื่อนักเรียน ครูผู้ฝึกสอน ไฟล์เกียรติบัตร หรือภาพถ่ายกิจกรรม ให้คลิกที่ปุ่ม <strong>"ดูข้อมูล"</strong> นี้ได้เลยครับ',
+                            position: 'left'
                         }
-
-                        modalDetail.show();
-                    } else {
-                        Swal.fire({
-                            title: 'เกิดข้อผิดพลาด',
-                            text: 'ไม่สามารถดึงข้อมูลรายละเอียดได้',
-                            icon: 'error',
-                            confirmButtonColor: '#15a362'
-                        });
-                    }
-                });
-        });
+                    ],
+                    nextLabel: 'ถัดไป ›',
+                    prevLabel: '‹ ย้อนกลับ',
+                    doneLabel: 'เสร็จสิ้น 🏁',
+                    dontShowAgain: false
+                }).start();
+            });
+        }
     });
-
-    // Intro.js Guided Tour Initialization
-    const btnStartTour = document.getElementById('btnStartTour');
-    if (btnStartTour) {
-        btnStartTour.addEventListener('click', function() {
-            introJs().setOptions({
-                steps: [
-                    {
-                        title: '👋 ยินดีต้อนรับ!',
-                        intro: 'นี่คือระบบทำเนียบผลงานการแข่งขันและรางวัลของโรงเรียนสวนกุหลาบวิทยาลัย ปทุมธานี ครับ'
-                    },
-                    {
-                        element: '#tourHeader',
-                        title: '📌 หน้าหลักผลงาน',
-                        intro: 'ส่วนนี้จะแสดงภาพรวมและหัวข้อการทำรายการสืบค้นผลงานและรางวัลที่ได้รับการบันทึกในระบบครับ',
-                        position: 'bottom'
-                    },
-                    {
-                        element: document.getElementById('btnDashboard') || document.getElementById('btnLoginTeacher'),
-                        title: '🔑 สำหรับคุณครูและบุคลากร',
-                        intro: 'คุณครูสามารถกดเข้าสู่ระบบ หรือไปยังหน้าจัดการหลังบ้าน เพื่อเพิ่มข้อมูลกิจกรรมการแข่งขัน รูปภาพ และเกียรติบัตรผ่านส่วนนี้ได้ทันทีครับ',
-                        position: 'bottom'
-                    },
-                    {
-                        element: '#tourStats',
-                        title: '📊 สถิติข้อมูล',
-                        intro: 'แสดงสรุปจำนวนรายการแข่งขันทั้งหมดที่ได้รับการอนุมัติ และปีการศึกษาล่าสุดในระบบครับ',
-                        position: 'bottom'
-                    },
-                    {
-                        element: '#tourTableCard',
-                        title: '🔍 ตารางทำเนียบเกียรติยศ',
-                        intro: 'คุณสามารถค้นหาข้อมูลด้วยการพิมพ์คำค้นหา (เช่น ชื่อนักเรียน, ชื่อกิจกรรม, ปีการศึกษา) ในตารางนี้ได้แบบเรียลไทม์',
-                        position: 'top'
-                    },
-                    {
-                        element: document.querySelector('.btn-view-public-detail'),
-                        title: '📄 ดูรายละเอียดเชิงลึก',
-                        intro: 'หากต้องการดูรายชื่อนักเรียน ครูผู้ฝึกสอน ไฟล์เกียรติบัตร หรือภาพถ่ายกิจกรรม ให้คลิกที่ปุ่ม <strong>"ดูข้อมูล"</strong> นี้ได้เลยครับ',
-                        position: 'left'
-                    }
-                ],
-                nextLabel: 'ถัดไป ›',
-                prevLabel: '‹ ย้อนกลับ',
-                doneLabel: 'เสร็จสิ้น 🏁',
-                dontShowAgain: false
-            }).start();
-        });
-    }
-});
 </script>
 <script src="https://unpkg.com/intro.js/minified/intro.min.js"></script>
 <?= $this->endSection() ?>

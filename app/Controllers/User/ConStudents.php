@@ -78,10 +78,12 @@ class ConStudents extends BaseController
         ->get()->getResult();
 
         $data['checkLine'] = $this->db->table('tb_students')->select('StudentClass,StudentStudyLine')
+        ->where('StudentStatus','1/ปกติ')  
+        ->where('StudentBehavior !=','จำหน่่าย') 
         ->where('StudentClass','ม.'.$this->request->getGet('studentList'))
         ->groupBy('StudentStudyLine')
         ->get()->getResult();
-        $data['selStudent'] = $this->db->table('tb_students')->select('StudentNumber,StudentCode,StudentPrefix,StudentFirstName,StudentLastName,StudentStudyLine,StudentBehavior')
+        $data['selStudent'] = $this->db->table('tb_students')->select('StudentNumber,StudentCode,StudentPrefix,StudentFirstName,StudentLastName,StudentStudyLine,StudentBehavior,StudentSex')
         ->where('StudentStatus','1/ปกติ')  
         ->where('StudentBehavior !=','จำหน่่าย')      
         ->where('StudentClass','ม.'.$this->request->getGet('studentList'))
