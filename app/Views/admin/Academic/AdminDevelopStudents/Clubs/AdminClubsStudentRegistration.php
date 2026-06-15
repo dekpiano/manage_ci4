@@ -1,69 +1,214 @@
 <?= $this->extend('admin/layout/main') ?>
 
 <?= $this->section('content') ?>
-<div class="container-xxl flex-grow-1 container-p-y">
-    <!-- Page Header (New Style) -->
-    <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=K2D:wght@200;300;400;500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap');
+
+    :root {
+        --primary-green: #15a362;
+        --primary-green-rgb: 21, 163, 98;
+        --secondary-green: #2ecc71;
+        --soft-bg: #f8fafc;
+        --card-shadow: 0 8px 26px rgba(0, 0, 0, 0.03);
+        --hover-shadow: 0 15px 30px rgba(21, 163, 98, 0.1);
+        --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    body {
+        font-family: 'Outfit', 'K2D', sans-serif !important;
+        background-color: var(--soft-bg);
+    }
+
+    /* Mobile First Padding */
+    .registration-container {
+        padding: 1rem;
+        animation: fadeIn 0.6s ease-out;
+    }
+
+    @media (min-width: 768px) {
+        .registration-container {
+            padding: 2rem;
+        }
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(15px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Green Theme Badges & Overrides */
+    .bg-light-green {
+        background-color: rgba(21, 163, 98, 0.08) !important;
+        color: var(--primary-green) !important;
+    }
+
+    /* Stat Cards - Mobile First Grid */
+    .stats-card {
+        background: #ffffff;
+        border: none;
+        border-radius: 16px;
+        box-shadow: var(--card-shadow);
+        transition: var(--transition-smooth);
+        overflow: hidden;
+    }
+
+    .stats-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--hover-shadow);
+    }
+
+    .stats-card .card-body {
+        padding: 1rem;
+    }
+
+    @media (min-width: 768px) {
+        .stats-card .card-body {
+            padding: 1.5rem;
+        }
+    }
+
+    .stats-avatar {
+        width: 38px;
+        height: 38px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+    }
+
+    @media (min-width: 768px) {
+        .stats-avatar {
+            width: 46px;
+            height: 46px;
+            border-radius: 12px;
+            font-size: 1.5rem;
+        }
+    }
+
+    /* Borders matching green and colors */
+    .card-border-green { border-bottom: 3.5px solid var(--primary-green) !important; }
+    .card-border-success { border-bottom: 3.5px solid var(--secondary-green) !important; }
+    .card-border-danger { border-bottom: 3.5px solid #ff3e1d !important; }
+
+    /* Custom Table Style */
+    #studentClubRegisTable thead th { 
+        text-transform: uppercase; 
+        font-size: 0.8rem; 
+        letter-spacing: 0.5px; 
+        color: #566a7f;
+        background-color: rgba(21, 163, 98, 0.05) !important;
+        border-bottom: 2px solid rgba(21, 163, 98, 0.15) !important;
+        padding-top: 1rem;
+        padding-bottom: 1rem;
+    }
+
+    /* Search & Page Length Controls spacing for mobile */
+    .dataTables_wrapper .dataTables_filter,
+    .dataTables_wrapper .dataTables_length,
+    .dataTables_wrapper .dataTables_info,
+    .dataTables_wrapper .dataTables_paginate {
+        padding: 0.75rem 1rem;
+    }
+
+    @media (min-width: 768px) {
+        .dataTables_wrapper .dataTables_filter,
+        .dataTables_wrapper .dataTables_length,
+        .dataTables_wrapper .dataTables_info,
+        .dataTables_wrapper .dataTables_paginate {
+            padding: 1rem 1.5rem;
+        }
+    }
+
+    .page-link.active, .active > .page-link {
+        background-color: var(--primary-green) !important;
+        border-color: var(--primary-green) !important;
+    }
+
+    .btn-outline-success {
+        color: var(--primary-green);
+        border-color: var(--primary-green);
+    }
+    .btn-outline-success:hover {
+        background-color: var(--primary-green);
+        border-color: var(--primary-green);
+        color: #ffffff;
+    }
+
+    @media print {
+        .container-p-y { padding: 0 !important; }
+        .breadcrumb, .stats-row, .card-header .btn, #studentClubRegisTable_length, #studentClubRegisTable_filter, #studentClubRegisTable_paginate { display: none !important; }
+        .card { border: none !important; box-shadow: none !important; }
+        table { width: 100% !important; border: 1px solid #eee !important; }
+    }
+</style>
+
+<div class="container-xxl flex-grow-1 container-p-y registration-container">
+    <!-- Page Header - Mobile First -->
+    <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
         <div class="page-title">
-            <h4 class="fw-bold py-1 mb-0">
+            <h4 class="fw-bold py-1 mb-0" style="font-size: calc(1.1rem + 0.5vw);">
                 <span class="text-muted fw-light">วิชาการ / พัฒนาผู้เรียน / ชุมนุม /</span> ข้อมูลการลงทะเบียน
             </h4>
             <div class="text-muted small">ตรวจสอบและส่งออกข้อมูลนักเรียนที่ลงทะเบียนในแต่ละชุมนุม</div>
         </div>
-        <nav aria-label="breadcrumb">
+        <nav aria-label="breadcrumb" class="d-none d-sm-block">
             <ol class="breadcrumb mb-0">
-                <li class="breadcrumb-item"><a href="<?= site_url('Admin/Acade/DevelopStudents/Clubs/Main') ?>">หน้าแรกชุมนุม</a></li>
+                <li class="breadcrumb-item"><a href="<?= site_url('Admin/Acade/DevelopStudents/Clubs/Main') ?>" class="text-success">หน้าแรกชุมนุม</a></li>
                 <li class="breadcrumb-item active">ข้อมูลการลงทะเบียน</li>
             </ol>
         </nav>
     </div>
 
-    <!-- Quick Stats Tiles -->
-    <div class="row g-4 mb-4">
-        <div class="col-sm-6 col-xl-3">
-            <div class="card card-border-shadow-primary h-100 shadow-sm border-0">
+    <!-- Quick Stats Tiles - 2 Columns on Mobile, 4 Columns on Desktop -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-lg-3">
+            <div class="stats-card card-border-green h-100">
                 <div class="card-body">
-                    <div class="d-flex align-items-center mb-2 pb-1">
-                        <div class="avatar me-2">
-                            <span class="avatar-initial rounded bg-label-primary"><i class="bx bx-user"></i></span>
+                    <div class="d-flex align-items-center mb-2">
+                        <div class="stats-avatar bg-light-green me-2">
+                            <i class="bx bx-user text-success"></i>
                         </div>
-                        <h4 class="ms-1 mb-0" id="totalStudents">0</h4>
+                        <h4 class="ms-1 mb-0 fw-bold" id="totalStudents" style="font-size: calc(1rem + 0.4vw);">0</h4>
                     </div>
-                    <p class="mb-1 text-muted small">นักเรียนทั้งหมดในระบบ</p>
+                    <p class="mb-0 text-muted small">นักเรียนในระบบ</p>
                 </div>
             </div>
         </div>
-        <div class="col-sm-6 col-xl-3">
-            <div class="card card-border-shadow-success h-100 shadow-sm border-0">
+        
+        <div class="col-6 col-lg-3">
+            <div class="stats-card card-border-success h-100">
                 <div class="card-body">
-                    <div class="d-flex align-items-center mb-2 pb-1">
-                        <div class="avatar me-2">
-                            <span class="avatar-initial rounded bg-label-success"><i class="bx bx-check-circle"></i></span>
+                    <div class="d-flex align-items-center mb-2">
+                        <div class="stats-avatar bg-light-green me-2">
+                            <i class="bx bx-check-circle text-success"></i>
                         </div>
-                        <h4 class="ms-1 mb-0" id="registeredStudents">0</h4>
+                        <h4 class="ms-1 mb-0 fw-bold" id="registeredStudents" style="font-size: calc(1rem + 0.4vw);">0</h4>
                     </div>
-                    <p class="mb-1 text-muted small" id="regisPercent">ลงทะเบียนแล้ว (0%)</p>
+                    <p class="mb-0 text-muted small text-truncate" id="regisPercent">ลงทะเบียนแล้ว (0%)</p>
                 </div>
             </div>
         </div>
-        <div class="col-sm-6 col-xl-3">
-            <div class="card card-border-shadow-danger h-100 shadow-sm border-0">
+
+        <div class="col-6 col-lg-3">
+            <div class="stats-card card-border-danger h-100">
                 <div class="card-body">
-                    <div class="d-flex align-items-center mb-2 pb-1">
-                        <div class="avatar me-2">
-                            <span class="avatar-initial rounded bg-label-danger"><i class="bx bx-error-circle"></i></span>
+                    <div class="d-flex align-items-center mb-2">
+                        <div class="stats-avatar bg-light-danger me-2" style="background-color: rgba(255, 62, 29, 0.08) !important;">
+                            <i class="bx bx-error-circle text-danger"></i>
                         </div>
-                        <h4 class="ms-1 mb-0" id="notRegisteredStudents">0</h4>
+                        <h4 class="ms-1 mb-0 fw-bold" id="notRegisteredStudents" style="font-size: calc(1rem + 0.4vw);">0</h4>
                     </div>
-                    <p class="mb-1 text-muted small" id="unregisPercent">ยังไม่เลือกชุมนุม (0%)</p>
+                    <p class="mb-0 text-muted small text-truncate" id="unregisPercent">ยังไม่เลือกชุมนุม (0%)</p>
                 </div>
             </div>
         </div>
-        <div class="col-sm-6 col-xl-3">
-            <div class="card shadow-sm border-0 h-100">
-                <div class="card-body d-flex flex-column justify-content-center">
-                    <label class="form-label fw-bold text-uppercase x-small mb-2"><i class="bx bx-filter-alt me-1"></i> กรองห้องเรียน</label>
-                    <select id="filterClassroom" class="form-select select2">
+
+        <div class="col-6 col-lg-3">
+            <div class="stats-card h-100">
+                <div class="card-body d-flex flex-column justify-content-center h-100">
+                    <label class="form-label fw-bold text-uppercase mb-1" style="font-size: 0.75rem;"><i class="bx bx-filter-alt me-1 text-success"></i> กรองห้องเรียน</label>
+                    <select id="filterClassroom" class="form-select select2 py-1">
                         <option value="">ทุกห้องเรียน</option>
                     </select>
                 </div>
@@ -75,7 +220,7 @@
     <div class="card shadow-sm border-0 overflow-hidden">
         <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center flex-wrap gap-3">
             <div class="d-flex align-items-center gap-2">
-                <div class="p-2 bg-label-info rounded me-1">
+                <div class="p-2 bg-light-green rounded me-1">
                     <i class="bx bx-list-check fs-4"></i>
                 </div>
                 <h5 class="mb-0 fw-bold">รายชื่อนักเรียนแยกตามชุมนุม</h5>
@@ -94,7 +239,7 @@
         <div class="card-body p-0">
             <div class="table-responsive text-nowrap">
                 <table id="studentClubRegisTable" class="table table-hover align-middle mb-0" style="width: 100%;">
-                    <thead class="bg-light-primary border-top-0">
+                    <thead>
                         <tr>
                             <th class="py-3 text-center" style="width: 50px;">#</th>
                             <th class="py-3"><i class="bx bx-id-card me-1 small"></i>รหัสประจำตัว</th>
@@ -108,7 +253,7 @@
                         <!-- Loading State -->
                         <tr>
                             <td colspan="6" class="text-center py-5">
-                                <div class="spinner-border text-primary" role="status">
+                                <div class="spinner-border text-success" role="status">
                                     <span class="visually-hidden">Loading...</span>
                                 </div>
                                 <p class="mt-2 mb-0 text-muted">กำลังดึงข้อมูล...</p>
@@ -120,34 +265,6 @@
         </div>
     </div>
 </div>
-
-<style>
-    .bg-light-primary { background-color: #f0f2ff !important; }
-    #studentClubRegisTable thead th { 
-        text-transform: uppercase; 
-        font-size: 0.8rem; 
-        letter-spacing: 0.5px; 
-        color: #566a7f;
-        border-bottom: 2px solid #e7e7ff !important;
-    }
-    .card-border-shadow-primary { border-bottom: 3.5px solid #696cff !important; }
-    .card-border-shadow-success { border-bottom: 3.5px solid #71dd37 !important; }
-    .card-border-shadow-danger { border-bottom: 3.5px solid #ff3e1d !important; }
-    .x-small { font-size: 0.7rem; }
-    
-    /* DataTable Visual Enhancement */
-    .dataTables_wrapper .dataTables_filter { padding: 1rem 1.5rem; }
-    .dataTables_wrapper .dataTables_length { padding: 1rem 1.5rem; }
-    .dataTables_wrapper .dataTables_info { padding: 1rem 1.5rem; }
-    .dataTables_wrapper .dataTables_paginate { padding: 1rem 1.5rem; }
-    
-    @media print {
-        .container-p-y { padding: 0 !important; }
-        .breadcrumb, .stats-row, .card-header .btn, #studentClubRegisTable_length, #studentClubRegisTable_filter, #studentClubRegisTable_paginate { display: none !important; }
-        .card { border: none !important; box-shadow: none !important; }
-        table { width: 100% !important; border: 1px solid #eee !important; }
-    }
-</style>
 <?= $this->endSection() ?>
 
 <?= $this->section('script') ?>
@@ -203,7 +320,27 @@ $(document).ready(function() {
         ],
         "responsive": true,
         "language": {
-            "url": "//cdn.datatables.net/plug-ins/1.13.7/i18n/th.json"
+            "emptyTable": "ไม่มีข้อมูลในตาราง",
+            "info": "แสดง _START_ ถึง _END_ จาก _TOTAL_ แถว",
+            "infoEmpty": "แสดง 0 ถึง 0 จาก 0 แถว",
+            "infoFiltered": "(กรองข้อมูล _MAX_ ทุกแถว)",
+            "infoPostFix": "",
+            "thousands": ",",
+            "lengthMenu": "แสดง _MENU_ แถว",
+            "loadingRecords": "กำลังโหลดข้อมูล...",
+            "processing": "กำลังดำเนินการ...",
+            "search": "ค้นหา:",
+            "zeroRecords": "ไม่พบข้อมูลที่ค้นหา",
+            "paginate": {
+                "first": "หน้าแรก",
+                "last": "หน้าสุดท้าย",
+                "next": "ถัดไป",
+                "previous": "ก่อนหน้า"
+            },
+            "aria": {
+                "sortAscending": ": เปิดใช้งานการเรียงข้อมูลจากน้อยไปมาก",
+                "sortDescending": ": เปิดใช้งานการเรียงข้อมูลจากมากไปน้อย"
+            }
         },
         "dom": '<"d-flex justify-content-between align-items-center mx-1 row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>B t <"d-flex justify-content-between mx-1 row"<"col-sm-12 col-md-6"i><"col-sm-12 col-md-6"p>>',
         "buttons": [
@@ -240,7 +377,7 @@ $(document).ready(function() {
         
         const regisPercent = total > 0 ? ((registered / total) * 100).toFixed(1) : 0;
         const unregisPercent = total > 0 ? ((notRegistered / total) * 100).toFixed(1) : 0;
-
+        
         $('#totalStudents').text(total.toLocaleString());
         $('#registeredStudents').text(registered.toLocaleString());
         $('#notRegisteredStudents').text(notRegistered.toLocaleString());
