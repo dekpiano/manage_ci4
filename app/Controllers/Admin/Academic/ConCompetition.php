@@ -47,10 +47,18 @@ class ConCompetition extends BaseController
      */
     public function index()
     {
-        // ในระบบจริง หากมี Session ผู้ใช้งาน:
-        // $userId = session()->get('username'); // หรือตามแต่ระบบตรวจสอบสิทธิ์
-        // ในตัวอย่างดึงข้อมูลทั้งหมด
-        $competitions = $this->modComp->orderBy('comp_id', 'DESC')->findAll();
+        $userId = session()->get('login_id');
+        $userStatus = session()->get('status');
+
+        // Admin/Superadmin/Manager เห็นข้อมูลทั้งหมด, ครูปกติเห็นเฉพาะของตัวเอง
+        if (in_array($userStatus, ['admin', 'superadmin', 'manager'])) {
+            $competitions = $this->modComp->orderBy('comp_id', 'DESC')->findAll();
+        } else {
+            $competitions = $this->modComp
+                ->where('comp_usersend', $userId)
+                ->orderBy('comp_id', 'DESC')
+                ->findAll();
+        }
 
         // แนบข้อมูลชื่อครูและนักเรียนของแต่ละแถวเพิ่มเติม
         foreach ($competitions as $comp) {
@@ -87,6 +95,13 @@ class ConCompetition extends BaseController
         $comp = $this->modComp->find($id);
         if (!$comp) {
             return redirect()->to(base_url('admin/academic/competition'))->with('error', 'ไม่พบข้อมูลรายการแข่งขัน');
+        }
+
+        // ตรวจสอบสิทธิ์: ครูปกติแก้ไขได้เฉพาะข้อมูลของตัวเอง
+        $userStatus = session()->get('status');
+        $userId = session()->get('login_id');
+        if (!in_array($userStatus, ['admin', 'superadmin', 'manager']) && $comp->comp_usersend != $userId) {
+            return redirect()->to(base_url('admin/academic/competition'))->with('error', 'คุณไม่มีสิทธิ์แก้ไขข้อมูลรายการนี้');
         }
 
         // ดึงรายละเอียดนักเรียนและครูที่เลือกไว้
@@ -162,7 +177,7 @@ class ConCompetition extends BaseController
             'comp_teacher_ids'       => json_encode($teacherIds, JSON_UNESCAPED_UNICODE),
             'comp_certificate_files' => json_encode($certFiles, JSON_UNESCAPED_UNICODE),
             'comp_images'            => json_encode($images, JSON_UNESCAPED_UNICODE),
-            'comp_usersend'          => session()->get('username') ?: 'guest_teacher'
+            'comp_usersend'          => session()->get('login_id') ?: 'guest_teacher'
         ];
 
         if ($id) {
@@ -202,6 +217,18 @@ class ConCompetition extends BaseController
      */
     public function delete($id)
     {
+        $comp = $this->modComp->find($id);
+        if (!$comp) {
+            return redirect()->to(base_url('admin/academic/competition'))->with('error', 'ไม่พบข้อมูลรายการแข่งขัน');
+        }
+
+        // ตรวจสอบสิทธิ์: ครูปกติลบได้เฉพาะข้อมูลของตัวเอง
+        $userStatus = session()->get('status');
+        $userId = session()->get('login_id');
+        if (!in_array($userStatus, ['admin', 'superadmin', 'manager']) && $comp->comp_usersend != $userId) {
+            return redirect()->to(base_url('admin/academic/competition'))->with('error', 'คุณไม่มีสิทธิ์ลบข้อมูลรายการนี้');
+        }
+
         if ($this->modComp->delete($id)) {
             return redirect()->to(base_url('admin/academic/competition'))->with('success', 'ลบข้อมูลเรียบร้อยแล้ว');
         }

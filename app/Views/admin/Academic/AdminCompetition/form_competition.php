@@ -317,9 +317,34 @@
                                 </div>
                                 <div class="file-preview-container mt-2" id="previewCert"></div>
                                 <?php if ($comp && $comp->comp_certificate_files): ?>
-                                    <div class="mt-2 text-muted small">
-                                        มีไฟล์เกียรติบัตรเดิมแล้ว <?= count(json_decode($comp->comp_certificate_files)) ?> ไฟล์ (อัปโหลดใหม่จะแนบต่อเพิ่ม)
-                                    </div>
+                                    <?php 
+                                        $certs = json_decode($comp->comp_certificate_files, true) ?: []; 
+                                    ?>
+                                    <?php if (!empty($certs)): ?>
+                                        <div class="mt-3">
+                                            <label class="form-label fw-semibold text-muted d-block mb-2">เกียรติบัตรเดิมในระบบ:</label>
+                                            <div class="row g-2">
+                                                <?php foreach ($certs as $cert): ?>
+                                                    <?php 
+                                                        $ext = strtolower(pathinfo($cert, PATHINFO_EXTENSION));
+                                                        $isImg = in_array($ext, ['jpg', 'jpeg', 'png', 'gif']);
+                                                        $certUrl = "https://skj.nsnpao.go.th/uploads/academic/competitions/certificates/" . $cert;
+                                                    ?>
+                                                    <div class="col-6 col-sm-4 text-center border p-2 rounded bg-light position-relative">
+                                                        <div class="mb-2" style="height: 80px; display: flex; align-items: center; justify-content: center;">
+                                                            <?php if ($isImg): ?>
+                                                                <img src="<?= $certUrl ?>" class="img-fluid rounded" style="max-height: 80px; object-fit: contain;">
+                                                            <?php else: ?>
+                                                                <i class="bx bxs-file-pdf text-danger display-6"></i>
+                                                            <?php endif; ?>
+                                                        </div>
+                                                        <div class="text-truncate small mb-1" title="<?= esc($cert) ?>"><?= esc($cert) ?></div>
+                                                        <a href="<?= $certUrl ?>" target="_blank" class="btn btn-xs btn-outline-primary w-100"><i class="bx bx-download me-1"></i>เปิดดู</a>
+                                                    </div>
+                                                <?php endforeach; ?>
+                                            </div>
+                                        </div>
+                                    <?php endif; ?>
                                 <?php endif; ?>
                             </div>
 
@@ -335,9 +360,28 @@
                                 </div>
                                 <div class="file-preview-container mt-2" id="previewImages"></div>
                                 <?php if ($comp && $comp->comp_images): ?>
-                                    <div class="mt-2 text-muted small">
-                                        มีภาพกิจกรรมเดิมแล้ว <?= count(json_decode($comp->comp_images)) ?> ภาพ (อัปโหลดใหม่จะแนบต่อเพิ่ม)
-                                    </div>
+                                    <?php 
+                                        $images = json_decode($comp->comp_images, true) ?: []; 
+                                    ?>
+                                    <?php if (!empty($images)): ?>
+                                        <div class="mt-3">
+                                            <label class="form-label fw-semibold text-muted d-block mb-2">รูปภาพกิจกรรมเดิมในระบบ:</label>
+                                            <div class="row g-2">
+                                                <?php foreach ($images as $img): ?>
+                                                    <?php 
+                                                        $imgUrl = "https://skj.nsnpao.go.th/uploads/academic/competitions/images/" . $img;
+                                                    ?>
+                                                    <div class="col-6 col-sm-4 text-center border p-2 rounded bg-light">
+                                                        <div class="mb-2" style="height: 80px; display: flex; align-items: center; justify-content: center;">
+                                                            <img src="<?= $imgUrl ?>" class="img-fluid rounded" style="max-height: 80px; object-fit: cover; width: 100%;">
+                                                        </div>
+                                                        <div class="text-truncate small mb-1" title="<?= esc($img) ?>"><?= esc($img) ?></div>
+                                                        <a href="<?= $imgUrl ?>" target="_blank" class="btn btn-xs btn-outline-primary w-100"><i class="bx bx-zoom-in me-1"></i>ดูรูปใหญ่</a>
+                                                    </div>
+                                                <?php endforeach; ?>
+                                            </div>
+                                        </div>
+                                    <?php endif; ?>
                                 <?php endif; ?>
                             </div>
 
