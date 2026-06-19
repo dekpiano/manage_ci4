@@ -235,6 +235,12 @@ class Auth extends BaseController
             $result = $this->model->fetch_teacher_login($email);
             
             if ($result) {
+                // ตรวจสอบสิทธิ์: เข้าได้เฉพาะผู้ที่มีตำแหน่งครูเท่านั้น (ดึงชื่อภาษาไทยจาก tb_position)
+                $positionName = $result->posi_name ?? '';
+                if (mb_strpos($positionName, 'ครู') === false) {
+                    return redirect()->to(base_url('competition/show'))->with('error', 'เข้าสู่ระบบได้เฉพาะผู้ที่มีตำแหน่งครูเท่านั้น');
+                }
+
                 $status = $result->academic_status ?: 'teacher'; // fallback เป็นครูปกติ
 
                 $current_datetime = date('Y-m-d H:i:s');
@@ -256,7 +262,7 @@ class Auth extends BaseController
                     'admin_rloes_status' => $status,
                     'img' => $result->pers_img,
                     'groupleade' => $result->pers_groupleade,
-                    'pers_position' => $result->pers_position,
+                    'pers_position' => $result->posi_name ?? $result->pers_position,
                     'CheckrloesAcademic' => (string)($result->academic_nanetype ?? ''),
                     'CheckrloesGeneral' => (string)($result->general_nanetype ?? ''),
                     'isLoggedIn' => true,

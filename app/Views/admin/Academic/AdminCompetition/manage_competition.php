@@ -1,5 +1,9 @@
 <?= $this->extend('user/layout/teacher_main') ?>
 
+<?= $this->section('extra_css') ?>
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css">
+<?= $this->endSection() ?>
+
 <?= $this->section('content') ?>
 <div class="container-xxl flex-grow-1 container-p-y">
     <!-- Intro.js Styles -->
@@ -78,17 +82,17 @@
         <div class="card-header d-flex justify-content-between align-items-center border-bottom mb-3">
             <h5 class="card-title mb-0">รายการบันทึกผลงานทั้งหมด</h5>
         </div>
-        <div class="table-responsive text-nowrap px-4 pb-4">
-            <table class="table table-hover" id="tableCompetitions">
+        <div class="table-responsive px-4 pb-4">
+            <table class="table table-hover dt-responsive nowrap" id="tableCompetitions" style="width: 100%;">
                 <thead>
                     <tr>
-                        <th style="width: 80px;">ปีการศึกษา</th>
                         <th>รายการแข่งขัน</th>
+                        <th style="width: 90px;">ปีการศึกษา</th>
                         <th>กิจกรรม/ประเภท</th>
-                        <th>ระดับ</th>
-                        <th>วันที่แข่งขัน</th>
+                        <th style="width: 110px;">ระดับ</th>
+                        <th style="width: 110px;">วันที่แข่งขัน</th>
                         <th style="width: 120px;">สถานะ</th>
-                        <th style="width: 150px;" class="text-center">จัดการ</th>
+                        <th style="width: 220px;" class="text-center">จัดการ</th>
                     </tr>
                 </thead>
                 <tbody class="table-border-bottom-0">
@@ -99,11 +103,11 @@
                     <?php else: ?>
                         <?php foreach ($competitions as $comp): ?>
                             <tr>
-                                <td><?= esc($comp->comp_academic_year) ?>/<?= esc($comp->comp_term) ?></td>
                                 <td>
                                     <div class="fw-bold"><?= esc($comp->comp_name) ?></div>
                                     <small class="text-muted"><i class="bx bx-map me-1"></i><?= esc($comp->comp_location ?: '-') ?></small>
                                 </td>
+                                <td><?= esc($comp->comp_academic_year) ?>/<?= esc($comp->comp_term) ?></td>
                                 <td><?= esc($comp->comp_activity) ?></td>
                                 <td>
                                     <span class="badge bg-label-info"><?= esc($comp->comp_level) ?></span>
@@ -249,132 +253,141 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // กำหนดปุ่มดูรายละเอียด (AJAX)
-    const viewButtons = document.querySelectorAll('.btn-view-detail');
+    // Initialize DataTable
+    const table = $('#tableCompetitions').DataTable({
+        responsive: true,
+        language: {
+            url: "https://cdn.datatables.net/plug-ins/1.13.7/i18n/Thai.json"
+        },
+        order: [[4, 'desc']], // เรียงตามวันที่แข่งขันเป็นหลัก (คอลัมน์ที่ 4)
+        columnDefs: [
+            { orderable: false, targets: 6 } // ปิดการกดเรียงลำดับในปุ่มการจัดการ (คอลัมน์ที่ 6)
+        ]
+    });
+
     const modalDetail = new bootstrap.Modal(document.getElementById('modalDetail'));
     
-    viewButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const id = this.getAttribute('data-id');
-            
-            fetch(`<?= base_url('admin/academic/competition/detail') ?>/${id}`)
-                .then(res => res.json())
-                .then(data => {
-                    if (data.status === 'success') {
-                        const comp = data.comp;
-                        
-                        document.getElementById('detName').textContent = comp.comp_name;
-                        document.getElementById('detActivity').textContent = comp.comp_activity;
-                        document.getElementById('detLevel').textContent = comp.comp_level;
-                        document.getElementById('detDate').textContent = data.thaiDate;
-                        document.getElementById('detLocation').textContent = `${comp.comp_location || '-'} (${comp.comp_organizer || '-'})`;
-                        
-                        // นักเรียน
-                        const studentContainer = document.getElementById('detStudents');
-                        studentContainer.innerHTML = '';
-                        if (data.students.length > 0) {
-                            data.students.forEach(st => {
-                                studentContainer.innerHTML += `
-                                    <li class="list-group-item px-0 py-1 d-flex align-items-center">
-                                        <i class="bx bx-chevron-right text-success me-1"></i>
-                                        <span>${st.StudentCode} - ${st.StudentPrefix}${st.StudentFirstName} ${st.StudentLastName} (ม.${st.StudentClass}/${st.StudentNumber})</span>
-                                    </li>`;
-                            });
-                        } else {
-                            studentContainer.innerHTML = '<li class="list-group-item text-muted px-0 py-1">ไม่มีข้อมูลรายชื่อ</li>';
-                        }
-
-                        // ครู
-                        const teacherContainer = document.getElementById('detTeachers');
-                        teacherContainer.innerHTML = '';
-                        if (data.teachers.length > 0) {
-                            data.teachers.forEach(t => {
-                                teacherContainer.innerHTML += `
-                                    <li class="list-group-item px-0 py-1 d-flex align-items-center">
-                                        <i class="bx bx-chevron-right text-success me-1"></i>
-                                        <span>${t.pers_prefix}${t.pers_firstname} ${t.pers_lastname}</span>
-                                    </li>`;
-                            });
-                        } else {
-                            teacherContainer.innerHTML = '<li class="list-group-item text-muted px-0 py-1">ไม่มีข้อมูลรายชื่อ</li>';
-                        }
-
-                        // รางวัล
-                        const awardsContainer = document.getElementById('detAwards');
-                        awardsContainer.innerHTML = '';
-                        if (data.awards.length > 0) {
-                            data.awards.forEach(aw => {
-                                awardsContainer.innerHTML += `<span class="badge bg-success" style="background-color: #15a362 !important; font-size: 0.9rem;"><i class="bx bx-trophy me-1"></i>${aw}</span>`;
-                            });
-                        } else {
-                            awardsContainer.innerHTML = '<span class="text-muted">ไม่ระบุรางวัล</span>';
-                        }
-
-                        // สื่อและไฟล์แนบ
-                        const mediaContainer = document.getElementById('detMedia');
-                        mediaContainer.innerHTML = '';
-                        
-                        // แสดงเกียรติบัตร
-                        if (data.certs.length > 0) {
-                            data.certs.forEach(file => {
-                                const ext = file.split('.').pop().toLowerCase();
-                                const isImg = ['jpg', 'jpeg', 'png', 'gif'].includes(ext);
-                                const fileUrl = `https://skj.nsnpao.go.th/uploads/academic/competitions/certificates/${file}`;
-                                
-                                mediaContainer.innerHTML += `
-                                    <div class="col-md-4 text-center border p-2 rounded bg-light">
-                                        <div class="small fw-semibold mb-1 text-truncate">เกียรติบัตร</div>
-                                        ${isImg ? `<img src="${fileUrl}" class="img-fluid rounded mb-2" style="max-height: 80px;">` : `<i class="bx bxs-file-pdf text-danger display-6 mb-2"></i>`}
-                                        <a href="${fileUrl}" target="_blank" class="btn btn-xs btn-outline-primary d-block w-100"><i class="bx bx-download me-1"></i>เปิดดูไฟล์</a>
-                                    </div>`;
-                            });
-                        }
-
-                        // แสดงภาพกิจกรรม
-                        if (data.images.length > 0) {
-                            data.images.forEach(file => {
-                                const fileUrl = `https://skj.nsnpao.go.th/uploads/academic/competitions/images/${file}`;
-                                mediaContainer.innerHTML += `
-                                    <div class="col-md-4 text-center border p-2 rounded bg-light">
-                                        <div class="small fw-semibold mb-1 text-truncate">ภาพกิจกรรม</div>
-                                        <img src="${fileUrl}" class="img-fluid rounded mb-2" style="max-height: 80px; object-fit: cover; width: 100%;">
-                                        <a href="${fileUrl}" target="_blank" class="btn btn-xs btn-outline-primary d-block w-100"><i class="bx bx-zoom-in me-1"></i>ดูรูปใหญ่</a>
-                                    </div>`;
-                            });
-                        }
-
-                        if (data.certs.length === 0 && data.images.length === 0) {
-                            mediaContainer.innerHTML = '<div class="col-12 text-muted">ไม่มีไฟล์แนบและรูปภาพผลงาน</div>';
-                        }
-
-                        // แสดงส่วนการอนุมัติสำหรับผู้ดูแลระบบ
-                        const adminSec = document.getElementById('adminApprovalSection');
-                        <?php 
-                        $status = session()->get('status');
-                        if (in_array($status, ['admin', 'manager', 'superadmin'])): 
-                        ?>
-                        adminSec.classList.remove('d-none');
-                        document.getElementById('statusCompId').value = comp.comp_id;
-                        document.getElementById('statusSelect').value = comp.comp_status;
-                        document.getElementById('statusFeedback').value = comp.comp_feedback || '';
-                        <?php else: ?>
-                        adminSec.classList.add('d-none');
-                        <?php endif; ?>
-
-                        modalDetail.show();
+    // กำหนดปุ่มดูรายละเอียด (AJAX) ด้วย Event Delegation เพื่อให้สามารถคลิกได้เมื่อมีการแบ่งหน้าหรือค้นหา
+    $(document).on('click', '.btn-view-detail', function() {
+        const id = $(this).attr('data-id');
+        
+        fetch(`<?= base_url('admin/academic/competition/detail') ?>/${id}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    const comp = data.comp;
+                    
+                    document.getElementById('detName').textContent = comp.comp_name;
+                    document.getElementById('detActivity').textContent = comp.comp_activity;
+                    document.getElementById('detLevel').textContent = comp.comp_level;
+                    document.getElementById('detDate').textContent = data.thaiDate;
+                    document.getElementById('detLocation').textContent = `${comp.comp_location || '-'} (${comp.comp_organizer || '-'})`;
+                    
+                    // นักเรียน
+                    const studentContainer = document.getElementById('detStudents');
+                    studentContainer.innerHTML = '';
+                    if (data.students.length > 0) {
+                        data.students.forEach(st => {
+                            studentContainer.innerHTML += `
+                                <li class="list-group-item px-0 py-1 d-flex align-items-center">
+                                    <i class="bx bx-chevron-right text-success me-1"></i>
+                                    <span>${st.StudentCode} - ${st.StudentPrefix}${st.StudentFirstName} ${st.StudentLastName} (ม.${st.StudentClass}/${st.StudentNumber})</span>
+                                </li>`;
+                        });
                     } else {
-                        Swal.fire({
-                            title: 'เกิดข้อผิดพลาด',
-                            text: 'ไม่สามารถดึงข้อมูลรายการนี้ได้',
-                            icon: 'error',
-                            confirmButtonColor: '#15a362'
+                        studentContainer.innerHTML = '<li class="list-group-item text-muted px-0 py-1">ไม่มีข้อมูลรายชื่อ</li>';
+                    }
+
+                    // ครู
+                    const teacherContainer = document.getElementById('detTeachers');
+                    teacherContainer.innerHTML = '';
+                    if (data.teachers.length > 0) {
+                        data.teachers.forEach(t => {
+                            teacherContainer.innerHTML += `
+                                <li class="list-group-item px-0 py-1 d-flex align-items-center">
+                                    <i class="bx bx-chevron-right text-success me-1"></i>
+                                    <span>${t.pers_prefix}${t.pers_firstname} ${t.pers_lastname}</span>
+                                </li>`;
+                        });
+                    } else {
+                        teacherContainer.innerHTML = '<li class="list-group-item text-muted px-0 py-1">ไม่มีข้อมูลรายชื่อ</li>';
+                    }
+
+                    // รางวัล
+                    const awardsContainer = document.getElementById('detAwards');
+                    awardsContainer.innerHTML = '';
+                    if (data.awards.length > 0) {
+                        data.awards.forEach(aw => {
+                            awardsContainer.innerHTML += `<span class="badge bg-success" style="background-color: #15a362 !important; font-size: 0.9rem;"><i class="bx bx-trophy me-1"></i>${aw}</span>`;
+                        });
+                    } else {
+                        awardsContainer.innerHTML = '<span class="text-muted">ไม่ระบุรางวัล</span>';
+                    }
+
+                    // สื่อและไฟล์แนบ
+                    const mediaContainer = document.getElementById('detMedia');
+                    mediaContainer.innerHTML = '';
+                    
+                    // แสดงเกียรติบัตร
+                    if (data.certs.length > 0) {
+                        data.certs.forEach(file => {
+                            const ext = file.split('.').pop().toLowerCase();
+                            const isImg = ['jpg', 'jpeg', 'png', 'gif'].includes(ext);
+                            const fileUrl = `https://skj.nsnpao.go.th/uploads/academic/competitions/certificates/${file}`;
+                            
+                            mediaContainer.innerHTML += `
+                                <div class="col-md-4 text-center border p-2 rounded bg-light">
+                                    <div class="small fw-semibold mb-1 text-truncate">เกียรติบัตร</div>
+                                    ${isImg ? `<img src="${fileUrl}" class="img-fluid rounded mb-2" style="max-height: 80px;">` : `<i class="bx bxs-file-pdf text-danger display-6 mb-2"></i>`}
+                                    <a href="${fileUrl}" target="_blank" class="btn btn-xs btn-outline-primary d-block w-100"><i class="bx bx-download me-1"></i>เปิดดูไฟล์</a>
+                                </div>`;
                         });
                     }
-                })
-                .catch(err => {
-                    console.error(err);
-                });
-        });
+
+                    // แสดงภาพกิจกรรม
+                    if (data.images.length > 0) {
+                        data.images.forEach(file => {
+                            const fileUrl = `https://skj.nsnpao.go.th/uploads/academic/competitions/images/${file}`;
+                            mediaContainer.innerHTML += `
+                                <div class="col-md-4 text-center border p-2 rounded bg-light">
+                                    <div class="small fw-semibold mb-1 text-truncate">ภาพกิจกรรม</div>
+                                    <img src="${fileUrl}" class="img-fluid rounded mb-2" style="max-height: 80px; object-fit: cover; width: 100%;">
+                                    <a href="${fileUrl}" target="_blank" class="btn btn-xs btn-outline-primary d-block w-100"><i class="bx bx-zoom-in me-1"></i>ดูรูปใหญ่</a>
+                                </div>`;
+                        });
+                    }
+
+                    if (data.certs.length === 0 && data.images.length === 0) {
+                        mediaContainer.innerHTML = '<div class="col-12 text-muted">ไม่มีไฟล์แนบและรูปภาพผลงาน</div>';
+                    }
+
+                    // แสดงส่วนการอนุมัติสำหรับผู้ดูแลระบบ
+                    const adminSec = document.getElementById('adminApprovalSection');
+                    <?php 
+                    $status = session()->get('status');
+                    if (in_array($status, ['admin', 'manager', 'superadmin'])): 
+                    ?>
+                    adminSec.classList.remove('d-none');
+                    document.getElementById('statusCompId').value = comp.comp_id;
+                    document.getElementById('statusSelect').value = comp.comp_status;
+                    document.getElementById('statusFeedback').value = comp.comp_feedback || '';
+                    <?php else: ?>
+                    adminSec.classList.add('d-none');
+                    <?php endif; ?>
+
+                    modalDetail.show();
+                } else {
+                    Swal.fire({
+                        title: 'เกิดข้อผิดพลาด',
+                        text: 'ไม่สามารถดึงข้อมูลรายการนี้ได้',
+                        icon: 'error',
+                        confirmButtonColor: '#15a362'
+                    });
+                }
+            })
+            .catch(err => {
+                console.error(err);
+            });
     });
 
     // การส่งข้อมูลอนุมัติของ Admin
@@ -412,25 +425,22 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // ฟังก์ชันลบรายการแข่งขัน
-    const deleteButtons = document.querySelectorAll('.btn-delete-comp');
-    deleteButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const url = this.getAttribute('data-url');
-            Swal.fire({
-                title: 'ยืนยันการลบข้อมูล?',
-                text: "ข้อมูลนี้จะถูกลบออกจากระบบอย่างถาวรและไม่สามารถกู้คืนได้!",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#15a362',
-                cancelButtonColor: '#8592a3',
-                confirmButtonText: 'ใช่, ต้องการลบ!',
-                cancelButtonText: 'ยกเลิก'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    window.location.href = url;
-                }
-            });
+    // ฟังก์ชันลบรายการแข่งขัน ด้วย Event Delegation
+    $(document).on('click', '.btn-delete-comp', function() {
+        const url = $(this).attr('data-url');
+        Swal.fire({
+            title: 'ยืนยันการลบข้อมูล?',
+            text: "ข้อมูลนี้จะถูกลบออกจากระบบอย่างถาวรและไม่สามารถกู้คืนได้!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#15a362',
+            cancelButtonColor: '#8592a3',
+            confirmButtonText: 'ใช่, ต้องการลบ!',
+            cancelButtonText: 'ยกเลิก'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = url;
+            }
         });
     });
 
