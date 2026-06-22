@@ -48,7 +48,11 @@ class ConCompetition extends BaseController
     public function index()
     {
         $userId = session()->get('login_id');
-        $userStatus = session()->get('status');
+        
+        // ตรวจสอบสิทธิ์ที่แท้จริงจากฐานข้อมูล
+        $db = \Config\Database::connect();
+        $roleData = $db->table('tb_admin_rloes')->where('admin_rloes_userid', $userId)->get()->getRow();
+        $userStatus = $roleData ? $roleData->admin_rloes_status : 'teacher';
 
         // Admin/Superadmin/Manager เห็นข้อมูลทั้งหมด, ครูปกติเห็นเฉพาะของตัวเอง
         if (in_array($userStatus, ['admin', 'superadmin', 'manager'])) {
@@ -68,7 +72,8 @@ class ConCompetition extends BaseController
 
         $data = [
             'title'        => 'ระบบบันทึกผลงานการแข่งขัน',
-            'competitions' => $competitions
+            'competitions' => $competitions,
+            'userStatus'   => $userStatus
         ];
 
         return view('admin/Academic/AdminCompetition/manage_competition', $data);
@@ -98,8 +103,11 @@ class ConCompetition extends BaseController
         }
 
         // ตรวจสอบสิทธิ์: ครูปกติแก้ไขได้เฉพาะข้อมูลของตัวเอง
-        $userStatus = session()->get('status');
         $userId = session()->get('login_id');
+        $db = \Config\Database::connect();
+        $roleData = $db->table('tb_admin_rloes')->where('admin_rloes_userid', $userId)->get()->getRow();
+        $userStatus = $roleData ? $roleData->admin_rloes_status : 'teacher';
+
         if (!in_array($userStatus, ['admin', 'superadmin', 'manager']) && $comp->comp_usersend != $userId) {
             return redirect()->to(base_url('admin/academic/competition'))->with('error', 'คุณไม่มีสิทธิ์แก้ไขข้อมูลรายการนี้');
         }
@@ -223,8 +231,11 @@ class ConCompetition extends BaseController
         }
 
         // ตรวจสอบสิทธิ์: ครูปกติลบได้เฉพาะข้อมูลของตัวเอง
-        $userStatus = session()->get('status');
         $userId = session()->get('login_id');
+        $db = \Config\Database::connect();
+        $roleData = $db->table('tb_admin_rloes')->where('admin_rloes_userid', $userId)->get()->getRow();
+        $userStatus = $roleData ? $roleData->admin_rloes_status : 'teacher';
+
         if (!in_array($userStatus, ['admin', 'superadmin', 'manager']) && $comp->comp_usersend != $userId) {
             return redirect()->to(base_url('admin/academic/competition'))->with('error', 'คุณไม่มีสิทธิ์ลบข้อมูลรายการนี้');
         }

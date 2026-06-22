@@ -96,11 +96,7 @@
                     </tr>
                 </thead>
                 <tbody class="table-border-bottom-0">
-                    <?php if (empty($competitions)): ?>
-                        <tr>
-                            <td colspan="7" class="text-center py-4 text-muted">ไม่พบข้อมูลบันทึกผลงานการแข่งขัน</td>
-                        </tr>
-                    <?php else: ?>
+                    <?php if (!empty($competitions)): ?>
                         <?php foreach ($competitions as $comp): ?>
                             <tr>
                                 <td>
@@ -364,8 +360,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     // แสดงส่วนการอนุมัติสำหรับผู้ดูแลระบบ
                     const adminSec = document.getElementById('adminApprovalSection');
                     <?php 
-                    $status = session()->get('status');
-                    if (in_array($status, ['admin', 'manager', 'superadmin'])): 
+                    if (in_array($userStatus, ['admin', 'manager', 'superadmin'])): 
                     ?>
                     adminSec.classList.remove('d-none');
                     document.getElementById('statusCompId').value = comp.comp_id;
@@ -448,49 +443,58 @@ document.addEventListener('DOMContentLoaded', function() {
     const btnStartAdminTour = document.getElementById('btnStartAdminTour');
     if (btnStartAdminTour) {
         btnStartAdminTour.addEventListener('click', function() {
+            const steps = [
+                {
+                    title: '🔑 ระบบจัดการผลงานการแข่งขัน',
+                    intro: 'ยินดีต้อนรับเข้าสู่หน้ารวมและจัดการข้อมูลผลการแข่งขันหลังบ้านครับ'
+                },
+                {
+                    element: '#tourAdminHeader',
+                    title: '📌 ภาพรวมระบบจัดการ',
+                    intro: 'หน้านี้ใช้สำหรับให้คุณครูและผู้ดูแลระบบทำการเพิ่มข้อมูล อนุมัติ หรือตีกลับผลงานที่ส่งเข้ามาแก้ไขครับ',
+                    position: 'bottom'
+                },
+                {
+                    element: '#btnCreateComp',
+                    title: '➕ บันทึกผลงานการแข่งขันใหม่',
+                    intro: 'หากต้องการบันทึกข้อมูลการแข่งขันของนักเรียนเพิ่มเติม ให้กดที่ปุ่มนี้เพื่อเปิดฟอร์มสำหรับกรอกข้อมูลและระบุเกียรติบัตรครับ',
+                    position: 'bottom'
+                },
+                {
+                    element: '#tourAdminTableCard',
+                    title: '📂 ตารางรายการผลงานทั้งหมด',
+                    intro: 'ตารางรวบรวมรายการที่คุณครูบันทึกเข้ามา พร้อมคอลัมน์สถานะ (อนุมัติแล้ว/รอตรวจสอบ/ตีกลับให้แก้ไข)',
+                    position: 'top'
+                }
+            ];
+
+            if (document.querySelector('.btn-view-detail')) {
+                steps.push({
+                    element: document.querySelector('.btn-view-detail'),
+                    title: '👁️ ดูข้อมูลเชิงลึก',
+                    intro: 'คลิกเพื่อตรวจสอบรายละเอียดการแข่งขัน รายชื่อผู้เข้าร่วม เกียรติบัตร และภาพประกอบ (สำหรับ Admin จะสามารถอนุมัติหรือตีกลับจากตรงนี้ได้)',
+                    position: 'bottom'
+                });
+            }
+            if (document.querySelector('.btn-outline-warning')) {
+                steps.push({
+                    element: document.querySelector('.btn-outline-warning'),
+                    title: '✏️ แก้ไขข้อมูล',
+                    intro: 'คลิกที่ปุ่มนี้เพื่อเข้าไปปรับปรุงรายละเอียด หรือแก้ไขรายการการแข่งขันที่ถูกตีกลับ',
+                    position: 'bottom'
+                });
+            }
+            if (document.querySelector('.btn-outline-danger')) {
+                steps.push({
+                    element: document.querySelector('.btn-outline-danger'),
+                    title: '🗑️ ลบรายการ',
+                    intro: 'หากบันทึกข้อมูลผิดพลาดและต้องการเอาออกจากระบบ สามารถใช้ปุ่มนี้ในการลบข้อมูลได้ครับ (ต้องได้รับการยืนยันอีกครั้ง)',
+                    position: 'bottom'
+                });
+            }
+
             introJs().setOptions({
-                steps: [
-                    {
-                        title: '🔑 ระบบจัดการผลงานการแข่งขัน',
-                        intro: 'ยินดีต้อนรับเข้าสู่หน้ารวมและจัดการข้อมูลผลการแข่งขันหลังบ้านครับ'
-                    },
-                    {
-                        element: '#tourAdminHeader',
-                        title: '📌 ภาพรวมระบบจัดการ',
-                        intro: 'หน้านี้ใช้สำหรับให้คุณครูและผู้ดูแลระบบทำการเพิ่มข้อมูล อนุมัติ หรือตีกลับผลงานที่ส่งเข้ามาแก้ไขครับ',
-                        position: 'bottom'
-                    },
-                    {
-                        element: '#btnCreateComp',
-                        title: '➕ บันทึกผลงานการแข่งขันใหม่',
-                        intro: 'หากต้องการบันทึกข้อมูลการแข่งขันของนักเรียนเพิ่มเติม ให้กดที่ปุ่มนี้เพื่อเปิดฟอร์มสำหรับกรอกข้อมูลและระบุเกียรติบัตรครับ',
-                        position: 'bottom'
-                    },
-                    {
-                        element: '#tourAdminTableCard',
-                        title: '📂 ตารางรายการผลงานทั้งหมด',
-                        intro: 'ตารางรวบรวมรายการที่คุณครูบันทึกเข้ามา พร้อมคอลัมน์สถานะ (อนุมัติแล้ว/รอตรวจสอบ/ตีกลับให้แก้ไข)',
-                        position: 'top'
-                    },
-                    {
-                        element: document.querySelector('.btn-view-detail'),
-                        title: '👁️ ดูข้อมูลเชิงลึก',
-                        intro: 'คลิกเพื่อตรวจสอบรายละเอียดการแข่งขัน รายชื่อผู้เข้าร่วม เกียรติบัตร และภาพประกอบ (สำหรับ Admin จะสามารถอนุมัติหรือตีกลับจากตรงนี้ได้)',
-                        position: 'bottom'
-                    },
-                    {
-                        element: document.querySelector('.btn-outline-warning'),
-                        title: '✏️ แก้ไขข้อมูล',
-                        intro: 'คลิกที่ปุ่มนี้เพื่อเข้าไปปรับปรุงรายละเอียด หรือแก้ไขรายการการแข่งขันที่ถูกตีกลับ',
-                        position: 'bottom'
-                    },
-                    {
-                        element: document.querySelector('.btn-outline-danger'),
-                        title: '🗑️ ลบรายการ',
-                        intro: 'หากบันทึกข้อมูลผิดพลาดและต้องการเอาออกจากระบบ สามารถใช้ปุ่มนี้ในการลบข้อมูลได้ครับ (ต้องได้รับการยืนยันอีกครั้ง)',
-                        position: 'bottom'
-                    }
-                ],
+                steps: steps,
                 nextLabel: 'ถัดไป ›',
                 prevLabel: '‹ ย้อนกลับ',
                 doneLabel: 'เสร็จสิ้น 🏁',
