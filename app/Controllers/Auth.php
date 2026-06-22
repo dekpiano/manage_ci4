@@ -20,6 +20,7 @@ class Auth extends BaseController
             if (in_array($status, ['admin', 'academic', 'general', 'superadmin', 'manager'])) {
                 return redirect()->to(base_url('Admin/Home'));
             }
+            return redirect()->to(base_url('admin/academic/competition'));
         }
 
         $config = config('Google');

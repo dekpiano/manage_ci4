@@ -14,8 +14,8 @@ class AdminAuthFilter implements FilterInterface
      */
     protected array $publicExcept = [
         'LoginAdmin',
-        'admin/academic/competition/detail',
-        'Admin/academic/competition/detail',
+        'admin/academic/competition',
+        'Admin/academic/competition',
     ];
 
     public function before(RequestInterface $request, $arguments = null)
