@@ -83,16 +83,15 @@
             <h5 class="card-title mb-0">รายการบันทึกผลงานทั้งหมด</h5>
         </div>
         <div class="table-responsive px-4 pb-4">
-            <table class="table table-hover dt-responsive nowrap" id="tableCompetitions" style="width: 100%;">
+            <table class="table table-hover dt-responsive" id="tableCompetitions" style="width: 100%;">
                 <thead>
                     <tr>
-                        <th>รายการแข่งขัน</th>
-                        <th style="width: 90px;">ปีการศึกษา</th>
-                        <th>กิจกรรม/ประเภท</th>
-                        <th style="width: 110px;">ระดับ</th>
-                        <th style="width: 110px;">วันที่แข่งขัน</th>
-                        <th style="width: 120px;">สถานะ</th>
-                        <th style="width: 220px;" class="text-center">จัดการ</th>
+                        <th style="width: 45%;" class="all">กิจกรรม / รายการแข่งขัน</th>
+                        <th style="width: 90px;" class="min-desktop">ปีการศึกษา</th>
+                        <th style="width: 110px;" class="min-desktop">ระดับ</th>
+                        <th style="width: 110px;" class="min-desktop">วันที่แข่งขัน</th>
+                        <th style="width: 120px;" class="min-desktop">สถานะ</th>
+                        <th style="width: 220px;" class="all text-center">จัดการ</th>
                     </tr>
                 </thead>
                 <tbody class="table-border-bottom-0">
@@ -100,11 +99,17 @@
                         <?php foreach ($competitions as $comp): ?>
                             <tr>
                                 <td>
-                                    <div class="fw-bold"><?= esc($comp->comp_name) ?></div>
-                                    <small class="text-muted"><i class="bx bx-map me-1"></i><?= esc($comp->comp_location ?: '-') ?></small>
+                                    <div class="fw-bold text-dark fs-6">
+                                        <?= esc($comp->comp_activity) ?>
+                                    </div>
+                                    <div class="fw-bold text-secondary mt-1" style="font-size: 0.9rem;">
+                                        <i class="bx bx-trophy me-1 text-warning"></i><?= esc($comp->comp_name) ?>
+                                    </div>
+                                    <small class="text-muted d-block">
+                                        <i class="bx bx-map me-1"></i><?= esc($comp->comp_location ?: '-') ?>
+                                    </small>
                                 </td>
                                 <td><?= esc($comp->comp_academic_year) ?>/<?= esc($comp->comp_term) ?></td>
-                                <td><?= esc($comp->comp_activity) ?></td>
                                 <td>
                                     <span class="badge bg-label-info"><?= esc($comp->comp_level) ?></span>
                                 </td>
@@ -255,9 +260,9 @@ document.addEventListener('DOMContentLoaded', function() {
         language: {
             url: "https://cdn.datatables.net/plug-ins/1.13.7/i18n/Thai.json"
         },
-        order: [[4, 'desc']], // เรียงตามวันที่แข่งขันเป็นหลัก (คอลัมน์ที่ 4)
+        order: [[3, 'desc']], // เรียงตามวันที่แข่งขันเป็นหลัก (คอลัมน์ที่ 3)
         columnDefs: [
-            { orderable: false, targets: 6 } // ปิดการกดเรียงลำดับในปุ่มการจัดการ (คอลัมน์ที่ 6)
+            { orderable: false, targets: 5 } // ปิดการกดเรียงลำดับในปุ่มการจัดการ (คอลัมน์ที่ 5)
         ]
     });
 

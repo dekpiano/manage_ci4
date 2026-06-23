@@ -1,10 +1,10 @@
 <?= $this->extend('user/layout/main') ?>
 
 <?= $this->section('extra_css') ?>
-    <!-- DataTables Bootstrap 5 CSS -->
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
-    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.bootstrap5.min.css">
-    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css">
+<!-- DataTables Bootstrap 5 CSS -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.bootstrap5.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css">
 <?= $this->endSection() ?>
 
 <?= $this->section('content') ?>
@@ -143,32 +143,40 @@
             <h5 class="card-title mb-0 fw-bold" style="color: #1b5e20;">ทำเนียบผลงานและรางวัลที่ได้รับ</h5>
         </div>
         <div class="table-responsive px-4 pb-4">
-            <table class="table table-hover dt-responsive nowrap" id="publicTableCompetitions" style="width: 100%;">
+            <table class="table table-hover dt-responsive" id="publicTableCompetitions" style="width: 100%;">
                 <thead>
                     <tr>
-                        <th>รายการแข่งขันหลัก</th>
-                        <th style="width: 90px;">ปีการศึกษา</th>
-                        <th>กิจกรรม/ประเภทที่แข่งขัน</th>
-                        <th style="width: 110px;">ระดับ</th>
-                        <th style="width: 110px;">วันที่</th>
-                        <th style="width: 120px;" class="text-center">รายละเอียด</th>
+                        <th style="width: 45%;" class="all">กิจกรรม / รายการแข่งขัน</th>
+                        <th style="width: 90px;" class="min-desktop">ปีการศึกษา</th>
+                        <th style="width: 110px;" class="min-desktop">ระดับ</th>
+                        <th style="width: 110px;" class="min-desktop">วันที่</th>
+                        <th style="width: 120px;" class="all text-center">รายละเอียด</th>
                     </tr>
                 </thead>
                 <tbody class="table-border-bottom-0">
                     <?php if (empty($competitions)): ?>
                         <tr>
-                            <td colspan="6" class="text-center py-4 text-muted">
+                            <td colspan="5" class="text-center py-4 text-muted">
                                 ยังไม่มีการบันทึกผลงานการแข่งขันที่ได้รับการอนุมัติในระบบ</td>
                         </tr>
                     <?php else: ?>
                         <?php foreach ($competitions as $comp): ?>
                             <tr>
                                 <td>
-                                    <div class="fw-bold text-dark"><?= esc($comp->comp_name) ?></div>
-                                    <small class="text-muted"><i class="bx bx-map me-1"></i><?= esc($comp->comp_location ?: '-') ?></small>
+                                    <div class="fw-bold text-dark fs-6 text-truncate" style="max-width: 40vw;"
+                                        title="<?= esc($comp->comp_activity) ?>">
+                                        <?= esc($comp->comp_activity) ?>
+                                    </div>
+                                    <div class="fw-bold text-secondary text-truncate mt-1" style="max-width: 40vw; font-size: 0.9rem;"
+                                        title="<?= esc($comp->comp_name) ?>">
+                                        <i class="bx bx-trophy me-1 text-warning"></i><?= esc($comp->comp_name) ?>
+                                    </div>
+                                    <small class="text-muted text-truncate d-inline-block" style="max-width: 40vw;"
+                                        title="<?= esc($comp->comp_location ?: '-') ?>">
+                                        <i class="bx bx-map me-1"></i><?= esc($comp->comp_location ?: '-') ?>
+                                    </small>
                                 </td>
                                 <td><?= esc($comp->comp_academic_year) ?>/<?= esc($comp->comp_term) ?></td>
-                                <td><?= esc($comp->comp_activity) ?></td>
                                 <td>
                                     <span class="badge bg-label-success"
                                         style="color: #15a362; background-color: rgba(21, 163, 98, 0.1);"><?= esc($comp->comp_level) ?></span>
@@ -284,9 +292,9 @@
             language: {
                 url: "https://cdn.datatables.net/plug-ins/1.13.7/i18n/Thai.json"
             },
-            order: [[4, 'desc']], // เรียงตามวันที่แข่งขันเป็นหลัก (คอลัมน์ที่ 4)
+            order: [[3, 'desc']], // เรียงตามวันที่แข่งขันเป็นหลัก (คอลัมน์ที่ 3)
             columnDefs: [
-                { orderable: false, targets: 5 } // ปิดเรียงลำดับปุ่มจัดการ/รายละเอียด (คอลัมน์ที่ 5)
+                { orderable: false, targets: 4 } // ปิดเรียงลำดับปุ่มจัดการ/รายละเอียด (คอลัมน์ที่ 4)
             ]
         });
 
@@ -452,7 +460,7 @@
 
 <?php if (session()->getFlashdata('error')): ?>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             Swal.fire({
                 title: 'เกิดข้อผิดพลาด!',
                 text: '<?= esc(session()->getFlashdata('error')) ?>',
@@ -466,7 +474,7 @@
 
 <?php if (session()->getFlashdata('success')): ?>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             Swal.fire({
                 title: 'สำเร็จ!',
                 text: '<?= esc(session()->getFlashdata('success')) ?>',

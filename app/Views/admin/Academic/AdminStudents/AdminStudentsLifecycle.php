@@ -501,6 +501,7 @@ $(document).ready(function() {
     }
 
     $(".student-be-datepicker").flatpickr({
+        disableMobile: true,
         dateFormat: "Y-m-d", // Sends A.D. ISO to Backend
         altInput: true,      // Show another format to user
         altFormat: "d/m/Y",  // Desired format

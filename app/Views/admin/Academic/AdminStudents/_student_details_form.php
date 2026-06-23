@@ -210,6 +210,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize Flatpickr for B.E. (พ.ศ.)
     if (typeof flatpickr !== 'undefined') {
         flatpickr(".student-be-datepicker", {
+            disableMobile: true,
             dateFormat: "Y-m-d", // ส่งค่า ค.ศ. ISO ไปที่ Controller
             altInput: true,      // แสดงผลอีกรูปแบบให้ผู้ใช้เห็น
             altFormat: "d/m/Y",  // รูปแบบวัน/เดือน/ปี

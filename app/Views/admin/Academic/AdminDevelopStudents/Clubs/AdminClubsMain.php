@@ -373,6 +373,7 @@ $(document).ready(function() {
     // Initialize datepickers inside any of the setting modals when shown
     $('#modalClubStudentSettings, #modalClubTeacherSettings, #modalClubSystemSettings').on('shown.bs.modal', function () {
         flatpickr(".club-onoff-datepicker", {
+            disableMobile: true,
             dateFormat: "Y-m-d",
             locale: "th",
             onChange: function(selectedDates, dateStr, instance) {

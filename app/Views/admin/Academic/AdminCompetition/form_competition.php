@@ -587,6 +587,7 @@ $(document).ready(function() {
     // เรียกใช้งาน Flatpickr สไตล์ Sneat (แสดงผลปี พ.ศ.)
     if (typeof flatpickr !== 'undefined') {
         flatpickr(".flatpickr-date", {
+            disableMobile: true,
             dateFormat: "Y-m-d", // บันทึกเป็น ค.ศ. (ISO) ไปยังฐานข้อมูล
             altInput: true,      // เปิดการแสดงผลแบบทางเลือก
             altFormat: "d/m/Y",  // รูปแบบ วัน/เดือน/ปีพ.ศ.
