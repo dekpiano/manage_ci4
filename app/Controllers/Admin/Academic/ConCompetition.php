@@ -156,14 +156,30 @@ class ConCompetition extends BaseController
         $certFiles = json_decode($certFilesJson, true) ?: [];
         $images = json_decode($imagesJson, true) ?: [];
 
-        // กรณีการแก้ไขข้อมูลและต้องการรวมกับไฟล์ของเดิมที่มีอยู่แล้ว
+        // กรณีการแก้ไขข้อมูล
         if ($id && $existingComp) {
             $oldCerts = json_decode($existingComp->comp_certificate_files, true) ?: [];
             $oldImages = json_decode($existingComp->comp_images, true) ?: [];
             
-            // นำไฟล์ใหม่ที่เพิ่งอัปโหลดสำเร็จไปรวมกับไฟล์เดิม
-            $certFiles = array_merge($oldCerts, $certFiles);
-            $images = array_merge($oldImages, $images);
+            // ถ้ามีการอัปโหลดเกียรติบัตรใหม่ ให้ลบของเก่าทิ้งและใช้ของใหม่แทน
+            if (!empty($certFiles)) {
+                if (!empty($oldCerts)) {
+                    $this->deleteFromRemoteApi('academic/competitions/certificates', $oldCerts);
+                }
+            } else {
+                // ถ้าไม่มีการอัปโหลดใหม่ ให้คงของเก่าไว้
+                $certFiles = $oldCerts;
+            }
+
+            // ถ้ามีการอัปโหลดรูปภาพใหม่ ให้ลบของเก่าทิ้งและใช้ของใหม่แทน
+            if (!empty($images)) {
+                if (!empty($oldImages)) {
+                    $this->deleteFromRemoteApi('academic/competitions/images', $oldImages);
+                }
+            } else {
+                // ถ้าไม่มีการอัปโหลดใหม่ ให้คงของเก่าไว้
+                $images = $oldImages;
+            }
         }
 
         // รับข้อมูล Array จาก Form
@@ -221,6 +237,41 @@ class ConCompetition extends BaseController
     }
 
     /**
+     * ส่งคำขอลบไฟล์ไปยังเซิร์ฟเวอร์หลักปลายทาง
+     */
+    private function deleteFromRemoteApi($path, array $fileNames)
+    {
+        $deleteUrl = getenv('upload.server.delete.url') ?: 'https://skj.nsnpao.go.th/delete.php';
+        $client = \Config\Services::curlrequest();
+        $token = getenv('upload.server.token') ?: 'Dekpiano2025!!';
+
+        log_message('info', 'Attempting remote delete. URL: ' . $deleteUrl . ', Path: ' . $path . ', Files: ' . json_encode($fileNames));
+
+        try {
+            $response = $client->setJSON([
+                'path' => $path,
+                'files' => $fileNames
+            ])->setHeader('X-Auth-Token', $token)
+              ->request('POST', $deleteUrl);
+            
+            $statusCode = $response->getStatusCode();
+            $body = $response->getBody();
+            
+            log_message('info', 'Remote delete response code: ' . $statusCode . ', Body: ' . $body);
+
+            if ($statusCode === 200) {
+                $decoded = json_decode($body);
+                if ($decoded && isset($decoded->status) && $decoded->status === 'success') {
+                    return true;
+                }
+            }
+        } catch (\Exception $e) {
+            log_message('error', 'Failed to delete remote files for path ' . $path . ': ' . $e->getMessage());
+        }
+        return false;
+    }
+
+    /**
      * ลบรายการการแข่งขัน
      */
     public function delete($id)
@@ -240,8 +291,24 @@ class ConCompetition extends BaseController
             return redirect()->to(base_url('admin/academic/competition'))->with('error', 'คุณไม่มีสิทธิ์ลบข้อมูลรายการนี้');
         }
 
+        // ลบเกยรติบัตรบนเซิร์ฟเวอร์ปลายทาง
+        if (!empty($comp->comp_certificate_files)) {
+            $certs = json_decode($comp->comp_certificate_files, true);
+            if (is_array($certs) && !empty($certs)) {
+                $this->deleteFromRemoteApi('academic/competitions/certificates', $certs);
+            }
+        }
+
+        // ลบรูปภาพกิจกรรมบนเซิร์ฟเวอร์ปลายทาง
+        if (!empty($comp->comp_images)) {
+            $images = json_decode($comp->comp_images, true);
+            if (is_array($images) && !empty($images)) {
+                $this->deleteFromRemoteApi('academic/competitions/images', $images);
+            }
+        }
+
         if ($this->modComp->delete($id)) {
-            return redirect()->to(base_url('admin/academic/competition'))->with('success', 'ลบข้อมูลเรียบร้อยแล้ว');
+            return redirect()->to(base_url('admin/academic/competition'))->with('success', 'ลบข้อมูลและไฟล์แนบเรียบร้อยแล้ว');
         }
         return redirect()->to(base_url('admin/academic/competition'))->with('error', 'ไม่สามารถลบข้อมูลได้');
     }
@@ -303,6 +370,110 @@ class ConCompetition extends BaseController
     }
 
     /**
+     * ช่วยย่อขนาดและบีบอัดรูปภาพเพื่อลดขนาดไฟล์ก่อนส่งต่อไปยังเซิร์ฟเวอร์หลัก
+     */
+    private function compressImageIfNeeded($filePath, $filename)
+    {
+        if (!extension_loaded('gd')) {
+            return;
+        }
+
+        $extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+        $allowedExtensions = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
+        if (!in_array($extension, $allowedExtensions)) {
+            return;
+        }
+
+        // โหลดรูปภาพตามประเภท
+        $image = null;
+        switch ($extension) {
+            case 'jpg':
+            case 'jpeg':
+                if (function_exists('imagecreatefromjpeg')) {
+                    $image = @imagecreatefromjpeg($filePath);
+                }
+                break;
+            case 'png':
+                if (function_exists('imagecreatefrompng')) {
+                    $image = @imagecreatefrompng($filePath);
+                }
+                break;
+            case 'webp':
+                if (function_exists('imagecreatefromwebp')) {
+                    $image = @imagecreatefromwebp($filePath);
+                }
+                break;
+            case 'gif':
+                if (function_exists('imagecreatefromgif')) {
+                    $image = @imagecreatefromgif($filePath);
+                }
+                break;
+        }
+
+        if (!$image) {
+            return; // ไม่สามารถโหลดรูปภาพได้ ให้ข้ามไปใช้ไฟล์เดิม
+        }
+
+        $width = imagesx($image);
+        $height = imagesy($image);
+        $maxDimension = 1200; // จำกัดความกว้าง/สูงสูงสุด 1200px
+        $quality = 70;       // คุณภาพ 70%
+
+        // ถ้ารูปมีขนาดใหญ่เกินไป ให้ย่อขนาดลงก่อน
+        if ($width > $maxDimension || $height > $maxDimension) {
+            if ($width > $height) {
+                $newWidth = $maxDimension;
+                $newHeight = (int)($height * ($maxDimension / $width));
+            } else {
+                $newHeight = $maxDimension;
+                $newWidth = (int)($width * ($maxDimension / $height));
+            }
+
+            $newImage = imagecreatetruecolor($newWidth, $newHeight);
+
+            // รักษาความโปร่งใสสำหรับ PNG/WebP/GIF
+            if ($extension === 'png' || $extension === 'webp' || $extension === 'gif') {
+                imagealphablending($newImage, false);
+                imagesavealpha($newImage, true);
+                $transparent = imagecolorallocatealpha($newImage, 255, 255, 255, 127);
+                imagefilledrectangle($newImage, 0, 0, $newWidth, $newHeight, $transparent);
+            }
+
+            imagecopyresampled($newImage, $image, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
+            imagedestroy($image);
+            $image = $newImage;
+        }
+
+        // เซฟทับไฟล์เดิมด้วยการบีบอัดคุณภาพ
+        switch ($extension) {
+            case 'jpg':
+            case 'jpeg':
+                if (function_exists('imagejpeg')) {
+                    imagejpeg($image, $filePath, $quality);
+                }
+                break;
+            case 'png':
+                if (function_exists('imagepng')) {
+                    // PNG compression level 0-9
+                    imagepng($image, $filePath, 7);
+                }
+                break;
+            case 'webp':
+                if (function_exists('imagewebp')) {
+                    imagewebp($image, $filePath, $quality);
+                }
+                break;
+            case 'gif':
+                if (function_exists('imagegif')) {
+                    imagegif($image, $filePath);
+                }
+                break;
+        }
+
+        imagedestroy($image);
+    }
+
+    /**
      * Proxy อัปโหลดไฟล์ชิ้นส่วนแบบ Chunk เพื่อส่งต่อไปที่เครื่องเซิร์ฟเวอร์อัปโหลดหลักภายนอก
      */
     public function upload_proxy()
@@ -325,106 +496,62 @@ class ConCompetition extends BaseController
         $chunkIndex = $this->request->getPost('chunk_index');
         $totalChunks = $this->request->getPost('total_chunks');
 
-        // หากเป็นไฟล์ขนาดเล็ก (ไม่มีการแบ่ง Chunk) ให้ยิงส่งตรงไปเลย
+        log_message('error', 'Upload Proxy Chunk Data: chunk_index=' . var_export($chunkIndex, true) . ', total_chunks=' . var_export($totalChunks, true) . ', filename=' . $originalName);
+
+        $target_url = getenv('upload.server.url') ?: 'https://skj.nsnpao.go.th/upload.php';
+        $token = getenv('upload.server.token') ?: 'Dekpiano2025!!';
+
+        // เตรียมข้อมูลส่งต่อ
+        $postFields = [
+            'path'     => $path,
+            'filename' => $originalName
+        ];
+
+        // ถ้าเป็น Chunked upload ให้แนบข้อมูล Chunk ไปด้วยเพื่อให้เซิร์ฟเวอร์ปลายทางประกอบไฟล์
+        if ($chunkIndex !== null && $totalChunks !== null) {
+            $postFields['chunk_index'] = (string)$chunkIndex;
+            $postFields['total_chunks'] = (string)$totalChunks;
+        }
+
+        $filePath = $file->getTempName();
+
+        // บีบอัดและย่อรูปภาพก่อนส่ง (กรณีไม่ใช่ Chunked และเป็นไฟล์รูปภาพ)
         if ($chunkIndex === null || $totalChunks === null) {
-            $target_url = getenv('upload.server.url') ?: 'https://skj.nsnpao.go.th/upload.php';
-
-            $ch = curl_init();
-            curl_setopt($ch, CURLOPT_URL, $target_url);
-            curl_setopt($ch, CURLOPT_POST, true);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, [
-                'file'     => new \CURLFile($file->getTempName(), $file->getClientMimeType(), $originalName),
-                'path'     => $path,
-                'filename' => $originalName
-            ]);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            
-            $response = curl_exec($ch);
-            $error = curl_error($ch);
-            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            curl_close($ch);
-
-            if ($error) {
-                return $this->response->setJSON(['status' => 'error', 'message' => 'Proxy Connection Error: ' . $error]);
-            }
-            if ($httpCode >= 400) {
-                return $this->response->setJSON(['status' => 'error', 'message' => 'เซิร์ฟเวอร์หลักภายนอกปฏิเสธการเชื่อมต่อ (HTTP ' . $httpCode . ')']);
-            }
-
-            return $this->response->setBody($response)->setContentType('application/json');
+            $this->compressImageIfNeeded($filePath, $originalName);
         }
 
-        // กรณีเป็น Chunked upload:
-        $chunkIndex = (int)$chunkIndex;
-        $totalChunks = (int)$totalChunks;
+        $postFields['file'] = new \CURLFile($filePath, $file->getClientMimeType(), $originalName);
 
-        $temp_dir = WRITEPATH . 'uploads/chunks/';
-        if (!is_dir($temp_dir)) {
-            mkdir($temp_dir, 0777, true);
-        }
-
-        // ตั้งชื่อไฟล์ชั่วคราวที่ไม่ซ้ำกัน
-        $temp_filename = md5(session()->get('login_id') . '_' . $originalName) . '.tmp';
-        $temp_filepath = $temp_dir . $temp_filename;
-
-        // บันทึกและนำเนื้อหาชิ้นส่วนไปต่อท้ายไฟล์เดิม (FILE_APPEND)
-        $chunk_content = file_get_contents($file->getTempName());
-        if ($chunkIndex === 0) {
-            file_put_contents($temp_filepath, $chunk_content);
-        } else {
-            file_put_contents($temp_filepath, $chunk_content, FILE_APPEND);
-        }
-
-        // ถ้าส่งมาจนถึงชิ้นส่วนสุดท้ายแล้ว ให้รวมไฟล์และยิงต่อไปยังเซิร์ฟเวอร์ภายนอก
-        if ($chunkIndex === $totalChunks - 1) {
-            if (!file_exists($temp_filepath) || filesize($temp_filepath) === 0) {
-                return $this->response->setJSON(['status' => 'error', 'message' => 'ไฟล์ชิ้นส่วนสูญหายหรือไม่สามารถรวมไฟล์ได้']);
-            }
-
-            $target_url = getenv('upload.server.url') ?: 'https://skj.nsnpao.go.th/upload.php';
-            $mime_type = $file->getClientMimeType() ?: 'application/octet-stream';
-
-            $ch = curl_init();
-            curl_setopt($ch, CURLOPT_URL, $target_url);
-            curl_setopt($ch, CURLOPT_POST, true);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, [
-                'file'     => new \CURLFile($temp_filepath, $mime_type, $originalName),
-                'path'     => $path,
-                'filename' => $originalName
-            ]);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            
-            $response = curl_exec($ch);
-            $error = curl_error($ch);
-            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            curl_close($ch);
-
-            // ลบไฟล์ชั่วคราวออกเพื่อป้องกันขยะในเซิร์ฟเวอร์
-            if (file_exists($temp_filepath)) {
-                unlink($temp_filepath);
-            }
-
-            if ($error) {
-                return $this->response->setJSON(['status' => 'error', 'message' => 'Proxy Error on assembly: ' . $error]);
-            }
-            if ($httpCode === 413) {
-                return $this->response->setJSON([
-                    'status' => 'error',
-                    'message' => 'เซิร์ฟเวอร์ปลายทางปฏิเสธการอัปโหลด (HTTP 413 - Payload Too Large): ไฟล์ที่ประกอบเสร็จมีขนาดใหญ่เกินขีดจำกัดของเซิร์ฟเวอร์ปลายทาง กรุณาลดขนาดมิติรูปภาพหรือคุณภาพไฟล์ PDF ก่อนทำการส่งใหม่อีกครั้ง'
-                ]);
-            }
-            if ($httpCode >= 400) {
-                return $this->response->setJSON(['status' => 'error', 'message' => 'เซิร์ฟเวอร์ภายนอกล้มเหลวขณะรวมไฟล์ชิ้นส่วนสุดท้าย (HTTP ' . $httpCode . ')']);
-            }
-
-            return $this->response->setBody($response)->setContentType('application/json');
-        }
-
-        // คืนค่า chunk_saved กลับไปเพื่อให้ JavaScript ส่งชิ้นถัดไป
-        return $this->response->setJSON([
-            'status' => 'chunk_saved',
-            'chunk_index' => $chunkIndex,
-            'total_chunks' => $totalChunks
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $target_url);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $postFields);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'X-Auth-Token: ' . $token
         ]);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        
+        $response = curl_exec($ch);
+        $error = curl_error($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($error) {
+            return $this->response->setJSON(['status' => 'error', 'message' => 'Proxy Connection Error: ' . $error]);
+        }
+
+        if ($httpCode === 413) {
+            return $this->response->setJSON([
+                'status' => 'error',
+                'message' => 'เซิร์ฟเวอร์ปลายทางปฏิเสธการอัปโหลด (HTTP 413 - Payload Too Large): ขนาดไฟล์หรือชิ้นส่วนใหญ่เกินขีดจำกัดของเซิร์ฟเวอร์ปลายทาง กรุณาลดขนาดมิติรูปภาพหรือคุณภาพไฟล์ PDF ก่อนทำการส่งใหม่อีกครั้ง'
+            ]);
+        }
+
+        if ($httpCode >= 400) {
+            return $this->response->setJSON(['status' => 'error', 'message' => 'เซิร์ฟเวอร์หลักภายนอกปฏิเสธการเชื่อมต่อ (HTTP ' . $httpCode . ')']);
+        }
+
+        return $this->response->setBody($response)->setContentType('application/json');
     }
+
 }
