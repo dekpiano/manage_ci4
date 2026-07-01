@@ -635,9 +635,12 @@ $(document).ready(function() {
             {
                 "data": null,
                 "render": function(data, type, row) {
+                    const avatarUrl = row.pers_img ? `https://personnel.skj.ac.th/uploads/admin/Personnal/${row.pers_img}` : '<?= base_url("assets/img/avatars/1.png") ?>';
                     return `
                     <div class="teacher-avatar-group">
-                        <div class="avatar-wrapper shadow-xs border border-white"><i class="bx bx-user text-muted fs-4 d-flex justify-content-center mt-2"></i></div>
+                        <div class="avatar-wrapper shadow-xs border border-white">
+                            <img src="${avatarUrl}" onerror="this.src='<?= base_url('assets/img/avatars/1.png') ?>'" alt="Avatar">
+                        </div>
                         <div>
                             <span class="d-block fw-bold small text-dark">${row.pers_prefix}${row.pers_firstname} ${row.pers_lastname}</span>
                             <span class="text-muted" style="font-size: 10px;">ID: ${row.pers_id}</span>

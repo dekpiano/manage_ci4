@@ -285,6 +285,10 @@
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
+    function openFileInNewTab(url) {
+        window.open(url, '_blank');
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
         // Initialize DataTable
         $('#publicTableCompetitions').DataTable({
@@ -300,7 +304,6 @@
 
         const modalDetail = new bootstrap.Modal(document.getElementById('modalPublicDetail'));
 
-        // กำหนดปุ่มดูรายละเอียด (AJAX) ด้วย Event Delegation เพื่อให้สามารถคลิกได้เมื่อมีการแบ่งหน้าหรือค้นหา
         $(document).on('click', '.btn-view-public-detail', function () {
             const id = $(this).attr('data-id');
 
@@ -316,7 +319,6 @@
                         document.getElementById('pubDetDate').textContent = data.thaiDate;
                         document.getElementById('pubDetLocation').textContent = `${comp.comp_location || '-'} (${comp.comp_organizer || '-'})`;
 
-                        // นักเรียน
                         const studentContainer = document.getElementById('pubDetStudents');
                         studentContainer.innerHTML = '';
                         if (data.students.length > 0) {
@@ -331,7 +333,6 @@
                             studentContainer.innerHTML = '<li class="list-group-item text-muted px-0 py-1 border-0">ไม่มีข้อมูลรายชื่อ</li>';
                         }
 
-                        // ครู
                         const teacherContainer = document.getElementById('pubDetTeachers');
                         teacherContainer.innerHTML = '';
                         if (data.teachers.length > 0) {
@@ -346,7 +347,6 @@
                             teacherContainer.innerHTML = '<li class="list-group-item text-muted px-0 py-1 border-0">ไม่มีข้อมูลรายชื่อ</li>';
                         }
 
-                        // รางวัล
                         const awardsContainer = document.getElementById('pubDetAwards');
                         awardsContainer.innerHTML = '';
                         if (data.awards.length > 0) {
@@ -357,11 +357,9 @@
                             awardsContainer.innerHTML = '<span class="text-muted">ไม่ระบุรางวัล</span>';
                         }
 
-                        // สื่อและไฟล์แนบ
                         const mediaContainer = document.getElementById('pubDetMedia');
                         mediaContainer.innerHTML = '';
 
-                        // แสดงเกียรติบัตร
                         if (data.certs.length > 0) {
                             data.certs.forEach(file => {
                                 const ext = file.split('.').pop().toLowerCase();
@@ -372,12 +370,11 @@
                                 <div class="col-md-4 text-center border p-2 rounded bg-light">
                                     <div class="small fw-semibold mb-1 text-truncate">เกียรติบัตร</div>
                                     ${isImg ? `<img src="${fileUrl}" class="img-fluid rounded mb-2" style="max-height: 80px;">` : `<i class="bx bxs-file-pdf text-danger display-6 mb-2"></i>`}
-                                    <a href="${fileUrl}" target="_blank" class="btn btn-xs btn-outline-primary d-block w-100"><i class="bx bx-download me-1"></i>เปิดดูไฟล์</a>
+                                    <a href="javascript:void(0)" onclick="openFileInNewTab('${fileUrl}')" class="btn btn-xs btn-outline-primary d-block w-100"><i class="bx bx-show me-1"></i>เปิดดูไฟล์</a>
                                 </div>`;
                             });
                         }
 
-                        // แสดงภาพกิจกรรม
                         if (data.images.length > 0) {
                             data.images.forEach(file => {
                                 const fileUrl = `https://skj.nsnpao.go.th/uploads/academic/competitions/images/${file}`;
@@ -385,7 +382,7 @@
                                 <div class="col-md-4 text-center border p-2 rounded bg-light">
                                     <div class="small fw-semibold mb-1 text-truncate">ภาพกิจกรรม</div>
                                     <img src="${fileUrl}" class="img-fluid rounded mb-2" style="max-height: 80px; object-fit: cover; width: 100%;">
-                                    <a href="${fileUrl}" target="_blank" class="btn btn-xs btn-outline-primary d-block w-100"><i class="bx bx-zoom-in me-1"></i>ดูรูปใหญ่</a>
+                                    <a href="javascript:void(0)" onclick="openFileInNewTab('${fileUrl}')" class="btn btn-xs btn-outline-primary d-block w-100"><i class="bx bx-zoom-in me-1"></i>ดูรูปใหญ่</a>
                                 </div>`;
                             });
                         }

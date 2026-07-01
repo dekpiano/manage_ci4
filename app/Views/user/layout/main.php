@@ -102,6 +102,17 @@
 
     <!-- Place this tag before closing body tag for github widget button. -->
     <script async defer src="https://buttons.github.io/buttons.js"></script>
+    <script>
+    // Global function to open file in new tab (Word, Excel, PowerPoint via Office Online Viewer, others directly)
+    function openFileInNewTab(fileUrl) {
+        const ext = fileUrl.split('.').pop().toLowerCase();
+        if (['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'].includes(ext)) {
+            window.open(`https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(fileUrl)}`, '_blank');
+        } else {
+            window.open(fileUrl, '_blank');
+        }
+    }
+    </script>
 </body>
 
 </html>

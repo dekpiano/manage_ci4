@@ -410,6 +410,30 @@
 <script>
 const UPLOAD_PLAN_BASE_URL = '<?= getenv('upload.server.baseurl.plan') ?>';
 
+// Open file in new tab: Word files via Office Online Viewer, PDF direct
+function openFileInNewTab(fileUrl) {
+    const ext = fileUrl.split('.').pop().toLowerCase();
+    if (['doc', 'docx'].includes(ext)) {
+        // Microsoft Office Online Viewer for Word files
+        window.open(`https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(fileUrl)}`, '_blank');
+    } else if (['xls', 'xlsx', 'ppt', 'pptx'].includes(ext)) {
+        // Office Online Viewer for other Office files
+        window.open(`https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(fileUrl)}`, '_blank');
+    } else {
+        // PDF and other files - open directly in new tab
+        window.open(fileUrl, '_blank');
+    }
+}
+
+// Get icon class based on file extension
+function getFileIcon(fileName) {
+    const ext = fileName.split('.').pop().toLowerCase();
+    if (['doc', 'docx'].includes(ext)) return 'bxs-file-doc';
+    if (['xls', 'xlsx'].includes(ext)) return 'bxs-spreadsheet';
+    if (['ppt', 'pptx'].includes(ext)) return 'bxs-slideshow';
+    return 'bxs-file-pdf';
+}
+
 // Improved Action Button Look for Emerald UI
 function renderActionButtons(planFile, fileId, status1, comment1, status2, comment2, pathInfo) {
     if (!planFile) return '<span class="badge bg-label-secondary opacity-50 small">ยังไม่แนบไฟล์</span>';
@@ -428,11 +452,12 @@ function renderActionButtons(planFile, fileId, status1, comment1, status2, comme
     };
 
     const fullPath = `${UPLOAD_PLAN_BASE_URL}${pathInfo.year}/${pathInfo.term}/${pathInfo.subj}/${planFile}`;
+    const fileIcon = getFileIcon(planFile);
     
     return `
     <div style="min-width: 130px;">
         <div class="d-flex gap-1 mb-1">
-            <a href="${fullPath}" target="_blank" class="btn btn-emerald btn-xs flex-grow-1"><i class="bx bxs-file-pdf"></i> ไฟล์</a>
+            <button type="button" class="btn btn-emerald btn-xs flex-grow-1" onclick="openFileInNewTab('${fullPath}')"><i class="bx ${fileIcon}"></i> ไฟล์</button>
             <button type="button" class="btn btn-label-info btn-xs info-detail-btn" data-id="${fileId}"><i class="bx bx-show-alt"></i></button>
         </div>
         <div class="d-flex gap-1">
@@ -472,8 +497,8 @@ $(document).ready(function() {
                                 <div class="text-muted small">${plan.seplan_coursecode}</div>
                             </td>
                             <td class="align-middle">
-                                <div><span class="badge bg-label-info mb-1">ม.${plan.seplan_class}</span></div>
-                                <div class="small opacity-75">${plan.seplan_subject_type}</div>
+                                <div><span class="badge bg-label-info mb-1">ม.${plan.seplan_class || '-'}</span></div>
+                                <div class="small opacity-75">${plan.seplan_subject_type || '-'}</div>
                             </td>
                             
                             <td class="text-center align-middle">${renderActionButtons(plan.check_plan_file, plan.check_plan_file_id, plan.check_plan_file_status1, plan.check_plan_file_comment1, plan.check_plan_file_status2, plan.check_plan_file_comment2, pathInfo)}</td>

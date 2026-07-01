@@ -340,7 +340,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <div class="col-md-4 text-center border p-2 rounded bg-light">
                                     <div class="small fw-semibold mb-1 text-truncate">เกียรติบัตร</div>
                                     ${isImg ? `<img src="${fileUrl}" class="img-fluid rounded mb-2" style="max-height: 80px;">` : `<i class="bx bxs-file-pdf text-danger display-6 mb-2"></i>`}
-                                    <a href="${fileUrl}" target="_blank" class="btn btn-xs btn-outline-primary d-block w-100"><i class="bx bx-download me-1"></i>เปิดดูไฟล์</a>
+                                    <a href="javascript:void(0)" onclick="openFileInNewTab('${fileUrl}')" class="btn btn-xs btn-outline-primary d-block w-100"><i class="bx bx-show me-1"></i>เปิดดูไฟล์</a>
                                 </div>`;
                         });
                     }
@@ -353,7 +353,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <div class="col-md-4 text-center border p-2 rounded bg-light">
                                     <div class="small fw-semibold mb-1 text-truncate">ภาพกิจกรรม</div>
                                     <img src="${fileUrl}" class="img-fluid rounded mb-2" style="max-height: 80px; object-fit: cover; width: 100%;">
-                                    <a href="${fileUrl}" target="_blank" class="btn btn-xs btn-outline-primary d-block w-100"><i class="bx bx-zoom-in me-1"></i>ดูรูปใหญ่</a>
+                                    <a href="javascript:void(0)" onclick="openFileInNewTab('${fileUrl}')" class="btn btn-xs btn-outline-primary d-block w-100"><i class="bx bx-zoom-in me-1"></i>ดูรูปใหญ่</a>
                                 </div>`;
                         });
                     }

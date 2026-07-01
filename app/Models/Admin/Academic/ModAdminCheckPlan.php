@@ -71,8 +71,8 @@ class ModAdminCheckPlan extends Model
             tb_send_plan.seplan_coursecode,
             tb_send_plan.seplan_year,
             tb_send_plan.seplan_term,
-            sub.SubjectClass as seplan_class,
-            sub.SubjectType as seplan_subject_type,
+            sub_unique.SubjectClassList as seplan_class,
+            sub_unique.SubjectType as seplan_subject_type,
 
             MAX(CASE WHEN tb_send_plan.seplan_typeplan_id = 1 THEN tb_send_plan.seplan_file END) AS check_plan_file,
             MAX(CASE WHEN tb_send_plan.seplan_typeplan_id = 1 THEN tb_send_plan.seplan_id END) AS check_plan_file_id,
@@ -110,11 +110,16 @@ class ModAdminCheckPlan extends Model
             MAX(CASE WHEN tb_send_plan.seplan_typeplan_id = 5 THEN tb_send_plan.seplan_comment2 END) AS after_teach_note_file_comment2
         ');
         $builder->join('tb_send_plan_type as type', 'type.type_id = tb_send_plan.seplan_typeplan_id');
-        $builder->join('skjacth_academic.tb_subjects as sub', 'sub.SubjectCode = tb_send_plan.seplan_coursecode');
+        // Subquery: group tb_subjects by SubjectCode to prevent 1:N join duplicates
+        $builder->join(
+            '(SELECT SubjectCode, GROUP_CONCAT(DISTINCT SubjectClass ORDER BY SubjectClass SEPARATOR \', \') AS SubjectClassList, MIN(SubjectType) AS SubjectType FROM skjacth_academic.tb_subjects GROUP BY SubjectCode) as sub_unique',
+            'sub_unique.SubjectCode = tb_send_plan.seplan_coursecode',
+            'left'
+        );
         $builder->where('tb_send_plan.seplan_usersend', $teacherId);
         $builder->where('tb_send_plan.seplan_year', $year);
         $builder->where('tb_send_plan.seplan_term', $term);
-        $builder->groupBy('tb_send_plan.seplan_coursecode, tb_send_plan.seplan_namesubject, tb_send_plan.seplan_year, tb_send_plan.seplan_term, sub.SubjectClass, sub.SubjectType');
+        $builder->groupBy('tb_send_plan.seplan_coursecode, tb_send_plan.seplan_namesubject, tb_send_plan.seplan_year, tb_send_plan.seplan_term');
         $builder->orderBy('tb_send_plan.seplan_coursecode', 'ASC');
         $query = $builder->get();
         return $query->getResult();
