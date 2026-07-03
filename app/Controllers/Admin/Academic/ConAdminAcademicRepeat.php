@@ -290,9 +290,16 @@ class ConAdminAcademicRepeat extends BaseController
                 'RegisterYear' => $registerYear
             ];
 
+            // Determine if the updater is the RepeatTeacher or original TeacherID
+            $registerRow = $this->db->table('tb_register')->select('RepeatTeacher, TeacherID')->where($key)->get()->getRow();
+            $teacherId = !empty($registerRow->RepeatTeacher) ? $registerRow->RepeatTeacher : ($registerRow->TeacherID ?? '');
+            $currentUserId = session()->get('login_id');
+            $gradeUserUpdate = ($currentUserId !== $teacherId) ? $currentUserId : null;
+
             $data = [
                 'StudyTime' => $studyTime,
-                'Grade_UpdateTime' => date('Y-m-d H:i:s')
+                'Grade_UpdateTime' => date('Y-m-d H:i:s'),
+                'Grade_UserUpdate' => $gradeUserUpdate
             ];
 
             // Optional: Recalculate Grade and Grade_Type here if needed
@@ -328,8 +335,8 @@ class ConAdminAcademicRepeat extends BaseController
                 'RegisterYear' => $registerYear
             ];
 
-            // Retrieve current Score100 string
-            $currentRegister = $this->db->table('tb_register')->select('Score100, StudyTime, Grade_Type')->where($key)->get()->getRow();
+            // Retrieve current Score100 string, RepeatTeacher and TeacherID
+            $currentRegister = $this->db->table('tb_register')->select('Score100, StudyTime, Grade_Type, RepeatTeacher, TeacherID')->where($key)->get()->getRow();
 
             if ($currentRegister) {
                 $scores = explode('|', $currentRegister->Score100);
@@ -357,10 +364,15 @@ class ConAdminAcademicRepeat extends BaseController
                     // For now, I'll just update the score and recalculate grade based on sum
                     // If "มส" or "ร" logic is critical, it needs to be fully replicated here or in a helper
 
+                    $teacherId = !empty($currentRegister->RepeatTeacher) ? $currentRegister->RepeatTeacher : ($currentRegister->TeacherID ?? '');
+                    $currentUserId = session()->get('login_id');
+                    $gradeUserUpdate = ($currentUserId !== $teacherId) ? $currentUserId : null;
+
                     $data = [
                         'Score100' => $newScore100,
                         'Grade' => $Grade, // Updated grade
-                        'Grade_UpdateTime' => date('Y-m-d H:i:s')
+                        'Grade_UpdateTime' => date('Y-m-d H:i:s'),
+                        'Grade_UserUpdate' => $gradeUserUpdate
                     ];
 
                     // If Grade_Type needs to be updated based on new score/grade, add logic here

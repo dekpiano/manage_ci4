@@ -323,6 +323,12 @@
                 </li>
             </ul>
         </li>
+        <li class="menu-item <?= ($s4 == 'EditGrade' ? 'active' : '') ?>">
+            <a href="<?=base_url('Admin/Acade/Evaluate/EditGrade');?>" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-edit-alt"></i>
+                <div data-i18n="แก้ไขผลการเรียน (0 ร)">แก้ไขผลการเรียน (0 ร)</div>
+            </a>
+        </li>
         <li class="menu-item <?= ($totalSegments >= 3 && ($s3 == 'Evaluate' || $s3 == 'characteristics' || $s3 == 'rwl') && (in_array($s4, ['AcademicRepeat', 'AcademicResult', 'SaveScore']) || $s3 == 'characteristics' || $s3 == 'rwl') ? 'active open' : '') ?>">
             <a href="javascript:void(0);" class="menu-link menu-toggle">
                 <i class="menu-icon tf-icons bx bx-cog"></i>

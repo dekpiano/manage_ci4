@@ -75,32 +75,34 @@ class ConAdminEvaluateEditGrade extends BaseController
         $data['OnOffSaveScoreSystem'] = $this->db->table('tb_register_onoff')->where('onoff_id', 6)->get()->getResult();
         $data['CheckYearRegis'] = $this->db->table('tb_register')->select('RegisterYear')->groupBy('RegisterYear')->get()->getResult();
 
-        // ถ้าไม่ได้ส่ง Term/Year มา ให้ดึงจาก DB
+        // ถ้าไม่ได้ส่ง Term/Year มา ให้ดึงปีล่าสุดที่มีในฐานข้อมูล (tb_register)
         if ($Term === null || $Year === null) {
-            // 1. ลองดู onoff_year ก่อน (ค่าที่ตั้งในระบบเปิด-ปิดการบันทึกคะแนน)
-            $onoff_year = $data['OnOffSaveScoreSystem'][0]->onoff_year ?? '';
-            $parts = explode('/', $onoff_year);
-            $Term = $parts[0] ?? '';
-            $Year = $parts[1] ?? '';
-
-            if (empty($Term) || empty($Year)) {
-                // 2. ใช้ get_selected_year() จากระบบกลาง
-                $selectedYearStr = get_selected_year();
-                if (!empty($selectedYearStr) && strpos($selectedYearStr, '/') !== false) {
-                    $parts = explode('/', $selectedYearStr);
-                    $Term = $parts[0] ?? '1';
-                    $Year = $parts[1] ?? '2568';
-                } elseif ($data['SchoolYear'] && property_exists($data['SchoolYear'], 'schyear_year')) {
-                    // 3. fallback สุดท้าย: SchoolYear จาก DB
-                    $parts = explode('/', $data['SchoolYear']->schyear_year);
-                    $Term = $parts[0] ?? '1';
-                    $Year = $parts[1] ?? '2568';
-                } else {
-                    $Term = '1';
-                    $Year = '2568';
-                }
+            $latestYearRows = $this->db->table('tb_register')->select('RegisterYear')->groupBy('RegisterYear')->get()->getResult();
+            if (!empty($latestYearRows)) {
+                $yearsList = array_map(function($r) { return $r->RegisterYear; }, $latestYearRows);
+                usort($yearsList, function($a, $b) {
+                    $aParts = explode('/', $a);
+                    $bParts = explode('/', $b);
+                    $aTerm = (int)($aParts[0] ?? 0);
+                    $aYear = (int)($aParts[1] ?? 0);
+                    $bTerm = (int)($bParts[0] ?? 0);
+                    $bYear = (int)($bParts[1] ?? 0);
+                    if ($aYear !== $bYear) {
+                        return $bYear - $aYear; // Descending
+                    }
+                    return $bTerm - $aTerm;
+                });
+                $latestYear = $yearsList[0];
+                $parts = explode('/', $latestYear);
+                $Term = $parts[0] ?? '1';
+                $Year = $parts[1] ?? '2568';
+            } else {
+                $Term = '1';
+                $Year = '2568';
             }
         }
+
+        $data['currentYear'] = $Term . '/' . $Year;
 
         $data['result'] = $this->db->table('skjacth_academic.tb_register')
                                     ->select('

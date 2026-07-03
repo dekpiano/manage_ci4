@@ -322,10 +322,13 @@ $routes->get('Admin/Acade/Evaluate/AcademicResult', [ConAdminAcademinResult::cla
     $routes->post('admin/academic/ConAdminAcademinResult/CheckOnOffDoGrade', [ConAdminAcademinResult::class, 'CheckOnOffDoGrade']);
     $routes->post('admin/academic/ConAdminAcademinResult/CheckOnOffOpenYear', [ConAdminAcademinResult::class, 'CheckOnOffOpenYear']);
 $routes->get('Admin/Acade/Evaluate/EditGrade', [ConAdminEvaluateEditGrade::class, 'AdminEvaluateEditGradeMain']);
+$routes->get('Admin/Acade/Evaluate/EditGrade/(:segment)/(:segment)', [ConAdminEvaluateEditGrade::class, 'AdminEvaluateEditGradeMain/$1/$2']);
 $routes->get('Admin/Acade/Evaluate/EditGrade/(:segment)/(:segment)/(:segment)', [ConAdminEvaluateEditGrade::class, 'AdminEvaluateEditGradeUpdate']);
 $routes->get('Admin/Acade/Evaluate/SaveScore', [ConAdminSaveScore::class, 'AdminSaveScoreMain']);
 $routes->get('Admin/Acade/Evaluate/SaveScoreGrade/(:segment)/(:segment)/(:segment)', [ConAdminSaveScore::class, 'AdminSaveScoreGrade']);
 $routes->post('admin/academic/ConAdminSaveScore/CheckOnOffSaveScore', [ConAdminSaveScore::class, 'CheckOnOffSaveScore']);
+$routes->post('Admin/Acade/Evaluate/ConAdminSaveScore/update_study_time', [ConAdminSaveScore::class, 'update_study_time']);
+$routes->post('Admin/Acade/Evaluate/ConAdminSaveScore/update_score', [ConAdminSaveScore::class, 'update_score']);
 $routes->get('Admin/Acade/Evaluate/ReportPerson', [ConAdminReportResult::class, 'AdminReportPersonMain']);
 $routes->get('Admin/Acade/Evaluate/ReportPerson/(:segment)/(:segment)', [ConAdminReportResult::class, 'AdminReportPersonMain/$1/$2']);
 $routes->post('Admin/Acade/Evaluate/ReportPerson/(:segment)/(:segment)', [ConAdminReportResult::class, 'AdminReportPersonMain/$1/$2']);

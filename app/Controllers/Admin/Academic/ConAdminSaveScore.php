@@ -207,9 +207,16 @@ class ConAdminSaveScore extends BaseController
                 'RegisterYear' => $registerYear
             ];
 
+            // Determine if the updater is the subject's teacher
+            $registerRow = $this->db->table('tb_register')->select('TeacherID')->where($key)->get()->getRow();
+            $teacherId = $registerRow->TeacherID ?? '';
+            $currentUserId = session()->get('login_id');
+            $gradeUserUpdate = ($currentUserId !== $teacherId) ? $currentUserId : null;
+
             $data = [
                 'StudyTime' => $studyTime,
-                'Grade_UpdateTime' => date('Y-m-d H:i:s')
+                'Grade_UpdateTime' => date('Y-m-d H:i:s'),
+                'Grade_UserUpdate' => $gradeUserUpdate
             ];
 
             // Optional: Recalculate Grade and Grade_Type here if needed
@@ -241,8 +248,8 @@ class ConAdminSaveScore extends BaseController
                 'RegisterYear' => $registerYear
             ];
 
-            // Retrieve current Score100 string
-            $currentRegister = $this->db->table('tb_register')->select('Score100, StudyTime, Grade_Type')->where($key)->get()->getRow();
+            // Retrieve current Score100 string and TeacherID
+            $currentRegister = $this->db->table('tb_register')->select('Score100, StudyTime, Grade_Type, TeacherID')->where($key)->get()->getRow();
 
             if ($currentRegister) {
                 $scores = explode('|', $currentRegister->Score100);
@@ -270,10 +277,15 @@ class ConAdminSaveScore extends BaseController
                     // For now, I'll just update the score and recalculate grade based on sum
                     // If "มส" or "ร" logic is critical, it needs to be fully replicated here or in a helper
 
+                    $teacherId = $currentRegister->TeacherID ?? '';
+                    $currentUserId = session()->get('login_id');
+                    $gradeUserUpdate = ($currentUserId !== $teacherId) ? $currentUserId : null;
+
                     $data = [
                         'Score100' => $newScore100,
                         'Grade' => $Grade, // Updated grade
-                        'Grade_UpdateTime' => date('Y-m-d H:i:s')
+                        'Grade_UpdateTime' => date('Y-m-d H:i:s'),
+                        'Grade_UserUpdate' => $gradeUserUpdate
                     ];
 
                     // If Grade_Type needs to be updated based on new score/grade, add logic here

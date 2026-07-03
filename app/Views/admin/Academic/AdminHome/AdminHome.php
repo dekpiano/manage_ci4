@@ -570,6 +570,18 @@
                     </a>
                 <?php endif; ?>
 
+                <?php if(in_array("งานวัดและประเมินผล", $Exp_Checkrloes)): ?>
+                    <a href="<?= base_url('Admin/Acade/Evaluate/EditGrade') ?>" class="action-tile">
+                        <div class="action-icon bg-light-green text-success">
+                            <i class='bx bxs-edit-alt'></i>
+                        </div>
+                        <div class="action-text">
+                            <h6>แก้ไขผลการเรียน (0 ร)</h6>
+                            <p>จัดการ/แก้ไขผลการเรียนของนักเรียนสำหรับแอดมิน</p>
+                        </div>
+                    </a>
+                <?php endif; ?>
+
                 <?php if(in_array("งานกิจกรรมพัฒนาผู้เรียน", $Exp_Checkrloes)): ?>
                     <a href="<?= base_url('Admin/Acade/DevelopStudents/Clubs/Main') ?>" class="action-tile">
                         <div class="action-icon bg-light-green text-success">
@@ -582,7 +594,7 @@
                     </a>
                 <?php endif; ?>
 
-                <?php if(empty(array_intersect(["งานทะเบียน", "งานหลักสูตร", "งานกิจกรรมพัฒนาผู้เรียน"], $Exp_Checkrloes))): ?>
+                <?php if(empty(array_intersect(["งานทะเบียน", "งานหลักสูตร", "งานกิจกรรมพัฒนาผู้เรียน", "งานวัดและประเมินผล"], $Exp_Checkrloes))): ?>
                     <div class="card p-5 text-center border-0 shadow-none bg-transparent">
                         <i class='bx bx-lock-alt fs-1 text-muted mb-3'></i>
                         <p class="text-muted">คุณยังไม่ได้รับสิทธิ์เข้าถึง<br>เมนูทางลัดในส่วนนี้</p>
