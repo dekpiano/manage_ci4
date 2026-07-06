@@ -191,6 +191,9 @@
         min-height: 45px;
         padding-top: 4px;
     }
+
+    /* SweetAlert2 always on top */
+    .swal2-container { z-index: 9999 !important; }
 </style>
 
 <div class="container-xxl flex-grow-1 container-p-y animate__animated animate__fadeIn">
@@ -426,14 +429,14 @@
                                 <div class="col-4">
                                     <select name="seplanset_term" class="form-select rounded-3">
                                         <?php for ($i=1; $i <=3 ; $i++):?>
-                                        <option <?= ($CheckYear[0]->seplanset_term ?? 0 == $i) ? 'selected' : ''?> value="<?= esc($i) ?>"><?= esc($i) ?></option>
+                                        <option <?= (($CheckYear[0]->seplanset_term ?? 0) == $i) ? 'selected' : ''?> value="<?= esc($i) ?>"><?= esc($i) ?></option>
                                         <?php endfor; ?>
                                     </select>
                                 </div>
                                 <div class="col-8">
                                     <select name="seplanset_year" class="form-select rounded-3">
                                         <?php $d = date("Y")+543; for ($i=$d-1; $i <= $d+1 ; $i++):?>
-                                        <option <?= ($CheckYear[0]->seplanset_year ?? 0 == $i) ? 'selected' : ''?> value="<?= esc($i) ?>"><?= esc($i) ?></option>
+                                        <option <?= (($CheckYear[0]->seplanset_year ?? 0) == $i) ? 'selected' : ''?> value="<?= esc($i) ?>"><?= esc($i) ?></option>
                                         <?php endfor; ?>
                                     </select>
                                 </div>
