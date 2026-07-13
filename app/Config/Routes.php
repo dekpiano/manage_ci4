@@ -99,7 +99,9 @@ $routes->get('Admin/Acade/Registration/Enroll', [ConAdminEnroll::class, 'AdminEn
 $routes->get('Admin/Acade/Registration/Enroll/Add', [ConAdminEnroll::class, 'AdminEnrollAdd']);
 $routes->get('Admin/Acade/Registration/Enroll/Add/(:segment)/(:segment)', [ConAdminEnroll::class, 'AdminEnrollAdd/$1/$2']);
 $routes->get('Admin/Acade/Registration/Enroll/Edit/(:segment)/(:segment)', [ConAdminEnroll::class, 'AdminEnrollEdit']);
+$routes->get('Admin/Acade/Registration/Enroll/Edit/(:segment)', [ConAdminEnroll::class, 'AdminEnrollEdit']);
 $routes->get('Admin/Acade/Registration/Enroll/Delete/(:segment)/(:segment)', [ConAdminEnroll::class, 'AdminEnrollDelete']);
+$routes->get('Admin/Acade/Registration/Enroll/Delete/(:segment)', [ConAdminEnroll::class, 'AdminEnrollDelete']);
 $routes->get('Admin/Acade/Registration/Repeat', [ConAdminRegisRepeat::class, 'AdminRegisRepeatMain']);
 $routes->get('Admin/Acade/Registration/Repeat/Detail/(:segment)/(:segment)/(:segment)/(:segment)', [ConAdminRegisRepeat::class, 'AdminRegisRepeatDetail']);
 $routes->get('Admin/Acade/Registration/Repeat/Add', [ConAdminRegisRepeat::class, 'AdminRegisRepeatAdd']);
@@ -370,6 +372,7 @@ $routes->match(['get', 'post'], 'admin/academic/ConAdminEnroll/checkRepeatHistor
 $routes->match(['get', 'post'], 'admin/academic/ConAdminEnroll/AdminEnrollInsert', [ConAdminEnroll::class, 'AdminEnrollInsert']);
 $routes->match(['get', 'post'], 'admin/academic/ConAdminEnroll/AdminEnrollDel', [ConAdminEnroll::class, 'AdminEnrollDel']);
 $routes->match(['get', 'post'], 'admin/academic/ConAdminEnroll/AdminEnrollChangeTeacherByRoom', [ConAdminEnroll::class, 'AdminEnrollChangeTeacherByRoom']);
+$routes->match(['get', 'post'], 'Admin/Academic/ConAdminEnroll/AdminEnrollChangeTeacherByRoom', [ConAdminEnroll::class, 'AdminEnrollChangeTeacherByRoom']);
 $routes->match(['get', 'post'], 'admin/academic/ConAdminEnroll/AdminEnrollChangeTeacher', [ConAdminEnroll::class, 'AdminEnrollChangeTeacher']);
 
 // Route สำหรับ AdminEnrollSubject

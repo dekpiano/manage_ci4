@@ -436,9 +436,19 @@ $(document).ready(function() {
         width: '100%',
         dropdownParent: $('body')
     });
+
+    $('#teacherregis').on('select2:select', function (e) {
+        $(this).data('user-triggered', true).trigger('change');
+    });
 });
 
-$(document).on("change", "#teacherregis", function() {
+$(document).on("change", "#teacherregis", function(e) {
+    // Only run this confirm dialog if the change was triggered by user interaction (originalEvent is present)
+    if (e.originalEvent === undefined && $(this).data('user-triggered') !== true) {
+        return;
+    }
+    $(this).data('user-triggered', false); // Reset flag
+
     let teacherregis = $(this).val();
     let subjectregisupdate = $('#subjectregisupdate').val();
     let SubjectYear = $('#SubjectYearregisupdate').val();
@@ -536,6 +546,10 @@ $(document).on("change", "#Room", function() {
 
 $(document).on("submit", "#FormEnrollUpdate", function(e) {
     e.preventDefault();
+    
+    // Select all options in the target list so they are sent via serialize
+    $('#multiselect_to option').prop('selected', true);
+    
     $.ajax({
         url: '<?= site_url('admin/academic/ConAdminEnroll/AdminEnrollUpdate') ?>',
         type: 'post',

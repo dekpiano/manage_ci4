@@ -508,6 +508,9 @@ $(document).on("submit", "#FormEnrollDelete", function(e) {
     e.preventDefault();
     var form = $(this);
     
+    // Select all options in the target list so they are sent via serialize
+    $('#multiselect_to option').prop('selected', true);
+    
     // Count selected
     var count = $('#multiselect_to option').length;
     if(count === 0) {

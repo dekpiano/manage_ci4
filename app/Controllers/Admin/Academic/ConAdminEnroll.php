@@ -247,7 +247,7 @@ class ConAdminEnroll extends BaseController
         echo view('admin/Academic/AdminEnroll/AdminEnrollFormAdd', $data);
     }
 
-    public function AdminEnrollEdit($codeSub, $TeachID)
+    public function AdminEnrollEdit($codeSub, $TeachID = null)
     {
         $data['title'] = "แก้ไขรายชื่อการลงทะเบียนเรียน";
         $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
@@ -260,7 +260,7 @@ class ConAdminEnroll extends BaseController
                                         ->get()->getResult();
         $data['CheckYearSubject'] = $this->db->table('tb_subjects')->select('SubjectYear')->where('SubjectID', $codeSub)->get()->getResult();
 
-    $data['Register'] = $this->db->table("tb_register")
+        $builder = $this->db->table("tb_register")
                     ->select("tb_register.RegisterYear,
                         tb_subjects.SubjectName,
                         tb_register.SubjectID,
@@ -271,22 +271,26 @@ class ConAdminEnroll extends BaseController
                         tb_students.StudentNumber,
                         tb_students.StudentPrefix,
                         tb_students.StudentFirstName,
-                        tb_students.StudentPrefix,
-                        tb_students.StudentFirstName,
                         tb_students.StudentLastName,
                         tb_students.StudentStudyLine
                         ")
                     ->join('tb_subjects', 'tb_subjects.SubjectID = tb_register.SubjectID')
                     ->join('tb_students', 'tb_students.StudentID = tb_register.StudentID')
-                    ->where('TeacherID', $TeachID)
-                    ->where('tb_subjects.SubjectID', $codeSub)
-                    ->get()->getResult();
-    $data['enrolledStudents'] = $data['Register']; // Pass the registered students to the view
-    $data['classroom'] = new Classroom(); // Instantiate Classroom library
-    return view('admin/Academic/AdminEnroll/AdminEnrollFormEdit', $data);
+                    ->where('tb_subjects.SubjectID', $codeSub);
+
+        if (!empty($TeachID)) {
+            $builder->where('TeacherID', $TeachID);
+        } else {
+            $builder->where('(TeacherID IS NULL OR TeacherID = "" OR TeacherID = 0)');
+        }
+
+        $data['Register'] = $builder->get()->getResult();
+        $data['enrolledStudents'] = $data['Register']; // Pass the registered students to the view
+        $data['classroom'] = new Classroom(); // Instantiate Classroom library
+        return view('admin/Academic/AdminEnroll/AdminEnrollFormEdit', $data);
     }
 
-    public function AdminEnrollDelete($codeSub, $TeachID)
+    public function AdminEnrollDelete($codeSub, $TeachID = null)
     {
         $data['title'] = "ถอนรายชื่อการลงทะเบียนเรียน";
         $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
@@ -303,13 +307,17 @@ class ConAdminEnroll extends BaseController
                                         ->get()->getRow();
 
         // Get Current Teacher Info
-        $data['CurrentTeacher'] = $this->DBPers->table('tb_personnel')
-                                            ->where('pers_id', $TeachID)
-                                            ->get()->getRow();
+        if (!empty($TeachID)) {
+            $data['CurrentTeacher'] = $this->DBPers->table('tb_personnel')
+                                                ->where('pers_id', $TeachID)
+                                                ->get()->getRow();
+        } else {
+            $data['CurrentTeacher'] = null;
+        }
 
         $registerYear = !empty($data['SubjectInfo']->SubjectYear) ? $data['SubjectInfo']->SubjectYear : null;
 
-        $data['Register'] = $this->db->table("tb_register")
+        $builder = $this->db->table("tb_register")
                     ->select("tb_register.RegisterYear,
                         tb_subjects.SubjectName,
                         tb_subjects.SubjectID,
@@ -323,7 +331,6 @@ class ConAdminEnroll extends BaseController
                         tb_students.StudentNumber,
                         tb_students.StudentPrefix,
                         tb_students.StudentFirstName,
-                        tb_students.StudentFirstName,
                         tb_students.StudentLastName,
                         tb_students.StudentStudyLine
                         ")
@@ -331,9 +338,15 @@ class ConAdminEnroll extends BaseController
                     ->join('tb_students', 'tb_students.StudentID = tb_register.StudentID')
                     ->where('tb_register.RegisterYear', $registerYear)
                     ->where('tb_register.SubjectID', $codeSub)
-                    ->where('tb_register.TeacherID', $TeachID)
-                    ->where('tb_students.StudentStatus', '1/ปกติ')
-                    ->get()->getResult();
+                    ->where('tb_students.StudentStatus', '1/ปกติ');
+
+        if (!empty($TeachID)) {
+            $builder->where('tb_register.TeacherID', $TeachID);
+        } else {
+            $builder->where('(tb_register.TeacherID IS NULL OR tb_register.TeacherID = "" OR tb_register.TeacherID = 0)');
+        }
+
+        $data['Register'] = $builder->get()->getResult();
         $data['classroom'] = new Classroom(); 
         return view('admin/Academic/AdminEnroll/AdminEnrollFormDelete', $data);
     }
@@ -393,40 +406,106 @@ class ConAdminEnroll extends BaseController
 
     public function AdminEnrollInsert()
     {
-        $chk_Subject = $this->db->table('tb_subjects')->where('SubjectID', $this->request->getPost('subjectregis'))->get()->getRow(); // Use getRow()
+        try {
+            $subjectRegis = $this->request->getPost('subjectregis');
+            $teacherRegis = $this->request->getPost('teacherregis');
 
-        if (empty($chk_Subject)) {
-            return $this->response->setJSON(['status' => 'error', 'message' => 'ไม่พบวิชา']);
-        }
+            log_message('debug', 'AdminEnrollInsert: subjectregis=' . $subjectRegis . ', teacherregis=' . $teacherRegis);
 
-        $studentIDs = $this->request->getPost('to');
-        if (empty($studentIDs)) {
-            return $this->response->setJSON(['status' => 'info', 'message' => 'ไม่มีข้อมูลถูกเพิ่ม']);
-        }
-        $studentsData = $this->db->table('tb_students')->select('StudentID, StudentClass')->whereIn('StudentID', $studentIDs)->get()->getResult();
-        $studentClasses = [];
-        foreach ($studentsData as $student) {
-            $studentClasses[$student->StudentID] = $student->StudentClass;
-        }
-
-        $insertedCount = 0;
-        foreach ($studentIDs as $studentID) {
-            $a = [
-                'StudentID'    => $studentID,
-                'SubjectID'    => $chk_Subject->SubjectID,
-                'RegisterYear' => $chk_Subject->SubjectYear,
-                'RegisterClass' => $studentClasses[$studentID] ?? null,
-                'TeacherID'    => $this->request->getPost('teacherregis'),
-            ];
-            if ($this->db->table('tb_register')->insert($a)) {
-                $insertedCount++;
+            // ตรวจสอบข้อมูลที่จำเป็น
+            if (empty($subjectRegis)) {
+                return $this->response->setJSON(['status' => 'error', 'message' => 'กรุณาเลือกรายวิชาก่อนบันทึก']);
             }
-        }
+            if (empty($teacherRegis)) {
+                return $this->response->setJSON(['status' => 'error', 'message' => 'กรุณาเลือกครูผู้สอนก่อนบันทึก']);
+            }
 
-        if ($insertedCount > 0) {
-            return $this->response->setJSON(['status' => 'success', 'message' => 'เพิ่มข้อมูลสำเร็จ', 'inserted_count' => $insertedCount]);
-        } else {
-            return $this->response->setJSON(['status' => 'info', 'message' => 'ไม่มีข้อมูลถูกเพิ่ม']);
+            $chk_Subject = $this->db->table('tb_subjects')->where('SubjectID', $subjectRegis)->get()->getRow();
+
+            if (empty($chk_Subject)) {
+                return $this->response->setJSON(['status' => 'error', 'message' => 'ไม่พบวิชา (SubjectID: ' . $subjectRegis . ')']);
+            }
+
+            log_message('debug', 'AdminEnrollInsert: SubjectID=' . $chk_Subject->SubjectID . ', SubjectYear=' . $chk_Subject->SubjectYear);
+
+            $studentIDs = $this->request->getPost('to');
+            if (empty($studentIDs)) {
+                return $this->response->setJSON(['status' => 'info', 'message' => 'กรุณาเลือกนักเรียนก่อนบันทึก']);
+            }
+
+            if (!is_array($studentIDs)) {
+                $studentIDs = [$studentIDs];
+            }
+
+            log_message('debug', 'AdminEnrollInsert: จำนวนนักเรียนที่เลือก = ' . count($studentIDs));
+
+            // ดึงข้อมูลห้องเรียนของนักเรียน
+            $studentsData = $this->db->table('tb_students')->select('StudentID, StudentClass')->whereIn('StudentID', $studentIDs)->get()->getResult();
+            $studentClasses = [];
+            foreach ($studentsData as $student) {
+                $studentClasses[$student->StudentID] = $student->StudentClass;
+            }
+
+            // ตรวจสอบ duplicate แบบ bulk (ดึงรายการที่ลงทะเบียนแล้วทั้งหมดในคราวเดียว)
+            $alreadyRegistered = [];
+            $existingRecords = $this->db->table('tb_register')
+                ->select('StudentID')
+                ->where('SubjectID', $chk_Subject->SubjectID)
+                ->where('RegisterYear', $chk_Subject->SubjectYear)
+                ->whereIn('StudentID', $studentIDs)
+                ->get()->getResult();
+
+            foreach ($existingRecords as $rec) {
+                $alreadyRegistered[$rec->StudentID] = true;
+            }
+
+            log_message('debug', 'AdminEnrollInsert: พบนักเรียนที่ลงทะเบียนแล้ว = ' . count($alreadyRegistered));
+
+            $insertedCount = 0;
+            $duplicateCount = count($alreadyRegistered);
+
+            foreach ($studentIDs as $studentID) {
+                // ข้ามถ้าลงทะเบียนแล้ว
+                if (isset($alreadyRegistered[$studentID])) {
+                    continue;
+                }
+
+                $a = [
+                    'StudentID'    => $studentID,
+                    'SubjectID'    => $chk_Subject->SubjectID,
+                    'RegisterYear' => $chk_Subject->SubjectYear,
+                    'RegisterClass' => $studentClasses[$studentID] ?? null,
+                    'TeacherID'    => $teacherRegis,
+                ];
+
+                try {
+                    $this->db->table('tb_register')->insert($a);
+                    if ($this->db->affectedRows() > 0) {
+                        $insertedCount++;
+                    }
+                } catch (\Exception $e) {
+                    log_message('error', 'AdminEnrollInsert: Insert failed for StudentID=' . $studentID . ' - ' . $e->getMessage());
+                    $duplicateCount++;
+                }
+            }
+
+            log_message('debug', 'AdminEnrollInsert: inserted=' . $insertedCount . ', duplicates=' . $duplicateCount);
+
+            if ($insertedCount > 0 && $duplicateCount > 0) {
+                return $this->response->setJSON(['status' => 'success', 'message' => "เพิ่มข้อมูลสำเร็จ {$insertedCount} คน (ซ้ำ {$duplicateCount} คน)", 'inserted_count' => $insertedCount]);
+            } elseif ($insertedCount > 0) {
+                return $this->response->setJSON(['status' => 'success', 'message' => "เพิ่มข้อมูลสำเร็จ {$insertedCount} คน", 'inserted_count' => $insertedCount]);
+            } elseif ($duplicateCount > 0) {
+                return $this->response->setJSON(['status' => 'info', 'message' => "นักเรียนทั้งหมดได้ลงทะเบียนวิชานี้แล้ว ({$duplicateCount} คน)"]);
+            } else {
+                return $this->response->setJSON(['status' => 'info', 'message' => 'ไม่มีข้อมูลถูกเพิ่ม']);
+            }
+        } catch (\Exception $e) {
+            log_message('error', 'AdminEnrollInsert Error: ' . $e->getMessage());
+            return $this->response->setStatusCode(500)->setJSON([
+                'status' => 'error',
+                'message' => 'เกิดข้อผิดพลาดในการบันทึก: ' . $e->getMessage()
+            ]);
         }
     }
 
@@ -560,10 +639,10 @@ class ConAdminEnroll extends BaseController
 
         try {
             $builder = $this->db->table('tb_register r');
-            $builder->select('r.SubjectID, s.SubjectCode, s.SubjectName, s.FirstGroup, s.SubjectYear, p.pers_firstname, p.pers_prefix, p.pers_lastname, r.TeacherID');
+            $builder->select("r.SubjectID, s.SubjectCode, s.SubjectName, s.FirstGroup, s.SubjectYear, IFNULL(p.pers_firstname, '(ไม่ระบุ)') as pers_firstname, IFNULL(p.pers_prefix, '') as pers_prefix, IFNULL(p.pers_lastname, '') as pers_lastname, IFNULL(r.TeacherID, '') as TeacherID", false);
             $builder->select("GROUP_CONCAT(DISTINCT r.RegisterClass ORDER BY r.RegisterClass ASC SEPARATOR ', ') as RegisterClasses", false);
             $builder->join('tb_subjects s', 's.SubjectID = r.SubjectID');
-            $builder->join($this->DBPers->database . '.tb_personnel p', 'p.pers_id = r.TeacherID');
+            $builder->join($this->DBPers->database . '.tb_personnel p', 'p.pers_id = r.TeacherID', 'left');
             $builder->where('s.SubjectYear', $keyYear);
             $builder->where('r.RegisterYear', $keyYear);
             $builder->groupBy('r.SubjectID, r.TeacherID, s.SubjectCode, s.SubjectName, s.FirstGroup, s.SubjectYear, p.pers_firstname, p.pers_prefix, p.pers_lastname');
@@ -572,14 +651,14 @@ class ConAdminEnroll extends BaseController
 
             foreach ($Register as $record) {
                 $data[] = [
-                    "SubjectYear"  => $record->SubjectYear,
-                    "SubjectCode"  => $record->SubjectCode,
-                    "SubjectName"  => $record->SubjectName,
-                    "FirstGroup"   => $record->FirstGroup,
-                    "SubjectClass" => $record->RegisterClasses, 
-                    "SubjectID"    => $record->SubjectID,
-                    "TeacherName"  => $record->pers_prefix . $record->pers_firstname . ' ' . $record->pers_lastname,
-                    "TeacherID"    => $record->TeacherID,
+                    "SubjectYear"  => $record->SubjectYear ?? '',
+                    "SubjectCode"  => $record->SubjectCode ?? '',
+                    "SubjectName"  => $record->SubjectName ?? '',
+                    "FirstGroup"   => $record->FirstGroup ?? '',
+                    "SubjectClass" => $record->RegisterClasses ?? '',
+                    "SubjectID"    => $record->SubjectID ?? '',
+                    "TeacherName"  => ($record->pers_prefix ?? '') . ($record->pers_firstname ?? '') . ' ' . ($record->pers_lastname ?? ''),
+                    "TeacherID"    => $record->TeacherID ?? '',
                 ];
             }
         } catch (\Exception $e) {
@@ -608,7 +687,7 @@ class ConAdminEnroll extends BaseController
     public function AdminEnrollChangeTeacher()
     {
         // This is a POST request, so we can validate it.
-        if ($this->request->getMethod() === 'post') {
+        if (strtolower((string)$this->request->getMethod()) === 'post' || $this->request->is('post')) {
             $data = ['TeacherID' => $this->request->getPost('KeyTeacher')];
             $this->db->table('tb_register')
                     ->where('SubjectID', $this->request->getPost('KeySubjectID'))
@@ -628,7 +707,7 @@ class ConAdminEnroll extends BaseController
 
     public function AdminEnrollChangeTeacherByRoom()
     {
-        if ($this->request->getMethod() === 'post') {
+        if (strtolower((string)$this->request->getMethod()) === 'post' || $this->request->is('post')) {
             $subjectID = $this->request->getPost('SubjectID');
             $registerYear = $this->request->getPost('RegisterYear');
             $oldTeacherID = $this->request->getPost('OldTeacherID');
@@ -647,7 +726,13 @@ class ConAdminEnroll extends BaseController
             $builder = $this->db->table('tb_register');
             $builder->where('SubjectID', $subjectID);
             $builder->where('RegisterYear', $registerYear);
-            $builder->where('TeacherID', $oldTeacherID);
+            
+            if (!empty($oldTeacherID)) {
+                $builder->where('TeacherID', $oldTeacherID);
+            } else {
+                $builder->where('(TeacherID IS NULL OR TeacherID = "" OR TeacherID = 0)');
+            }
+            
             $builder->whereIn('RegisterClass', $rooms);
             $builder->update($data);
 

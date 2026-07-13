@@ -509,6 +509,7 @@ function submitEnrollment(formData) {
         url: '<?= site_url('admin/academic/ConAdminEnroll/AdminEnrollInsert') ?>',
         type: 'post',
         data: formData,
+        dataType: 'json',
         beforeSend: function() {
             Swal.fire({
                 title: 'กำลังบันทึก...',
@@ -517,14 +518,21 @@ function submitEnrollment(formData) {
                 showConfirmButton: false
             });
         },
-        error: function() {
+        error: function(xhr) {
+            var errorMsg = 'กรุณาลองใหม่อีกครั้ง';
+            try {
+                var resp = JSON.parse(xhr.responseText);
+                if (resp && resp.message) {
+                    errorMsg = resp.message;
+                }
+            } catch(e) {}
             Swal.fire({
                 icon: 'error',
                 title: 'เกิดข้อผิดพลาดในการบันทึก',
-                text: 'กรุณาลองใหม่อีกครั้ง',
+                text: errorMsg,
                 confirmButtonColor: '#dc3545',
-                timer: 3000,
-                showConfirmButton: false
+                timer: 5000,
+                showConfirmButton: true
             });
         },
         success: function(data) {
@@ -542,7 +550,7 @@ function submitEnrollment(formData) {
                  });
             } else if (data.status === 'info') {
                  Swal.fire({
-                    title: "ไม่ได้บันทึก",
+                    title: "แจ้งเตือน",
                     text: data.message,
                     icon: "info",
                     confirmButtonColor: '#17a2b8'
@@ -561,6 +569,10 @@ function submitEnrollment(formData) {
 
 $(document).on("submit", "#FormEnroll", function(e) {
     e.preventDefault();
+    
+    // Select all options in the target list so they are sent via serialize
+    $('#multiselect_to option').prop('selected', true);
+    
     var formData = $(this).serialize();
 
     // 1. Check for Repeat History
