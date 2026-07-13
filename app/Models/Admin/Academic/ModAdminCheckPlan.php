@@ -164,12 +164,22 @@ class ModAdminCheckPlan extends Model
             p.pers_lastname,
             tb_send_plan.seplan_coursecode,
             tb_send_plan.seplan_namesubject,
-            tb_send_plan.seplan_gradelevel,
-            tb_send_plan.seplan_typesubject as subject_type,
-            tb_send_plan.seplan_createdate
+            sub_unique.SubjectClassList as seplan_gradelevel,
+            sub_unique.SubjectType as subject_type,
+            tb_send_plan.seplan_createdate,
+            tb_send_plan.seplan_file,
+            tb_send_plan.seplan_year,
+            tb_send_plan.seplan_term
         ');
         
         $builder->join('skjacth_personnel.tb_personnel as p', 'p.pers_id = tb_send_plan.seplan_usersend');
+        
+        // Subquery: group tb_subjects by SubjectCode to prevent 1:N join duplicates
+        $builder->join(
+            '(SELECT SubjectCode, GROUP_CONCAT(DISTINCT SubjectClass ORDER BY SubjectClass SEPARATOR \', \') AS SubjectClassList, MIN(SubjectType) AS SubjectType FROM skjacth_academic.tb_subjects GROUP BY SubjectCode) as sub_unique',
+            'sub_unique.SubjectCode = tb_send_plan.seplan_coursecode',
+            'left'
+        );
         
         $builder->where('tb_send_plan.seplan_year', $year);
         $builder->where('tb_send_plan.seplan_term', $term);

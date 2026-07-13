@@ -202,12 +202,13 @@
                 <thead>
                     <tr>
                         <th class="text-center" style="width: 5%">ที่</th>
-                        <th style="width: 25%">ชื่อ-สกุล ครูผู้สอน</th>
+                        <th style="width: 20%">ชื่อ-สกุล ครูผู้สอน</th>
                         <th class="text-center" style="width: 10%">รหัสวิชา</th>
-                        <th style="width: 25%">ชื่อวิชา</th>
-                        <th class="text-center" style="width: 5%">ระดับ</th>
+                        <th style="width: 20%">ชื่อวิชา</th>
+                        <th class="text-center" style="width: 10%">ระดับ</th>
                         <th class="text-center" style="width: 10%">ประเภท</th>
-                        <th class="text-center" style="width: 20%">วัน-เวลาที่ส่งข้อมูล</th>
+                        <th class="text-center" style="width: 15%">วันที่ส่งข้อมูล</th>
+                        <th class="text-center" style="width: 10%">ไฟล์แผน</th>
                     </tr>
                 </thead>
                 <tbody class="bg-white">
@@ -227,21 +228,30 @@
                         </td>
                         <td class="align-middle fw-semibold"><?= esc($row->seplan_namesubject) ?></td>
                         <td class="text-center align-middle">
-                            <span class="badge bg-label-info">ม.<?= esc($row->seplan_gradelevel) ?></span>
+                            <span class="badge bg-label-info"><?= esc($row->seplan_gradelevel ?? '-') ?></span>
                         </td>
                         <td class="text-center align-middle">
-                            <small class="text-muted fw-bold"><?= esc($row->subject_type) ?></small>
+                            <small class="text-muted fw-bold"><?= esc($row->subject_type ?? '-') ?></small>
                         </td>
                         <td class="text-center align-middle">
                             <?php 
-                                if (!empty($row->seplan_createdate) && $row->seplan_createdate != '0000-00-00' && $row->seplan_createdate != '0000-00-00 00:00:00') {
+                                if (!empty($row->seplan_file) && !empty($row->seplan_createdate) && $row->seplan_createdate != '0000-00-00' && $row->seplan_createdate != '0000-00-00 00:00:00') {
                                     $ts = strtotime($row->seplan_createdate);
                                     echo '<div class="fw-bold text-dark">' . date('d/m/', $ts) . (date('Y', $ts) + 543) . '</div>';
-                                    echo '<div class="small text-muted">' . date('H:i', $ts) . ' น.</div>';
                                 } else {
-                                    echo '<span class="text-light-muted">---</span>';
+                                    echo '<span class="text-danger small fw-bold"><i class="bx bx-x-circle me-1"></i>ยังไม่ส่ง</span>';
                                 }
                             ?>
+                        </td>
+                        <td class="text-center align-middle">
+                            <?php if(!empty($row->seplan_file)): ?>
+                                <?php $fileUrl = getenv('upload.server.baseurl.plan') . $row->seplan_year . '/' . $row->seplan_term . '/' . $row->seplan_namesubject . '/' . $row->seplan_file; ?>
+                                <a href="javascript:void(0);" onclick="openFileInNewTab('<?= esc($fileUrl) ?>')" class="btn btn-sm btn-outline-primary rounded-pill">
+                                    <i class="bx bxs-file-pdf me-1"></i> เปิดไฟล์
+                                </a>
+                            <?php else: ?>
+                                <span class="badge bg-label-secondary">ไม่มีไฟล์</span>
+                            <?php endif; ?>
                         </td>
                     </tr>
                     <?php endforeach; ?>
@@ -278,6 +288,17 @@
         const [year, term] = val.split('/');
         document.getElementById('input_year').value = year;
         document.getElementById('input_term').value = term;
+    }
+
+    function openFileInNewTab(fileUrl) {
+        const ext = fileUrl.split('.').pop().toLowerCase();
+        if (['doc', 'docx'].includes(ext)) {
+            window.open(`https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(fileUrl)}`, '_blank');
+        } else if (['xls', 'xlsx', 'ppt', 'pptx'].includes(ext)) {
+            window.open(`https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(fileUrl)}`, '_blank');
+        } else {
+            window.open(fileUrl, '_blank');
+        }
     }
 
     function exportTableToExcel(tableID, filename = '', docType = '', groupName = '', term = '', year = ''){
@@ -363,7 +384,7 @@
                 else if(R === 1 || R === 2) ws[cellAddress].s = subTitleStyle;
                 else if(R === 4) ws[cellAddress].s = headerStyle;
                 else if(R > 4) {
-                    if(C === 0 || C === 2 || C === 4 || C === 5 || C === 6) ws[cellAddress].s = bodyCenterStyle;
+                    if(C === 0 || C === 2 || C === 4 || C === 5 || C === 6 || C === 7) ws[cellAddress].s = bodyCenterStyle;
                     else ws[cellAddress].s = bodyStyle;
                 }
             }
@@ -376,7 +397,7 @@
         ];
         
         ws['!cols'] = [
-            { wch: 6 }, { wch: 30 }, { wch: 14 }, { wch: 40 }, { wch: 8 }, { wch: 14 }, { wch: 25 }
+            { wch: 6 }, { wch: 30 }, { wch: 14 }, { wch: 40 }, { wch: 8 }, { wch: 14 }, { wch: 25 }, { wch: 15 }
         ];
         
         XLSX.utils.book_append_sheet(wb, ws, "รายงานการส่งแผน");
