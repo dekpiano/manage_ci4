@@ -558,6 +558,11 @@
         font-size: 1.25rem;
     }
 }
+
+/* Ensure SweetAlert2 (swal2) is always on top of Bootstrap Modals */
+.swal2-container {
+    z-index: 9999 !important;
+}
 </style>
 
 <div class="students-list-page">
@@ -773,7 +778,8 @@ $(document).ready(function() {
             { 
                 "data": "StudentStudyLine",
                 "render": function(data, type, row) {
-                    return `<span class="study-line-text" title="${data}">${data || '-'}</span>`;
+                    if (!data) return `<span class="text-muted">-</span>`;
+                    return `<span class="study-line-text" title="${data}">${data}</span>`;
                 }
             },
             { 

@@ -52,7 +52,7 @@ class Classroom {
     }
 
     function studentStudyLineOptions(){
-        $list  = array('เลือกสายการเรียน', 'CEP', 'CP', 'PAP1', 'PAP2', 'PAP3', 'PAP4', 'SMT(S)', 'SMT(T)', 'SP1', 'SP2', 'SP3', 'SP4');
+        $list  = array('GENERAL', 'CEP', 'CP', 'PAP1', 'PAP2', 'PAP3', 'PAP4', 'SMT(S)', 'SMT(T)', 'SP1', 'SP2', 'SP3', 'SP4');
         return $list;
     }
 

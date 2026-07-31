@@ -154,13 +154,15 @@ foreach ($fields as $field) {
                 <div class="form-floating">
                     <select class="form-select" id="StudentStudyLine" name="StudentStudyLine">
                         <option value="">เลือกสายการเรียน</option>
-                        <?php if (!empty($study_line_list)): foreach ($study_line_list as $line): ?>
-                        <option value="<?= $line ?>" <?= $StudentStudyLine === $line ? 'selected' : '' ?>><?= $line ?></option>
-                        <?php endforeach; else: ?>
-                            <option value="วิทยาศาสตร์-คณิตศาสตร์" <?= $StudentStudyLine == 'วิทยาศาสตร์-คณิตศาสตร์' ? 'selected' : '' ?>>วิทยาศาสตร์-คณิตศาสตร์</option>
-                            <option value="ภาษาอังกฤษ-คณิตศาสตร์" <?= $StudentStudyLine == 'ภาษาอังกฤษ-คณิตศาสตร์' ? 'selected' : '' ?>>ภาษาอังกฤษ-คณิตศาสตร์</option>
-                            <option value="ทั่วไป" <?= $StudentStudyLine == 'ทั่วไป' ? 'selected' : '' ?>>ทั่วไป</option>
-                        <?php endif; ?>
+                        <?php 
+                        $lines = !empty($study_line_list) ? $study_line_list : ['GENERAL', 'CEP', 'CP', 'PAP1', 'PAP2', 'PAP3', 'PAP4', 'SMT(S)', 'SMT(T)', 'SP1', 'SP2', 'SP3', 'SP4'];
+                        $uniqueLines = array_unique(array_filter($lines, function($item) {
+                            return !empty($item) && $item !== 'เลือกสายการเรียน' && $item !== 'ทั่วไป' && $item !== 'GENERAL (ทั่วไป)';
+                        }));
+                        foreach ($uniqueLines as $line): 
+                        ?>
+                        <option value="<?= esc($line) ?>" <?= $StudentStudyLine === $line ? 'selected' : '' ?>><?= esc($line) ?></option>
+                        <?php endforeach; ?>
                     </select>
                     <label for="StudentStudyLine">สายการเรียน (Study Line)</label>
                 </div>

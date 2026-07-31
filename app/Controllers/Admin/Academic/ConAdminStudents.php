@@ -1571,20 +1571,72 @@ class ConAdminStudents extends BaseController
         $student_date_birth_buddhist_main = null; 
         $student_date_birth_buddhist_personnel = null; 
         $student_date_entrance_buddhist = null;
-        if ($birth = $this->request->getPost('StudentDateBirth')) {
-            try {
-                $date = new \DateTime($birth);
-                $buddhist_year = (int)$date->format('Y') + 543;
-                $student_date_birth_buddhist_main = $date->format("d/m/$buddhist_year");
-                $student_date_birth_buddhist_personnel = $date->format("d-m-$buddhist_year");
-            } catch (\Exception $e) {}
+
+        $rawBirth = trim($this->request->getPost('StudentDateBirth') ?? '');
+        if (!empty($rawBirth)) {
+            if (strpos($rawBirth, '/') !== false) {
+                $parts = explode('/', $rawBirth);
+                if (count($parts) === 3) {
+                    $d = str_pad(trim($parts[0]), 2, '0', STR_PAD_LEFT);
+                    $m = str_pad(trim($parts[1]), 2, '0', STR_PAD_LEFT);
+                    $y = (int)trim($parts[2]);
+                    if ($y < 2400) $y += 543;
+                    $student_date_birth_buddhist_main = "$d/$m/$y";
+                    $student_date_birth_buddhist_personnel = "$d-$m-$y";
+                }
+            } elseif (strpos($rawBirth, '-') !== false) {
+                $parts = explode('-', $rawBirth);
+                if (count($parts) === 3) {
+                    if (strlen($parts[0]) === 4) { // YYYY-MM-DD
+                        $y = (int)$parts[0] + 543;
+                        $m = str_pad(trim($parts[1]), 2, '0', STR_PAD_LEFT);
+                        $d = str_pad(trim($parts[2]), 2, '0', STR_PAD_LEFT);
+                        $student_date_birth_buddhist_main = "$d/$m/$y";
+                        $student_date_birth_buddhist_personnel = "$d-$m-$y";
+                    } elseif (strlen($parts[2]) === 4) { // DD-MM-YYYY
+                        $d = str_pad(trim($parts[0]), 2, '0', STR_PAD_LEFT);
+                        $m = str_pad(trim($parts[1]), 2, '0', STR_PAD_LEFT);
+                        $y = (int)trim($parts[2]);
+                        if ($y < 2400) $y += 543;
+                        $student_date_birth_buddhist_main = "$d/$m/$y";
+                        $student_date_birth_buddhist_personnel = "$d-$m-$y";
+                    }
+                }
+            }
         }
-        if ($entrance = $this->request->getPost('StudentDateEntrance')) {
-            try {
-                $date = new \DateTime($entrance);
-                $buddhist_year = (int)$date->format('Y') + 543;
-                $student_date_entrance_buddhist = $date->format("d/m/$buddhist_year");
-            } catch (\Exception $e) {}
+
+        // Fallback จากข้อมูลเดิมหากไม่สามารถแปลงวันเกิดได้
+        if (empty($student_date_birth_buddhist_personnel)) {
+            $existingStudent = $this->db->table('tb_students')->where('StudentID', $student_id)->get()->getRow();
+            if ($existingStudent && !empty($existingStudent->StudentDateBirth)) {
+                $student_date_birth_buddhist_main = $existingStudent->StudentDateBirth;
+                $student_date_birth_buddhist_personnel = str_replace('/', '-', $existingStudent->StudentDateBirth);
+            } else {
+                $student_date_birth_buddhist_main = date('d/m/') . (date('Y') + 543);
+                $student_date_birth_buddhist_personnel = date('d-m-') . (date('Y') + 543);
+            }
+        }
+
+        $rawEntrance = trim($this->request->getPost('StudentDateEntrance') ?? '');
+        if (!empty($rawEntrance)) {
+            if (strpos($rawEntrance, '/') !== false) {
+                $parts = explode('/', $rawEntrance);
+                if (count($parts) === 3) {
+                    $d = str_pad(trim($parts[0]), 2, '0', STR_PAD_LEFT);
+                    $m = str_pad(trim($parts[1]), 2, '0', STR_PAD_LEFT);
+                    $y = (int)trim($parts[2]);
+                    if ($y < 2400) $y += 543;
+                    $student_date_entrance_buddhist = "$d/$m/$y";
+                }
+            } elseif (strpos($rawEntrance, '-') !== false) {
+                $parts = explode('-', $rawEntrance);
+                if (count($parts) === 3 && strlen($parts[0]) === 4) {
+                    $y = (int)$parts[0] + 543;
+                    $m = str_pad(trim($parts[1]), 2, '0', STR_PAD_LEFT);
+                    $d = str_pad(trim($parts[2]), 2, '0', STR_PAD_LEFT);
+                    $student_date_entrance_buddhist = "$d/$m/$y";
+                }
+            }
         }
         $data_main = [
             'StudentPrefix' => $this->request->getPost('StudentPrefix'),
@@ -1607,6 +1659,10 @@ class ConAdminStudents extends BaseController
             'StudentDateBirth' => $student_date_birth_buddhist_main,
             'StudentDateEntrance' => $student_date_entrance_buddhist
         ];
+
+        // กรองค่า null ออกจาก data_main เพื่อป้องกัน column cannot be null
+        $data_main = array_filter($data_main, function($v) { return $v !== null; });
+
         $data_personnel = [
             'stu_prefix'    => $this->request->getPost('StudentPrefix'),
             'stu_fristName' => $this->request->getPost('StudentFirstName'),
@@ -1615,43 +1671,47 @@ class ConAdminStudents extends BaseController
             'stu_iden'      => $student_id_number,
         ];
 
+        // กรองค่า null ออกจาก data_personnel ด้วย
+        $data_personnel = array_filter($data_personnel, function($v) { return $v !== null; });
+
         // Only update these if they are actually sent (they are now removed from simple form)
         $extra_fields = ['stu_nickName', 'stu_phone', 'stu_email', 'stu_bloodType', 'stu_nationality', 'stu_race', 'stu_religion', 'stu_hNumber', 'stu_hTambon', 'stu_hDistrict', 'stu_hProvince', 'stu_hPostCode'];
         foreach ($extra_fields as $f) {
             $val = $this->request->getPost($f);
             if ($val !== null) $data_personnel[$f] = $val;
         }
-        $this->db->transStart();
+
         try {
+            // === 1. อัปเดตฐานข้อมูลหลัก (tb_students ใน main DB) ===
+            $this->db->transStart();
             $this->modAdminStudents->update($student_id, $data_main);
+            $this->db->transComplete();
             
+            if ($this->db->transStatus() === false) {
+                $lastError = $this->db->error();
+                log_message('error', '[update_student_details] Main DB Error: ' . json_encode($lastError) . ' | Data: ' . json_encode($data_main));
+                throw new \Exception("ไม่สามารถอัปเดตข้อมูลในฐานข้อมูลหลักได้ (Error: " . ($lastError['message'] ?? 'unknown') . ")");
+            }
+
+            // === 2. อัปเดตฐานข้อมูล Personnel (แยก transaction) ===
             $student_id_number_cleaned = str_replace('-', '', $student_id_number);
             
-            // ใช้ query แบบ raw SQL นิดหน่อยเพื่อให้ชัวร์เรื่องฟังค์ชั่น REPLACE ครับ
-            $personnel_check = $this->DBpersonnel->query("SELECT COUNT(*) AS count FROM tb_students WHERE REPLACE(stu_iden, '-', '') = '$student_id_number_cleaned'")->getRow();
+            $personnel_check = $this->DBpersonnel->query("SELECT COUNT(*) AS count FROM tb_students WHERE REPLACE(stu_iden, '-', '') = ?", [$student_id_number_cleaned])->getRow();
 
             if ($personnel_check && $personnel_check->count > 0) {
-                // อัปเดตข้อมูลเดิม (ใช้ raw query เพื่อความแม่นยำกับตัวแปรที่มีอักขระพิเศษ)
                 $this->DBpersonnel->table('tb_students')
                     ->where("REPLACE(stu_iden, '-', '') = '$student_id_number_cleaned'", null, false)
                     ->update($data_personnel);
             } else {
-                // ถ้าไม่มีข้อมูลเดิม ให้เพิ่มใหม่
                 $data_personnel['stu_iden'] = $student_id_number;
                 $this->DBpersonnel->table('tb_students')->insert($data_personnel);
-            }
-
-            $this->db->transComplete();
-            
-            if ($this->db->transStatus() === false) {
-                throw new \Exception("ไม่สามารถจบ Transaction ของฐานข้อมูลหลักได้");
             }
 
             return $this->response->setJSON(['status' => 'success', 'message' => 'บันทึกข้อมูลนักเรียนเรียบร้อยแล้ว']);
 
         } catch (\Exception $e) {
             $this->db->transRollback();
-            log_message('error', 'Update Student Details Error: ' . $e->getMessage());
+            log_message('error', '[update_student_details] Exception: ' . $e->getMessage());
             return $this->response->setJSON([
                 'status' => 'error', 
                 'message' => 'เกิดความผิดพลาดในการบันทึกข้อมูล: ' . $e->getMessage()
