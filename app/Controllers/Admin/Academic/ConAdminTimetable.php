@@ -11,6 +11,7 @@ class ConAdminTimetable extends BaseController
     protected $db;
     protected $db_timetable;
     protected $db_personnel;
+    protected $db_skj;
     protected $modTimetable;
     protected $modConfig;
 
@@ -926,8 +927,6 @@ class ConAdminTimetable extends BaseController
             ->get()->getResult();
 
         $data['break_map'] = [];
-        $data['time_map'] = [];
-
         // 1. Fill time map with GLOBAL defaults first
         foreach($global_periods as $gp) {
             if (!isset($data['time_map'][$gp->period_number])) {
@@ -1054,6 +1053,12 @@ class ConAdminTimetable extends BaseController
             return $this->response->setJSON(['status' => 'error', 'message' => "ไม่สามารถวางบล็อก $block_size คาบได้ (เกินเวลา)"]);
         }
 
+        // 🚀 Group-Aware assignments
+        $group_members = (!empty($assign->group_id))
+            ? $this->db_timetable->table('tb_timetable_assignments')->where('group_id', $assign->group_id)->get()->getResult()
+            : [$assign];
+        $group_assign_ids = array_column($group_members, 'assign_id');
+
         // 🚀 Same Day Constraint: check if this subject already exists on this day
         $sameDayCheck = $this->db_timetable->table('tb_timetable_data')
             ->where('assign_id', $assign_id)
@@ -1066,10 +1071,6 @@ class ConAdminTimetable extends BaseController
         }
 
         $this->db_timetable->transStart();
-        // 🚀 Group-Aware Constraint Check
-        $group_members = (!empty($assign->group_id))
-            ? $this->db_timetable->table('tb_timetable_assignments')->where('group_id', $assign->group_id)->get()->getResult()
-            : [$assign];
 
         $has_junior = false; $has_senior = false;
         foreach ($group_members as $member) {
@@ -1102,49 +1103,54 @@ class ConAdminTimetable extends BaseController
                 return $this->response->setJSON(['status' => 'error', 'message' => "คาบที่ $p ติดกิจกรรมโรงเรียนของระดับชั้นในกลุ่ม"]);
             }
 
-            // 2. Check Class Conflict (Room Busy)
-            // Get all assign_ids for this specific room to avoid JOIN in WHERE
-            $room_assign_ids = array_column(
-                $this->db_timetable->table('tb_timetable_assignments')
-                    ->select('assign_id')
-                    ->where('class_name', $assign->class_name)
-                    ->get()->getResultArray(), 
-                'assign_id'
-            );
+            // 2. Check Class Conflict for all members in group
+            foreach ($group_members as $member) {
+                $room_assign_ids = array_column(
+                    $this->db_timetable->table('tb_timetable_assignments')
+                        ->select('assign_id')
+                        ->where('class_name', $member->class_name)
+                        ->get()->getResultArray(), 
+                    'assign_id'
+                );
 
-            $classConflict = 0;
-            if (!empty($room_assign_ids)) {
-                $classConflict = $this->db_timetable->table('tb_timetable_data')
-                    ->whereIn('assign_id', $room_assign_ids)
-                    ->where([
-                        'day' => $day, 
-                        'period' => $p, 
-                        'term' => $term, 
-                        'year' => $year
-                    ])
-                    ->countAllResults();
-            }
-            if ($classConflict > 0) {
-                $this->db_timetable->transRollback();
-                return $this->response->setJSON(['status' => 'error', 'message' => "คาบที่ $p มีวิชาอื่นอยู่แล้ว!"]);
+                if (!empty($room_assign_ids)) {
+                    $classConflict = $this->db_timetable->table('tb_timetable_data')
+                        ->whereIn('assign_id', $room_assign_ids)
+                        ->where([
+                            'day' => $day, 
+                            'period' => $p, 
+                            'term' => $term, 
+                            'year' => $year
+                        ])
+                        ->countAllResults();
+                    if ($classConflict > 0) {
+                        $this->db_timetable->transRollback();
+                        return $this->response->setJSON(['status' => 'error', 'message' => "ห้องเรียน {$member->class_name} มีวิชาอื่นในคาบที่ $p แล้ว!"]);
+                    }
+                }
             }
 
             // 3. Check Teacher Conflict
-            $teacher_ids = explode(',', $assign->teacher_id);
-            foreach ($teacher_ids as $tid) {
-                $tid = trim($tid);
-                if (empty($tid)) continue;
+            $all_group_teacher_ids = [];
+            foreach ($group_members as $member) {
+                foreach (explode(',', $member->teacher_id ?? '') as $tid) {
+                    $tid = trim($tid);
+                    if (!empty($tid)) $all_group_teacher_ids[] = $tid;
+                }
+            }
+            $all_group_teacher_ids = array_unique($all_group_teacher_ids);
 
-                // Get all assign_ids for this teacher to avoid JOIN in WHERE
+            foreach ($all_group_teacher_ids as $tid) {
+                // Get other assign_ids for this teacher outside current group
                 $teacher_assign_ids = array_column(
                     $this->db_timetable->table('tb_timetable_assignments')
                         ->select('assign_id')
                         ->where("FIND_IN_SET('$tid', teacher_id) >", 0)
+                        ->whereNotIn('assign_id', $group_assign_ids)
                         ->get()->getResultArray(),
                     'assign_id'
                 );
 
-                $teacherConflict = 0;
                 if (!empty($teacher_assign_ids)) {
                     $teacherConflict = $this->db_timetable->table('tb_timetable_data')
                         ->whereIn('assign_id', $teacher_assign_ids)
@@ -1155,6 +1161,10 @@ class ConAdminTimetable extends BaseController
                             'year' => $year
                         ])
                         ->countAllResults();
+                    if ($teacherConflict > 0) {
+                        $this->db_timetable->transRollback();
+                        return $this->response->setJSON(['status' => 'error', 'message' => "ครูมีคาบสอนวิชาอื่นในคาบที่ $p แล้ว!"]);
+                    }
                 }
                 
                 // 🚀 Check Teacher Constraints (Teacher Locks)
@@ -1167,26 +1177,28 @@ class ConAdminTimetable extends BaseController
                         'year' => $year
                     ])->countAllResults();
 
-                if ($teacherConflict > 0 || $is_teacher_locked > 0) {
+                if ($is_teacher_locked > 0) {
                     $this->db_timetable->transRollback();
-                    $msg = ($is_teacher_locked > 0) ? "ครูท่านนี้ถูกล็อคเวลาไม่ว่างในคาบที่ $p" : "ครูมีคาบสอนในคาบที่ $p แล้ว!";
-                    return $this->response->setJSON(['status' => 'error', 'message' => $msg]);
+                    return $this->response->setJSON(['status' => 'error', 'message' => "ครูถูกล็อคเวลาไม่ว่างในคาบที่ $p"]);
                 }
             }
 
-            $this->db_timetable->table('tb_timetable_data')->insert([
-                'assign_id' => $assign_id, 
-                'day' => $day, 
-                'period' => $p, 
-                'term' => $term, 
-                'year' => $year,
-                'is_locked' => 1 // 🔒 การจัดมือถือว่าเป็นการล็อคอัตโนมัติ เพื่อไม่ให้หายเมื่อรีตาราง
-            ]);
+            // Insert for all members of group
+            foreach ($group_members as $member) {
+                $this->db_timetable->table('tb_timetable_data')->insert([
+                    'assign_id' => $member->assign_id, 
+                    'day' => $day, 
+                    'period' => $p, 
+                    'term' => $term, 
+                    'year' => $year,
+                    'is_locked' => 1 // 🔒 การจัดมือถือว่าเป็นการล็อคอัตโนมัติ เพื่อไม่ให้หายเมื่อรีตาราง
+                ]);
+            }
         }
         $this->db_timetable->transComplete();
         return $this->response->setJSON([
             'status' => 'success', 
-            'message' => "บันทึกสำเร็จ ($block_size คาบ)",
+            'message' => "บันทึกสำเร็จ ($block_size คาบ)" . (count($group_members) > 1 ? ' (' . count($group_members) . ' ห้องเรียนในกลุ่ม)' : ''),
             'csrf_hash' => csrf_hash()
         ]);
     }
@@ -1200,10 +1212,15 @@ class ConAdminTimetable extends BaseController
         $target = $this->db_timetable->table('tb_timetable_data')->where('data_id', $data_id)->get()->getRow();
         if (!$target) return $this->response->setJSON(['status' => 'error', 'message' => 'ไม่พบข้อมูล']);
 
+        $assign = $this->modTimetable->find($target->assign_id);
+        $group_assign_ids = ($assign && !empty($assign->group_id))
+            ? array_column($this->db_timetable->table('tb_timetable_assignments')->select('assign_id')->where('group_id', $assign->group_id)->get()->getResultArray(), 'assign_id')
+            : [$target->assign_id];
+
         // 2. Find all periods for this assignment on the same day
         $siblings = $this->db_timetable->table('tb_timetable_data')
+                    ->where('assign_id', $target->assign_id)
                     ->where([
-                        'assign_id' => $target->assign_id,
                         'day'       => $target->day,
                         'term'      => $target->term,
                         'year'      => $target->year
@@ -1212,33 +1229,37 @@ class ConAdminTimetable extends BaseController
                     ->get()->getResult();
 
         // 3. Identify the consecutive block that contains our target period
-        $block_ids = [];
-        $current_block = [];
+        $current_periods = [];
         $found_target = false;
 
         for ($i = 0; $i < count($siblings); $i++) {
             if ($i > 0 && ($siblings[$i]->period != $siblings[$i-1]->period + 1)) {
                 // Gap found, check if previous block had our target
                 if ($found_target) break;
-                $current_block = [];
+                $current_periods = [];
             }
             
-            $current_block[] = $siblings[$i]->data_id;
+            $current_periods[] = $siblings[$i]->period;
             if ($siblings[$i]->data_id == $data_id) $found_target = true;
 
             if ($i == count($siblings) - 1 && $found_target) {
-                // End of list and we found target in last block
                 break;
             }
         }
-        
-        $block_ids = $current_block;
 
-        // 4. Delete the whole block
-        if ($this->db_timetable->table('tb_timetable_data')->whereIn('data_id', $block_ids)->delete()) {
+        // 4. Delete the whole block across all group members
+        if (!empty($current_periods)) {
+            $this->db_timetable->table('tb_timetable_data')
+                ->whereIn('assign_id', $group_assign_ids)
+                ->where('day', $target->day)
+                ->where('term', $target->term)
+                ->where('year', $target->year)
+                ->whereIn('period', $current_periods)
+                ->delete();
+
             return $this->response->setJSON([
                 'status' => 'success', 
-                'message' => 'ลบคาบเรียนทั้งบล็อกสำเร็จ (' . count($block_ids) . ' คาบ)',
+                'message' => 'ลบคาบเรียนทั้งบล็อกสำเร็จ (' . count($current_periods) . ' คาบ)',
                 'csrf_hash' => csrf_hash()
             ]);
         }
@@ -1255,10 +1276,15 @@ class ConAdminTimetable extends BaseController
         $target = $this->db_timetable->table('tb_timetable_data')->where('data_id', $data_id)->get()->getRow();
         if (!$target) return $this->response->setJSON(['status' => 'error', 'message' => 'ไม่พบข้อมูล']);
 
+        $assign = $this->modTimetable->find($target->assign_id);
+        $group_assign_ids = ($assign && !empty($assign->group_id))
+            ? array_column($this->db_timetable->table('tb_timetable_assignments')->select('assign_id')->where('group_id', $assign->group_id)->get()->getResultArray(), 'assign_id')
+            : [$target->assign_id];
+
         // 2. Find all periods for this assignment on the same day to identify the block
         $siblings = $this->db_timetable->table('tb_timetable_data')
+                    ->where('assign_id', $target->assign_id)
                     ->where([
-                        'assign_id' => $target->assign_id,
                         'day'       => $target->day,
                         'term'      => $target->term,
                         'year'      => $target->year
@@ -1267,27 +1293,32 @@ class ConAdminTimetable extends BaseController
                     ->get()->getResult();
 
         // 3. Identify the consecutive block that contains our target period
-        $block_ids = [];
-        $current_block = [];
+        $current_periods = [];
         $found_target = false;
 
         for ($i = 0; $i < count($siblings); $i++) {
             if ($i > 0 && ($siblings[$i]->period != $siblings[$i-1]->period + 1)) {
                 if ($found_target) break;
-                $current_block = [];
+                $current_periods = [];
             }
-            $current_block[] = $siblings[$i]->data_id;
+            $current_periods[] = $siblings[$i]->period;
             if ($siblings[$i]->data_id == $data_id) $found_target = true;
         }
-        
-        $block_ids = $current_block;
 
-        // 4. Toggle lock for the whole block
-        if ($this->db_timetable->table('tb_timetable_data')->whereIn('data_id', $block_ids)->update(['is_locked' => $is_locked])) {
+        // 4. Toggle lock for the whole block across all group members
+        if (!empty($current_periods)) {
+            $this->db_timetable->table('tb_timetable_data')
+                ->whereIn('assign_id', $group_assign_ids)
+                ->where('day', $target->day)
+                ->where('term', $target->term)
+                ->where('year', $target->year)
+                ->whereIn('period', $current_periods)
+                ->update(['is_locked' => $is_locked]);
+
             $msg = $is_locked == 1 ? 'ล็อคคาบเรียนทั้งบล็อกเรียบร้อย' : 'ปลดล็อคคาบเรียนทั้งบล็อกเรียบร้อย';
             return $this->response->setJSON([
                 'status' => 'success', 
-                'message' => $msg . ' (' . count($block_ids) . ' คาบ)',
+                'message' => $msg . ' (' . count($current_periods) . ' คาบ)',
                 'csrf_hash' => csrf_hash()
             ]);
         }
@@ -1308,48 +1339,50 @@ class ConAdminTimetable extends BaseController
         if (!$target) return $this->response->setJSON(['status' => 'error', 'message' => 'ไม่พบข้อมูล']);
         if ($target->is_locked == 1) return $this->response->setJSON(['status' => 'error', 'message' => 'คาบเรียนนี้ถูกล็อคอยู่ ไม่สามารถย้ายได้']);
 
+        $assign = $this->modTimetable->find($target->assign_id);
+        if (!$assign) return $this->response->setJSON(['status' => 'error', 'message' => 'ไม่พบข้อมูลการมอบหมายงาน']);
+
+        $group_members = (!empty($assign->group_id))
+            ? $this->db_timetable->table('tb_timetable_assignments')->where('group_id', $assign->group_id)->get()->getResult()
+            : [$assign];
+        $group_assign_ids = array_column($group_members, 'assign_id');
+
         $siblings = $this->db_timetable->table('tb_timetable_data')
                     ->where(['assign_id' => $target->assign_id, 'day' => $target->day, 'term' => $term, 'year' => $year])
                     ->orderBy('period', 'ASC')->get()->getResult();
 
-        $current_block = [];
+        $current_periods = [];
         $found_target = false;
         for ($i = 0; $i < count($siblings); $i++) {
             if ($i > 0 && ($siblings[$i]->period != $siblings[$i-1]->period + 1)) {
                 if ($found_target) break;
-                $current_block = [];
+                $current_periods = [];
             }
-            $current_block[] = $siblings[$i]->data_id;
+            $current_periods[] = $siblings[$i]->period;
             if ($siblings[$i]->data_id == $data_id) $found_target = true;
         }
-        $block_size = count($current_block);
-        $old_block_ids = $current_block;
+        $block_size = count($current_periods);
 
         if ($block_size === 0) return $this->response->setJSON(['status' => 'error', 'message' => 'ไม่พบกลุ่มคาบเรียนที่ต้องการย้าย']);
-
-        // 2. Check availability at new location
-        $assign = $this->modTimetable->find($target->assign_id);
-        if (!$assign) return $this->response->setJSON(['status' => 'error', 'message' => 'ไม่พบข้อมูลการมอบหมายงาน']);
 
         // 🚀 Same Day Constraint: Check if this assignment already has slots on the new day (excluding our current block)
         $sameDayCheck = $this->db_timetable->table('tb_timetable_data')
             ->where('assign_id', $target->assign_id)
             ->where('day', $new_day)
             ->where('term', $term)
-            ->where('year', $year)
-            ->whereNotIn('data_id', $old_block_ids)
-            ->countAllResults();
-        if ($sameDayCheck > 0) return $this->response->setJSON(['status' => 'error', 'message' => 'วิชานี้มีคาบสอนในวันนี้แล้ว ไม่สามารถย้ายมาซ้ำซ้อนได้ (ตามเงื่อนไขการหั่นคาบ)']);
+            ->where('year', $year);
+        if ($target->day === $new_day) {
+            $sameDayCheck->whereNotIn('period', $current_periods);
+        }
+        if ($sameDayCheck->countAllResults() > 0) {
+            return $this->response->setJSON(['status' => 'error', 'message' => 'วิชานี้มีคาบสอนในวันนี้แล้ว ไม่สามารถย้ายมาซ้ำซ้อนได้ (ตามเงื่อนไขการหั่นคาบ)']);
+        }
 
         $new_end_period = $new_start_period + $block_size - 1;
         $max_p = $this->db_timetable->table('tb_timetable_config_periods')->countAllResults();
         if ($new_end_period > $max_p) return $this->response->setJSON(['status' => 'error', 'message' => 'เกินเวลาตารางสอน']);
 
         // 🚀 Group-Aware Constraint Check
-        $group_members = (!empty($assign->group_id))
-            ? $this->db_timetable->table('tb_timetable_assignments')->where('group_id', $assign->group_id)->get()->getResult()
-            : [$assign];
-
         $has_junior = false; $has_senior = false;
         foreach ($group_members as $member) {
             if (preg_match('/ม\.[1-3]/', $member->class_name) || preg_match('/^[1-3]/', $member->class_name)) $has_junior = true;
@@ -1372,23 +1405,33 @@ class ConAdminTimetable extends BaseController
                             ->countAllResults();
             if ($is_master > 0) return $this->response->setJSON(['status' => 'error', 'message' => "คาบที่ $p ติดกิจกรรมโรงเรียนของระดับชั้นในกลุ่ม"]);
 
-            // Class Conflict
-            $classConflict = $this->db_timetable->table('tb_timetable_data')
-                ->join('tb_timetable_assignments', 'tb_timetable_assignments.assign_id = tb_timetable_data.assign_id')
-                ->where('tb_timetable_assignments.class_name', $assign->class_name)
-                ->where([
-                    'tb_timetable_data.day' => $new_day, 
-                    'tb_timetable_data.period' => $p, 
-                    'tb_timetable_data.term' => $term, 
-                    'tb_timetable_data.year' => $year
-                ])
-                ->whereNotIn('tb_timetable_data.data_id', $old_block_ids)
-                ->countAllResults();
-            if ($classConflict > 0) return $this->response->setJSON(['status' => 'error', 'message' => "คาบที่ $p มีวิชาอื่นอยู่แล้ว!"]);
+            // Class Conflict for all group members
+            foreach ($group_members as $member) {
+                $classConflict = $this->db_timetable->table('tb_timetable_data')
+                    ->join('tb_timetable_assignments', 'tb_timetable_assignments.assign_id = tb_timetable_data.assign_id')
+                    ->where('tb_timetable_assignments.class_name', $member->class_name)
+                    ->where([
+                        'tb_timetable_data.day' => $new_day, 
+                        'tb_timetable_data.period' => $p, 
+                        'tb_timetable_data.term' => $term, 
+                        'tb_timetable_data.year' => $year
+                    ])
+                    ->whereNotIn('tb_timetable_data.assign_id', $group_assign_ids)
+                    ->countAllResults();
+                if ($classConflict > 0) return $this->response->setJSON(['status' => 'error', 'message' => "ห้องเรียน {$member->class_name} มีวิชาอื่นในคาบที่ $p แล้ว!"]);
+            }
 
-            // Teacher Conflict
-            $teacher_ids = explode(',', $assign->teacher_id);
-            foreach ($teacher_ids as $tid) {
+            // Teacher Conflict for all teachers in group
+            $all_group_teacher_ids = [];
+            foreach ($group_members as $member) {
+                foreach (explode(',', $member->teacher_id ?? '') as $tid) {
+                    $tid = trim($tid);
+                    if (!empty($tid)) $all_group_teacher_ids[] = $tid;
+                }
+            }
+            $all_group_teacher_ids = array_unique($all_group_teacher_ids);
+
+            foreach ($all_group_teacher_ids as $tid) {
                 $teacherConflict = $this->db_timetable->table('tb_timetable_data')
                     ->join('tb_timetable_assignments', 'tb_timetable_assignments.assign_id = tb_timetable_data.assign_id')
                     ->where("FIND_IN_SET('$tid', tb_timetable_assignments.teacher_id) >", 0)
@@ -1398,7 +1441,7 @@ class ConAdminTimetable extends BaseController
                         'tb_timetable_data.term' => $term, 
                         'tb_timetable_data.year' => $year
                     ])
-                    ->whereNotIn('tb_timetable_data.data_id', $old_block_ids)
+                    ->whereNotIn('tb_timetable_data.assign_id', $group_assign_ids)
                     ->countAllResults();
                 
                 // 🚀 Check Teacher Constraints (Teacher Locks)
@@ -1412,25 +1455,38 @@ class ConAdminTimetable extends BaseController
                     ])->countAllResults();
 
                 if ($teacherConflict > 0 || $is_teacher_locked > 0) {
-                    $msg = ($is_teacher_locked > 0) ? "ครูท่านนี้ถูกล็อคเวลาไม่ว่างในคาบที่ $p" : "ครูมีคาบสอนในคาบที่ $p แล้ว!";
+                    $msg = ($is_teacher_locked > 0) ? "ครูถูกล็อคเวลาไม่ว่างในคาบที่ $p" : "ครูมีคาบสอนในคาบที่ $p แล้ว!";
                     return $this->response->setJSON(['status' => 'error', 'message' => $msg]);
                 }
             }
         }
 
-        // 3. Move it
+        // 3. Move it for all group members
         $this->db_timetable->transStart();
-        $idx = 0;
-        for ($p = $new_start_period; $p <= $new_end_period; $p++) {
-            $this->db_timetable->table('tb_timetable_data')->where('data_id', $old_block_ids[$idx])
-                ->update(['day' => $new_day, 'period' => $p]);
-            $idx++;
+        foreach ($group_members as $member) {
+            $member_slots = $this->db_timetable->table('tb_timetable_data')
+                ->where('assign_id', $member->assign_id)
+                ->where('day', $target->day)
+                ->where('term', $term)
+                ->where('year', $year)
+                ->whereIn('period', $current_periods)
+                ->orderBy('period', 'ASC')
+                ->get()->getResult();
+
+            $pIdx = 0;
+            foreach ($member_slots as $ms) {
+                $targetP = $new_start_period + $pIdx;
+                $this->db_timetable->table('tb_timetable_data')
+                    ->where('data_id', $ms->data_id)
+                    ->update(['day' => $new_day, 'period' => $targetP]);
+                $pIdx++;
+            }
         }
         $this->db_timetable->transComplete();
 
         return $this->response->setJSON([
             'status' => 'success', 
-            'message' => 'ย้ายคาบเรียนสำเร็จ',
+            'message' => 'ย้ายคาบเรียนสำเร็จ' . (count($group_members) > 1 ? ' (' . count($group_members) . ' ห้องเรียนในกลุ่ม)' : ''),
             'csrf_hash' => csrf_hash()
         ]);
     }
@@ -2151,27 +2207,29 @@ class ConAdminTimetable extends BaseController
         $selectedYear = $this->getTimetableYear();
         list($term, $year) = explode('/', $selectedYear);
 
-        // 1. Get the original record to find the group
+        // 1. Get the original record
         $original = $this->modTimetable->find($id);
         if (!$original) return $this->response->setJSON(['status' => 'error', 'message' => 'ไม่พบข้อมูลเดิม']);
 
-        // 2. Delete the entire old group
-        $this->db_timetable->table('tb_timetable_assignments')->where([
-            'teacher_id'     => $original->teacher_id,
-            'subject_id'     => $original->subject_id,
-            'hours_per_week' => $original->hours_per_week,
-            'term'           => $term,
-            'year'           => $year
-        ])->delete();
+        $edit_ids = $this->request->getPost('edit_ids');
+        $idArray = !empty($edit_ids) ? explode(',', $edit_ids) : [$id];
 
-        // 3. Insert new ones
+        // 2. Preserve group_id if exists
+        $existing_group_id = $original->group_id;
+
+        // 3. Delete only the edited records
+        $this->modTimetable->whereIn('assign_id', $idArray)->delete();
+
+        // 4. Insert updated ones
         $teacher_ids = $this->request->getPost('teacher_id');
         $teacher_id_string = is_array($teacher_ids) ? implode(',', $teacher_ids) : $teacher_ids;
-        $class_names = $this->request->getPost('class_name');
+        $class_names = $this->request->getPost('class_names');
+        if (empty($class_names)) $class_names = $this->request->getPost('class_name');
         if (!is_array($class_names)) $class_names = [$class_names];
 
         $this->db_timetable->transStart();
         foreach ($class_names as $class) {
+            if (empty($class)) continue;
             $this->modTimetable->insert([
                 'teacher_id'     => $teacher_id_string,
                 'subject_id'     => $this->request->getPost('subject_id'),
@@ -2179,6 +2237,7 @@ class ConAdminTimetable extends BaseController
                 'hours_per_week' => $this->request->getPost('hours_per_week'),
                 'period_split'   => $this->request->getPost('period_split'),
                 'preferred_time' => $this->request->getPost('preferred_time') ?: 'NONE',
+                'group_id'       => $existing_group_id,
                 'term'           => $term,
                 'year'           => $year,
             ]);
@@ -2448,7 +2507,7 @@ class ConAdminTimetable extends BaseController
 
         $fields = $this->db_timetable->getFieldNames('tb_timetable_assignments');
         if (!in_array('group_id', $fields)) {
-            $this->db_timetable->query("ALTER TABLE tb_timetable_assignments ADD COLUMN group_id INT DEFAULT NULL AFTER preferred_time");
+            $this->db_timetable->query("ALTER TABLE tb_timetable_assignments ADD COLUMN group_id VARCHAR(50) DEFAULT NULL AFTER preferred_time");
         }
 
         $selectedYear = $this->getTimetableYear();

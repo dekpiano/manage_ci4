@@ -118,6 +118,8 @@ $routes->get('Admin/Acade/Registration/ClassRoom', [ConAdminClassRoom::class, 'A
 $routes->get('Admin/Acade/Registration/ClassRoom/(:num)', [ConAdminClassRoom::class, 'AdminClassMain/$1']);
 $routes->get('admin/academic/ConAdminClassRoom/AddClassRoom', [ConAdminClassRoom::class, 'AddClassRoom']);
 $routes->post('admin/academic/ConAdminClassRoom/AddClassRoom', [ConAdminClassRoom::class, 'AddClassRoom']);
+$routes->get('admin/academic/ConAdminClassRoom/getAssignedTeachers/(:segment)', [ConAdminClassRoom::class, 'getAssignedTeachers/$1']);
+$routes->get('admin/academic/ConAdminClassRoom/getAssignedTeachers', [ConAdminClassRoom::class, 'getAssignedTeachers']);
 $routes->post('admin/academic/ConAdminClassRoom/DeleteClassRoom/(:segment)', [ConAdminClassRoom::class, 'DeleteClassRoom']);
 $routes->get('Admin/Acade/Registration/Students', [ConAdminStudents::class, 'AdminStudentsMain']);
 $routes->get('Admin/Acade/Registration/Students/Data', [ConAdminStudents::class, 'AdminStudentsData']);
@@ -289,6 +291,10 @@ $routes->group('admin/academic/timetable', ['namespace' => 'App\Controllers'], f
     // Subject Constraints
     $routes->get('subject-constraints', 'Admin\Academic\ConAdminTimetable::subjectConstraints');
     $routes->post('save-subject-lock', 'Admin\Academic\ConAdminTimetable::saveSubjectLock');
+
+    // Room Constraints
+    $routes->get('get-room-constraint-grid', 'Admin\Academic\ConAdminTimetable::getRoomConstraintGrid');
+    $routes->post('save-room-constraint', 'Admin\Academic\ConAdminTimetable::saveRoomConstraint');
 
 });
 

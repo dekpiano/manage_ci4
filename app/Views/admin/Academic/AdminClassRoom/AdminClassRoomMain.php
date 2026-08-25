@@ -517,6 +517,61 @@
     color: #fff;
 }
 
+/* SweetAlert2 Highest Layer */
+.swal2-container {
+    z-index: 99999 !important;
+}
+
+/* Select2 Multiple Customizations */
+.select2-container--bootstrap-5 .select2-selection--multiple {
+    min-height: 44px;
+    border-radius: 10px;
+    border: 2px solid #e9ecef;
+    padding: 0.35rem 0.5rem;
+}
+
+.select2-container--bootstrap-5.select2-container--focus .select2-selection--multiple {
+    border-color: #15a362;
+    box-shadow: 0 0 0 3px rgba(21, 163, 98, 0.15);
+}
+
+.select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__rendered {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 0;
+    margin: 0;
+}
+
+.select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__choice {
+    background: #e8f5e9 !important;
+    border: 1px solid #c8e6c9 !important;
+    color: #1b5e20 !important;
+    font-size: 0.85rem !important;
+    font-weight: 600 !important;
+    border-radius: 6px !important;
+    padding: 3px 8px !important;
+    margin: 2px !important;
+    display: inline-flex;
+    align-items: center;
+}
+
+.select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__choice__remove {
+    color: #1b5e20 !important;
+    margin-right: 5px !important;
+}
+
+.select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__choice__remove:hover {
+    color: #d32f2f !important;
+}
+
+.select2-container--bootstrap-5 .select2-results__option[aria-disabled=true] {
+    color: #adb5bd !important;
+    background-color: #f8f9fa !important;
+    cursor: not-allowed !important;
+    font-size: 0.85rem;
+}
+
 /* ===== Empty State ===== */
 .empty-state {
     text-align: center;
@@ -690,54 +745,94 @@
                 <table class="table table-hover mb-0" id="tb-classroom">
                     <thead>
                         <tr>
-                            <th><i class="bx bx-calendar me-1"></i>ปีการศึกษา</th>
-                            <th><i class="bx bx-door-open me-1"></i>ห้องเรียน</th>
-                            <th><i class="bx bx-user me-1"></i>ครูที่ปรึกษา / ครูหัวหน้าระดับ</th>
-                            <th class="text-center"><i class="bx bx-cog me-1"></i>จัดการ</th>
+                            <th style="width: 15%;"><i class="bx bx-calendar me-1"></i>ปีการศึกษา</th>
+                            <th style="width: 25%;"><i class="bx bx-door-open me-1"></i>ห้องเรียน / ระดับชั้น</th>
+                            <th style="width: 45%;"><i class="bx bx-user me-1"></i>ครูที่ปรึกษา / ครูหัวหน้าระดับ</th>
+                            <th style="width: 15%;" class="text-center"><i class="bx bx-user-check me-1"></i>จำนวนครู</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <?php $tea = []; foreach ($classRoom as $key => $v_classRoom) : 
-                            $tea[] = isset($v_classRoom->class_teacher) ? $v_classRoom->class_teacher : '';
+                        <?php 
+                        $groupedClassRooms = [];
+                        foreach ($classRoom as $key => $v_classRoom) {
+                            $classKey = $v_classRoom->Reg_Class;
+                            if (!isset($groupedClassRooms[$classKey])) {
+                                $groupedClassRooms[$classKey] = [
+                                    'Reg_Year' => $v_classRoom->Reg_Year,
+                                    'Reg_Class' => $v_classRoom->Reg_Class,
+                                    'teachers' => []
+                                ];
+                            }
+                            $groupedClassRooms[$classKey]['teachers'][] = $v_classRoom;
+                        }
+
+                        foreach ($groupedClassRooms as $classKey => $group) :
+                            $regClass = $group['Reg_Class'];
+                            $isLevelHead = (strlen($regClass) == 1);
                         ?>
-                        <tr id="row-<?= isset($v_classRoom->regclass_id) ? esc($v_classRoom->regclass_id) : '' ?>">
-                            <td>
+                        <tr id="class-row-<?= esc(str_replace('/', '-', $regClass)) ?>">
+                            <td class="align-middle">
                                 <span class="year-badge-table">
-                                    <i class="bx bx-calendar"></i><?= isset($v_classRoom->Reg_Year) ? esc($v_classRoom->Reg_Year) : '' ?>
+                                    <i class="bx bx-calendar"></i><?= isset($group['Reg_Year']) ? esc($group['Reg_Year']) : '' ?>
                                 </span>
                             </td>
-                            <td>
-                                <?php if(isset($v_classRoom->Reg_Class) && strlen($v_classRoom->Reg_Class) == 1) : ?>
+                            <td class="align-middle">
+                                <?php if ($isLevelHead) : ?>
                                     <span class="room-badge badge-head">
-                                        <i class="bx bx-crown"></i>หัวหน้าระดับ ม.<?= esc($v_classRoom->Reg_Class) ?>
+                                        <i class="bx bx-crown"></i>หัวหน้าระดับ ม.<?= esc($regClass) ?>
                                     </span>
                                 <?php else : ?>
                                     <span class="room-badge badge-room">
-                                        <i class="bx bx-chalkboard"></i>ห้อง ม.<?= isset($v_classRoom->Reg_Class) ? esc($v_classRoom->Reg_Class) : '' ?>
+                                        <i class="bx bx-chalkboard"></i>ห้อง ม.<?= esc($regClass) ?>
                                     </span>
                                 <?php endif; ?>
                             </td>
                             <td>
-                                <div class="teacher-name">
-                                    <div class="teacher-avatar">
-                                        <i class="bx bx-user"></i>
-                                    </div>
-                                    <div class="teacher-info">
-                                        <div class="name"><?= (isset($v_classRoom->pers_prefix) ? esc($v_classRoom->pers_prefix) : '').(isset($v_classRoom->pers_firstname) ? esc($v_classRoom->pers_firstname) : '').' '.(isset($v_classRoom->pers_lastname) ? esc($v_classRoom->pers_lastname) : '') ?></div>
-                                        <div class="role">
-                                            <?php if(isset($v_classRoom->Reg_Class) && strlen($v_classRoom->Reg_Class) == 1) : ?>
-                                                หัวหน้าระดับ
-                                            <?php else : ?>
-                                                ครูที่ปรึกษา
-                                            <?php endif; ?>
+                                <div class="teachers-list-container d-flex flex-column gap-2 py-1">
+                                    <?php foreach ($group['teachers'] as $t) : 
+                                        $tFullName = (isset($t->pers_prefix) ? $t->pers_prefix : '').(isset($t->pers_firstname) ? $t->pers_firstname : '').' '.(isset($t->pers_lastname) ? $t->pers_lastname : '');
+                                    ?>
+                                    <div class="teacher-item d-flex align-items-center justify-content-between p-2 rounded-3 bg-white border border-light-subtle shadow-sm" id="row-<?= isset($t->regclass_id) ? esc($t->regclass_id) : '' ?>" style="transition: all 0.2s ease;">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="teacher-avatar flex-shrink-0" style="width: 38px; height: 38px;">
+                                                <?php if (!empty($t->pers_img)) : ?>
+                                                    <img src="https://personnel.skj.ac.th/uploads/admin/Personnal/<?= esc($t->pers_img) ?>" 
+                                                         alt="<?= esc($tFullName) ?>" 
+                                                         class="rounded-circle border border-2 border-white shadow-sm" 
+                                                         style="width: 38px; height: 38px; object-fit: cover;"
+                                                         onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\'teacher-avatar-fallback rounded-circle d-flex align-items-center justify-content-center bg-light text-primary fw-bold\' style=\'width:38px;height:38px;font-size:1rem;border:1px solid #e9ecef;\'><i class=\'bx bx-user\'></i></div>';">
+                                                <?php else : ?>
+                                                    <div class="teacher-avatar-fallback rounded-circle d-flex align-items-center justify-content-center bg-light text-primary fw-bold" style="width: 38px; height: 38px; font-size: 1rem; border: 1px solid #e9ecef;">
+                                                        <i class="bx bx-user"></i>
+                                                    </div>
+                                                <?php endif; ?>
+                                            </div>
+                                            <div class="teacher-info">
+                                                <div class="name fw-semibold text-dark" style="font-size: 0.92rem;">
+                                                    <?= esc($tFullName) ?>
+                                                </div>
+                                                <div class="role small">
+                                                    <?php if ($isLevelHead) : ?>
+                                                        <span class="badge bg-label-warning" style="font-size: 0.72rem;"><i class="bx bx-crown me-1"></i>หัวหน้าระดับ</span>
+                                                    <?php else : ?>
+                                                        <span class="badge bg-label-success" style="font-size: 0.72rem;"><i class="bx bx-check-shield me-1"></i>ครูที่ปรึกษา</span>
+                                                    <?php endif; ?>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <button type="button" class="btn btn-sm btn-outline-danger btn-delete d-flex align-items-center px-2 py-1" data-id="<?= isset($t->regclass_id) ? esc($t->regclass_id, 'url') : '' ?>" title="ลบครูท่านนี้">
+                                                <i class="bx bx-trash me-1"></i>ลบ
+                                            </button>
                                         </div>
                                     </div>
+                                    <?php endforeach; ?>
                                 </div>
                             </td>
-                            <td class="text-center">
-                                <button class="btn-delete-action btn-delete" data-id="<?= isset($v_classRoom->regclass_id) ? esc($v_classRoom->regclass_id, 'url') : '' ?>">
-                                    <i class="bx bx-trash"></i>ลบ
-                                </button>
+                            <td class="text-center align-middle">
+                                <span class="badge bg-label-primary rounded-pill px-3 py-2 fw-bold teacher-count-badge">
+                                    <i class="bx bx-group me-1"></i><?= count($group['teachers']) ?> ท่าน
+                                </span>
                             </td>
                         </tr>
                         <?php endforeach; ?>
@@ -798,17 +893,38 @@
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label for="teacher" class="form-label">
-                            <i class="bx bx-user me-1"></i>ครูที่ปรึกษา / ครูหัวหน้าระดับ
+                        <label for="teacher" class="form-label fw-bold d-flex align-items-center justify-content-between">
+                            <span><i class="bx bx-user me-1"></i>ครูที่ปรึกษา / ครูหัวหน้าระดับ <span class="text-danger">*</span></span>
+                            <span class="badge bg-label-success" style="font-size: 0.75rem;"><i class="bx bx-check-double me-1"></i>เลือกได้หลายคน</span>
                         </label>
-                        <select name="teacher" id="teacher" class="form-select" required>
-                            <option value=''>-- เลือกครู --</option>
-                            <?php foreach ($NameTeacher as $key => $v_NameTeacher) : ?>
-                            <option value="<?= isset($v_NameTeacher->pers_id) ? esc($v_NameTeacher->pers_id) : '' ?>">
-                                <?= (isset($v_NameTeacher->pers_prefix) ? esc($v_NameTeacher->pers_prefix) : '').(isset($v_NameTeacher->pers_firstname) ? esc($v_NameTeacher->pers_firstname) : '').' '.(isset($v_NameTeacher->pers_lastname) ? esc($v_NameTeacher->pers_lastname) : '') ?>
+                        <select name="teacher[]" id="teacher" class="form-select" multiple="multiple" data-placeholder="-- ค้นหาและเลือกครู --" required style="width: 100%;">
+                            <?php 
+                            $assignedHeads = isset($assignedHeads) ? $assignedHeads : [];
+                            $assignedAdvisors = isset($assignedAdvisors) ? $assignedAdvisors : [];
+                            foreach ($NameTeacher as $key => $v_NameTeacher) : 
+                                $tId = isset($v_NameTeacher->pers_id) ? $v_NameTeacher->pers_id : '';
+                                $hasHead = isset($assignedHeads[$tId]) ? $assignedHeads[$tId] : null;
+                                $hasAdvisor = isset($assignedAdvisors[$tId]) ? $assignedAdvisors[$tId] : null;
+                                
+                                $tagParts = [];
+                                if ($hasHead) $tagParts[] = 'หัวหน้าระดับ ม.' . $hasHead;
+                                if ($hasAdvisor) $tagParts[] = 'ที่ปรึกษาห้อง ' . $hasAdvisor;
+                                $tagStr = !empty($tagParts) ? ' [' . implode(', ', $tagParts) . ']' : '';
+
+                                // Initially classroom option 1 is selected (Head of Level), so disable if already Head
+                                $isInitiallyDisabled = !empty($hasHead);
+                                $teacherFullName = (isset($v_NameTeacher->pers_prefix) ? $v_NameTeacher->pers_prefix : '') . (isset($v_NameTeacher->pers_firstname) ? $v_NameTeacher->pers_firstname : '') . ' ' . (isset($v_NameTeacher->pers_lastname) ? $v_NameTeacher->pers_lastname : '');
+                            ?>
+                            <option value="<?= esc($tId) ?>" 
+                                    data-name="<?= esc($teacherFullName) ?>"
+                                    <?= $isInitiallyDisabled ? 'disabled' : '' ?>>
+                                <?= esc($teacherFullName) ?><?= esc($tagStr) ?>
                             </option>
                             <?php endforeach; ?>
                         </select>
+                        <div class="form-text text-muted small mt-1">
+                            <i class="bx bx-info-circle me-1 text-primary"></i>ครูที่เป็นหัวหน้าระดับสามารถเป็นครูที่ปรึกษาห้องเรียนได้ (Disable เฉพาะผู้ที่มีหน้าที่ซ้ำกันในประเภทเดียวกัน)
+                        </div>
                     </div>
             </div>
 
@@ -832,11 +948,23 @@
 <script>
 $(document).on('submit', '#AddClassRoom', function (e) {
     e.preventDefault();
+    var teachers = $('#teacher').val();
+    if (!teachers || teachers.length === 0) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'กรุณาเลือกครู',
+            text: 'โปรดเลือกครูที่ปรึกษาหรือครูหัวหน้าระดับอย่างน้อย 1 ท่าน',
+            confirmButtonColor: '#15a362'
+        });
+        return false;
+    }
+
     var formadd = $('#AddClassRoom').serialize();
     $.ajax({
         type: 'post',
         url: "<?= site_url('admin/academic/ConAdminClassRoom/AddClassRoom') ?>",
         data: formadd,
+        dataType: 'json',
         beforeSend: function () {
             Swal.fire({
                 title: 'กำลังบันทึก...',
@@ -846,27 +974,132 @@ $(document).on('submit', '#AddClassRoom', function (e) {
             });
         },
         success: function (result) {
-            $('#myModal').modal('hide');
-            Swal.fire({
-                icon: 'success',
-                title: 'บันทึกข้อมูลสำเร็จ',
-                text: 'ข้อมูลห้องเรียนถูกเพิ่มเรียบร้อยแล้ว',
-                showConfirmButton: true,
-                confirmButtonColor: '#15a362',
-                confirmButtonText: 'ตกลง'
-            }).then((result) => {
-                window.location.reload();
-            });
+            if (result.csrf_hash) {
+                $('.csrf_token').val(result.csrf_hash);
+            }
+            if (result.status === 'success') {
+                $('#myModal').modal('hide');
+                Swal.fire({
+                    icon: 'success',
+                    title: 'บันทึกข้อมูลสำเร็จ',
+                    text: result.message,
+                    showConfirmButton: true,
+                    confirmButtonColor: '#15a362',
+                    confirmButtonText: 'ตกลง'
+                }).then((res) => {
+                    window.location.reload();
+                });
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'เกิดข้อผิดพลาด',
+                    text: result.message || 'ไม่สามารถบันทึกข้อมูลได้',
+                    confirmButtonColor: '#dc3545'
+                });
+            }
         },
         error: function (jqXHR, textStatus, errorThrown) {
             Swal.fire({
                 icon: 'error',
                 title: 'เกิดข้อผิดพลาด',
-                text: 'ไม่สามารถบันทึกข้อมูลได้',
+                text: 'ไม่สามารถติดต่อเซิร์ฟเวอร์ได้',
                 confirmButtonColor: '#dc3545'
             });
         }
     });
+});
+
+var cachedAssignedData = [];
+
+function fetchAndApplyAssignedTeachers(year) {
+    if (!year) return;
+    $.ajax({
+        url: "<?= site_url('admin/academic/ConAdminClassRoom/getAssignedTeachers/') ?>" + year,
+        type: 'GET',
+        dataType: 'json',
+        success: function(response) {
+            if (response.status === 'success') {
+                cachedAssignedData = response.data || [];
+                applyTeacherDisabledStatus();
+            }
+        }
+    });
+}
+
+function applyTeacherDisabledStatus() {
+    var selectedClassroom = $('#classroom').val() || '';
+    var isSelectingHead = (selectedClassroom.length === 1);
+
+    var assignedHeads = {};
+    var assignedAdvisors = {};
+
+    cachedAssignedData.forEach(function(item) {
+        if (item.Reg_Class.length === 1) {
+            assignedHeads[item.class_teacher] = item.Reg_Class;
+        } else {
+            assignedAdvisors[item.class_teacher] = item.Reg_Class;
+        }
+    });
+
+    var currentValues = $('#teacher').val() || [];
+    var validValues = [];
+
+    $('#teacher option').each(function() {
+        var teacherId = $(this).val();
+        if (!teacherId) return;
+
+        var rawName = $(this).attr('data-name');
+        if (!rawName) {
+            rawName = $(this).text().replace(/\s*\[.*\]\s*$/, '').trim();
+            $(this).attr('data-name', rawName);
+        }
+
+        var hasHead = assignedHeads[teacherId];
+        var hasAdvisor = assignedAdvisors[teacherId];
+
+        var tagParts = [];
+        if (hasHead) {
+            tagParts.push('หัวหน้าระดับ ม.' + hasHead);
+        }
+        if (hasAdvisor) {
+            tagParts.push('ที่ปรึกษาห้อง ' + hasAdvisor);
+        }
+
+        var isAlreadyInCurrentRole = isSelectingHead ? Boolean(hasHead) : Boolean(hasAdvisor);
+
+        if (isAlreadyInCurrentRole) {
+            $(this).prop('disabled', true);
+            $(this).text(rawName + ' [' + tagParts.join(', ') + ']');
+        } else {
+            $(this).prop('disabled', false);
+            if (tagParts.length > 0) {
+                $(this).text(rawName + ' [' + tagParts.join(', ') + ']');
+            } else {
+                $(this).text(rawName);
+            }
+            if (currentValues.includes(teacherId)) {
+                validValues.push(teacherId);
+            }
+        }
+    });
+
+    // Re-trigger select2
+    $('#teacher').val(validValues).trigger('change');
+}
+
+$('#classroom').on('change', function() {
+    applyTeacherDisabledStatus();
+});
+
+$('#year').on('change', function() {
+    fetchAndApplyAssignedTeachers($(this).val());
+});
+
+$('#myModal').on('show.bs.modal', function () {
+    var selectedYear = $('#year').val();
+    if (selectedYear) {
+        fetchAndApplyAssignedTeachers(selectedYear);
+    }
 });
 
 $(document).ready(function () {
@@ -902,7 +1135,11 @@ $(document).ready(function () {
     });
     $('#teacher').select2({
         theme: "bootstrap-5",
-        dropdownParent: $('#myModal')
+        dropdownParent: $('#myModal'),
+        placeholder: "-- ค้นหาและเลือกครูที่ปรึกษา (เลือกได้หลายคน) --",
+        allowClear: true,
+        width: '100%',
+        closeOnSelect: false
     });
 });
 
@@ -919,10 +1156,13 @@ $(document).on('click', '.btn-delete', function(e) {
     var url = '<?= site_url('admin/academic/ConAdminClassRoom/DeleteClassRoom/') ?>' + id;
     var csrfName = $('.csrf_token').attr('name');
     var csrfHash = $('.csrf_token').val();
+    var $teacherItem = $('#row-' + id);
+    var $container = $teacherItem.closest('.teachers-list-container');
+    var $classRow = $teacherItem.closest('tr');
 
     Swal.fire({
         title: 'ยืนยันการลบ',
-        text: "คุณต้องการลบข้อมูลนี้ใช่หรือไม่?",
+        text: "คุณต้องการลบครูท่านนี้ออกจากห้องเรียนใช่หรือไม่?",
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#dc3545',
@@ -953,8 +1193,16 @@ $(document).on('click', '.btn-delete', function(e) {
                             text: response.message,
                             confirmButtonColor: '#15a362'
                         });
-                        $('#row-' + id).fadeOut(300, function() {
+                        $teacherItem.fadeOut(300, function() {
                             $(this).remove();
+                            var remaining = $container.find('.teacher-item').length;
+                            if (remaining === 0) {
+                                $classRow.fadeOut(300, function() {
+                                    $(this).remove();
+                                });
+                            } else {
+                                $classRow.find('.teacher-count-badge').html('<i class="bx bx-group me-1"></i>' + remaining + ' ท่าน');
+                            }
                         });
                     } else {
                         Swal.fire({

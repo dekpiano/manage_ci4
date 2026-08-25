@@ -19,6 +19,9 @@ class ModAdminTimetable extends Model
         'class_name',
         'hours_per_week',
         'period_split',
+        'preferred_time',
+        'group_id',
+        'room_name',
         'term',
         'year'
     ];
@@ -32,17 +35,38 @@ class ModAdminTimetable extends Model
     public function getAssignmentsWithDetails($term, $year)
     {
         $db = \Config\Database::connect('timetable');
-        $db_academic = \Config\Database::connect('default');
         $db_personnel = \Config\Database::connect('personnel');
 
         $builder = $db->table($this->table);
-        $builder->select('tb_timetable_assignments.*, skjacth_academic.tb_subjects.SubjectCode, skjacth_academic.tb_subjects.SubjectName, skjacth_personnel.tb_personnel.pers_prefix, skjacth_personnel.tb_personnel.pers_firstname, skjacth_personnel.tb_personnel.pers_lastname');
-        $builder->join('skjacth_academic.tb_subjects', 'skjacth_academic.tb_subjects.SubjectID = tb_timetable_assignments.subject_id', 'left');
-        $builder->join('skjacth_personnel.tb_personnel', 'skjacth_personnel.tb_personnel.pers_id = tb_timetable_assignments.teacher_id', 'left');
+        $builder->select('tb_timetable_assignments.*, tb_timetable_subjects.tsub_code as SubjectCode, tb_timetable_subjects.tsub_name as SubjectName');
+        $builder->join('tb_timetable_subjects', 'tb_timetable_subjects.tsub_id = tb_timetable_assignments.subject_id', 'left');
         
-        if ($term) $builder->where('term', $term);
-        if ($year) $builder->where('year', $year);
+        if ($term) $builder->where('tb_timetable_assignments.term', $term);
+        if ($year) $builder->where('tb_timetable_assignments.year', $year);
         
-        return $builder->get()->getResult();
+        $results = $builder->get()->getResult();
+
+        // Attach teacher info
+        $teachers = $db_personnel->table('tb_personnel')
+            ->select('pers_id, pers_prefix, pers_firstname, pers_lastname')
+            ->get()->getResult();
+        $teacherMap = [];
+        foreach ($teachers as $t) {
+            $teacherMap[$t->pers_id] = $t;
+        }
+
+        foreach ($results as $r) {
+            $tids = explode(',', $r->teacher_id ?? '');
+            $names = [];
+            foreach ($tids as $tid) {
+                $tid = trim($tid);
+                if (isset($teacherMap[$tid])) {
+                    $names[] = $teacherMap[$tid]->pers_prefix . $teacherMap[$tid]->pers_firstname . ' ' . $teacherMap[$tid]->pers_lastname;
+                }
+            }
+            $r->teacher_name = !empty($names) ? implode(', ', $names) : '-';
+        }
+
+        return $results;
     }
 }
