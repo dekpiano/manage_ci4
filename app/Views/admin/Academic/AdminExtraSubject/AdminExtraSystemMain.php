@@ -116,10 +116,14 @@
                     <form class="settings-form">
                         <div class="row">
                             <div class="col-md-6">
+                                <?php 
+                                    $activeExtraTerm = !empty($OnoffSystem->extra_setting_term) ? $OnoffSystem->extra_setting_term : ($selectedTerm ?? get_selected_term_only());
+                                    $activeExtraYear = !empty($OnoffSystem->extra_setting_year) ? $OnoffSystem->extra_setting_year : ($selectedYearOnly ?? get_selected_year_only());
+                                ?>
                                 <select class="form-select form-select-lg mb-3"
                                     aria-label=".form-select-lg example" id="extra_setting_term" name="extra_setting_term">
                                     <?php for ($i=1; $i <=3 ; $i++) : ?>
-                                    <option <?= isset($OnoffSystem[0]->extra_setting_term) && $OnoffSystem[0]->extra_setting_term == $i ? 'selected' : '';?> value="<?= esc($i)?>">ภาคเรียนที่ <?= esc($i)?></option>
+                                    <option <?= $activeExtraTerm == $i ? 'selected' : '';?> value="<?= esc($i)?>">ภาคเรียนที่ <?= esc($i)?></option>
                                     <?php endfor; ?>
                                 </select>
                             </div>
@@ -129,7 +133,7 @@
                                     <?php $d = date('Y')+543; ?>
                                     <?php for ($i=$d-1; $i < $d+2; $i++):
                                     ?>
-                                    <option <?= isset($OnoffSystem[0]->extra_setting_year) && $OnoffSystem[0]->extra_setting_year == $i ? 'selected' : '';?> value="<?= esc($i);?>"><?= esc($i);?></option>
+                                    <option <?= $activeExtraYear == $i ? 'selected' : '';?> value="<?= esc($i);?>"><?= esc($i);?></option>
                                     <?php endfor; ?>
                                 </select>
                             </div>

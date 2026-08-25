@@ -31,15 +31,18 @@
             <div class="d-flex align-items-center gap-3">
                 <div class="input-group input-group-merge shadow-sm" style="min-width: 200px;">
                     <span class="input-group-text"><i class="bx bx-calendar text-primary"></i></span>
+                    <?php 
+                        $activeClubYearTerm = get_selected_term_only() . '/' . get_selected_year_only();
+                    ?>
                     <select id="academicYearFilter" name="academicYearFilter" class="form-select fw-semibold">
-                        <?php $isFirst = true; ?>
-                        <?php foreach ($YearAll as $key => $v_YearAll) : ?>
+                        <?php foreach ($YearAll as $key => $v_YearAll) : 
+                            $ytVal = (isset($v_YearAll['club_trem']) ? $v_YearAll['club_trem'] : '') . '/' . (isset($v_YearAll['club_year']) ? $v_YearAll['club_year'] : '');
+                        ?>
                         <option
-                            value="<?= (isset($v_YearAll['club_trem']) ? esc($v_YearAll['club_trem']) : '') ?>/<?= (isset($v_YearAll['club_year']) ? esc($v_YearAll['club_year']) : '') ?>"
-                            <?= $isFirst ? 'selected' : '' ?>>
+                            value="<?= esc($ytVal) ?>"
+                            <?= ($ytVal == $activeClubYearTerm) ? 'selected' : '' ?>>
                              ภาคเรียนที่ <?= (isset($v_YearAll['club_trem']) ? esc($v_YearAll['club_trem']) : '') ?> / ปีการศึกษา <?= (isset($v_YearAll['club_year']) ? esc($v_YearAll['club_year']) : '') ?>
                         </option>
-                        <?php $isFirst = false; ?>
                         <?php endforeach; ?>
                     </select>
                 </div>
@@ -127,10 +130,14 @@
                         <div class="col-6">
                             <div class="form-floating">
                                 <select class="form-select" id="club_year" name="club_year" required>
-                                    <option value="" disabled selected>เลือกปีการศึกษา</option>
-                                    <option value="2567">2567</option>
-                                    <option value="2568">2568</option>
-                                    <option value="2569">2569</option>
+                                    <option value="" disabled>เลือกปีการศึกษา</option>
+                                    <?php 
+                                        $activeOnlyYear = get_selected_year_only();
+                                        $currY = (int)date('Y') + 543;
+                                        for ($yi = $currY - 1; $yi <= $currY + 2; $yi++):
+                                    ?>
+                                    <option value="<?= $yi ?>" <?= ($yi == $activeOnlyYear) ? 'selected' : '' ?>><?= $yi ?></option>
+                                    <?php endfor; ?>
                                 </select>
                                 <label for="club_year">ปีการศึกษา</label>
                             </div>
@@ -138,9 +145,9 @@
                         <div class="col-6">
                             <div class="form-floating">
                                 <select class="form-select" id="club_trem" name="club_trem" required>
-                                    <option value="" disabled selected>เลือกภาคเรียน</option>
-                                    <option value="1">1</option>
-                                    <option value="2">2</option>
+                                    <option value="" disabled>เลือกภาคเรียน</option>
+                                    <option value="1" <?= (get_selected_term_only() == '1') ? 'selected' : '' ?>>1</option>
+                                    <option value="2" <?= (get_selected_term_only() == '2') ? 'selected' : '' ?>>2</option>
                                 </select>
                                 <label for="club_trem">ภาคเรียน (เทอม)</label>
                             </div>

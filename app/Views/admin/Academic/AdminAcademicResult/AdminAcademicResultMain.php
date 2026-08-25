@@ -152,10 +152,13 @@
                                     <?php endforeach;?>
                                 </select> -->
                                 <div class="align-self-center me-2">ถึง</div>
+                                <?php 
+                                    $activeAcademicYear = !empty($checkOnOff[0]->onoff_year) ? $checkOnOff[0]->onoff_year : get_selected_year();
+                                ?>
                                 <select name="OpenYear" id="OpenYear" class="form-select me-2">
                                     <?php foreach ($checkYear as $key => $v_checkYear):?>
                                     <option
-                                        <?= isset($checkOnOff[0]->onoff_year) && isset($v_checkYear->SubjectYear) && $checkOnOff[0]->onoff_year === $v_checkYear->SubjectYear ? "selected" : "" ?>
+                                        <?= isset($v_checkYear->SubjectYear) && $activeAcademicYear === $v_checkYear->SubjectYear ? "selected" : "" ?>
                                         value="<?= isset($v_checkYear->SubjectYear) ? esc($v_checkYear->SubjectYear) : '' ?>"><?= isset($v_checkYear->SubjectYear) ? esc($v_checkYear->SubjectYear) : '' ?>
                                     </option>
                                     <?php endforeach;?>

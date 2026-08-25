@@ -335,14 +335,13 @@
                             </div>
                             <!-- Filters -->
                             <div class="row g-2">
-                                <div class="col-md-4">
+                                    <?php $activeSysYear = get_selected_year_only(); ?>
                                     <select id="admissionFilterYear" class="form-select form-select-sm rounded-3" style="border-color: rgba(32, 201, 151, 0.4) !important;">
                                         <option value="all">ทุกปีการศึกษา</option>
                                         <?php if(!empty($admission_years)): foreach($admission_years as $ay): ?>
-                                            <option value="<?= $ay->recruit_year ?>"><?= $ay->recruit_year ?></option>
+                                            <option value="<?= $ay->recruit_year ?>" <?= $ay->recruit_year == $activeSysYear ? 'selected' : '' ?>><?= $ay->recruit_year ?></option>
                                         <?php endforeach; endif; ?>
                                     </select>
-                                </div>
                                 <div class="col-md-4">
                                     <select id="admissionFilterClass" class="form-select form-select-sm rounded-3" style="border-color: rgba(32, 201, 151, 0.4) !important;">
                                         <option value="all">ทุกระดับชั้น</option>

@@ -35,15 +35,21 @@ class ConAdminExtraSubject extends BaseController
 
         $data['admin'] = $this->DBpersonnel->table('tb_personnel')->select('pers_id,pers_img')->where('pers_id',session()->get('login_id'))->get()->getRow();
         $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
+        $data['selectedYear'] = get_selected_year();
+        $data['selectedYearOnly'] = get_selected_year_only();
+        $data['selectedTerm'] = get_selected_term_only();
         $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();
         $data['title'] = "ลงทะเบียนวิชาเพิ่มเติม";
         $ExtraSetting = $this->db->table('tb_extra_setting')->get()->getRow();
 
+        $extraYear = (!empty($ExtraSetting) && !empty($ExtraSetting->extra_setting_year)) ? $ExtraSetting->extra_setting_year : $data['selectedYearOnly'];
+        $extraTerm = (!empty($ExtraSetting) && !empty($ExtraSetting->extra_setting_term)) ? $ExtraSetting->extra_setting_term : $data['selectedTerm'];
+
         $data['ExtraSubject'] = [];
-        if (!empty($ExtraSetting) && !empty($ExtraSetting->extra_setting_year) && !empty($ExtraSetting->extra_setting_term)) {
+        if (!empty($extraYear) && !empty($extraTerm)) {
             $data['ExtraSubject'] = $this->db->table('tb_extra_subject')
-                                            ->where('extra_year',$ExtraSetting->extra_setting_year)
-                                            ->where('extra_term',$ExtraSetting->extra_setting_term)
+                                            ->where('extra_year', $extraYear)
+                                            ->where('extra_term', $extraTerm)
                                             ->get()->getResult();
         }
 
@@ -65,7 +71,7 @@ class ConAdminExtraSubject extends BaseController
         ->get()->getResult();
 
         
-        echo view('admin/Academic/AdminExtraSubject/AdminExtraSubjectMain.php');
+        echo view('admin/Academic/AdminExtraSubject/AdminExtraSubjectMain.php', $data);
         
     }
 
@@ -110,9 +116,12 @@ class ConAdminExtraSubject extends BaseController
     public function SystemMainExtraSubject(){ 
 
         $data['title'] = "ตั้งค่าระบบ";
+        $data['selectedYear'] = get_selected_year();
+        $data['selectedYearOnly'] = get_selected_year_only();
+        $data['selectedTerm'] = get_selected_term_only();
         $data['OnoffSystem'] = $this->db->table('tb_extra_setting')->get()->getRow();
         
-        echo view('admin/Academic/AdminExtraSubject/AdminExtraSystemMain.php');
+        echo view('admin/Academic/AdminExtraSubject/AdminExtraSystemMain.php', $data);
 
     }
 
@@ -169,12 +178,18 @@ class ConAdminExtraSubject extends BaseController
      public function ExtraReport() {
         $data['title'] = "รายงาน";
         $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
+        $data['selectedYear'] = get_selected_year();
+        $data['selectedYearOnly'] = get_selected_year_only();
+        $data['selectedTerm'] = get_selected_term_only();
         $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();
         $ExtraSetting = $this->db->table('tb_extra_setting')->get()->getRow();
         $data['OnoffSystem'] = $this->db->table('tb_extra_setting')->get()->getRow();
         
+        $extraYear = (!empty($ExtraSetting) && !empty($ExtraSetting->extra_setting_year)) ? $ExtraSetting->extra_setting_year : $data['selectedYearOnly'];
+        $extraTerm = (!empty($ExtraSetting) && !empty($ExtraSetting->extra_setting_term)) ? $ExtraSetting->extra_setting_term : $data['selectedTerm'];
+
         $data['Report'] = [];
-        if (!empty($ExtraSetting) && !empty($ExtraSetting->extra_setting_year) && !empty($ExtraSetting->extra_setting_term)) {
+        if (!empty($extraYear) && !empty($extraTerm)) {
             $data['Report'] = $this->db->table('tb_extra_register')
                                                 ->select('tb_extra_subject.extra_year,
                                                         tb_extra_subject.extra_term,
@@ -192,12 +207,12 @@ class ConAdminExtraSubject extends BaseController
                                                         tb_student_express.StudentClass')
                                                 ->join('tb_extra_subject','tb_extra_subject.extr-id = tb_extra_register.fk_extr-id')   
                                                 ->join('tb_student_express','tb_student_express.StudentCode = tb_extra_register.fk_std_id')   
-                                                ->where('extra_year',$ExtraSetting->extra_setting_year)
-                                                ->where('extra_term',$ExtraSetting->extra_setting_term)
+                                                ->where('extra_year', $extraYear)
+                                                ->where('extra_term', $extraTerm)
                                                 ->get()->getResult();
         }
 
         
-        echo view('admin/Academic/AdminExtraSubject/AdminExtraReport.php');
+        echo view('admin/Academic/AdminExtraSubject/AdminExtraReport.php', $data);
      }
 }

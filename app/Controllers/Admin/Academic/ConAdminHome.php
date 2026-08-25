@@ -84,7 +84,10 @@ class ConAdminHome extends BaseController
         }
 
         // --- 3. Club Stats ---
-        $data['total_clubs'] = $this->db->table('tb_clubs')->countAllResults();
+        $data['total_clubs'] = $this->db->table('tb_clubs')
+            ->where('club_year', $year)
+            ->where('club_trem', $term)
+            ->countAllResults();
         $data['club_registrations'] = $this->db->table('tb_club_members')
             ->join('tb_clubs', 'tb_club_members.member_club_id = tb_clubs.club_id')
             ->where('tb_club_members.member_status', 'active')

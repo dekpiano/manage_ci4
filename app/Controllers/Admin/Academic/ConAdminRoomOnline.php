@@ -31,6 +31,9 @@ class ConAdminRoomOnline extends BaseController
     public function RoomOnlineMain(){      
         $data['title']  = "หน้าหลักห้องเรียนออนไลน์";
         $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
+        $data['selectedYear'] = get_selected_year();
+        $data['selectedYearOnly'] = get_selected_year_only();
+        $data['selectedTerm'] = get_selected_term_only();
         $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();
         $data['teacher'] = $this->DBpersonnel->table('tb_personnel')->select('pers_id,pers_img')->where('pers_id',session()->get('login_id'))->get()->getRow();
         $data['NameTeacher'] = $this->DBpersonnel->table('tb_personnel')
@@ -122,6 +125,22 @@ class ConAdminRoomOnline extends BaseController
             'CONCAT(personnel.pers_firstname, " ", personnel.pers_lastname) as teacher_name'
         ]);
         $builder->join($this->DBpersonnel->database . '.tb_personnel as personnel', 'personnel.pers_id = tb_room_online.roomon_teachid', 'left');
+
+        // Filter by year and term
+        $yearFilter = $request->getPost('year');
+        $termFilter = $request->getPost('term');
+
+        if (!empty($yearFilter) && $yearFilter !== 'all') {
+            $builder->where('tb_room_online.roomon_year', $yearFilter);
+        } elseif ($yearFilter !== 'all') {
+            $builder->where('tb_room_online.roomon_year', get_selected_year_only());
+        }
+
+        if (!empty($termFilter) && $termFilter !== 'all') {
+            $builder->where('tb_room_online.roomon_term', $termFilter);
+        } elseif ($termFilter !== 'all') {
+            $builder->where('tb_room_online.roomon_term', get_selected_term_only());
+        }
 
         // Total records
         $totalRecords = $builder->countAllResults(false); // false to not reset the query

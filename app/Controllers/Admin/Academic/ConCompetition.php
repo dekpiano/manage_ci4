@@ -73,7 +73,10 @@ class ConCompetition extends BaseController
         $data = [
             'title'        => 'ระบบบันทึกผลงานการแข่งขัน',
             'competitions' => $competitions,
-            'userStatus'   => $userStatus
+            'userStatus'   => $userStatus,
+            'selectedYear' => get_selected_year(),
+            'selectedYearOnly' => get_selected_year_only(),
+            'selectedTerm' => get_selected_term_only()
         ];
 
         return view('admin/Academic/AdminCompetition/manage_competition', $data);
@@ -87,7 +90,10 @@ class ConCompetition extends BaseController
         $data = [
             'title'  => 'เพิ่มผลงานการแข่งขัน',
             'action' => base_url('admin/academic/competition/save'),
-            'comp'   => null
+            'comp'   => null,
+            'selectedYear' => get_selected_year(),
+            'selectedYearOnly' => get_selected_year_only(),
+            'selectedTerm' => get_selected_term_only()
         ];
         return view('admin/Academic/AdminCompetition/form_competition', $data);
     }

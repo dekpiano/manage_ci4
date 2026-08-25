@@ -385,7 +385,7 @@
             </nav>
             <div class="dropdown">
                 <button class="btn btn-white shadow-sm border-0 dropdown-toggle rounded-pill px-4" type="button" id="yearSelector" data-bs-toggle="dropdown" aria-expanded="false">
-                    <i class='bx bx-calendar-event me-2 text-primary'></i>ปีการศึกษา <?= explode('/', get_selected_year())[0] ?>
+                    <i class='bx bx-calendar-event me-2 text-primary'></i>ปีการศึกษา <?= get_selected_year() ?>
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-3" aria-labelledby="yearSelector">
                     <li class="dropdown-header">เลือกปีการศึกษา</li>

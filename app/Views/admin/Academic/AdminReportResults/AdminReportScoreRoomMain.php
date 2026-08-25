@@ -233,7 +233,7 @@
                         <option value="">-- เลือกปีการศึกษา --</option>
                         <?php foreach ($CheckYear as $v_CheckYear) : ?>
                             <?php 
-                                $currentVal = ($Term ?? '') . '/' . ($Year ?? '');
+                                $currentVal = (!empty($Term) && !empty($Year)) ? ($Term . '/' . $Year) : get_selected_year();
                                 $isSelected = ($currentVal == $v_CheckYear->RegisterYear) ? 'selected' : '';
                             ?>
                             <option value="<?= esc($v_CheckYear->RegisterYear) ?>" <?= $isSelected ?>>

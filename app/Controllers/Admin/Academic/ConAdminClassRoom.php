@@ -46,9 +46,12 @@ class ConAdminClassRoom extends BaseController
         // Get available years for the filter dropdown
         $data['years'] = $this->db->table('tb_regclass')->select('Reg_Year')->distinct()->orderBy('Reg_Year', 'DESC')->get()->getResult();
         
-        // Determine the year to display
-        $latestYear = !empty($data['years']) ? $data['years'][0]->Reg_Year : ($data['SchoolYear']->schoolyear_year ?? date('Y') + 543);
+        // Determine the year to display (URL param -> active selected year -> latest in table)
+        $sysYear = get_selected_year_only();
+        $latestYear = !empty($sysYear) ? $sysYear : (!empty($data['years']) ? $data['years'][0]->Reg_Year : date('Y') + 543);
         $data['selectedYear'] = $selectedYear ?? $latestYear;
+        $data['selectedYearFull'] = get_selected_year();
+        $data['selectedTerm'] = get_selected_term_only();
 
         // Get classroom data for the selected year
         $data['classRoom'] = $this->db->table('tb_regclass')

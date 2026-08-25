@@ -767,10 +767,13 @@
                         <label for="year" class="form-label">
                             <i class="bx bx-calendar me-1"></i>ปีการศึกษา
                         </label>
-                        <?php $d = (date('Y')+543)-1; ?>
+                        <?php 
+                            $activeModalYear = isset($selectedYear) ? $selectedYear : get_selected_year_only();
+                            $d = (date('Y')+543)-1; 
+                        ?>
                         <select name="year" id="year" class="form-select">
                             <?php for($i=$d; $i<=$d+2; $i++) : ?>
-                            <option <?=$i==date('Y')+543 ? 'selected' : ''?>><?= esc($i) ?></option>
+                            <option value="<?= esc($i) ?>" <?= $i == $activeModalYear ? 'selected' : '' ?>><?= esc($i) ?></option>
                             <?php endfor; ?>
                         </select>
                     </div>

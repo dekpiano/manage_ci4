@@ -842,11 +842,15 @@
                         </div>
                         
                         <div class="col-6">
+                            <?php 
+                                $activeExamTerm = $selectedTerm ?? get_selected_term_only();
+                                $activeExamYear = $selectedYearOnly ?? get_selected_year_only();
+                            ?>
                             <label class="form-label"><i class="bx bx-book me-1"></i>ภาคเรียน</label>
                             <select name="exam_term" class="form-select" required>
                                 <option value="">-- เลือก --</option>
-                                <option value="1">ภาคเรียนที่ 1</option>
-                                <option value="2">ภาคเรียนที่ 2</option>
+                                <option value="1" <?= $activeExamTerm == '1' ? 'selected' : '' ?>>ภาคเรียนที่ 1</option>
+                                <option value="2" <?= $activeExamTerm == '2' ? 'selected' : '' ?>>ภาคเรียนที่ 2</option>
                             </select>
                         </div>
 
@@ -858,7 +862,7 @@
                                 $currentYear = date('Y')+543;
                                 for($i = $currentYear; $i >= $currentYear-2; $i--): 
                                 ?>
-                                <option value="<?=$i?>"><?=$i?></option>
+                                <option value="<?=$i?>" <?= $activeExamYear == $i ? 'selected' : '' ?>><?=$i?></option>
                                 <?php endfor; ?>
                             </select>
                         </div>

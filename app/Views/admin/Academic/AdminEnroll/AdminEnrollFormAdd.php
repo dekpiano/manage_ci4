@@ -311,11 +311,13 @@
                         <label for="SelectYearRegister" class="form-label fw-semibold"><i class="bx bx-calendar text-success me-1"></i>ปีการศึกษา</label>
                         <select name="SelectYearRegister" id="SelectYearRegister" class="form-select" required>
                             <option value="">เลือกปีการศึกษา</option>
-                            <?php $d = date('Y')+543; 
-                                for ($i=$d-2; $i<=$d; $i++):
+                            <?php 
+                                $activeEnrollYear = isset($selectedYear) ? $selectedYear : get_selected_year();
+                                $d = date('Y')+543; 
+                                for ($i=$d-2; $i<=$d+1; $i++):
                                     for($j=1; $j<=4; $j++):
                                 ?>
-                            <option <?= (isset($selectedYear) && $selectedYear == $j.'/'.$i) ? "selected" : ""?> value="<?= esc($j.'/'.$i) ?>"><?= esc($j.'/'.$i) ?></option>
+                            <option <?= ($activeEnrollYear == $j.'/'.$i) ? "selected" : ""?> value="<?= esc($j.'/'.$i) ?>"><?= esc($j.'/'.$i) ?></option>
                             <?php endfor; endfor; ?>
                         </select>
                     </div>

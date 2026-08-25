@@ -173,16 +173,20 @@
 
                             <!-- ปีการศึกษา -->
                             <div class="col-md-3">
+                                <?php 
+                                    $activeCompYear = $selectedYearOnly ?? get_selected_year_only();
+                                    $activeCompTerm = $selectedTerm ?? get_selected_term_only();
+                                ?>
                                 <label class="form-label fw-bold text-dark" for="comp_academic_year">ปีการศึกษา พ.ศ. <span class="text-danger">*</span></label>
-                                <input type="number" id="comp_academic_year" name="comp_academic_year" class="form-control" placeholder="เช่น 2569" min="2500" max="2700" value="<?= old('comp_academic_year', $comp ? $comp->comp_academic_year : date('Y')+543) ?>" required>
+                                <input type="number" id="comp_academic_year" name="comp_academic_year" class="form-control" placeholder="เช่น 2568" min="2500" max="2700" value="<?= old('comp_academic_year', $comp ? $comp->comp_academic_year : $activeCompYear) ?>" required>
                             </div>
 
                             <!-- ภาคเรียน -->
                             <div class="col-md-3">
                                 <label class="form-label fw-bold text-dark" for="comp_term">ภาคเรียนที่ <span class="text-danger">*</span></label>
                                 <select id="comp_term" name="comp_term" class="form-select" required>
-                                    <option value="1" <?= old('comp_term', $comp ? $comp->comp_term : '') === '1' ? 'selected' : '' ?>>1</option>
-                                    <option value="2" <?= old('comp_term', $comp ? $comp->comp_term : '') === '2' ? 'selected' : '' ?>>2</option>
+                                    <option value="1" <?= old('comp_term', $comp ? $comp->comp_term : $activeCompTerm) === '1' ? 'selected' : '' ?>>1</option>
+                                    <option value="2" <?= old('comp_term', $comp ? $comp->comp_term : $activeCompTerm) === '2' ? 'selected' : '' ?>>2</option>
                                 </select>
                             </div>
 

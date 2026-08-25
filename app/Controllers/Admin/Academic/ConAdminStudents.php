@@ -110,12 +110,12 @@ class ConAdminStudents extends BaseController
 
     public function changeYear($year)
     {
-        session()->set('schyear_year', $year);
+        set_selected_year($year);
         return redirect()->back();
     }
 
     public function AdminStudentsMain($Key = null){ 
-    $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();
+        $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();
         $data['CountAllStu'] = $this->db->table('tb_students')->select('COUNT(StudentID) AS stuall')
             ->where('StudentStatus', '1/ปกติ')
             ->get()->getRow();
@@ -144,15 +144,13 @@ class ConAdminStudents extends BaseController
         }else{
             $ta = 1;
         }       
-        if($Key != 'All'){
-               
-        }
 
         $data['title'] = "จัดการข้อมูลนักเรียน";
-        $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
         
         // Use session-stored selected year
         $data['selectedYear'] = get_selected_year();
+        $data['selectedYearOnly'] = get_selected_year_only();
+        $data['selectedTerm'] = get_selected_term_only();
         
         echo view('admin/Academic/AdminStudents/AdminStudentsMain', $data);
     }
@@ -179,6 +177,9 @@ class ConAdminStudents extends BaseController
 
         $data['title'] = "จัดการเลื่อนชั้นและสถานะนักเรียน";
         $data['class_list'] = $this->classroom->ListRoom();
+        $data['selectedYear'] = get_selected_year();
+        $data['selectedYearOnly'] = get_selected_year_only();
+        $data['selectedTerm'] = get_selected_term_only();
         
         $data['school_years'] = $this->db->table('tb_schoolyear')->orderBy('schyear_year', 'desc')->get()->getResult();
 
@@ -384,6 +385,9 @@ class ConAdminStudents extends BaseController
         $data['school_years'] = $this->db->table('tb_schoolyear')->orderBy('schyear_year','desc')->get()->getResult();
         $data['title'] = "จัดการข้อมูลนักเรียนปกติ";
         $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
+        $data['selectedYear'] = get_selected_year();
+        $data['selectedYearOnly'] = get_selected_year_only();
+        $data['selectedTerm'] = get_selected_term_only();
         
         echo view('admin/Academic/AdminStudents/AdminStudentsNormal',$data);
     }
@@ -2060,6 +2064,9 @@ class ConAdminStudents extends BaseController
         $data['title'] = "จัดการเลขที่นักเรียนรายห้อง";
         $data['classroom'] = $this->classroom->ListRoom();
         $data['school_years'] = $this->db->table('tb_schoolyear')->orderBy('schyear_year','desc')->get()->getResult();
+        $data['selectedYear'] = get_selected_year();
+        $data['selectedYearOnly'] = get_selected_year_only();
+        $data['selectedTerm'] = get_selected_term_only();
         return view('admin/Academic/AdminStudents/AdminStudentsAdjustNumber', $data);
     }
 

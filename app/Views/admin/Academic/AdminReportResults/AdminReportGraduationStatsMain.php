@@ -137,10 +137,11 @@
             <div class="d-flex align-items-center gap-3">
                 <div class="d-flex align-items-center gap-2">
                     <label for="SelYearFinish" class="form-label mb-0 fw-semibold text-dark text-nowrap">ปีการศึกษาที่จบ:</label>
+                    <?php $activeGradYear = get_selected_year_only(); ?>
                     <select class="form-select border-2 border-emerald" id="SelYearFinish" style="width: 160px; height: 40px; font-weight: 600;">
                         <?php if (!empty($SelYears)) : ?>
                             <?php foreach ($SelYears as $idx => $y) : ?>
-                                <option value="<?= esc($y->YearFinish) ?>" <?= $idx === 0 ? 'selected' : '' ?>>ปี พ.ศ. <?= esc($y->YearFinish) ?></option>
+                                <option value="<?= esc($y->YearFinish) ?>" <?= ($y->YearFinish == $activeGradYear) ? 'selected' : ($idx === 0 && empty($activeGradYear) ? 'selected' : '') ?>>ปี พ.ศ. <?= esc($y->YearFinish) ?></option>
                             <?php endforeach; ?>
                         <?php else : ?>
                             <option value="">ไม่มีข้อมูลการศึกษา</option>

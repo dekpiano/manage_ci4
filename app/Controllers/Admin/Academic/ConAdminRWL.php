@@ -9,6 +9,7 @@ class ConAdminRWL extends BaseController
 {
     protected $ModAdminCharacteristics;
     protected $setting_name = 'ReadingWritingLearning';
+    protected $db;
 
     public function __construct()
     {
@@ -19,15 +20,18 @@ class ConAdminRWL extends BaseController
     public function index()
     {
         $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
+        $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();
         
         $settings = $this->ModAdminCharacteristics->getSettings($this->setting_name);
         
         if (!$settings) {
             $settings = (object)[
                 'onoff_status' => 'off',
-                'onoff_year' => '',
+                'onoff_year' => get_selected_year(),
                 'onoff_name' => $this->setting_name
             ];
+        } elseif (empty($settings->onoff_year)) {
+            $settings->onoff_year = get_selected_year();
         }
 
         // Generate year/term combinations
@@ -43,17 +47,12 @@ class ConAdminRWL extends BaseController
         $data['settings'] = $settings;
         $data['school_years'] = $years;
 
-        // Create the directory if it doesn't exist
-        if (!is_dir(APPPATH . 'Views/admin/Academic/RWL')) {
-            mkdir(APPPATH . 'Views/admin/Academic/RWL', 0777, true);
-        }
-
         return view('admin/Academic/AdminRWL/index', $data);
     }
 
     public function update()
     {
-        if ($this->request->getMethod() !== 'post') {
+        if (!$this->request->is('post') && strtolower((string)$this->request->getMethod()) !== 'post') {
             return redirect()->to('admin/academic/rwl/settings')->with('error', 'Invalid request method.');
         }
 

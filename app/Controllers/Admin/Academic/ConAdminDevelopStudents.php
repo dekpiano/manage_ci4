@@ -125,18 +125,20 @@ class ConAdminDevelopStudents extends BaseController
                                             ->get()->getRow();
 
         // Parse c_onoff_year into year and term for safer access
-        $activeYear = date('Y') + 543; // Default value
-        $activeTerm = '1'; // Default value
+        $activeYear = get_selected_year_only(); // Default value from system active year
+        $activeTerm = get_selected_term_only(); // Default value from system active term
         if ($activeConfig) {
             $raw_year = $activeConfig->c_onoff_year ?? '';
             $term = $activeConfig->c_onoff_term ?? '';
             if (strpos($raw_year, '/') !== false) {
                 $parts = explode('/', $raw_year);
                 $activeYear = end($parts);
-            } else {
+            } else if (!empty($raw_year)) {
                 $activeYear = $raw_year;
             }
-            $activeTerm = $term;
+            if (!empty($term)) {
+                $activeTerm = $term;
+            }
         }
         $data['CheckOnoffClubParsed'] = [$activeYear, $activeTerm];
 

@@ -9,6 +9,9 @@ use App\Libraries\Classroom; // Assuming this library will be migrated to App\Li
 class ConAdminCheckPlan extends BaseController
 {
     protected $ModAdminCheckPlan;
+    protected $classroom;
+    protected $DBpersonnel;
+    protected $db;
 
     public function __construct()
     {
@@ -38,17 +41,27 @@ class ConAdminCheckPlan extends BaseController
         if (!empty($yearTerm)) {
             list($year, $term) = explode('/', $yearTerm);
         } else {
-            // Use the system's selected year from helper as default
-            $selectedYearStr = get_selected_year(); // e.g. "1/2568"
-            if (strpos($selectedYearStr, '/') !== false) {
-                list($term, $year) = explode('/', $selectedYearStr);
-            } else {
-                $year = $selectedYearStr ?: date('Y') + 543;
-                $term = '1';
-            }
+            $parsed = parse_selected_year();
+            $term = $parsed['term'];
+            $year = $parsed['year'];
         }
 
         $data['selected_year_term'] = $year . '/' . $term;
+
+        // Ensure active selected year/term exists in year_terms list
+        $hasSelected = false;
+        foreach ($data['year_terms'] as $yt) {
+            if (($yt->seplan_year . '/' . $yt->seplan_term) === $data['selected_year_term']) {
+                $hasSelected = true;
+                break;
+            }
+        }
+        if (!$hasSelected) {
+            $newItem = new \stdClass();
+            $newItem->seplan_year = $year;
+            $newItem->seplan_term = $term;
+            array_unshift($data['year_terms'], $newItem);
+        }
         $data['plans'] = $this->ModAdminCheckPlan->getPlansByGroupId($groupId, $year, $term);
         
         $groupedPlans = [];
@@ -138,6 +151,21 @@ class ConAdminCheckPlan extends BaseController
 
         $data['sel_year'] = $this->request->getGet('year') ?? $defaultYear;
         $data['sel_term'] = $this->request->getGet('term') ?? $defaultTerm;
+
+        $hasSelected = false;
+        foreach ($data['year_terms'] as $yt) {
+            if ($yt->seplan_year == $data['sel_year'] && $yt->seplan_term == $data['sel_term']) {
+                $hasSelected = true;
+                break;
+            }
+        }
+        if (!$hasSelected) {
+            $newItem = new \stdClass();
+            $newItem->seplan_year = $data['sel_year'];
+            $newItem->seplan_term = $data['sel_term'];
+            array_unshift($data['year_terms'], $newItem);
+        }
+
         $data['sel_group'] = $this->request->getGet('group') ?? ''; // Empty means none selected or 'all'
         $data['sel_type'] = $this->request->getGet('type') ?? '';
 

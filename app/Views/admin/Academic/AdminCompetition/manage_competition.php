@@ -79,8 +79,13 @@
     <?php endif; ?>
 
     <div class="card shadow-sm border-0" id="tourAdminTableCard">
-        <div class="card-header d-flex justify-content-between align-items-center border-bottom mb-3">
-            <h5 class="card-title mb-0">รายการบันทึกผลงานทั้งหมด</h5>
+        <div class="card-header d-flex justify-content-between align-items-center border-bottom mb-3 flex-wrap gap-2">
+            <div class="d-flex align-items-center gap-2">
+                <h5 class="card-title mb-0">รายการบันทึกผลงานทั้งหมด</h5>
+                <span class="badge bg-label-success fw-bold">
+                    <i class="bx bx-calendar me-1"></i>ปีการศึกษา <?= get_selected_year() ?>
+                </span>
+            </div>
         </div>
         <div class="table-responsive px-4 pb-4">
             <table class="table table-hover dt-responsive" id="tableCompetitions" style="width: 100%;">

@@ -153,8 +153,9 @@
                     <div class="d-flex align-items-center gap-2">
                         <label for="SelYearClassSchedule" class="form-label mb-0 fw-medium">เลือกปี:</label>
                         <select name="SelYearClassSchedule" id="SelYearClassSchedule" class="form-select form-select-sm" style="width: auto; min-width: 140px;">
+                            <?php $currentActiveYear = $selectedYear ?? get_selected_year(); ?>
                             <?php foreach ($YearAll as $key => $v_YearAll) : ?>
-                            <option <?= $key === 0 ? "selected" : ""; ?>
+                            <option <?= (isset($v_YearAll->Year) && $v_YearAll->Year === $currentActiveYear) ? "selected" : ($key === 0 && empty($currentActiveYear) ? "selected" : ""); ?>
                                 value="<?= isset($v_YearAll->Year) ? esc($v_YearAll->Year) : '' ?>">
                                 <?= isset($v_YearAll->Year) ? esc($v_YearAll->Year) : '' ?></option>
                             <?php endforeach; ?>
@@ -206,11 +207,15 @@
                     </h6>
                     <div class="row mb-4">
                         <div class="col-md-6 mb-3 mb-md-0">
+                            <?php 
+                                $activeScheTerm = get_selected_term_only();
+                                $activeScheYear = get_selected_year_only();
+                            ?>
                             <label for="schestu_term" class="form-label">ภาคเรียน <span class="text-danger">*</span></label>
                             <select name="schestu_term" id="schestu_term" class="form-select border-light-success">
-                                <option value="1">1</option>
-                                <option value="2">2</option>
-                                <option value="3">3</option>
+                                <option value="1" <?= $activeScheTerm == '1' ? 'selected' : '' ?>>1</option>
+                                <option value="2" <?= $activeScheTerm == '2' ? 'selected' : '' ?>>2</option>
+                                <option value="3" <?= $activeScheTerm == '3' ? 'selected' : '' ?>>3</option>
                             </select>
                         </div>
                         <div class="col-md-6">
@@ -218,7 +223,7 @@
                             <?php $toYear = date("Y", strtotime(date('Y'))) + 543; ?>
                             <select name="schestu_year" id="schestu_year" class="form-select border-light-success">
                                 <?php for ($i = $toYear - 2; $i <= $toYear + 2; $i++): ?>
-                                <option value="<?= esc($i) ?>" <?= $toYear == $i ? 'selected' : '' ?>><?= esc($i) ?></option>
+                                <option value="<?= esc($i) ?>" <?= $activeScheYear == $i ? 'selected' : '' ?>><?= esc($i) ?></option>
                                 <?php endfor; ?>
                             </select>
                         </div>

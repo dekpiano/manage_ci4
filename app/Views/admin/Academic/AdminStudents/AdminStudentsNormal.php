@@ -581,9 +581,14 @@
                     <i class="bx bx-group"></i><?= isset($title) ? esc($title) : 'รายชื่อนักเรียน' ?>
                 </h1>
             </div>
-            <a href="<?= base_url('Admin/Acade/Registration/Students') ?>" class="btn-back">
-                <i class="bx bx-arrow-back"></i>กลับหน้าหลัก
-            </a>
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-white text-success fw-bold px-3 py-2 fs-6 shadow-sm rounded-pill">
+                    <i class="bx bx-calendar-check me-1"></i>ปีการศึกษา <?= get_selected_year() ?>
+                </span>
+                <a href="<?= base_url('Admin/Acade/Registration/Students') ?>" class="btn-back">
+                    <i class="bx bx-arrow-back"></i>กลับหน้าหลัก
+                </a>
+            </div>
         </div>
     </div>
 

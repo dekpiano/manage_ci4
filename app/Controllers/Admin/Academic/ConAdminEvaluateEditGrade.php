@@ -75,33 +75,14 @@ class ConAdminEvaluateEditGrade extends BaseController
         $data['OnOffSaveScoreSystem'] = $this->db->table('tb_register_onoff')->where('onoff_id', 6)->get()->getResult();
         $data['CheckYearRegis'] = $this->db->table('tb_register')->select('RegisterYear')->groupBy('RegisterYear')->get()->getResult();
 
-        // ถ้าไม่ได้ส่ง Term/Year มา ให้ดึงปีล่าสุดที่มีในฐานข้อมูล (tb_register)
+        // ถ้าไม่ได้ส่ง Term/Year มา ให้ดึงจากปีการศึกษาที่เลือกใช้งาน (get_selected_year) เป็นหลัก
         if ($Term === null || $Year === null) {
-            $latestYearRows = $this->db->table('tb_register')->select('RegisterYear')->groupBy('RegisterYear')->get()->getResult();
-            if (!empty($latestYearRows)) {
-                $yearsList = array_map(function($r) { return $r->RegisterYear; }, $latestYearRows);
-                usort($yearsList, function($a, $b) {
-                    $aParts = explode('/', $a);
-                    $bParts = explode('/', $b);
-                    $aTerm = (int)($aParts[0] ?? 0);
-                    $aYear = (int)($aParts[1] ?? 0);
-                    $bTerm = (int)($bParts[0] ?? 0);
-                    $bYear = (int)($bParts[1] ?? 0);
-                    if ($aYear !== $bYear) {
-                        return $bYear - $aYear; // Descending
-                    }
-                    return $bTerm - $aTerm;
-                });
-                $latestYear = $yearsList[0];
-                $parts = explode('/', $latestYear);
-                $Term = $parts[0] ?? '1';
-                $Year = $parts[1] ?? '2568';
-            } else {
-                $Term = '1';
-                $Year = '2568';
-            }
+            $parsed = parse_selected_year();
+            $Term = $parsed['term'];
+            $Year = $parsed['year'];
         }
 
+        $data['selectedYear'] = get_selected_year();
         $data['currentYear'] = $Term . '/' . $Year;
 
         $data['result'] = $this->db->table('skjacth_academic.tb_register')

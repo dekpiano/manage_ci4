@@ -121,11 +121,11 @@
         <div class="card-body">
             <div class="row g-3 align-items-end">
                 <div class="col-md-2">
-                    <label class="form-label fw-bold">ปีที่เรียนซ้ำ</label>
+                    <?php $activeRepYear = isset($selectedYear) ? $selectedYear : get_selected_year(); ?>
                     <select id="FilterYear" class="form-select">
                         <option value="">ทั้งหมด</option>
                         <?php foreach($GroupYear as $v_year): ?>
-                            <option value="<?= esc($v_year->RepeatYear) ?>" <?= (isset($selectedYear) && $selectedYear == $v_year->RepeatYear) ? 'selected' : '' ?>><?= esc($v_year->RepeatYear) ?></option>
+                            <option value="<?= esc($v_year->RepeatYear) ?>" <?= ($activeRepYear == $v_year->RepeatYear) ? 'selected' : '' ?>><?= esc($v_year->RepeatYear) ?></option>
                         <?php endforeach; ?>
                     </select>
                 </div>

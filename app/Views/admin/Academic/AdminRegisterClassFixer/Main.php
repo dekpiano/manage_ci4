@@ -14,10 +14,11 @@
             <form id="filterForm" class="row g-3">
                 <div class="col-md-4">
                     <label class="form-label" for="filterYear">ปีการศึกษาอ้างอิง</label>
+                    <?php $activeFixerYear = get_selected_year(); ?>
                     <select id="filterYear" class="form-select select2">
                         <option value="">เลือกปีการศึกษา...</option>
                         <?php foreach ($years as $y): ?>
-                            <option value="<?= esc($y->RegisterYear) ?>"><?= esc($y->RegisterYear) ?></option>
+                            <option value="<?= esc($y->RegisterYear) ?>" <?= ($y->RegisterYear == $activeFixerYear) ? 'selected' : '' ?>><?= esc($y->RegisterYear) ?></option>
                         <?php endforeach; ?>
                     </select>
                 </div>

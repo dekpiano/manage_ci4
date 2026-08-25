@@ -10,10 +10,15 @@
 
                 <div class="col-lg-12">
                     <div class="card">
-                        <div class="card-header align-items-center">
-                            <h3 class="h4 float-left">จัดการห้องเรียนออนไลน์ </h3>
-                            <button type="button" class="btn btn-primary float-right ShowAddRoomOnline">
-                                + เพิ่มห้องเรียนออนไลน์
+                        <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            <div class="d-flex align-items-center gap-2">
+                                <h4 class="card-title mb-0">จัดการห้องเรียนออนไลน์</h4>
+                                <span class="badge bg-label-success fw-bold">
+                                    <i class="bx bx-calendar me-1"></i>ปีการศึกษา <?= get_selected_year() ?>
+                                </span>
+                            </div>
+                            <button type="button" class="btn btn-primary ShowAddRoomOnline">
+                                <i class="bx bx-plus-circle me-1"></i> เพิ่มห้องเรียนออนไลน์
                             </button>
                             <!-- data-toggle="modal" data-target="#AddRoomOnline" -->
                         </div>
@@ -61,11 +66,15 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-floating mb-3">
+                                <?php 
+                                    $activeRoomYear = get_selected_year_only();
+                                    $activeRoomTerm = get_selected_term_only();
+                                ?>
                                 <select class="form-select" id="roomon_year" name="roomon_year" required>
                                     <option value="">เลือกปีการศึกษา</option>
                                     <?php $year = date('Y')+543;
                                     for ($i=$year-1; $i <= $year+1; $i++) : ?>
-                                    <option <?=$year==$i ? "selected" : ""?> value="<?= esc($i) ?>"><?= esc($i) ?></option>
+                                    <option <?= $activeRoomYear == $i ? "selected" : ""?> value="<?= esc($i) ?>"><?= esc($i) ?></option>
                                     <?php endfor; ?>
                                 </select>
                                 <label for="roomon_year">ปีการศึกษา</label>
@@ -77,7 +86,7 @@
                                 <select class="form-select" id="roomon_term" name="roomon_term" required>
                                     <option value="">เลือกภาคเรียน</option>
                                     <?php for ($i=1; $i <= 3; $i++) : ?>
-                                    <option value="<?= esc($i) ?>"><?= esc($i) ?></option>
+                                    <option <?= $activeRoomTerm == $i ? "selected" : ""?> value="<?= esc($i) ?>"><?= esc($i) ?></option>
                                     <?php endfor; ?>
                                 </select>
                                 <label for="roomon_term">ภาคเรียน</label>
@@ -186,7 +195,11 @@ $(document).ready(function() {
         "serverSide": true,
         "ajax": {
             "url": "<?= site_url('admin/room-online/data') ?>",
-            "type": "POST"
+            "type": "POST",
+            "data": function(d) {
+                d.year = '<?= $selectedYearOnly ?? get_selected_year_only() ?>';
+                d.term = '<?= $selectedTerm ?? get_selected_term_only() ?>';
+            }
         },
         "columns": [
             { 

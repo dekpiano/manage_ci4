@@ -45,7 +45,10 @@ class ConAdminClassSchedule extends BaseController
         $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();
         $data['title'] = "ตารางเรียน";
 
-        $eX = explode('/', $data['SchoolYear']->schyear_year);
+        $selectedYear = get_selected_year();
+        $data['selectedYear'] = $selectedYear;
+        $data['selectedYearOnly'] = get_selected_year_only();
+        $data['selectedTerm'] = get_selected_term_only();
 
         $data['class_schedule'] = $this->db->table('tb_class_schedule')
                                         ->orderBy('schestu_classname', 'ASC')
@@ -60,7 +63,7 @@ class ConAdminClassSchedule extends BaseController
                                     ->get()->getResult();
 
         // Ensure the current active school year is always present in YearAll to prevent empty dropdown
-        $currentActiveYear = isset($data['SchoolYear']->schyear_year) ? $data['SchoolYear']->schyear_year : '';
+        $currentActiveYear = $selectedYear ?: (isset($data['SchoolYear']->schyear_year) ? $data['SchoolYear']->schyear_year : '');
         $hasCurrent = false;
         foreach ($data['YearAll'] as $v) {
             if ($v->Year === $currentActiveYear) {
@@ -74,7 +77,7 @@ class ConAdminClassSchedule extends BaseController
             array_unshift($data['YearAll'], $newYear);
         }
 
-        session()->set('SchoolYear', $data['SchoolYear']->schyear_year);
+        session()->set('SchoolYear', $currentActiveYear);
         
         echo view('admin/Academic/AdminClassSchedule/AdminClassScheduleMain', $data);
         

@@ -49,11 +49,15 @@ class ConAdminResearch extends BaseController
                                             ->get()
                                             ->getResult();
 
-        $academic_year = $this->request->getPost('academic_year');
+        $defaultYear = get_selected_year_only();
+        $defaultTerm = get_selected_term_only();
+
+        $academic_year = $this->request->getPost('academic_year') ?: $defaultYear;
         $learning_group = $this->request->getPost('learning_group');
-        $term = $this->request->getPost('term');
+        $term = $this->request->getPost('term') ?: $defaultTerm;
 
         // Pass selected values back to the view for persistence
+        $data['selectedYear'] = get_selected_year();
         $data['selected_year'] = $academic_year;
         $data['selected_group'] = $learning_group;
         $data['selected_term'] = $term;

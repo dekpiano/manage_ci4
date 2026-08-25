@@ -73,13 +73,28 @@ $(document).ready(function() {
     let allData = [];
 
     // Load available years
+    const activeYearOnly = '<?= get_selected_year_only() ?>';
+    const activeTermOnly = '<?= get_selected_term_only() ?>';
+
     $.ajax({
         url: '<?= site_url('user/getscheduleyears') ?>',
         method: 'GET',
         success: function(years) {
             let html = '<option value="">เลือกปีการศึกษา...</option>';
-            years.forEach(y => html += `<option value="${y.schestu_year}">ครึ่งปี ${y.schestu_year}</option>`);
+            let hasActiveYear = false;
+            years.forEach(y => {
+                const isSel = (y.schestu_year == activeYearOnly) ? 'selected' : '';
+                if (isSel) hasActiveYear = true;
+                html += `<option value="${y.schestu_year}" ${isSel}>ปีการศึกษา ${y.schestu_year}</option>`;
+            });
             $('#SearchYear').html(html);
+
+            if (hasActiveYear || activeYearOnly) {
+                $('#SearchYear').val(activeYearOnly).trigger('change');
+                if (activeTermOnly) {
+                    $('#SearchTerm').val(activeTermOnly).trigger('change');
+                }
+            }
         }
     });
 

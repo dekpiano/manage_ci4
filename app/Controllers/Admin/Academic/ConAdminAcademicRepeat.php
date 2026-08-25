@@ -102,24 +102,16 @@ class ConAdminAcademicRepeat extends BaseController
                                     ->orderBy('RegisterYear', 'ASC')
                                     ->get()->getResult();
 
-        // ดึงค่า Term/Year จาก tb_register_onoff (onoff_name = 'เรียนซ้ำ')
-        $repeat_setting = $data['repeat_setting'];
-        $onoff_year = $repeat_setting->onoff_year ?? ''; 
-        $parts = explode('/', $onoff_year);
-        $term = $parts[0] ?? '';
-        $year = $parts[1] ?? '';
+        $data['selectedYear'] = get_selected_year();
+        $data['selectedYearOnly'] = get_selected_year_only();
+        $data['selectedTerm'] = get_selected_term_only();
 
-        // ถ้าไม่มีข้อมูลใน DB ให้ใช้ค่า Default
-        if (empty($term) || empty($year)) {
-             if ($data['SchoolYear'] && property_exists($data['SchoolYear'], 'schyear_year')) {
-                $parts = explode('/', $data['SchoolYear']->schyear_year);
-                $term = $parts[0] ?? '2';
-                $year = $parts[1] ?? '2567';
-            } else {
-                $term = '2';
-                $year = '2567';
-            }
-        }
+        // ดึงค่า Term/Year จาก tb_register_onoff (onoff_name = 'เรียนซ้ำ') หรือ fallback เป็น get_selected_year()
+        $repeat_setting = $data['repeat_setting'];
+        $onoff_year = !empty($repeat_setting->onoff_year) ? $repeat_setting->onoff_year : $data['selectedYear']; 
+        $parsed = parse_selected_year($onoff_year);
+        $term = $parsed['term'];
+        $year = $parsed['year'];
 
         $data['Term'] = $term;
         $data['Year'] = $year;

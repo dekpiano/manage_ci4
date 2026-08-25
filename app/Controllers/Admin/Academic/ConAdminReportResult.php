@@ -138,28 +138,14 @@ class ConAdminReportResult extends BaseController
             ->get()->getResult();
 
         if ($Term === null || $year === null) {
-            if (!empty($data['CheckYearSaveScore'])) {
-                // ถ้าไม่ได้ระบุปีมา ให้ใช้ปีล่าสุดที่มีข้อมูลใน tb_register เสมอ
-                $latest = $data['CheckYearSaveScore'][0]->RegisterYear;
-                $parts = explode('/', $latest);
-                $Term = $parts[0] ?? '1';
-                $year = $parts[1] ?? '2568';
-            } else {
-                // Fallback กรณีไม่มีข้อมูลเลย
-                $selectedYearStr = get_selected_year();
-                if (!empty($selectedYearStr) && strpos($selectedYearStr, '/') !== false) {
-                    $parts = explode('/', $selectedYearStr);
-                    $Term = $parts[0] ?? '1';
-                    $year = $parts[1] ?? '2568';
-                } else {
-                    $Term = '1';
-                    $year = '2568';
-                }
-            }
+            $parsed = parse_selected_year();
+            $Term = $parsed['term'];
+            $year = $parsed['year'];
         }
-            $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
+        $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
         $data['Term'] = $Term;
-        $data['Year'] = $year;       
+        $data['Year'] = $year;
+        $data['selectedYear'] = get_selected_year();       
 
         // กู้คืนระบบการดึงรายชื่อครูที่หายไป
         $teacherIdsWithScores = $this->db->table('tb_register')
@@ -1158,6 +1144,9 @@ class ConAdminReportResult extends BaseController
 
         $data['Keylern'] = $this->request->getGet('SelLern');
         $data['KeyYear'] = urldecode($this->request->getGet('KeyYear') ?? '');
+        if (empty($data['KeyYear']) || $data['KeyYear'] === '0') {
+            $data['KeyYear'] = get_selected_year();
+        }
 
         $builder = $this->db->table('skjacth_academic.tb_register');
         $builder->select('
@@ -1220,7 +1209,10 @@ class ConAdminReportResult extends BaseController
         $data['lern'] = $this->DBSkj->table('tb_learning')->get()->getResult();
 
         $data['KeyLevel'] = $this->request->getGet('SelLevel') ?? '0';
-        $data['KeyYear'] = urldecode($this->request->getGet('KeyYear') ?? '0');
+        $data['KeyYear'] = urldecode($this->request->getGet('KeyYear') ?? '');
+        if (empty($data['KeyYear']) || $data['KeyYear'] === '0') {
+            $data['KeyYear'] = get_selected_year();
+        }
 
         $data['SubjectsList'] = [];
         if (!empty($data['KeyLevel']) && !empty($data['KeyYear']) && $data['KeyLevel'] !== '0' && $data['KeyYear'] !== '0') {

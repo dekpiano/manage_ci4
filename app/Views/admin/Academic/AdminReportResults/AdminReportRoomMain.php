@@ -185,8 +185,11 @@
                     <label class="form-label fw-bold text-dark mb-1 small"><i class='bx bx-calendar me-1'></i>ปีการศึกษา/ภาคเรียน</label>
                     <select class="form-select select2" name="KeyCheckYear" id="KeyCheckYear">
                         <option value="">-- เลือกปี --</option>
+                        <?php 
+                            $activeRoomYear = (isset($KeyCheckYear) && !empty($KeyCheckYear)) ? $KeyCheckYear : get_selected_year();
+                        ?>
                         <?php foreach ($CheckYear as $v_CheckYear) : ?>
-                        <option <?= (isset($KeyCheckYear) && $KeyCheckYear == $v_CheckYear->RegisterYear) ? 'selected' : ''?> value="<?= esc($v_CheckYear->RegisterYear) ?>">
+                        <option <?= ($activeRoomYear == $v_CheckYear->RegisterYear) ? 'selected' : ''?> value="<?= esc($v_CheckYear->RegisterYear) ?>">
                             ปีการศึกษา <?= esc($v_CheckYear->RegisterYear) ?>
                         </option>
                         <?php endforeach; ?>

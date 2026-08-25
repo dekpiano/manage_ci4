@@ -34,6 +34,9 @@ class ConAdminExamSchedule extends BaseController
     public function AdminExamScheduleMain(){   
         $data['admin'] = $this->DBpersonnel->table('tb_personnel')->select('pers_id,pers_img')->where('pers_id',session()->get('login_id'))->get()->getResult();
         $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
+        $data['selectedYear'] = get_selected_year();
+        $data['selectedYearOnly'] = get_selected_year_only();
+        $data['selectedTerm'] = get_selected_term_only();
         $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();
         $data['title'] = "ตารางสอบ";     
         $data['exam_schedule'] = $this->db->table('tb_exam_schedule')
@@ -41,8 +44,6 @@ class ConAdminExamSchedule extends BaseController
                                         ->get()->getResult();
    
         echo view('admin/Academic/AdminExamSchedule/AdminExamScheduleMain', $data);
-        
-        
     }
     
     public function add(){   

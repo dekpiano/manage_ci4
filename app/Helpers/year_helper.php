@@ -31,7 +31,7 @@ if (!function_exists('get_selected_year')) {
 
 if (!function_exists('set_selected_year')) {
     /**
-     * Set the selected academic year in session
+     * Set the selected academic year in session and update tb_schoolyear
      *
      * @param string $year The academic year to set (e.g., "1/2568")
      * @return void
@@ -39,6 +39,67 @@ if (!function_exists('set_selected_year')) {
     function set_selected_year(string $year): void
     {
         session()->set('admin_selected_year', $year);
+        try {
+            $db = \Config\Database::connect();
+            $db->table('tb_schoolyear')->where('schyear_id', 1)->update(['schyear_year' => $year]);
+        } catch (\Exception $e) {
+            log_message('error', 'set_selected_year update tb_schoolyear failed: ' . $e->getMessage());
+        }
+    }
+}
+
+if (!function_exists('parse_selected_year')) {
+    /**
+     * Parse academic year into term and year (e.g., "1/2568" -> ['term' => '1', 'year' => '2568', 'full' => '1/2568'])
+     *
+     * @param string|null $yearStr
+     * @return array
+     */
+    function parse_selected_year(?string $yearStr = null): array
+    {
+        $selected = $yearStr ?: get_selected_year();
+        if (!empty($selected) && strpos($selected, '/') !== false) {
+            $parts = explode('/', $selected);
+            return [
+                'term' => trim($parts[0]),
+                'year' => trim($parts[1]),
+                'full' => $selected
+            ];
+        }
+        $currentYear = (string)(date('Y') + 543);
+        return [
+            'term' => '1',
+            'year' => trim($selected ?: $currentYear),
+            'full' => !empty($selected) ? "1/{$selected}" : "1/{$currentYear}"
+        ];
+    }
+}
+
+if (!function_exists('get_selected_year_only')) {
+    /**
+     * Get 4-digit Buddhist year only (e.g., "2568")
+     *
+     * @param string|null $yearStr
+     * @return string
+     */
+    function get_selected_year_only(?string $yearStr = null): string
+    {
+        $parsed = parse_selected_year($yearStr);
+        return $parsed['year'];
+    }
+}
+
+if (!function_exists('get_selected_term_only')) {
+    /**
+     * Get semester/term only (e.g., "1" or "2")
+     *
+     * @param string|null $yearStr
+     * @return string
+     */
+    function get_selected_term_only(?string $yearStr = null): string
+    {
+        $parsed = parse_selected_year($yearStr);
+        return $parsed['term'];
     }
 }
 

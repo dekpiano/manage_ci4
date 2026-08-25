@@ -28,8 +28,13 @@
                                 <div class="input-group">
                                     <span class="input-group-text"><i class="bx bx-calendar"></i></span>
                                     <select name="researchset_year" id="researchset_year" class="form-select">
-                                        <?php $d = date("Y")+543; for ($i=$d-1; $i <= $d+1 ; $i++):?>
-                                        <option <?= (isset($CheckYear[0]->seres_setup_year) && $CheckYear[0]->seres_setup_year == $i) ? 'selected' : ''?> value="<?= esc($i) ?>">
+                                        <?php 
+                                            $d = date("Y")+543; 
+                                            $activeResearchYear = !empty($CheckYear[0]->seres_setup_year) ? $CheckYear[0]->seres_setup_year : get_selected_year_only();
+                                            $activeResearchTerm = !empty($CheckYear[0]->seres_setup_term) ? $CheckYear[0]->seres_setup_term : get_selected_term_only();
+                                            for ($i=$d-1; $i <= $d+1 ; $i++):
+                                        ?>
+                                        <option <?= $activeResearchYear == $i ? 'selected' : ''?> value="<?= esc($i) ?>">
                                             ปีการศึกษา <?= esc($i) ?>
                                         </option>
                                         <?php endfor; ?>
@@ -37,7 +42,7 @@
                                     <span class="input-group-text">ภาคเรียนที่</span>
                                     <select name="researchset_term" id="researchset_term" class="form-select">
                                         <?php for ($i=1; $i <=3 ; $i++):?>
-                                        <option <?= (isset($CheckYear[0]->seres_setup_term) && $CheckYear[0]->seres_setup_term == $i) ? 'selected' : ''?> value="<?= esc($i) ?>">
+                                        <option <?= $activeResearchTerm == $i ? 'selected' : ''?> value="<?= esc($i) ?>">
                                             <?= esc($i) ?>
                                         </option>
                                         <?php endfor; ?>

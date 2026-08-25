@@ -13,11 +13,13 @@
                 <div class="card-header d-flex flex-column flex-md-row justify-content-between align-items-md-center border-bottom mb-2">
                     <h5 class="mb-3 mb-md-0"><i class="bx bx-group me-2"></i>รายชื่อผู้สมัคร</h5>
                     <div class="d-flex align-items-center">
-                        <label for="SelLern" class="me-2 mb-0 text-nowrap">ปีการศึกษา</label>
-                        <select class="form-select w-auto SelTearEnoll" name="SelLern" id="SelLern" key_year="<?= $CheckYearadmission->openyear_year ?>">
+                        <?php 
+                            $activeEnrollYear = !empty($CheckYearadmission->openyear_year) ? $CheckYearadmission->openyear_year : get_selected_year_only();
+                        ?>
+                        <select class="form-select w-auto SelTearEnoll" name="SelLern" id="SelLern" key_year="<?= esc($activeEnrollYear) ?>">
                             <option value="">เลือกปี...</option>
                             <?php foreach ($SelYear as $key => $v_SelYear) : ?>
-                                <option <?= $CheckYearadmission->openyear_year == $v_SelYear->recruit_year ? "selected" : "" ?> value="<?= $v_SelYear->recruit_year ?>"><?= $v_SelYear->recruit_year ?></option>
+                                <option <?= $activeEnrollYear == $v_SelYear->recruit_year ? "selected" : "" ?> value="<?= $v_SelYear->recruit_year ?>"><?= $v_SelYear->recruit_year ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>

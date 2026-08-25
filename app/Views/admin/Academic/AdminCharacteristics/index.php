@@ -296,10 +296,34 @@
                 showConfirmButton: false,
                 timer: 2000,
                 customClass: {
-                    popup: 'rounded-4'
+                    popup: 'rounded-4 swal2-popup-on-top'
                 }
             });
         <?php endif; ?>
+
+        <?php if (session()->getFlashdata('error')) : ?>
+            Swal.fire({
+                icon: 'error',
+                title: 'ผิดพลาด!',
+                text: <?= json_encode(session()->getFlashdata('error')) ?>,
+                confirmButtonColor: '#15a362',
+                customClass: {
+                    popup: 'rounded-4 swal2-popup-on-top'
+                }
+            });
+        <?php endif; ?>
+
+        // Form Submit Loading State
+        $('form').on('submit', function() {
+            if (this.checkValidity && !this.checkValidity()) {
+                return;
+            }
+            const $btn = $(this).find('button[type="submit"]');
+            $btn.html('<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>กำลังบันทึกข้อมูล...');
+            setTimeout(function() {
+                $btn.prop('disabled', true);
+            }, 10);
+        });
     });
 </script>
 <?= $this->endSection() ?>

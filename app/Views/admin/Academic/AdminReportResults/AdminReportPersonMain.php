@@ -111,8 +111,11 @@
                     <select class="form-select select2" id="CheckYearSaveScore" data-base-url="<?= $baseUrlStr ?>">
                         <option value="">-- เลือกปีการศึกษา --</option>
                         <?php if(isset($CheckYearSaveScore)): ?>
+                            <?php 
+                                $activeReportYear = (isset($Term) && isset($Year) && !empty($Term) && !empty($Year)) ? ($Term . '/' . $Year) : get_selected_year();
+                            ?>
                             <?php foreach ($CheckYearSaveScore as $value) : ?>
-                            <option <?= (isset($Term) && isset($Year) && ($Term.'/'.$Year) == $value->RegisterYear) ? "selected" : ""?> value="<?= esc($value->RegisterYear) ?>">
+                            <option <?= ($activeReportYear == $value->RegisterYear) ? "selected" : ""?> value="<?= esc($value->RegisterYear) ?>">
                                 ปีการศึกษา <?= esc($value->RegisterYear) ?>
                             </option>
                             <?php endforeach; ?>

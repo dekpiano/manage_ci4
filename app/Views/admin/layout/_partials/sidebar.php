@@ -185,7 +185,7 @@
         ?>
 
         <!-- 1. งานทะเบียนและสถิติ -->
-        <?php if(in_array("งานทะเบียน",$Exp_Checkrloes)): ?>
+        <?php if(in_array("งานทะเบียน", $Exp_Checkrloes)): ?>
         <li class="menu-header small text-uppercase">
             <span class="menu-header-text">งานทะเบียนและสถิติ</span>
         </li>
@@ -252,28 +252,16 @@
                 <div data-i18n="จัดการห้องเรียน / ที่ปรึกษา">จัดการห้องเรียน / ที่ปรึกษา</div>
             </a>
         </li>
-        <li class="menu-item <?= ($totalSegments >= 4 && ($s4 == 'ExamSchedule' || $s4 == 'RoomOnline') ? 'active open' : '') ?>">
-            <a href="javascript:void(0);" class="menu-link menu-toggle">
-                <i class="menu-icon tf-icons bx bx-calendar-event"></i>
-                <div data-i18n="ตารางสอบ & ออนไลน์">ตารางสอบ & ออนไลน์</div>
+        <li class="menu-item <?= ($s4 == 'ReportEnroll' || ($s3 == 'Executive' && $s4 == 'ReportEnroll') ? 'active' : '') ?>">
+            <a href="<?=base_url('Admin/Acade/Executive/ReportEnroll/Main');?>" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-user-plus"></i>
+                <div data-i18n="งานรับสมัครนักเรียน">งานรับสมัครนักเรียน</div>
             </a>
-            <ul class="menu-sub">
-                <li class="menu-item <?= ($s4 == 'ExamSchedule' ? 'active' : '') ?>">
-                    <a href="<?=base_url('Admin/Acade/Registration/ExamSchedule');?>" class="menu-link">
-                        <div data-i18n="จัดการตารางสอบ">จัดการตารางสอบ</div>
-                    </a>
-                </li>
-                <li class="menu-item <?= ($s4 == 'RoomOnline' ? 'active' : '') ?>">
-                    <a href="<?=base_url('Admin/Acade/Registration/RoomOnline');?>" class="menu-link">
-                        <div data-i18n="จัดการห้องเรียนออนไลน์">จัดการห้องเรียนออนไลน์</div>
-                    </a>
-                </li>
-            </ul>
         </li>
         <?php endif; ?>
 
         <!-- 2. งานวัดผลและประเมินผล -->
-        <?php if(in_array("งานวัดและประเมินผล",$Exp_Checkrloes)): ?>
+        <?php if(in_array("งานวัดและประเมินผล", $Exp_Checkrloes) || in_array("งานวัดผล", $Exp_Checkrloes)): ?>
         <li class="menu-header small text-uppercase">
             <span class="menu-header-text">งานวัดผลและประเมินผล</span>
         </li>
@@ -285,12 +273,12 @@
             <ul class="menu-sub">
                 <li class="menu-item <?= ($s4 == 'ReportTeacherSaveScore' || $s4 == 'ReportTeacherSaveScoreCheck' ? 'active' : '') ?>">
                     <a href="<?=base_url('Admin/Acade/Evaluate/ReportTeacherSaveScore');?>" class="menu-link">
-                        <div data-i18n="บันทึกคะแนน (ครู)">บันทึกคะแนน (ครู)</div>
+                        <div data-i18n="บันทึกคะแนน (รายครู)">บันทึกคะแนน (รายครู)</div>
                     </a>
                 </li>
                 <li class="menu-item <?= ($s4 == 'ReportScoreRoomMain' ? 'active' : '') ?>">
                     <a href="<?=base_url('Admin/Acade/Evaluate/ReportScoreRoomMain');?>" class="menu-link">
-                        <div data-i18n="บันทึกคะแนน (ห้อง)">บันทึกคะแนน (ห้อง)</div>
+                        <div data-i18n="บันทึกคะแนน (รายห้อง)">บันทึกคะแนน (รายห้อง)</div>
                     </a>
                 </li>
             </ul>
@@ -329,15 +317,21 @@
                 <div data-i18n="แก้ไขผลการเรียน (0 ร)">แก้ไขผลการเรียน (0 ร)</div>
             </a>
         </li>
+        <li class="menu-item <?= ($s4 == 'ExamSchedule' ? 'active' : '') ?>">
+            <a href="<?=base_url('Admin/Acade/Registration/ExamSchedule');?>" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-calendar-event"></i>
+                <div data-i18n="จัดการตารางสอบ">จัดการตารางสอบ</div>
+            </a>
+        </li>
         <li class="menu-item <?= ($totalSegments >= 3 && ($s3 == 'Evaluate' || $s3 == 'characteristics' || $s3 == 'rwl') && (in_array($s4, ['AcademicRepeat', 'AcademicResult', 'SaveScore']) || $s3 == 'characteristics' || $s3 == 'rwl') ? 'active open' : '') ?>">
             <a href="javascript:void(0);" class="menu-link menu-toggle">
                 <i class="menu-icon tf-icons bx bx-cog"></i>
                 <div data-i18n="ตั้งค่าระบบวัดผล">ตั้งค่าระบบวัดผล</div>
             </a>
             <ul class="menu-sub">
-                <li class="menu-item <?= ($s4 == 'AcademicRepeat' ? 'active' : '') ?>">
-                    <a href="<?= base_url('Admin/Acade/Evaluate/AcademicRepeat'); ?>" class="menu-link">
-                        <div data-i18n="ตั้งค่าเรียนซ้ำ (มส)">ตั้งค่าเรียนซ้ำ (มส)</div>
+                <li class="menu-item <?= ($s4 == 'SaveScore' ? 'active' : '') ?>">
+                    <a href="<?=base_url('Admin/Acade/Evaluate/SaveScore');?>" class="menu-link">
+                        <div data-i18n="ตั้งค่าบันทึกคะแนน">ตั้งค่าบันทึกคะแนน</div>
                     </a>
                 </li>
                 <li class="menu-item <?= ($s4 == 'AcademicResult' ? 'active' : '') ?>">
@@ -345,9 +339,9 @@
                         <div data-i18n="ตั้งค่าแสดงผลการเรียน">ตั้งค่าแสดงผลการเรียน</div>
                     </a>
                 </li>
-                <li class="menu-item <?= ($s4 == 'SaveScore' ? 'active' : '') ?>">
-                    <a href="<?=base_url('Admin/Acade/Evaluate/SaveScore');?>" class="menu-link">
-                        <div data-i18n="ตั้งค่าบันทึกคะแนน">ตั้งค่าบันทึกคะแนน</div>
+                <li class="menu-item <?= ($s4 == 'AcademicRepeat' ? 'active' : '') ?>">
+                    <a href="<?= base_url('Admin/Acade/Evaluate/AcademicRepeat'); ?>" class="menu-link">
+                        <div data-i18n="ตั้งค่าเรียนซ้ำ (มส)">ตั้งค่าเรียนซ้ำ (มส)</div>
                     </a>
                 </li>
                 <li class="menu-item <?= ($s3 == 'characteristics' ? 'active' : '') ?>">
@@ -365,7 +359,7 @@
         <?php endif; ?>
 
         <!-- 3. งานหลักสูตรและนิเทศ -->
-        <?php if(in_array("งานหลักสูตร",$Exp_Checkrloes)): ?>
+        <?php if(in_array("งานหลักสูตร", $Exp_Checkrloes)): ?>
         <li class="menu-header small text-uppercase">
             <span class="menu-header-text">งานหลักสูตรและนิเทศ</span>
         </li>
@@ -373,12 +367,6 @@
             <a href="<?=base_url('Admin/Acade/Course/RegisterSubject');?>" class="menu-link">
                 <i class="menu-icon tf-icons bx bx-book-open"></i>
                 <div data-i18n="จัดการวิชาเรียน">จัดการวิชาเรียน</div>
-            </a>
-        </li>
-        <li class="menu-item <?= ($s4 == 'ClassSchedule' ? 'active' : '') ?>">
-            <a href="<?=base_url('Admin/Acade/Course/ClassSchedule');?>" class="menu-link">
-                <i class="menu-icon tf-icons bx bx-spreadsheet"></i>
-                <div data-i18n="จัดการตารางเรียน">จัดการตารางเรียน</div>
             </a>
         </li>
         <li class="menu-item <?= ($s3 == 'timetable' ? 'active open' : '') ?>">
@@ -420,6 +408,18 @@
                 </li>
             </ul>
         </li>
+        <li class="menu-item <?= ($s4 == 'ClassSchedule' ? 'active' : '') ?>">
+            <a href="<?=base_url('Admin/Acade/Course/ClassSchedule');?>" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-spreadsheet"></i>
+                <div data-i18n="จัดการตารางเรียน">จัดการตารางเรียน</div>
+            </a>
+        </li>
+        <li class="menu-item <?= ($s4 == 'RoomOnline' ? 'active' : '') ?>">
+            <a href="<?=base_url('Admin/Acade/Registration/RoomOnline');?>" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-laptop"></i>
+                <div data-i18n="จัดการห้องเรียนออนไลน์">จัดการห้องเรียนออนไลน์</div>
+            </a>
+        </li>
         <li class="menu-item <?= ($s4 == 'SendPlan' || $s3 == 'checkplan' || ($s3 == 'report' && $s4 == 'checkplan') ? 'active open' : '') ?>">
             <a href="javascript:void(0);" class="menu-link menu-toggle">
                 <i class="menu-icon tf-icons bx bx-edit"></i>
@@ -441,17 +441,18 @@
                         <div data-i18n="รายงานการส่งแผน">รายงานการส่งแผน</div>
                     </a>
                 </li>
-                <li class="menu-item <?= ($s3 == 'competition' ? 'active' : '') ?>">
-                    <a href="<?=base_url('admin/academic/competition');?>" class="menu-link">
-                        <div data-i18n="ผลงานการแข่งขัน">ผลงานการแข่งขัน</div>
-                    </a>
-                </li>
             </ul>
+        </li>
+        <li class="menu-item <?= ($s3 == 'competition' ? 'active' : '') ?>">
+            <a href="<?=base_url('admin/academic/competition');?>" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-trophy"></i>
+                <div data-i18n="ผลงานการแข่งขัน">ผลงานการแข่งขัน</div>
+            </a>
         </li>
         <?php endif; ?>
 
         <!-- 4. งานวิจัยเพื่อพัฒนาคุณภาพ -->
-        <?php if(in_array("งานวิจัย",$Exp_Checkrloes)): ?>
+        <?php if(in_array("งานวิจัย", $Exp_Checkrloes)): ?>
         <li class="menu-header small text-uppercase">
             <span class="menu-header-text">งานวิจัยเพื่อพัฒนาคุณภาพ</span>
         </li>
@@ -476,19 +477,34 @@
         <?php endif; ?>
 
         <!-- 5. กิจกรรมพัฒนาผู้เรียน -->
-        <?php if(in_array("งานกิจกรรมพัฒนาผู้เรียน",$Exp_Checkrloes)): ?>
+        <?php if(in_array("งานกิจกรรมพัฒนาผู้เรียน", $Exp_Checkrloes)): ?>
         <li class="menu-header small text-uppercase">
             <span class="menu-header-text">กิจกรรมพัฒนาผู้เรียน</span>
         </li>
-        <li class="menu-item <?= ($totalSegments >= 3 && $s3 == 'DevelopStudents' || ($totalSegments >= 4 && $s4 == 'student-registrations') ? 'active open' : '' ) ?>">
+        <li class="menu-item <?= ($totalSegments >= 3 && ($s3 == 'DevelopStudents' || $s4 == 'student-registrations') ? 'active open' : '' ) ?>">
             <a href="javascript:void(0);" class="menu-link menu-toggle">
                 <i class="menu-icon tf-icons bx bx-extension"></i>
-                <div data-i18n="งานพัฒนาผู้เรียน">งานพัฒนาผู้เรียน</div>
+                <div data-i18n="กิจกรรมชุมนุม">กิจกรรมชุมนุม</div>
             </a>
             <ul class="menu-sub">
-                <li class="menu-item <?= ($totalSegments >= 4 && ($s4 == 'Clubs' || $s4 == 'student-registrations') ? 'active' : '') ?>">
+                <li class="menu-item <?= ($s4 == 'Clubs' && ($s5 == 'Main' || $s5 == '') ? 'active' : '') ?>">
                     <a href="<?=base_url('Admin/Acade/DevelopStudents/Clubs/Main');?>" class="menu-link">
                         <div data-i18n="จัดการชุมนุม">จัดการชุมนุม</div>
+                    </a>
+                </li>
+                <li class="menu-item <?= ($s4 == 'Clubs' && $s5 == 'All' ? 'active' : '') ?>">
+                    <a href="<?=base_url('Admin/Acade/DevelopStudents/Clubs/All');?>" class="menu-link">
+                        <div data-i18n="รายชื่อชุมนุมทั้งหมด">รายชื่อชุมนุมทั้งหมด</div>
+                    </a>
+                </li>
+                <li class="menu-item <?= ($s4 == 'student-registrations' ? 'active' : '') ?>">
+                    <a href="<?=base_url('admin/academic/develop-students/student-registrations');?>" class="menu-link">
+                        <div data-i18n="ข้อมูลลงทะเบียนชุมนุม">ข้อมูลลงทะเบียนชุมนุม</div>
+                    </a>
+                </li>
+                <li class="menu-item <?= ($s4 == 'Clubs' && $s5 == 'Report' ? 'active' : '') ?>">
+                    <a href="<?=base_url('Admin/Acade/DevelopStudents/Clubs/Report');?>" class="menu-link">
+                        <div data-i18n="รายงานสรุปชุมนุม">รายงานสรุปชุมนุม</div>
                     </a>
                 </li>
             </ul>
@@ -496,27 +512,15 @@
         <?php endif; ?>
 
         <!-- 6. งานแนะแนว -->
-        <?php if(in_array("งานแนะแนว",$Exp_Checkrloes)): ?>
+        <?php if(in_array("งานแนะแนว", $Exp_Checkrloes)): ?>
         <li class="menu-header small text-uppercase">
             <span class="menu-header-text">งานแนะแนว</span>
         </li>
-        <li class="menu-item <?= ($totalSegments >= 3 && $s3 == 'Guidance') ? 'active open' : '' ?>">
-            <a href="javascript:void(0);" class="menu-link menu-toggle">
+        <li class="menu-item <?= ($totalSegments >= 4 && $s4 == 'GraduationStats' ? 'active' : '') ?>">
+            <a href="<?=base_url('Admin/Acade/Guidance/GraduationStats');?>" class="menu-link">
                 <i class="menu-icon tf-icons bx bx-street-view"></i>
-                <div data-i18n="งานแนะแนว">งานแนะแนว</div>
+                <div data-i18n="สถิติเด็กจบแล้วไปไหน">สถิติเด็กจบแล้วไปไหน</div>
             </a>
-            <ul class="menu-sub">
-                <li class="menu-item <?= ($totalSegments >= 4 && $s4 == 'GraduationStats' ? 'active' : '') ?>">
-                    <a href="<?=base_url('Admin/Acade/Guidance/GraduationStats');?>" class="menu-link">
-                        <div data-i18n="สถิติเด็กจบแล้วไปไหน">สถิติเด็กจบแล้วไปไหน</div>
-                    </a>
-                </li>
-                <li class="menu-item <?= ($totalSegments >= 4 && $s4 == 'ReportEnroll' ? 'active' : '') ?>">
-                    <a href="<?=base_url('Admin/Acade/Executive/ReportEnroll/Main');?>" class="menu-link">
-                        <div data-i18n="งานรับสมัครนักเรียน">งานรับสมัครนักเรียน</div>
-                    </a>
-                </li>
-            </ul>
         </li>
         <?php endif; ?>
 
