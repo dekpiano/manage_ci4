@@ -9,100 +9,58 @@ use Mpdf\Config\FontVariables;
 
 class ConStudents extends BaseController
 {
-    protected $title = "แผงควบคุม";
+    protected $title = "ฝ่ายวิชาการ";
     protected $db; // เปลี่ยนชื่อจาก $DBSKJ เป็น $db
     protected $DBPERS;
     protected $DBSKJ;
 
     public function __construct()
     {
-        $this->db = \Config\Database::connect('default'); // เปลี่ยนการเชื่อมต่อเป็น default group
+        $this->db = \Config\Database::connect('default'); // เปลี่ยนเป็นเชื่อมต่อกับ default group
         $this->DBPERS = \Config\Database::connect('personnel');
         $this->DBSKJ = \Config\Database::connect('skj'); // Initialize skjacth_skj database connection
     }
 
     public function index(){ 
-        $data['title'] = "หน้าแรก";
-        $data['description'] = "หน้าหลัก";     
+        $data['title'] = "วิชาการ";
+        $data['description'] = "วิชาการ";     
         $data['full_url'] = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
         $data['banner'] = "";
         $data['CheckOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();
-    return view('user/Students/PageStudentsHome', $data);
-
-        // delete_cookie('username_cookie'); 
-		// delete_cookie('password_cookie'); 
-        // $this->session->sess_destroy();
-        
+        return view('user/Students/PageStudentsHome', $data);
     }
 
     public function Home(){      
-        
-        $data['title'] = "หน้าแรก";
-        $data['description'] = "หน้าแรก";  
+        $data['title'] = "วิชาการ";
+        $data['description'] = "วิชาการ";  
         $data['full_url'] = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
         $data['banner'] = "";
         
         $data['CheckOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();
-    return view('user/Students/PageStudentsHome', $data);
-
-        // delete_cookie('username_cookie'); 
-		// delete_cookie('password_cookie'); 
-        // $this->session->sess_destroy();
-        
+        return view('user/Students/PageStudentsHome', $data);
     }
 
     public function StudentsList(){  
-        $data['title'] = "รายชื่อนักเรียนและครูที่ปรึกษา";
-        $data['description'] = "ตรวจสอบรายชื่อนักเรียนและครูที่ปรึกษา";
+        $data['title'] = "รายชื่อนักเรียน";
+        $data['description'] = "รายชื่อนักเรียน";  
         $data['full_url'] = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
-        $data['banner'] = base_url('uploads/banner/StudentList/bannerStu.png');
-        $data['schoolyear'] = $this->db->table('tb_schoolyear')->get()->getRow();
-
-        $data['SelectSubject'] = $this->db->table('tb_subjects')->select('SubjectCode,SubjectName')
-        ->where('SubjectYear',$data['schoolyear']->schyear_year)
-        ->orderBy('FirstGroup','ASC')
-        ->get()->getResult();
-
-        
-       
-        $subYear = explode('/',$data['schoolyear']->schyear_year);
-        $data['TeacRoom'] = $this->db->table('tb_regclass')->select([
-            'skjacth_personnel.tb_personnel.pers_prefix',
-            'skjacth_personnel.tb_personnel.pers_firstname',
-            'skjacth_personnel.tb_personnel.pers_lastname',
-            'tb_regclass.Reg_Class'
-        ])
-        ->join('skjacth_personnel.tb_personnel','skjacth_personnel.tb_personnel.pers_id = tb_regclass.class_teacher')
-        ->where('Reg_Year',$subYear[1])
-        ->where('Reg_Class',$this->request->getGet('studentList'))
-        ->get()->getResult();
-
-        $data['checkLine'] = $this->db->table('tb_students')->select('StudentClass,StudentStudyLine')
-        ->where('StudentStatus','1/ปกติ')  
-        ->where('StudentBehavior !=','จำหน่่าย') 
+        $data['banner'] = base_url('assets/images/Students/banner.png');
+        $data['checkLine'] = $this->db->table('tb_students')->select('StudentStudyLine')
         ->where('StudentClass','ม.'.$this->request->getGet('studentList'))
         ->groupBy('StudentStudyLine')
         ->get()->getResult();
-        $data['selStudent'] = $this->db->table('tb_students')->select('StudentNumber,StudentCode,StudentPrefix,StudentFirstName,StudentLastName,StudentStudyLine,StudentBehavior,StudentSex')
+
+        $data['selStudent'] = $this->db->table('tb_students')->select('StudentNumber,StudentCode,StudentPrefix,StudentFirstName,StudentLastName,StudentStudyLine,StudentBehavior')
         ->where('StudentStatus','1/ปกติ')  
         ->where('StudentBehavior !=','จำหน่่าย')      
         ->where('StudentClass','ม.'.$this->request->getGet('studentList'))
         ->orderBy('StudentNumber','ASC')
         ->get()->getResult();
                 
-    return view('user/PageStudentsList', $data);
-
-        // delete_cookie('username_cookie'); 
-		// delete_cookie('password_cookie'); 
-        // $this->session->sess_destroy();
-        
+        return view('user/PageStudentsList', $data);
     }
 
     public function StudentsPrintRoom($Class,$Room,$StudyLine = 0){
-   
-        // Use composer-installed mPDF
-
-
         $defaultConfig = (new ConfigVariables())->getDefaults();
         $fontDirs = $defaultConfig['fontDir'];
 
@@ -137,8 +95,6 @@ class ConStudents extends BaseController
         $data['schoolyear'] = $this->db->table('tb_schoolyear')->get()->getRow();
         $subYear = explode('/',$data['schoolyear']->schyear_year);
 
-        
-
         $NameRoom = 'ม.'.$Class.'/'.$Room;
         $data['SubRoom'] = explode('.',$NameRoom);
         $data['TeacRoom'] = $this->db->table('tb_regclass')->select([
@@ -151,8 +107,6 @@ class ConStudents extends BaseController
         ->where('Reg_Year',$subYear[1])
         ->where('Reg_Class',$data['SubRoom'][1])
         ->get()->getResult();
-
-        //echo '<pre>'; print_r($data['TeacRoom']); exit();
 
         $data['checkLine'] = $this->db->table('tb_students')->select('StudentStudyLine')
         ->where('StudentClass',$NameRoom)
@@ -176,7 +130,6 @@ class ConStudents extends BaseController
             ->get()->getResult();
         }
 
-        // true
         $ReportFront = view('user/PageStudentsListPrint',$data,['save' => true]);        
         $live_mpdf->WriteHTML($ReportFront);
         $this->response->setHeader('Content-Type', 'application/pdf');
@@ -195,7 +148,6 @@ class ConStudents extends BaseController
                                 ->orderBy('exam_term','DESC')
                                 ->get()->getResult();
         
-        // Group by Year and Term
         $groupedExams = [];
         foreach ($exams as $exam) {
             $key = $exam->exam_term . '/' . $exam->exam_year;
@@ -203,7 +155,7 @@ class ConStudents extends BaseController
                 $groupedExams[$key] = [
                     'exam_term' => $exam->exam_term,
                     'exam_year' => $exam->exam_year,
-                    'exam_type' => $exam->exam_type, // Use the type from first entry or just show collectively
+                    'exam_type' => $exam->exam_type,
                     'files' => []
                 ];
             }
@@ -212,7 +164,7 @@ class ConStudents extends BaseController
 
         $data['Exam'] = $groupedExams;
        
-    return view('user/PageExamSchedule', $data);
+        return view('user/PageExamSchedule', $data);
     }
 
     public function ExamScheduleOnline(){
@@ -225,7 +177,7 @@ class ConStudents extends BaseController
                                 ->where('exam_status', 'เปิด')
                                 ->orderBy('exam_id','DESC')
                                 ->limit(6)->get()->getResult();
-    return view('user/PageExamScheduleOnline', $data);
+        return view('user/PageExamScheduleOnline', $data);
     }
 
     public function ClassSchedule(){
@@ -235,7 +187,7 @@ class ConStudents extends BaseController
         $data['banner'] = base_url("uploads/banner/class_schedule/banner.png");;
         
         $data['schedule'] = $this->db->table('tb_class_schedule')->orderBy('schestu_id','DESC')->get()->getResult();
-    return view('user/PageClassSchedule', $data);
+        return view('user/PageClassSchedule', $data);
     }
 
     public function SearchClassSchedule()
@@ -268,15 +220,15 @@ class ConStudents extends BaseController
         return $this->response->setJSON($years);
     }
 
-    //-----ห้องเรียนออนไลน์ ------
+    //----- ห้องเรียนออนไลน์ ------
     public function LearningOnline(){
-        $data['lear'] =	$this->DBSKJ->table('tb_learning')->get()->getResult(); //กลุ่มสาระ
-         $data['title'] = "ห้องเรียนออนไลน์";
-         $data['description'] = "ห้องเรียนออนไลน์";  
-         $data['full_url'] = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";        
-         $data['banner'] = base_url('uploads/banner/RoomOnline/bannerRoomOnline.png');
-         
-         $data['room'] = $this->db->table('tb_room_online')->select([
+        $data['lear'] = $this->DBSKJ->table('tb_learning')->get()->getResult();
+        $data['title'] = "ห้องเรียนออนไลน์";
+        $data['description'] = "ห้องเรียนออนไลน์ โรงเรียนสวนกุหลาบวิทยาลัย (จิรประวัติ) นครสวรรค์";  
+        $data['full_url'] = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";        
+        $data['banner'] = base_url('uploads/banner/RoomOnline/bannerRoomOnline.png');
+        
+        $data['room'] = $this->db->table('tb_room_online')->select([
                                             'tb_room_online.*',
                                             'skjacth_personnel.tb_personnel.pers_prefix',
                                             'skjacth_personnel.tb_personnel.pers_firstname',
@@ -287,27 +239,59 @@ class ConStudents extends BaseController
                                 ->where('roomon_classlevel',$this->request->getGet('s'))
                                 ->get()->getResult();
         $data['keyroom'] = $this->request->getGet('s');
-         return view('user/LearnOnline/PageLearnOnlineDetail', $data);
-     }
+        return view('user/PageLearningOnline', $data);
+    }
 
-     public function LearningOnlineDetail($key){
-        $data['lear'] =	$this->DBSKJ->table('tb_learning')->get()->getResult(); //กลุ่มสาระ
-         $data['title'] = "ห้องเรียนออนไลน์";
-         $data['description'] = "ห้องเรียนออนไลน์";  
-         $data['full_url'] = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
-         $data['banner'] = base_url('uploads/banner/RoomOnline/bannerRoomOnline.png');
+    public function LearningOnlineDetail($key = null){
+        $data['lear'] = $this->DBSKJ->table('tb_learning')->get()->getResult();
+        $data['title'] = "ห้องเรียนออนไลน์";
+        $data['description'] = "ห้องเรียนออนไลน์ โรงเรียนสวนกุหลาบวิทยาลัย (จิรประวัติ) นครสวรรค์";  
+        $data['full_url'] = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
+        $data['banner'] = base_url('uploads/banner/RoomOnline/bannerRoomOnline.png');
 
-         return view('user/LearnOnline/PageLearnOnlineDetail', $data);
-     }
+        $decodedKey = urldecode($key ?? '');
+        $learGroup = null;
+        if (!empty($decodedKey)) {
+            $learGroup = $this->DBSKJ->table('tb_learning')
+                ->where('lear_nameeng', $decodedKey)
+                ->orWhere('lear_id', $decodedKey)
+                ->orWhere('lear_namethai', $decodedKey)
+                ->get()->getRow();
+        }
 
+        $builder = $this->db->table('tb_room_online')->select([
+            'tb_room_online.*',
+            'skjacth_personnel.tb_personnel.pers_prefix',
+            'skjacth_personnel.tb_personnel.pers_firstname',
+            'skjacth_personnel.tb_personnel.pers_lastname',
+            'skjacth_personnel.tb_personnel.pers_img',
+            'skjacth_personnel.tb_personnel.pers_learning'
+        ])->join('skjacth_personnel.tb_personnel', 'skjacth_personnel.tb_personnel.pers_id = tb_room_online.roomon_teachid', 'LEFT');
 
-     public function PageReportLearnOnline(){ 
-        $data['lear'] =	$this->DBSKJ->table('tb_learning')->get()->getResult(); //กลุ่มสาระ
+        if ($learGroup) {
+            $builder->where('skjacth_personnel.tb_personnel.pers_learning', $learGroup->lear_id);
+            $data['title'] = "ห้องเรียนออนไลน์ - กลุ่มสาระการเรียนรู้" . $learGroup->lear_namethai;
+        }
+
+        if ($this->request->getGet('s')) {
+            $builder->where('tb_room_online.roomon_classlevel', $this->request->getGet('s'));
+        }
+
+        $data['room'] = $builder->orderBy('roomon_classlevel', 'ASC')->orderBy('roomon_coursecode', 'ASC')->get()->getResult();
+        $data['learGroup'] = $learGroup;
+        $data['key'] = $decodedKey;
+        $data['keyroom'] = $this->request->getGet('s');
+
+        return view('user/PageLearningOnlineDetail', $data);
+    }
+
+    public function PageReportLearnOnline(){ 
+        $data['lear'] = $this->DBSKJ->table('tb_learning')->get()->getResult();
         $data['title'] = "แบบรายงานการเรียนการสอนออนไลน์";
         $data['description'] = "แบบรายงานการเรียนการสอนออนไลน์";  
         $data['full_url'] = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
         $data['banner'] = "";
 
-         return view('user/PageReportLearnOnline', $data);
-     }
+        return view('user/PageReportLearnOnline', $data);
+    }
 }
