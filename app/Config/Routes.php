@@ -18,6 +18,8 @@ use App\Controllers\Admin\Academic\ConAdminExtraSubject;
 use App\Controllers\Admin\Academic\ConAdminHome;
 use App\Controllers\Admin\Academic\ConAdminRegisRepeat;
 use App\Controllers\Admin\Academic\ConAdminRegisterSubject;
+use App\Controllers\Admin\Academic\ConAdminSubjectMaster;
+use App\Controllers\Admin\Academic\ConAdminTeachingSchedule;
 use App\Controllers\Admin\Academic\ConAdminResearch;
 use App\Controllers\Admin\Academic\ConAdminReportResult;
 use App\Controllers\Admin\Academic\ConAdminRoomOnline;
@@ -173,7 +175,27 @@ $routes->get('admin/academic/ConAdminClassSchedule/insert_class_schedule', funct
 $routes->post('admin/academic/ConAdminClassSchedule/delete_class_schedule/(:any)/(:any)/(:any)/(:any)', [ConAdminClassSchedule::class, 'delete_class_schedule/$1/$2/$3/$4']);
 $routes->post('admin/academic/ConAdminClassSchedule/upload_proxy', [ConAdminClassSchedule::class, 'upload_proxy']);
 $routes->get('admin/academic/ConAdminClassSchedule/upload_proxy', function() { return redirect()->to(base_url('Admin/Acade/Course/ClassSchedule')); });
+// Master Subjects (คลังรายวิชาหลักสูตรกลาง)
+$routes->get('Admin/Acade/Course/MasterSubject', [ConAdminSubjectMaster::class, 'index']);
+$routes->post('admin/academic/subject-master/select', [ConAdminSubjectMaster::class, 'getMasterSubjectsSelect']);
+$routes->post('admin/academic/subject-master/insert', [ConAdminSubjectMaster::class, 'insert']);
+$routes->get('admin/academic/subject-master/edit/(:num)', [ConAdminSubjectMaster::class, 'edit/$1']);
+$routes->post('admin/academic/subject-master/update', [ConAdminSubjectMaster::class, 'update']);
+$routes->delete('admin/academic/subject-master/delete/(:num)', [ConAdminSubjectMaster::class, 'delete/$1']);
+$routes->post('admin/academic/subject-master/sync', [ConAdminSubjectMaster::class, 'syncFromGoogleSheets']);
+$routes->match(['get', 'post'], 'admin/academic/subject-master/get-for-register', [ConAdminSubjectMaster::class, 'getForRegister']);
+
+// Teaching Schedule & Workload Monitoring (ตรวจสอบตารางสอนกลุ่มสาระ)
+$routes->get('Admin/Acade/Course/TeachingSchedule', [ConAdminTeachingSchedule::class, 'index']);
+$routes->get('Admin/Acade/Course/TeachingSchedule/group/(:segment)', [ConAdminTeachingSchedule::class, 'groupDetail']);
+$routes->get('Admin/Acade/Course/TeachingSchedule/print-all/(:segment)/(:num)/(:num)', [ConAdminTeachingSchedule::class, 'printGroupWorkload']);
+$routes->get('Admin/Acade/Course/TeachingSchedule/print-all/(:segment)', [ConAdminTeachingSchedule::class, 'printGroupWorkload']);
+$routes->get('Admin/Acade/Course/TeachingSchedule/print/(:segment)/(:num)/(:num)', [ConAdminTeachingSchedule::class, 'printTeacherWorkload']);
+$routes->get('Admin/Acade/Course/TeachingSchedule/print/(:segment)', [ConAdminTeachingSchedule::class, 'printTeacherWorkload']);
+$routes->match(['get', 'post'], 'admin/academic/teaching-schedule/teacher-detail', [ConAdminTeachingSchedule::class, 'getTeacherDetailAjax']);
+
 $routes->get('Admin/Acade/Course/RegisterSubject', [ConAdminRegisterSubject::class, 'AdminRegisterSubjectMain']);
+$routes->match(['get', 'post'], 'admin/academic/ConAdminRegisterSubject/AdminRegisterSubjectGetMaster', [ConAdminRegisterSubject::class, 'AdminRegisterSubjectGetMaster']);
 $routes->post('admin/academic/ConAdminRegisterSubject/AdminRegisterSubjectSelect', [ConAdminRegisterSubject::class, 'AdminRegisterSubjectSelect']);
 $routes->post('admin/academic/ConAdminRegisterSubject/AdminRegisterSubjectEdit', [ConAdminRegisterSubject::class, 'AdminRegisterSubjectEdit']);
 $routes->post('admin/academic/ConAdminRegisterSubject/AdminRegisterSubjectUpdate', [ConAdminRegisterSubject::class, 'AdminRegisterSubjectUpdate']);
@@ -181,6 +203,11 @@ $routes->post('admin/academic/ConAdminRegisterSubject/AdminRegisterSubjectInsert
 $routes->post('admin/academic/ConAdminRegisterSubject/AdminRegisterSubjectBulkInsert', [ConAdminRegisterSubject::class, 'AdminRegisterSubjectBulkInsert']);
 $routes->delete('admin/academic/ConAdminRegisterSubject/AdminRegisterSubjectDelete/(:num)', [ConAdminRegisterSubject::class, 'AdminRegisterSubjectDelete/$1']);
 $routes->get('admin/academic/ConAdminRegisterSubject/AdminRegisterSubjectEdit', [ConAdminRegisterSubject::class, 'AdminRegisterSubjectEdit']);
+$routes->post('admin/academic/ConAdminRegisterSubject/AdminRegisterSubjectCompareYears', [ConAdminRegisterSubject::class, 'AdminRegisterSubjectCompareYears']);
+$routes->post('admin/academic/ConAdminRegisterSubject/AdminRegisterSubjectCopyFromYear', [ConAdminRegisterSubject::class, 'AdminRegisterSubjectCopyFromYear']);
+$routes->match(['get', 'post'], 'admin/academic/ConAdminRegisterSubject/AdminRegisterSubjectGetCodesByYear', [ConAdminRegisterSubject::class, 'AdminRegisterSubjectGetCodesByYear']);
+$routes->post('admin/academic/ConAdminRegisterSubject/CheckOnOffRegisterSubject', [ConAdminRegisterSubject::class, 'CheckOnOffRegisterSubject']);
+$routes->post('admin/academic/ConAdminRegisterSubject/SaveSettingRegisterSubjectYear', [ConAdminRegisterSubject::class, 'SaveSettingRegisterSubjectYear']);
 $routes->get('Admin/Acade/Course/SendPlan', [ConAdminCourse::class, 'SendPlanMain']);
 $routes->get('Admin/Acade/Course/(:segment)/(:segment)', [ConAdminCourse::class, 'UpdateSendPlanYear/$1/$2']);
 $routes->match(['get', 'post'], 'admin/academic/course/get_filtered_plan_data', [ConAdminCourse::class, 'getFilteredPlanData']);

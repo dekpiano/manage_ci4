@@ -48,6 +48,32 @@
     <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.bootstrap5.min.css">
     <!-- Boxicons CSS -->
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <!-- Theme & Accessibility Contrast Utilities -->
+    <style>
+        :root {
+            --primary-emerald: #15a362;
+            --dark-emerald: #0d6d41;
+            --light-emerald: #e8f5ee;
+        }
+        .text-emerald { color: #0d6d41 !important; }
+        .text-primary-emerald { color: #15a362 !important; }
+        .bg-emerald { background-color: #15a362 !important; color: #ffffff !important; }
+        .bg-emerald-light { background-color: #e8f5ee !important; color: #0d6d41 !important; }
+        .btn-white {
+            background-color: #ffffff !important;
+            color: #0d6d41 !important;
+            border: 1px solid rgba(0, 0, 0, 0.08) !important;
+            font-weight: 700 !important;
+            transition: all 0.2s ease;
+        }
+        .btn-white:hover {
+            background-color: #f0fdf4 !important;
+            color: #065f46 !important;
+            border-color: #86efac !important;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+        }
+        .swal2-container { z-index: 9999 !important; }
+    </style>
 </head>
 
 

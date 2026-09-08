@@ -14,6 +14,28 @@
         --shadow-premium: 0 10px 40px rgba(0, 0, 0, 0.08);
     }
 
+    .text-emerald {
+        color: var(--dark-emerald) !important;
+    }
+    .text-primary-emerald {
+        color: var(--primary-emerald) !important;
+    }
+    .btn-white {
+        background-color: #ffffff !important;
+        color: var(--dark-emerald) !important;
+        border: 2px solid #ffffff !important;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1) !important;
+        font-weight: 700 !important;
+        transition: all 0.3s ease;
+    }
+    .btn-white:hover {
+        background-color: #f0fdf4 !important;
+        color: #065f46 !important;
+        border-color: #86efac !important;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15) !important;
+    }
+
     /* Premium Header */
     .premium-header {
         background: linear-gradient(135deg, var(--primary-emerald) 0%, var(--dark-emerald) 100%);

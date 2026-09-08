@@ -9,6 +9,7 @@ class ConAdminRegisterSubject extends BaseController
 {
     protected $modAdminRegisterSubject;
     protected $DBpersonnel;
+    protected $db;
 
     public function __construct()
     {
@@ -29,6 +30,21 @@ class ConAdminRegisterSubject extends BaseController
             session()->setFlashdata(['msg' => 'OK', 'messge' => 'คุณไม่มีสิทธ์ในระบบจัดข้อมูลนี้ ติดต่อเจ้าหน้าที่คอม', 'alert' => 'error']);
             return redirect()->to(base_url('welcome'));
         }
+    }
+
+    /**
+     * ตรวจสอบว่าระบบจัดการวิชาเรียนเปิดใช้งานอยู่หรือไม่
+     */
+    protected function isRegisterSubjectOpen()
+    {
+        $statusRow = $this->db->table('tb_register_onoff')
+            ->select('onoff_status')
+            ->where('onoff_id', 16)
+            ->orWhere('onoff_name', 'จัดการวิชาเรียน')
+            ->get()
+            ->getRow();
+
+        return !empty($statusRow) && ($statusRow->onoff_status === 'on' || $statusRow->onoff_status === 'true');
     }
 
     public function update_row($RegisterYear,$SubjectCode, $data) {
@@ -121,7 +137,6 @@ class ConAdminRegisterSubject extends BaseController
     }
 
     public function AdminRegisterSubjectInsert(){ 
-
         $subjectCode = $this->request->getPost('SubjectCode');
         $subjectYear = $this->request->getPost('SubjectYear');
 
@@ -233,9 +248,343 @@ class ConAdminRegisterSubject extends BaseController
         $data['selectedYear'] = get_selected_year();
         $data['title'] = "วิชาเรียน";	
         $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();
+        $data['onoff_register_subject'] = $this->db->table('tb_register_onoff')
+                                            ->where('onoff_id', 16)
+                                            ->orWhere('onoff_name', 'จัดการวิชาเรียน')
+                                            ->get()->getRow();
         $data['classroom'] = new \App\Libraries\Classroom();
-        
         echo view('admin/Academic/AdminRegisterSubject/AdminRegisterSubjectMain', $data);
+    }
 
+    /**
+     * สลับสถานะ เปิด - ปิด ระบบจัดการวิชาเรียน (tb_register_onoff)
+     */
+    public function CheckOnOffRegisterSubject()
+    {
+        if (!$this->request->isAJAX()) {
+            return $this->response->setStatusCode(400)->setJSON(['status' => 'error', 'message' => 'Invalid request']);
+        }
+
+        $check = $this->request->getPost('check');
+        $status = ($check === 'true' || $check === true || $check === 'on') ? 'on' : 'off';
+
+        $exists = $this->db->table('tb_register_onoff')
+            ->where('onoff_id', 16)
+            ->orWhere('onoff_name', 'จัดการวิชาเรียน')
+            ->get()->getRow();
+
+        if ($exists) {
+            $this->db->table('tb_register_onoff')
+                ->where('onoff_id', $exists->onoff_id)
+                ->update([
+                    'onoff_status' => $status,
+                    'onoff_StartDate' => date('Y-m-d H:i:s')
+                ]);
+        } else {
+            $this->db->table('tb_register_onoff')->insert([
+                'onoff_id' => 16,
+                'onoff_name' => 'จัดการวิชาเรียน',
+                'onoff_status' => $status,
+                'onoff_year' => get_selected_year(),
+                'onoff_Level' => '',
+                'onoff_detail' => 'งานหลักสูตร',
+                'onoff_StartDate' => date('Y-m-d H:i:s'),
+                'onoff_EndDate' => date('Y-m-d H:i:s')
+            ]);
+        }
+
+        return $this->response->setJSON([
+            'status' => 'success',
+            'new_status' => $status,
+            'message' => $status === 'on' ? 'เปิดระบบจัดการวิชาเรียนเรียบร้อย' : 'ปิดระบบจัดการวิชาเรียนเรียบร้อย'
+        ]);
+    }
+
+    /**
+     * บันทึกการตั้งค่าปีการศึกษาของระบบจัดการวิชาเรียน (tb_register_onoff)
+     */
+    public function SaveSettingRegisterSubjectYear()
+    {
+        if (!$this->request->isAJAX()) {
+            return $this->response->setStatusCode(400)->setJSON(['status' => 'error', 'message' => 'Invalid request']);
+        }
+
+        $term = trim($this->request->getPost('setting_term') ?? '');
+        $year = trim($this->request->getPost('setting_year') ?? '');
+        $onoffYear = $term . '/' . $year;
+
+        if (empty($term) || empty($year)) {
+            return $this->response->setJSON(['status' => 'error', 'message' => 'กรุณาระบุภาคเรียนและปีการศึกษาให้ครบถ้วน']);
+        }
+
+        $exists = $this->db->table('tb_register_onoff')
+            ->where('onoff_id', 16)
+            ->orWhere('onoff_name', 'จัดการวิชาเรียน')
+            ->get()->getRow();
+
+        if ($exists) {
+            $this->db->table('tb_register_onoff')
+                ->where('onoff_id', $exists->onoff_id)
+                ->update([
+                    'onoff_year' => $onoffYear,
+                    'onoff_StartDate' => date('Y-m-d H:i:s')
+                ]);
+        } else {
+            $this->db->table('tb_register_onoff')->insert([
+                'onoff_id' => 16,
+                'onoff_name' => 'จัดการวิชาเรียน',
+                'onoff_status' => 'off',
+                'onoff_year' => $onoffYear,
+                'onoff_Level' => '',
+                'onoff_detail' => 'งานหลักสูตร',
+                'onoff_StartDate' => date('Y-m-d H:i:s'),
+                'onoff_EndDate' => date('Y-m-d H:i:s')
+            ]);
+        }
+
+        return $this->response->setJSON([
+            'status' => 'success',
+            'new_year' => $onoffYear,
+            'message' => "บันทึกตั้งค่าปีการศึกษาสำหรับระบบครูเป็น {$onoffYear} เรียบร้อยแล้ว"
+        ]);
+    }
+
+
+    public function AdminRegisterSubjectGetMaster()
+    {
+        $class = $this->request->getGet('class') ?: $this->request->getPost('class');
+        $builder = $this->db->table('tb_subjects_master');
+        
+        if (!empty($class)) {
+            $builder->where('subject_class', $class);
+        }
+
+        $records = $builder->orderBy('subject_class', 'ASC')
+                           ->orderBy('subject_code', 'ASC')
+                           ->get()
+                           ->getResult();
+
+        $data = [];
+        foreach ($records as $sub) {
+            $data[] = [
+                'code'        => $sub->subject_code,
+                'name'        => $sub->subject_name,
+                'unit'        => $sub->subject_unit,
+                'hour'        => $sub->subject_hour,
+                'type'        => $sub->subject_type,
+                'firstGroup'  => $sub->first_group,
+                'secondGroup' => $sub->second_group,
+                'class'       => $sub->subject_class,
+                'searchString'=> strtolower($sub->subject_code . ' ' . $sub->subject_name . ' ' . ($sub->first_group ?? '') . ' ' . ($sub->subject_class ?? ''))
+            ];
+        }
+
+        return $this->response->setJSON([
+            'status' => 'success',
+            'data'   => $data,
+            'total'  => count($data)
+        ]);
+    }
+
+    /**
+     * เปรียบเทียบรายวิชาระหว่างปีการศึกษาต้นทางและเป้าหมาย
+     */
+    public function AdminRegisterSubjectCompareYears()
+    {
+        $sourceYear  = $this->request->getPost('source_year');
+        $targetYear  = $this->request->getPost('target_year');
+        $classFilter = $this->request->getPost('class_filter');
+        $groupFilter = $this->request->getPost('group_filter');
+
+        if (empty($sourceYear) || empty($targetYear)) {
+            return $this->response->setJSON([
+                'status'  => 'error',
+                'message' => 'กรุณาระบุปีการศึกษาต้นทางและเป้าหมาย'
+            ]);
+        }
+
+        // 1. ดึงรายวิชาที่มีอยู่ในปีเป้าหมาย (Target Year)
+        $targetSubjects = $this->db->table('tb_subjects')
+            ->select('SubjectCode, SubjectClass')
+            ->where('SubjectYear', $targetYear)
+            ->get()
+            ->getResult();
+
+        $targetMap = [];
+        foreach ($targetSubjects as $ts) {
+            $key = trim($ts->SubjectCode) . '_' . trim($ts->SubjectClass);
+            $targetMap[$key] = true;
+        }
+
+        // 2. ดึงรายวิชาจากปีต้นทาง (Source Year)
+        $builder = $this->db->table('tb_subjects')->where('SubjectYear', $sourceYear);
+        if (!empty($classFilter)) {
+            $builder->where('SubjectClass', $classFilter);
+        }
+        if (!empty($groupFilter)) {
+            $builder->where('FirstGroup', $groupFilter);
+        }
+
+        $sourceSubjects = $builder->orderBy('SubjectClass', 'ASC')
+                                  ->orderBy('SubjectCode', 'ASC')
+                                  ->get()
+                                  ->getResult();
+
+        $comparisonList  = [];
+        $totalSource     = count($sourceSubjects);
+        $totalRegistered = 0;
+        $totalMissing    = 0;
+
+        foreach ($sourceSubjects as $row) {
+            $key = trim($row->SubjectCode) . '_' . trim($row->SubjectClass);
+            $isRegistered = isset($targetMap[$key]);
+
+            if ($isRegistered) {
+                $totalRegistered++;
+            } else {
+                $totalMissing++;
+            }
+
+            $comparisonList[] = [
+                'SubjectID'    => $row->SubjectID,
+                'SubjectCode'  => $row->SubjectCode,
+                'SubjectName'  => $row->SubjectName,
+                'SubjectClass' => $row->SubjectClass,
+                'SubjectUnit'  => $row->SubjectUnit,
+                'SubjectHour'  => $row->SubjectHour,
+                'SubjectType'  => $row->SubjectType,
+                'FirstGroup'   => $row->FirstGroup,
+                'SecondGroup'  => $row->SecondGroup,
+                'is_registered'=> $isRegistered,
+                'searchString' => strtolower($row->SubjectCode . ' ' . $row->SubjectName . ' ' . ($row->FirstGroup ?? '') . ' ' . ($row->SubjectClass ?? ''))
+            ];
+        }
+
+        return $this->response->setJSON([
+            'status' => 'success',
+            'data'   => $comparisonList,
+            'stats'  => [
+                'total'      => $totalSource,
+                'registered' => $totalRegistered,
+                'missing'    => $totalMissing
+            ]
+        ]);
+    }
+
+    /**
+     * คัดลอกรายวิชาที่เลือกจากปีต้นทางเข้าสู่ปีเป้าหมาย
+     */
+    public function AdminRegisterSubjectCopyFromYear()
+    {
+        $sourceYear = $this->request->getPost('source_year');
+        $targetYear = $this->request->getPost('target_year');
+        $subjectIds = $this->request->getPost('subject_ids');
+
+        if (empty($sourceYear) || empty($targetYear)) {
+            return $this->response->setJSON(['status' => 'error', 'message' => 'ข้อมูลปีการศึกษาไม่ถูกต้อง']);
+        }
+
+        if (empty($subjectIds) || !is_array($subjectIds)) {
+            return $this->response->setJSON(['status' => 'error', 'message' => 'กรุณาเลือกวิชาที่ต้องการคัดลอกอย่างน้อย 1 วิชา']);
+        }
+
+        $subjectsToCopy = $this->db->table('tb_subjects')
+            ->where('SubjectYear', $sourceYear)
+            ->whereIn('SubjectID', $subjectIds)
+            ->get()
+            ->getResult();
+
+        if (empty($subjectsToCopy)) {
+            return $this->response->setJSON(['status' => 'error', 'message' => 'ไม่พบข้อมูลวิชาที่เลือก']);
+        }
+
+        $insertedCount = 0;
+        $skippedCount  = 0;
+
+        $this->db->transStart();
+
+        foreach ($subjectsToCopy as $sub) {
+            $exists = $this->db->table('tb_subjects')
+                ->where('SubjectCode', $sub->SubjectCode)
+                ->where('SubjectClass', $sub->SubjectClass)
+                ->where('SubjectYear', $targetYear)
+                ->countAllResults();
+
+            if ($exists > 0) {
+                $skippedCount++;
+                continue;
+            }
+
+            $insertData = [
+                'SubjectCode'  => $sub->SubjectCode,
+                'SubjectName'  => $sub->SubjectName,
+                'SubjectUnit'  => $sub->SubjectUnit,
+                'SubjectHour'  => $sub->SubjectHour,
+                'SubjectType'  => $sub->SubjectType,
+                'FirstGroup'   => $sub->FirstGroup,
+                'SecondGroup'  => $sub->SecondGroup,
+                'SubjectClass' => $sub->SubjectClass,
+                'SubjectYear'  => $targetYear
+            ];
+
+            if ($this->db->table('tb_subjects')->insert($insertData)) {
+                $insertedCount++;
+            }
+        }
+
+        $this->db->transComplete();
+
+        if ($this->db->transStatus() === false) {
+            return $this->response->setJSON(['status' => 'error', 'message' => 'เกิดข้อผิดพลาดในการบันทึกข้อมูล']);
+        }
+
+        $msg = "คัดลอกวิชาเข้าสู่ปีการศึกษา {$targetYear} สำเร็จ {$insertedCount} รายการ";
+        if ($skippedCount > 0) {
+            $msg .= " (ข้าม {$skippedCount} รายการที่มีอยู่แล้ว)";
+        }
+
+        return $this->response->setJSON([
+            'status'   => 'success',
+            'message'  => $msg,
+            'inserted' => $insertedCount,
+            'skipped'  => $skippedCount
+        ]);
+    }
+
+    /**
+     * ดึงรหัสวิชาที่เปิดสอนในเทอม/ปีที่ระบุ (สำหรับ Auto-Select ใน Modal)
+     */
+    public function AdminRegisterSubjectGetCodesByYear()
+    {
+        $year  = $this->request->getPost('year') ?: $this->request->getGet('year');
+        $class = $this->request->getPost('class') ?: $this->request->getGet('class');
+
+        if (empty($year)) {
+            return $this->response->setJSON(['status' => 'error', 'codes' => []]);
+        }
+
+        $builder = $this->db->table('tb_subjects')
+            ->select('SubjectCode, SubjectClass')
+            ->where('SubjectYear', $year);
+
+        if (!empty($class)) {
+            $builder->where('SubjectClass', $class);
+        }
+
+        $records = $builder->get()->getResult();
+        $codes = [];
+        foreach ($records as $r) {
+            $codes[] = [
+                'code'  => $r->SubjectCode,
+                'class' => $r->SubjectClass
+            ];
+        }
+
+        return $this->response->setJSON([
+            'status' => 'success',
+            'codes'  => $codes,
+            'total'  => count($codes)
+        ]);
     }
 }
+

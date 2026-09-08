@@ -363,10 +363,22 @@
         <li class="menu-header small text-uppercase">
             <span class="menu-header-text">งานหลักสูตรและนิเทศ</span>
         </li>
+        <li class="menu-item <?= ($s4 == 'MasterSubject' ? 'active' : '') ?>">
+            <a href="<?=base_url('Admin/Acade/Course/MasterSubject');?>" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-archive"></i>
+                <div data-i18n="คลังวิชาหลักสูตรกลาง">คลังวิชาหลักสูตรกลาง</div>
+            </a>
+        </li>
         <li class="menu-item <?= ($s4 == 'RegisterSubject' ? 'active' : '') ?>">
             <a href="<?=base_url('Admin/Acade/Course/RegisterSubject');?>" class="menu-link">
                 <i class="menu-icon tf-icons bx bx-book-open"></i>
-                <div data-i18n="จัดการวิชาเรียน">จัดการวิชาเรียน</div>
+                <div data-i18n="จัดการวิชาเรียนประจำเทอม">จัดการวิชาเรียนประจำเทอม</div>
+            </a>
+        </li>
+        <li class="menu-item <?= ($s4 == 'TeachingSchedule' ? 'active' : '') ?>">
+            <a href="<?=base_url('Admin/Acade/Course/TeachingSchedule');?>" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-calendar-check" style="color: #15a362 !important;"></i>
+                <div data-i18n="ตรวจสอบตารางสอนกลุ่มสาระ">ตรวจสอบตารางสอนกลุ่มสาระ</div>
             </a>
         </li>
         <li class="menu-item <?= ($s3 == 'timetable' ? 'active open' : '') ?>">
