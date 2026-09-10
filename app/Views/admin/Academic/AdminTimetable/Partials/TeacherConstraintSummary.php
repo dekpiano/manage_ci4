@@ -11,7 +11,7 @@
     </div>
     <div class="table-responsive rounded-3 border bg-white">
         <table class="table table-bordered text-center align-middle m-0">
-            <thead class="bg-light">
+            <thead class="modern-table-header">
                 <tr>
                     <th style="width: 120px;" class="py-3">วัน / คาบ</th>
                     <?php foreach($periods as $p): ?>

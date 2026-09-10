@@ -7,12 +7,12 @@
     <div class="d-flex align-items-md-center justify-content-between mb-4 flex-column flex-md-row gap-3">
         <div>
             <h4 class="fw-bold py-1 mb-0">
-                <span class="text-muted fw-light">วิชาการ / พัฒนาผู้เรียน / ชุมนุม /</span> รายงาน
+                <span class="text-muted fw-light">วิชาการ / พัฒนาผู้เรียน / <?= !empty($is_scout_page) ? 'กิจกรรมลูกเสือ - เนตรนารี /' : 'กิจกรรมชุมนุม /' ?></span> รายงาน
             </h4>
-            <div class="text-muted small">รายงานบันทึกการมาเรียนและผลการประเมินชุมนุม</div>
+            <div class="text-muted small"><?= !empty($is_scout_page) ? 'รายงานบันทึกการมาเรียนและผลการประเมินกิจกรรมลูกเสือ - เนตรนารี' : 'รายงานบันทึกการมาเรียนและผลการประเมินกิจกรรมชุมนุม' ?></div>
         </div>
         <div class="d-flex gap-2 flex-wrap">
-            <a href="<?= site_url('Admin/Acade/DevelopStudents/Clubs/Main') ?>" class="btn btn-outline-secondary px-3">
+            <a href="<?= !empty($is_scout_page) ? site_url('Admin/Acade/DevelopStudents/Scout/All') : site_url('Admin/Acade/DevelopStudents/Clubs/All') ?>" class="btn btn-outline-secondary px-3">
                 <i class="bx bx-arrow-back me-1"></i> กลับหน้าหลัก
             </a>
             <button class="btn btn-success px-3 d-none" id="btnExportExcel">
@@ -28,17 +28,20 @@
     <div class="row mb-4">
         <div class="col-12">
             <div class="card shadow-sm border-0">
-                <div class="card-body">
+                <div class="card-body py-3">
                     <div class="d-flex align-items-center mb-3">
-                        <div class="p-2 bg-label-primary rounded me-3">
+                        <div class="p-2 bg-label-success text-success rounded me-2">
                             <i class="bx bx-filter-alt fs-4"></i>
                         </div>
-                        <h5 class="mb-0">ตัวกรองข้อมูล</h5>
+                        <div>
+                            <h6 class="mb-0 fw-bold">ตัวกรองข้อมูล<?= !empty($is_scout_page) ? ' (กิจกรรมลูกเสือ - เนตรนารี)' : ' (กิจกรรมชุมนุม)' ?></h6>
+                            <small class="text-muted">กำหนดปีการศึกษา ภาคเรียน และกิจกรรมที่ต้องการเรียกดู</small>
+                        </div>
                     </div>
                     <div class="row g-3 align-items-end">
                         <div class="col-md-3">
-                            <label class="form-label fw-semibold">ปีการศึกษา</label>
-                            <select class="form-select" id="filterYear">
+                            <label class="form-label fw-semibold small text-muted">ปีการศึกษา</label>
+                            <select class="form-select shadow-sm" id="filterYear">
                                 <?php if (!empty($AcademicYears)): ?>
                                     <?php foreach ($AcademicYears as $y): ?>
                                         <option value="<?= esc($y->club_year) ?>" <?= ($y->club_year == ($currentYear ?? '')) ? 'selected' : '' ?>>
@@ -51,16 +54,16 @@
                             </select>
                         </div>
                         <div class="col-md-3">
-                            <label class="form-label fw-semibold">ภาคเรียน</label>
-                            <select class="form-select" id="filterTerm">
-                                <option value="1">ภาคเรียนที่ 1</option>
-                                <option value="2">ภาคเรียนที่ 2</option>
+                            <label class="form-label fw-semibold small text-muted">ภาคเรียน</label>
+                            <select class="form-select shadow-sm" id="filterTerm">
+                                <option value="1" <?= (($currentTerm ?? 1) == 1) ? 'selected' : '' ?>>ภาคเรียนที่ 1</option>
+                                <option value="2" <?= (($currentTerm ?? 1) == 2) ? 'selected' : '' ?>>ภาคเรียนที่ 2</option>
                             </select>
                         </div>
-                        <div class="col-md-3">
-                            <label class="form-label fw-semibold">ชุมนุม</label>
-                            <select class="form-select select2" id="filterClub">
-                                <option value="all">-- ทุกชุมนุม --</option>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold small text-muted"><?= !empty($is_scout_page) ? 'กองลูกเสือ - เนตรนารี' : 'ชุมนุม' ?></label>
+                            <select class="form-select select2 shadow-sm" id="filterClub">
+                                <option value="all">-- <?= !empty($is_scout_page) ? 'ทุกกองลูกเสือ - เนตรนารี' : 'ทุกชุมนุม' ?> --</option>
                                 <?php if (!empty($Clubs)): ?>
                                     <?php foreach ($Clubs as $club): ?>
                                         <option value="<?= esc($club->club_id) ?>"><?= esc($club->club_name) ?></option>
@@ -68,8 +71,8 @@
                                 <?php endif; ?>
                             </select>
                         </div>
-                        <div class="col-md-3">
-                            <button class="btn btn-primary w-100" id="btnSearch">
+                        <div class="col-md-2">
+                            <button class="btn btn-skj-green w-100 shadow-sm py-2" id="btnSearch">
                                 <i class="bx bx-search me-1"></i> ค้นหา
                             </button>
                         </div>
@@ -80,46 +83,46 @@
     </div>
 
     <!-- Report Tab Selector -->
-    <div class="row g-4 mb-4">
+    <div class="row g-3 mb-4">
         <div class="col-md-6">
-            <div class="card shadow-sm border-0 h-100 report-tab-card active" data-target="#content-attendance" id="card-tab-attendance" style="cursor: pointer; transition: all 0.3s ease;">
-                <div class="card-body py-4">
+            <div class="card shadow-sm border-0 h-100 report-tab-card active" data-target="#content-attendance" id="card-tab-attendance" style="cursor: pointer; transition: all 0.25s ease;">
+                <div class="card-body py-3 px-3">
                     <div class="d-flex align-items-center">
                         <div class="me-3">
-                            <div class="avatar avatar-lg">
-                                <span class="avatar-initial rounded-circle bg-primary shadow" style="width:56px;height:56px;">
-                                    <i class="bx bx-calendar-check fs-2 text-white"></i>
+                            <div class="avatar avatar-md">
+                                <span class="avatar-initial rounded-circle shadow-sm" style="width:46px;height:46px; background-color: #15a362 !important;">
+                                    <i class="bx bx-calendar-check fs-3 text-white"></i>
                                 </span>
                             </div>
                         </div>
                         <div class="flex-grow-1">
-                            <h5 class="mb-1 fw-bold">รายงานบันทึกการมาเรียน</h5>
-                            <p class="mb-0 text-muted small">สถิติมา / ขาด / ลาป่วย / ลากิจ แยกรายสัปดาห์</p>
+                            <h6 class="mb-1 fw-bold text-dark">รายงานบันทึกการมาเรียน</h6>
+                            <p class="mb-0 text-muted small">สถิติมา / ขาด / ลา แยกรายสัปดาห์</p>
                         </div>
                         <div class="ms-2">
-                            <i class="bx bx-chevron-right fs-3 text-primary report-tab-arrow"></i>
+                            <i class="bx bx-chevron-right fs-4 text-success report-tab-arrow"></i>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
         <div class="col-md-6">
-            <div class="card shadow-sm border-0 h-100 report-tab-card" data-target="#content-evaluation" id="card-tab-evaluation" style="cursor: pointer; transition: all 0.3s ease;">
-                <div class="card-body py-4">
+            <div class="card shadow-sm border-0 h-100 report-tab-card" data-target="#content-evaluation" id="card-tab-evaluation" style="cursor: pointer; transition: all 0.25s ease;">
+                <div class="card-body py-3 px-3">
                     <div class="d-flex align-items-center">
                         <div class="me-3">
-                            <div class="avatar avatar-lg">
-                                <span class="avatar-initial rounded-circle bg-success shadow" style="width:56px;height:56px;">
-                                    <i class="bx bx-check-shield fs-2 text-white"></i>
+                            <div class="avatar avatar-md">
+                                <span class="avatar-initial rounded-circle shadow-sm" style="width:46px;height:46px; background-color: #2e7d32 !important;">
+                                    <i class="bx bx-check-shield fs-3 text-white"></i>
                                 </span>
                             </div>
                         </div>
                         <div class="flex-grow-1">
-                            <h5 class="mb-1 fw-bold">รายงานการประเมิน</h5>
-                            <p class="mb-0 text-muted small">ผลประเมิน ผ่าน / ไม่ผ่าน ตามที่ครูชุมนุมบันทึก</p>
+                            <h6 class="mb-1 fw-bold text-dark">รายงานผลการประเมิน</h6>
+                            <p class="mb-0 text-muted small"><?= !empty($is_scout_page) ? 'ผลประเมิน ผ่าน / ไม่ผ่าน กิจกรรมลูกเสือ' : 'ผลประเมิน ผ่าน / ไม่ผ่าน กิจกรรมชุมนุม' ?></p>
                         </div>
                         <div class="ms-2">
-                            <i class="bx bx-chevron-right fs-3 text-success report-tab-arrow"></i>
+                            <i class="bx bx-chevron-right fs-4 text-success report-tab-arrow"></i>
                         </div>
                     </div>
                 </div>
@@ -288,7 +291,7 @@
                             <div class="text-center py-5" id="evalEmpty">
                                 <i class="bx bx-check-shield text-muted mb-3" style="font-size: 4rem; opacity: 0.3;"></i>
                                 <h5 class="text-muted">เลือกเงื่อนไขแล้วกด "ค้นหา" เพื่อดูรายงาน</h5>
-                                <p class="text-muted small">แสดงผลการประเมิน ผ่าน/ไม่ผ่าน ตามที่ครูชุมนุมบันทึก</p>
+                                <p class="text-muted small">แสดงผลการประเมิน ผ่าน/ไม่ผ่าน ตามที่<?= !empty($is_scout_page) ? 'ครูผู้กำกับบันทึก' : 'ครูที่ปรึกษาชุมนุมบันทึก' ?></p>
                             </div>
 
                             <!-- Table -->
@@ -300,8 +303,8 @@
                                             <th style="width: 100px;">เลขประจำตัว</th>
                                             <th>ชื่อ - นามสกุล</th>
                                             <th>ชั้น/ห้อง</th>
-                                            <th>ชุมนุม</th>
-                                            <th>ครูที่ปรึกษาชุมนุม</th>
+                                            <th><?= !empty($is_scout_page) ? 'กองลูกเสือ - เนตรนารี' : 'ชุมนุม' ?></th>
+                                            <th><?= !empty($is_scout_page) ? 'ครูผู้กำกับลูกเสือ' : 'ครูที่ปรึกษาชุมนุม' ?></th>
                                             <th class="text-center" style="width: 130px;">ผลการประเมิน</th>
                                         </tr>
                                     </thead>
@@ -326,26 +329,78 @@
 <script>
 $(document).ready(function() {
 
+    const isScoutPage = <?= !empty($is_scout_page) ? 'true' : 'false' ?>;
+    const activityType = isScoutPage ? 'scout' : 'club';
+
     // Initial Select2
     $('#filterClub').select2({
         theme: 'bootstrap-5',
         width: '100%',
-        placeholder: '-- เลือกชุมนุม --',
+        placeholder: isScoutPage ? '-- เลือกกองลูกเสือ - เนตรนารี --' : '-- เลือกชุมนุม --',
+    });
+
+    // รีโหลด Dropdown รายชื่อกิจกรรมเมื่อเปลี่ยนปีหรือภาคเรียน
+    function reloadClubDropdown() {
+        const year = $('#filterYear').val();
+        const term = $('#filterTerm').val();
+        if (!year) return;
+
+        $.ajax({
+            url: '<?= site_url("admin/academic/ConAdminDevelopStudents/ClubGetClubsByYearTerm") ?>',
+            type: 'GET',
+            data: {
+                year: year,
+                term: term,
+                activity_type: activityType
+            },
+            dataType: 'json',
+            success: function(res) {
+                if (res.status === 'success') {
+                    const defaultText = isScoutPage ? '-- ทุกกองลูกเสือ - เนตรนารี --' : '-- ทุกชุมนุม --';
+                    let opts = `<option value="all">${defaultText}</option>`;
+                    if (res.clubs && res.clubs.length > 0) {
+                        res.clubs.forEach(function(c) {
+                            opts += `<option value="${c.club_id}">${c.club_name}</option>`;
+                        });
+                    }
+                    $('#filterClub').html(opts).trigger('change');
+                }
+            }
+        });
+    }
+
+    $('#filterYear, #filterTerm').on('change', function() {
+        reloadClubDropdown();
     });
 
     // ========== ค้นหา ==========
     $('#btnSearch').on('click', function() {
-        loadAttendanceReport();
-        loadEvaluationReport();
+        const $btn = $(this);
+        const origHtml = $btn.html();
+        $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> กำลังค้นหา...');
+
+        let pending = 2;
+        const done = () => {
+            pending--;
+            if (pending <= 0) {
+                $btn.prop('disabled', false).html(origHtml);
+            }
+        };
+
+        loadAttendanceReport(done);
+        loadEvaluationReport(done);
     });
 
     // ========== TAB 1: รายงานบันทึกการมาเรียน ==========
-    function loadAttendanceReport() {
+    function loadAttendanceReport(callback) {
         const year = $('#filterYear').val();
         const term = $('#filterTerm').val();
         const clubId = $('#filterClub').val();
 
-        if (!year) { return; }
+        if (!year) { 
+            if (typeof callback === 'function') callback();
+            return; 
+        }
 
         $('#attendEmpty').addClass('d-none');
         $('#attendTableContainer').addClass('d-none');
@@ -359,7 +414,8 @@ $(document).ready(function() {
                 '<?= csrf_token() ?>': '<?= csrf_hash() ?>',
                 year: year,
                 term: term,
-                club_id: clubId
+                club_id: clubId,
+                activity_type: activityType
             },
             dataType: 'json',
             success: function(res) {
@@ -382,6 +438,9 @@ $(document).ready(function() {
                 $('#attendLoading').addClass('d-none');
                 console.error('AJAX Error:', xhr.status, xhr.responseText);
                 showAttendanceEmpty('Error ' + xhr.status + ': ' + (xhr.responseText || '').substring(0, 200));
+            },
+            complete: function() {
+                if (typeof callback === 'function') callback();
             }
         });
     }
@@ -395,8 +454,9 @@ $(document).ready(function() {
 
     function renderAttendanceTable(data, weeks) {
         // Header
+        const clubColTitle = isScoutPage ? 'กองลูกเสือ - เนตรนารี' : 'ชุมนุม';
         let headHtml = '<tr><th class="text-center" style="width:30px;">#</th>';
-        headHtml += '<th class="student-name-col">ชื่อ-นามสกุล</th><th style="width:40px;">ห้อง</th><th class="text-start">ชุมนุม</th>';
+        headHtml += `<th class="student-name-col">ชื่อ-นามสกุล</th><th style="width:40px;">ห้อง</th><th class="text-start">${clubColTitle}</th>`;
         weeks.forEach(function(w) {
             headHtml += `<th class="text-center week-col"><small>${w.week_number}</small></th>`;
         });
@@ -445,12 +505,15 @@ $(document).ready(function() {
     }
 
     // ========== TAB 2: รายงานการประเมิน ==========
-    function loadEvaluationReport() {
+    function loadEvaluationReport(callback) {
         const year = $('#filterYear').val();
         const term = $('#filterTerm').val();
         const clubId = $('#filterClub').val();
 
-        if (!year) { return; }
+        if (!year) { 
+            if (typeof callback === 'function') callback();
+            return; 
+        }
 
         $('#evalEmpty').addClass('d-none');
         $('#evalTableContainer').addClass('d-none');
@@ -465,7 +528,8 @@ $(document).ready(function() {
                 '<?= csrf_token() ?>': '<?= csrf_hash() ?>',
                 year: year,
                 term: term,
-                club_id: clubId
+                club_id: clubId,
+                activity_type: activityType
             },
             dataType: 'json',
             success: function(res) {
@@ -484,6 +548,9 @@ $(document).ready(function() {
             error: function() {
                 $('#evalLoading').addClass('d-none');
                 showEvalEmpty('ไม่สามารถโหลดข้อมูลได้');
+            },
+            complete: function() {
+                if (typeof callback === 'function') callback();
             }
         });
     }
@@ -514,13 +581,23 @@ $(document).ready(function() {
                 badgeText = 'ยังไม่ประเมิน';
             }
 
+            let advHtml = '-';
+            if (row.advisor_name && row.advisor_name !== '-') {
+                const advList = row.advisor_name.split(',').map(s => s.trim()).filter(Boolean);
+                if (advList.length > 1) {
+                    advHtml = `<div class="d-flex flex-column gap-1">${advList.map(n => `<div class="text-nowrap small"><i class="${isScoutPage ? 'bx bx-award text-success' : 'bx bx-user-voice text-success'} me-1"></i>${n}</div>`).join('')}</div>`;
+                } else if (advList.length === 1) {
+                    advHtml = `<span class="small">${advList[0]}</span>`;
+                }
+            }
+
             html += `<tr>
                 <td class="text-center">${idx + 1}</td>
                 <td>${row.student_code || '-'}</td>
                 <td>${row.student_prefix}${row.student_firstname} ${row.student_lastname}</td>
                 <td>${row.student_class || '-'}</td>
                 <td>${row.club_name || '-'}</td>
-                <td>${row.advisor_name || '-'}</td>
+                <td>${advHtml}</td>
                 <td class="text-center">
                     <span class="badge ${badgeClass} px-3 py-2">
                         <i class="bx ${badgeIcon} me-1"></i>${badgeText}
@@ -579,59 +656,82 @@ $(document).ready(function() {
         const blob = new Blob(["\uFEFF" + csv.join("\n")], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
-        link.download = "รายงานชุมนุม_" + $('#filterYear').val() + ".csv";
+        const prefix = isScoutPage ? "รายงานลูกเสือ_" : "รายงานชุมนุม_";
+        link.download = prefix + $('#filterYear').val() + "_เทอม" + $('#filterTerm').val() + ".csv";
         link.click();
     });
+
+    // โหลดข้อมูลอัตโนมัติเมื่อเปิดหน้าครั้งแรก
+    if ($('#filterYear').val()) {
+        $('#btnSearch').trigger('click');
+    }
 });
 </script>
 
 <style>
+    .btn-skj-green {
+        background-color: #15a362 !important;
+        border-color: #15a362 !important;
+        color: #ffffff !important;
+    }
+    .btn-skj-green:hover, .btn-skj-green:focus {
+        background-color: #11824e !important;
+        border-color: #11824e !important;
+        color: #ffffff !important;
+    }
     .report-tab-card {
         border: 2px solid transparent !important;
-        opacity: 0.7;
+        opacity: 0.75;
+        border-radius: 12px;
     }
     .report-tab-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.12) !important;
+        transform: translateY(-2px);
+        box-shadow: 0 0.4rem 1.25rem rgba(0, 0, 0, 0.08) !important;
         opacity: 1;
     }
     .report-tab-card.active {
-        border: 2px solid #696cff !important;
-        box-shadow: 0 0.5rem 1.5rem rgba(105, 108, 255, 0.2) !important;
+        border: 2px solid #15a362 !important;
+        box-shadow: 0 0.4rem 1.25rem rgba(21, 163, 98, 0.22) !important;
         opacity: 1;
-        transform: translateY(-2px);
+        background-color: #ffffff;
     }
     .report-tab-card.active .report-tab-arrow {
         animation: bounceRight 1.5s ease infinite;
     }
     @keyframes bounceRight {
         0%, 100% { transform: translateX(0); }
-        50% { transform: translateX(5px); }
+        50% { transform: translateX(4px); }
     }
     /* ตารางแบบ Compact พิเศษ */
     .table-compact-report {
-        font-size: 0.75rem; /* ย่อตัวหนังสือลง */
+        font-size: 0.78rem;
     }
     .table-compact-report th, 
     .table-compact-report td {
-        padding: 0.4rem 0.2rem !important; /* ลดช่องว่างภายในช่อง */
+        padding: 0.45rem 0.3rem !important;
         vertical-align: middle;
-        white-space: nowrap; /* ไม่ให้ตัดบรรทัด */
+        white-space: nowrap;
+    }
+    .table-compact-report thead th {
+        background-color: #f8fafc !important;
+        color: #566a7f;
+        font-weight: 600;
+        border-bottom: 2px solid #e7eaf0 !important;
     }
     .table-compact-report .student-name-col {
-        max-width: 150px;
+        max-width: 160px;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
         text-align: left !important;
     }
     .week-col {
-        width: 30px !important;
-        min-width: 30px !important;
+        width: 32px !important;
+        min-width: 32px !important;
         padding: 0.4rem 0 !important;
     }
     .summary-col {
-        width: 35px !important;
+        width: 38px !important;
         font-weight: bold;
     }
     

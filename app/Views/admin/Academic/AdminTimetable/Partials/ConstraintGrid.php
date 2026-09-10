@@ -68,7 +68,7 @@
 <!-- ➡️ GRID CONTENT -->
 <div class="table-responsive">
     <table class="table table-bordered m-0 table-hover" id="constraintTable" style="font-size: 0.75rem;">
-        <thead class="table-light text-center">
+        <thead class="modern-table-header text-center">
             <tr>
                 <th style="width: 100px;">วัน / คาบ</th>
                 <?php foreach($periods as $p): ?>

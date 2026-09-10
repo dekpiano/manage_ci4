@@ -35,6 +35,24 @@ class ModAdminStudents extends Model
         'YearIn',
     ]; // Fields that can be mass-assigned
 
+    // Model Event callbacks to sanitize StudentStudyLine on every insert/update
+    protected $beforeInsert = ['sanitizeStudyLine'];
+    protected $beforeUpdate = ['sanitizeStudyLine'];
+
+    /**
+     * Sanitize StudentStudyLine before insert/update.
+     * Ensures only valid study line values are saved to the database.
+     * Valid values: GENERAL, CEP, CP, PAP1, PAP2, PAP3, PAP4, SMT(S), SMT(T), SP1, SP2, SP3, SP4
+     */
+    protected function sanitizeStudyLine(array $data): array
+    {
+        if (isset($data['data']['StudentStudyLine'])) {
+            $classroom = new \App\Libraries\Classroom();
+            $data['data']['StudentStudyLine'] = $classroom->sanitizeStudyLine($data['data']['StudentStudyLine']);
+        }
+        return $data;
+    }
+
     public function Students_Insert($data)
     {
         return $this->insert($data);

@@ -2,118 +2,169 @@
 
 <?= $this->section('extra_css') ?>
 <style>
-    /* Modern Design System */
+    /* Modern Design System & Pro Palette */
     :root {
-        --primary-gradient: linear-gradient(135deg, #15a362 0%, #0d6e42 100%);
-        --glass-bg: rgba(255, 255, 255, 0.9);
-        --glass-border: rgba(255, 255, 255, 0.2);
+        --primary-theme: #15a362;
+        --primary-gradient: linear-gradient(135deg, #15a362 0%, #0c7a46 100%);
+        --primary-light: #e8f7f0;
+        --primary-border: #b8e8ce;
+        --card-shadow: 0 4px 20px 0 rgba(0, 0, 0, 0.05);
+        --card-hover-shadow: 0 10px 30px 0 rgba(21, 163, 98, 0.12);
+    }
+
+    /* Page Header Styles */
+    .timetable-header-card {
+        background: #ffffff;
+        border-radius: 16px;
+        padding: 1.25rem 1.75rem;
+        box-shadow: var(--card-shadow);
+        border: 1px solid rgba(0,0,0,0.04);
+        margin-bottom: 1.5rem;
     }
 
     .wizard-container {
         perspective: 1000px;
     }
 
-    /* Card-based Navigation */
+    /* Card-based Navigation - Step Pills / Cards */
     .nav-cards-wrapper {
         display: grid;
         grid-template-columns: repeat(5, 1fr);
         gap: 1rem;
-        margin-bottom: 2.5rem;
+        margin-bottom: 1.75rem;
     }
+    @media (max-width: 991.98px) {
+        .nav-cards-wrapper {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+    @media (max-width: 575.98px) {
+        .nav-cards-wrapper {
+            grid-template-columns: 1fr;
+        }
+    }
+
     .nav-card-item {
         cursor: pointer;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
         border: 2px solid transparent !important;
-        background: #fff;
-        border-radius: 15px !important;
+        background: #ffffff;
+        border-radius: 16px !important;
+        box-shadow: var(--card-shadow);
+        position: relative;
+        overflow: hidden;
+    }
+    .nav-card-item::before {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: transparent;
+        transition: background 0.3s ease;
     }
     .nav-card-item:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 20px rgba(0,0,0,0.08) !important;
+        transform: translateY(-4px);
+        box-shadow: var(--card-hover-shadow) !important;
+        border-color: rgba(21, 163, 98, 0.25) !important;
     }
     .nav-card-item.active {
-        border-color: #15a362 !important;
-        background: rgba(21, 163, 98, 0.04) !important;
+        border-color: var(--primary-theme) !important;
+        background: #ffffff !important;
+        box-shadow: 0 8px 24px rgba(21, 163, 98, 0.15) !important;
+    }
+    .nav-card-item.active::before {
+        background: var(--primary-theme);
     }
     .nav-card-item.active .nav-card-icon {
         background: var(--primary-gradient);
-        color: white;
-        box-shadow: 0 4px 10px rgba(21, 163, 98, 0.3);
+        color: #ffffff;
+        box-shadow: 0 4px 12px rgba(21, 163, 98, 0.35);
     }
+    .nav-card-item.active .step-number-tag {
+        background-color: var(--primary-theme) !important;
+        color: #ffffff !important;
+    }
+
     .nav-card-icon {
-        width: 42px;
-        height: 42px;
+        width: 44px;
+        height: 44px;
+        min-width: 44px;
         display: flex;
         align-items: center;
         justify-content: center;
-        border-radius: 10px;
-        background: #f8f9fa;
-        color: #697a8d;
-        font-size: 1.25rem;
+        border-radius: 12px;
+        background: #f4f6f8;
+        color: #566a7f;
+        font-size: 1.35rem;
         transition: all 0.3s ease;
     }
     .nav-card-title {
-        font-size: 0.85rem;
+        font-size: 0.9rem;
         font-weight: 700;
-        margin-bottom: 0;
+        margin-bottom: 2px;
+        color: #384551;
     }
     .nav-card-subtitle {
+        font-size: 0.72rem;
+        color: #8592a3;
+    }
+
+    .step-number-tag {
         font-size: 0.65rem;
-        color: #888;
+        font-weight: 800;
+        padding: 2px 7px;
+        border-radius: 6px;
+        background: #f0f2f4;
+        color: #697a8d;
+        display: inline-block;
+        margin-bottom: 2px;
+        transition: all 0.2s;
     }
 
     .hover-elevate {
-        transition: all 0.3s ease;
+        transition: all 0.25s ease;
         display: flex;
         align-items: center;
         text-align: left;
     }
     .hover-elevate:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.1) !important;
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.08) !important;
     }
 
-    /* Wizard Content */
+    /* Wizard Content Animation */
     .wizard-step {
-        animation: slideInUp 0.5s cubic-bezier(0.165, 0.84, 0.44, 1) forwards;
+        animation: fadeInStep 0.35s cubic-bezier(0.165, 0.84, 0.44, 1) forwards;
     }
-    @keyframes slideInUp {
-        from { opacity: 0; transform: translateY(30px); }
+    @keyframes fadeInStep {
+        from { opacity: 0; transform: translateY(12px); }
         to { opacity: 1; transform: translateY(0); }
     }
 
-    .hero-gradient {
-        background: var(--primary-gradient);
-        color: white;
-        border-radius: 20px;
-        position: relative;
-        overflow: hidden;
-    }
-    .hero-gradient::after {
-        content: "";
-        position: absolute;
-        top: -50%;
-        right: -20%;
-        width: 300px;
-        height: 300px;
-        background: rgba(255,255,255,0.1);
-        border-radius: 50%;
+    /* Step Card Content Layout */
+    .step-header-banner {
+        padding: 1.5rem 1.75rem;
+        background: #ffffff;
+        border-bottom: 1px solid #edf1f4;
     }
 
     /* Step 3 Sidebar & Grid */
     .subject-card-wizard {
         transition: all 0.2s ease;
-        border: 1px solid #eee !important;
-        border-left: 4px solid #15a362 !important;
+        border: 1px solid #e9ecef !important;
+        border-left: 4px solid var(--primary-theme) !important;
+        border-radius: 10px;
     }
     .subject-card-wizard:hover {
-        transform: translateX(5px);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.08) !important;
+        transform: translateX(4px);
+        box-shadow: 0 4px 14px rgba(0,0,0,0.06) !important;
     }
 
     .drag-target-hover {
         background-color: rgba(21, 163, 98, 0.1) !important;
-        border: 2px dashed #15a362 !important;
+        border: 2px dashed var(--primary-theme) !important;
         transform: scale(0.98);
     }
 
@@ -124,19 +175,19 @@
 
     /* Glassmorphism for loaders */
     .glass-loader {
-        background: rgba(255, 255, 255, 0.7);
-        backdrop-filter: blur(5px);
-        border-radius: 15px;
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(6px);
+        border-radius: 16px;
     }
 
     .locked-menu {
-        opacity: 0.7;
-        background: #f8f9fa !important;
+        opacity: 0.65;
+        background: #fbfbfb !important;
         cursor: not-allowed !important;
     }
     .locked-menu:hover {
         transform: none !important;
-        box-shadow: none !important;
+        box-shadow: var(--card-shadow) !important;
     }
 
     /* 🔔 SweetAlert2 Layer Fix */
@@ -145,21 +196,25 @@
     }
 
     .progress-bar.bg-success {
-        background-color: #15a362 !important;
+        background-color: var(--primary-theme) !important;
     }
 
     /* Card Menu Step 1 */
     .card-setting-step1 {
         cursor: pointer;
-        transition: all 0.3s ease;
-        border: 1px solid #f0f2f4 !important;
+        transition: all 0.25s ease;
+        border: 1px solid #edf0f2 !important;
+        border-radius: 16px !important;
+        background: #ffffff;
     }
     .card-setting-step1:hover {
-        border-color: #15a362 !important;
-        background: rgba(21, 163, 98, 0.02);
+        border-color: var(--primary-theme) !important;
+        background: #ffffff;
+        transform: translateY(-4px);
+        box-shadow: 0 8px 24px rgba(21, 163, 98, 0.1) !important;
     }
     .card-setting-step1:hover .avatar {
-        transform: scale(1.1);
+        transform: scale(1.08);
     }
 
     /* 🎨 Import Modal UI Enhancement */
@@ -167,10 +222,10 @@
     .shadow-sm-hover:hover {
         box-shadow: 0 4px 12px rgba(0,0,0,0.08) !important;
         transform: translateY(-2px);
-        border-color: #15a362 !important;
+        border-color: var(--primary-theme) !important;
     }
-    .scroll-custom::-webkit-scrollbar { width: 5px; }
-    .scroll-custom::-webkit-scrollbar-thumb { background: #e0e0e0; border-radius: 10px; }
+    .scroll-custom::-webkit-scrollbar { width: 6px; }
+    .scroll-custom::-webkit-scrollbar-thumb { background: #d0d7de; border-radius: 10px; }
     .transition-all { transition: all 0.3s ease; }
 
     /* ✅ Selected State for Import Cards */
@@ -180,12 +235,12 @@
     }
     .subject-import-card.is-selected {
         background-color: #f1fbf4 !important;
-        border-color: #15a362 !important;
-        box-shadow: 0 0 0 1px #15a362;
+        border-color: var(--primary-theme) !important;
+        box-shadow: 0 0 0 1px var(--primary-theme);
     }
     .subject-import-card.is-selected .bg-checkbox-area {
-        background-color: #15a362 !important;
-        border-color: #15a362 !important;
+        background-color: var(--primary-theme) !important;
+        border-color: var(--primary-theme) !important;
     }
     .check-subject-wizard {
         width: 20px !important;
@@ -199,18 +254,115 @@
         background: #f8f9fa;
         transition: all 0.2s ease;
     }
+
+    /* Step Badge Numbers */
+    .step-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: var(--primary-theme);
+        background: var(--primary-light);
+        padding: 4px 12px;
+        border-radius: 20px;
+        border: 1px solid var(--primary-border);
+    }
+
+    /* Modern Tabs for Step 3 */
+    .nav-tabs {
+        background: #fbfcfd;
+        border-bottom: 1px solid #edf1f4 !important;
+        gap: 4px;
+    }
+    .nav-tabs .nav-link {
+        color: #697a8d;
+        border: none !important;
+        border-bottom: 3px solid transparent !important;
+        transition: all 0.2s ease;
+        border-radius: 8px 8px 0 0 !important;
+        background: transparent !important;
+    }
+    .nav-tabs .nav-link:hover {
+        color: var(--primary-theme);
+        background: rgba(21, 163, 98, 0.05) !important;
+    }
+    .nav-tabs .nav-link.active {
+        color: var(--primary-theme) !important;
+        border-bottom: 3px solid var(--primary-theme) !important;
+        background: #ffffff !important;
+        box-shadow: 0 -2px 10px rgba(0,0,0,0.03);
+    }
+
+    /* Modern Surface and Sidebar Backgrounds */
+    .step-sidebar-surface {
+        background: #fbfcfd !important;
+        border-color: #edf1f4 !important;
+    }
+    .step-search-surface {
+        background: #ffffff !important;
+        border-bottom: 1px solid #edf1f4 !important;
+    }
+    .modern-table-header th {
+        background: #f8fafc !important;
+        color: #475569 !important;
+        font-weight: 700 !important;
+        font-size: 0.8rem !important;
+        border-bottom: 2px solid #e2e8f0 !important;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+    }
+    .table-hover tbody tr:hover {
+        background-color: #f7fbf9 !important;
+    }
 </style>
 <?= $this->endSection() ?>
 
 <?= $this->section('content') ?>
 <div class="container-xxl flex-grow-1 container-p-y">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h4 class="fw-bold mb-0">
-            <span class="text-muted fw-light">วิชาการ / ตารางสอน /</span> Timetable Wizard 🪄
-        </h4>
-        
+    <!-- Top Bar / Header Card -->
+    <div class="timetable-header-card">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div>
+                <div class="d-flex align-items-center gap-2 mb-1">
+                    <span class="step-pill">
+                        <i class="bx bx-calendar-check"></i> ระบบจัดตารางสอนอัตโนมัติ
+                    </span>
+                </div>
+                <h4 class="fw-bold mb-0 text-dark">
+                    Timetable Process Wizard
+                </h4>
+                <p class="text-muted small mb-0 mt-1">กำหนดค่า มอบหมาย ล็อคเงื่อนไข และประมวลผลตารางด้วย AI อย่างเป็นขั้นตอน</p>
+            </div>
+            
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <button type="button" onclick="resetAllData()" class="btn btn-label-danger rounded-pill shadow-xs px-3">
+                    <i class="bx bx-trash me-1"></i> ล้างข้อมูลทั้งหมด
+                </button>
+                <div class="dropdown">
+                    <button class="btn btn-white border shadow-xs dropdown-toggle rounded-pill px-3 fw-bold" type="button" id="yearSelector" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class='bx bx-calendar-event me-2 text-success'></i>
+                        <span>ปีการศึกษา <?= $selectedYear ?></span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-3 mt-2" aria-labelledby="yearSelector">
+                        <li class="dropdown-header text-uppercase small pb-2">เลือกปีการศึกษา</li>
+                        <?php foreach($available_years as $ay): ?>
+                        <li>
+                            <a class="dropdown-item py-2 change-year-btn <?= $ay->year == $selectedYear ? 'active bg-label-success' : '' ?>" 
+                               href="javascript:void(0);" 
+                               data-year="<?= $ay->year ?>">
+                                <i class='bx bx-check me-2 <?= $ay->year == $selectedYear ? '' : 'opacity-0' ?>'></i>
+                                ปีการศึกษา <?= $ay->year ?>
+                            </a>
+                        </li>
+                        <?php endforeach; ?>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
         <?php if (session()->getFlashdata('error')): ?>
-            <div class="alert alert-danger alert-dismissible shadow-sm border-start border-danger border-3 mb-4" role="alert">
+            <div class="alert alert-danger alert-dismissible shadow-sm border-start border-danger border-3 mt-3 mb-0" role="alert">
                 <div class="d-flex align-items-center">
                     <i class="bx bx-error-circle fs-3 me-2"></i>
                     <div class="fw-bold"><?= session()->getFlashdata('error') ?></div>
@@ -220,7 +372,7 @@
         <?php endif; ?>
 
         <?php if (session()->getFlashdata('success')): ?>
-            <div class="alert alert-success alert-dismissible shadow-sm border-start border-success border-3 mb-4" role="alert">
+            <div class="alert alert-success alert-dismissible shadow-sm border-start border-success border-3 mt-3 mb-0" role="alert">
                 <div class="d-flex align-items-center">
                     <i class="bx bx-check-circle fs-3 me-2"></i>
                     <div class="fw-bold"><?= session()->getFlashdata('success') ?></div>
@@ -228,43 +380,20 @@
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
         <?php endif; ?>
-        <div class="d-flex gap-2">
-            <button type="button" onclick="resetAllData()" class="btn btn-label-danger rounded-pill shadow-sm px-3">
-                <i class="bx bx-trash me-1"></i> ล้างข้อมูลทั้งหมด
-            </button>
-            <div class="dropdown">
-            <button class="btn btn-white border shadow-sm dropdown-toggle rounded-pill px-3" type="button" id="yearSelector" data-bs-toggle="dropdown" aria-expanded="false">
-                <i class='bx bx-calendar-event me-2 text-success'></i>
-                <span class="fw-bold">ปีการศึกษา <?= $selectedYear ?></span>
-            </button>
-            <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-3 mt-2" aria-labelledby="yearSelector">
-                <li class="dropdown-header text-uppercase small pb-2">เลือกปีการศึกษา</li>
-                <?php foreach($available_years as $ay): ?>
-                <li>
-                    <a class="dropdown-item py-2 change-year-btn <?= $ay->year == $selectedYear ? 'active bg-label-success' : '' ?>" 
-                       href="javascript:void(0);" 
-                       data-year="<?= $ay->year ?>">
-                        <i class='bx bx-check me-2 <?= $ay->year == $selectedYear ? '' : 'opacity-0' ?>'></i>
-                        ปีการศึกษา <?= $ay->year ?>
-                    </a>
-                </li>
-                <?php endforeach; ?>
-            </ul>
-        </div>
     </div>
-</div>
 
     <!-- 📊 Dashboard-style Navigation Cards -->
     <div class="nav-cards-wrapper">
-        <div class="card nav-card-item shadow-sm d-none" onclick="goToStep(1)" id="nav-step-1">
+        <div class="card nav-card-item shadow-sm" onclick="goToStep(1)" id="nav-step-1">
             <div class="card-body p-3">
                 <div class="d-flex align-items-center">
-                    <div class="nav-card-icon me-2">
-                        <i class='bx bx-cog'></i>
+                    <div class="nav-card-icon me-3">
+                        <i class='bx bx-slider-alt'></i>
                     </div>
                     <div class="overflow-hidden">
-                        <p class="nav-card-title text-nowrap">1. ตั้งค่าพื้นฐาน</p>
-                        <p class="nav-card-subtitle text-nowrap mb-0">วัน/เวลา/ช่วงพัก</p>
+                        <span class="step-number-tag">STEP 1</span>
+                        <p class="nav-card-title text-truncate">ตั้งค่าพื้นฐาน</p>
+                        <p class="nav-card-subtitle text-truncate mb-0">วัน/เวลา/ช่วงพัก</p>
                     </div>
                 </div>
             </div>
@@ -272,12 +401,13 @@
         <div class="card nav-card-item shadow-sm" onclick="goToStep(2)" id="nav-step-2">
             <div class="card-body p-3">
                 <div class="d-flex align-items-center">
-                    <div class="nav-card-icon me-2">
+                    <div class="nav-card-icon me-3">
                         <i class='bx bx-user-plus'></i>
                     </div>
                     <div class="overflow-hidden">
-                        <p class="nav-card-title text-nowrap">2. มอบหมายงาน</p>
-                        <p class="nav-card-subtitle text-nowrap mb-0">ครูสอน/วิชา/ห้อง</p>
+                        <span class="step-number-tag">STEP 2</span>
+                        <p class="nav-card-title text-truncate">มอบหมายงาน</p>
+                        <p class="nav-card-subtitle text-truncate mb-0">ครูสอน/วิชา/ห้อง</p>
                     </div>
                 </div>
             </div>
@@ -285,12 +415,13 @@
         <div class="card nav-card-item shadow-sm" onclick="goToStep(3)" id="nav-step-3">
             <div class="card-body p-3">
                 <div class="d-flex align-items-center">
-                    <div class="nav-card-icon me-2">
-                        <i class='bx bx-grid-alt'></i>
+                    <div class="nav-card-icon me-3">
+                        <i class='bx bx-lock-open-alt'></i>
                     </div>
                     <div class="overflow-hidden">
-                        <p class="nav-card-title text-nowrap">3. ล็อคเวลา</p>
-                        <p class="nav-card-subtitle text-nowrap mb-0">ล็อคครู/ล็อคห้อง</p>
+                        <span class="step-number-tag">STEP 3</span>
+                        <p class="nav-card-title text-truncate">ล็อคเวลา</p>
+                        <p class="nav-card-subtitle text-truncate mb-0">ล็อคครู/ล็อคห้อง</p>
                     </div>
                 </div>
             </div>
@@ -298,12 +429,13 @@
         <div class="card nav-card-item shadow-sm" onclick="goToStep(4)" id="nav-step-4">
             <div class="card-body p-3">
                 <div class="d-flex align-items-center">
-                    <div class="nav-card-icon me-2">
-                        <i class='bx bx-bot'></i>
+                    <div class="nav-card-icon me-3">
+                        <i class='bx bx-brain'></i>
                     </div>
                     <div class="overflow-hidden">
-                        <p class="nav-card-title text-nowrap">4. ประมวลผล AI</p>
-                        <p class="nav-card-subtitle text-nowrap mb-0">ประมวลผลตาราง</p>
+                        <span class="step-number-tag">STEP 4</span>
+                        <p class="nav-card-title text-truncate">ประมวลผล AI</p>
+                        <p class="nav-card-subtitle text-truncate mb-0">จัดตารางอัตโนมัติ</p>
                     </div>
                 </div>
             </div>
@@ -311,12 +443,13 @@
         <div class="card nav-card-item shadow-sm <?= $overall_progress < 100 ? 'locked-menu' : '' ?>" onclick="<?= $overall_progress < 100 ? "Swal.fire({icon:'warning', title:'กรุณาประมวลผล AI ก่อน', text:'ข้อมูลมีการเปลี่ยนแปลง จำเป็นต้องประมวลผลในขั้นตอนที่ 4 ให้สำเร็จ 100% ก่อนจึงจะดูตารางได้ครับ'})" : 'goToStep(5)' ?>" id="nav-step-5">
             <div class="card-body p-3">
                 <div class="d-flex align-items-center">
-                    <div class="nav-card-icon me-2">
+                    <div class="nav-card-icon me-3">
                         <i class='bx <?= $overall_progress < 100 ? "bx-lock-alt text-danger" : "bx-check-double" ?>'></i>
                     </div>
                     <div class="overflow-hidden">
-                        <p class="nav-card-title text-nowrap">5. ตรวจสอบ</p>
-                        <p class="nav-card-subtitle text-nowrap mb-0"><?= $overall_progress < 100 ? 'รอกระบวนการขั้นตอนที่ 4' : 'พิมพ์/ตรวจสอบ' ?></p>
+                        <span class="step-number-tag">STEP 5</span>
+                        <p class="nav-card-title text-truncate">ตรวจสอบ</p>
+                        <p class="nav-card-subtitle text-truncate mb-0"><?= $overall_progress < 100 ? 'รอผลขั้นตอนที่ 4' : 'พิมพ์/ตรวจสอบ' ?></p>
                     </div>
                 </div>
             </div>
@@ -328,19 +461,27 @@
             
             <!-- --- STEP 1: BASIC SETTINGS --- -->
             <div class="wizard-step d-none" id="step-1">
-                <div class="p-4 bg-white border-bottom">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h5 class="mb-1 fw-bold text-primary">ตั้งค่าพื้นฐานตารางสอน</h5>
-                            <p class="text-muted small mb-0">กำหนดวันเรียนและเวลาเรียนของภาคเรียนนี้</p>
+                <div class="step-header-banner">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="avatar avatar-md bg-label-success rounded-3 d-flex align-items-center justify-content-center">
+                                <i class="bx bx-slider-alt fs-3 text-success"></i>
+                            </div>
+                            <div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="badge bg-label-success rounded-pill px-2 py-1 small">ขั้นตอนที่ 1</span>
+                                    <h5 class="mb-0 fw-bold text-dark">ตั้งค่าพื้นฐานตารางสอน</h5>
+                                </div>
+                                <p class="text-muted small mb-0 mt-1">กำหนดวันเปิดเรียน คาบเรียน เวลาเริ่ม-สิ้นสุด และกิจกรรมส่วนกลางของภาคเรียนนี้</p>
+                            </div>
                         </div>
-                        <button class="btn btn-primary rounded-pill px-4 next-step">
-                            ไปขั้นตอนถัดไป <i class="bx bx-right-arrow-alt ms-1"></i>
+                        <button class="btn btn-success rounded-pill px-4 next-step shadow-sm fw-bold" style="background: #15a362 !important; border: none;">
+                            ไปขั้นตอนที่ 2: มอบหมายงาน <i class="bx bx-right-arrow-alt ms-1"></i>
                         </button>
                     </div>
                 </div>
 
-                <div class="p-4">
+                <div class="p-4 p-lg-5">
                     <div class="row g-4">
                         <!-- 📅 Day Settings Card -->
                         <div class="col-md-4 col-lg-3">
@@ -410,36 +551,41 @@
 
             <!-- --- STEP 2: ASSIGNMENT --- -->
             <div class="wizard-step d-none" id="step-2">
-                <div class="p-4 bg-white border-bottom">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h5 class="mb-1 fw-bold text-primary">การมอบหมายวิชาเรียน</h5>
-                            <p class="text-muted small mb-0">กรุณาตรวจสอบรายวิชา ครูผู้สอน และห้องเรียนให้ครบถ้วน</p>
-                        </div>
-                        <div class="d-flex gap-3 align-items-center">
-                            <a href="<?= base_url('admin/academic/timetable/subject-groups') ?>" class="btn btn-label-info btn-lg rounded-4 shadow-sm border-2 px-4 hover-elevate">
-                                <i class="bx bx-layer fs-4 me-2"></i>
-                                <div>
-                                    <div class="fw-bold fs-6">จัดการกลุ่มเรียนพร้อมกัน</div>
-                                    <div style="font-size: 0.65rem; opacity: 0.8;">วิชาเลือก, วิชาขนานห้อง (Joint Groups)</div>
+                <div class="step-header-banner">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="avatar avatar-md bg-label-success rounded-3 d-flex align-items-center justify-content-center">
+                                <i class="bx bx-user-plus fs-3 text-success"></i>
+                            </div>
+                            <div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="badge bg-label-success rounded-pill px-2 py-1 small">ขั้นตอนที่ 2</span>
+                                    <h5 class="mb-0 fw-bold text-dark">การมอบหมายรายวิชาและผู้สอน</h5>
                                 </div>
+                                <p class="text-muted small mb-0 mt-1">กำหนดรายวิชา ครูผู้สอน ห้องเรียน และรูปแบบการแบ่งคาบเรียน (Period Split)</p>
+                            </div>
+                        </div>
+                        <div class="d-flex gap-2 align-items-center flex-wrap">
+                            <a href="<?= base_url('admin/academic/timetable/subject-groups') ?>" class="btn btn-label-info rounded-pill px-3 shadow-xs hover-elevate">
+                                <i class="bx bx-layer fs-5 me-1"></i>
+                                <span>จัดการกลุ่มเรียนพร้อมกัน</span>
                             </a>
                             <div id="group-actions" class="d-none animate__animated animate__fadeIn">
-                                <button class="btn btn-success btn-lg rounded-4 px-4 shadow" onclick="saveTeachingGroup()">
+                                <button class="btn btn-success rounded-pill px-3 shadow-xs" onclick="saveTeachingGroup()" style="background: #15a362 !important; border: none;">
                                     <i class="bx bx-package me-1"></i> มัดรวมกลุ่มสอนควบ
                                 </button>
-                                <button class="btn btn-label-secondary btn-lg rounded-4 px-4" onclick="clearSelection()">
+                                <button class="btn btn-label-secondary rounded-pill px-3" onclick="clearSelection()">
                                     ยกเลิก
                                 </button>
                             </div>
-                            <button class="btn btn-primary btn-lg rounded-4 px-4 shadow" data-bs-toggle="modal" data-bs-target="#modalAddAssignment">
-                                <i class="bx bx-plus-circle fs-4 me-2"></i> เพิ่มการมอบหมาย
+                            <button class="btn btn-success rounded-pill px-4 shadow-sm fw-bold" data-bs-toggle="modal" data-bs-target="#modalAddAssignment" style="background: #15a362 !important; border: none;">
+                                <i class="bx bx-plus-circle fs-5 me-1"></i> เพิ่มการมอบหมาย
                             </button>
                         </div>
                     </div>
                 </div>
                 <!-- Search and summary bar -->
-                <div class="px-4 py-3 bg-light border-bottom d-flex align-items-center justify-content-between flex-wrap gap-3">
+                <div class="px-4 py-3 step-search-surface d-flex align-items-center justify-content-between flex-wrap gap-3">
                     <div class="input-group input-group-merge" style="max-width: 450px;">
                         <span class="input-group-text text-muted"><i class="bx bx-search fs-4"></i></span>
                         <input type="text" class="form-control" id="searchAssignmentInput" placeholder="ค้นหา วิชา, รหัสวิชา, หรือชื่อครูผู้สอน...">
@@ -456,7 +602,7 @@
                 </div>
                 <div class="table-responsive" style="max-height: 500px;" id="assignmentListContainer">
                     <table class="table table-hover align-middle mb-0">
-                        <thead class="bg-label-secondary sticky-top">
+                        <thead class="modern-table-header sticky-top">
                             <tr>
                                 <th class="text-center py-3" style="width: 50px;">
                                     <input class="form-check-input" type="checkbox" id="check-all-assignments">
@@ -578,29 +724,46 @@
 
             <!-- --- STEP 3: CONSTRAINTS --- -->
             <div class="wizard-step d-none" id="step-3">
+                <div class="step-header-banner">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="avatar avatar-md bg-label-success rounded-3 d-flex align-items-center justify-content-center">
+                                <i class="bx bx-lock-open-alt fs-3 text-success"></i>
+                            </div>
+                            <div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="badge bg-label-success rounded-pill px-2 py-1 small">ขั้นตอนที่ 3</span>
+                                    <h5 class="mb-0 fw-bold text-dark">กำหนดเงื่อนไขและการล็อคเวลา (Constraints)</h5>
+                                </div>
+                                <p class="text-muted small mb-0 mt-1">ล็อคคาบวิชาเฉพาะเจาะจง กำหนดเวลาไม่ว่างของครู และกำหนดการล็อคการใช้งานห้องเรียน</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="nav-align-top mb-0">
-                    <ul class="nav nav-tabs nav-fill border-bottom p-2 bg-light" role="tablist">
+                    <ul class="nav nav-tabs nav-fill border-bottom p-2" role="tablist">
                         <li class="nav-item">
-                            <button type="button" class="nav-link active fw-bold" role="tab" data-bs-toggle="tab" data-bs-target="#tab-subject-locks">
-                                <i class="bx bx-book-bookmark me-1"></i> ล็อคคาบวิชา
+                            <button type="button" class="nav-link active fw-bold py-3" role="tab" data-bs-toggle="tab" data-bs-target="#tab-subject-locks">
+                                <i class="bx bx-book-bookmark me-2 fs-5"></i> 1. ล็อคคาบวิชาในห้องเรียน
                             </button>
                         </li>
                         <li class="nav-item">
-                            <button type="button" class="nav-link fw-bold" role="tab" data-bs-toggle="tab" data-bs-target="#tab-teacher-locks">
-                                <i class="bx bx-user-x me-1"></i> ล็อคเวลาครู
+                            <button type="button" class="nav-link fw-bold py-3" role="tab" data-bs-toggle="tab" data-bs-target="#tab-teacher-locks">
+                                <i class="bx bx-user-x me-2 fs-5"></i> 2. ล็อคเวลาไม่ว่างของครู
                             </button>
                         </li>
                         <li class="nav-item">
-                            <button type="button" class="nav-link fw-bold" role="tab" data-bs-toggle="tab" data-bs-target="#tab-room-locks">
-                                <i class="bx bx-building-house me-1"></i> ล็อคการใช้ห้อง
+                            <button type="button" class="nav-link fw-bold py-3" role="tab" data-bs-toggle="tab" data-bs-target="#tab-room-locks">
+                                <i class="bx bx-building-house me-2 fs-5"></i> 3. ล็อคการใช้ห้องปฏิบัติการ
                             </button>
                         </li>
                     </ul>
-                    <div class="tab-content p-0 border-0 shadow-none">
+                    <div class="tab-content p-0 border-0 shadow-none bg-white">
                         <!-- 📌 Tab 1: Subject Locks -->
                         <div class="tab-pane fade show active" id="tab-subject-locks" role="tabpanel">
                             <div class="row g-0">
-                                <div class="col-lg-3 border-end bg-light p-4" style="min-height: 500px;">
+                                <div class="col-lg-3 border-end step-sidebar-surface p-4" style="min-height: 500px;">
                                     <label class="form-label fw-bold small text-uppercase mb-2">เลือกห้องเรียน</label>
                                     <select class="form-select border-primary shadow-sm rounded-3" id="wizardClassSelect">
                                         <option value="">-- เลือกห้องเรียน --</option>
@@ -630,7 +793,7 @@
                         <!-- 👨‍🏫 Tab 2: Teacher Locks -->
                         <div class="tab-pane fade" id="tab-teacher-locks" role="tabpanel">
                             <div class="row g-0">
-                                <div class="col-lg-3 border-end bg-light p-4">
+                                <div class="col-lg-3 border-end step-sidebar-surface p-4">
                                     <label class="form-label fw-bold small text-uppercase mb-2">เลือกครูผู้สอน</label>
                                     <select class="form-select select2" id="wizardTeacherSelect">
                                         <option value="">-- เลือกครู --</option>
@@ -652,7 +815,7 @@
                         <!-- 🏢 Tab 3: Room Locks -->
                         <div class="tab-pane fade" id="tab-room-locks" role="tabpanel">
                             <div class="row g-0">
-                                <div class="col-lg-3 border-end bg-light p-4">
+                                <div class="col-lg-3 border-end step-sidebar-surface p-4">
                                     <label class="form-label fw-bold small text-uppercase mb-2">เลือกห้องเรียน/ห้องปฏิบัติการ</label>
                                     <select class="form-select select2" id="wizardRoomSelect">
                                         <option value="">-- เลือกห้อง --</option>
@@ -673,29 +836,49 @@
 
             <!-- --- STEP 4: GENERATION --- -->
             <div class="wizard-step d-none" id="step-4">
-                <div class="p-5">
-                    <div class="card bg-label-primary border-0 shadow-none p-5 text-center rounded-4">
-                        <div class="mb-4">
-                            <div class="avatar avatar-xl d-inline-block">
-                                <span class="avatar-initial rounded-circle bg-primary shadow-lg"><i class="bx bx-cog bx-spin text-white"></i></span>
+                <div class="step-header-banner">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="avatar avatar-md bg-label-success rounded-3 d-flex align-items-center justify-content-center">
+                                <i class="bx bx-brain fs-3 text-success"></i>
+                            </div>
+                            <div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="badge bg-label-success rounded-pill px-2 py-1 small">ขั้นตอนที่ 4</span>
+                                    <h5 class="mb-0 fw-bold text-dark">ระบบประมวลผลตารางสอนอัตโนมัติ (AI Engine)</h5>
+                                </div>
+                                <p class="text-muted small mb-0 mt-1">ประมวลผลและจัดคาบเรียนที่เหลือทั้งหมดโดยคำนึงถึงเงื่อนไขการล็อคเวลาและความขัดแย้ง 100%</p>
                             </div>
                         </div>
-                        <h3 class="fw-bold text-primary">พร้อมสำหรับการประมวลผลขั้นสุดท้าย?</h3>
-                        <p class="text-muted mx-auto mb-5" style="max-width: 500px;">
-                            AI จะนำเงื่อนไขที่คุณกำหนดไว้ทั้งหมดมาคำนวณและเติมเต็มตารางในส่วนที่เหลือ 
-                            โดยใช้เวลารวดเร็วและมีความแม่นยำสูง
+                    </div>
+                </div>
+
+                <div class="p-4 p-lg-5">
+                    <div class="card border-0 text-center rounded-4 p-4 p-lg-5" style="background: linear-gradient(180deg, #f7fdf9 0%, #edf9f2 100%); border: 1px solid #c9ebd8 !important;">
+                        <div class="mb-3">
+                            <div class="avatar avatar-xl d-inline-block shadow-sm rounded-circle p-1" style="background: #ffffff;">
+                                <span class="avatar-initial rounded-circle text-white shadow" style="background: var(--primary-gradient); width: 60px; height: 60px;">
+                                    <i class="bx bx-bot fs-2"></i>
+                                </span>
+                            </div>
+                        </div>
+                        <h3 class="fw-bold text-dark mb-2">พร้อมสำหรับการจัดตารางด้วย AI หรือยัง?</h3>
+                        <p class="text-muted mx-auto mb-4 fs-6" style="max-width: 540px;">
+                            ระบบ AI จะดึงเงื่อนไขที่คุณกำหนดไว้ทั้งหมดมาประมวลผลและเติมเต็มคาบเรียนที่ยังว่างอยู่ให้สมบูรณ์ โดยไม่เกิดข้อขัดแย้งของครู ห้อง และคาบเรียน
                         </p>
-                        <button class="btn btn-primary btn-lg px-5 rounded-pill shadow-lg" id="btnAIGenerate">
-                            <i class='bx bxs-magic-wand me-2'></i> เริ่มประมวลผลด้วย AI 
-                        </button>
+                        <div>
+                            <button class="btn btn-success btn-lg px-5 py-3 rounded-pill shadow-lg fw-bold" id="btnAIGenerate" style="background: #15a362 !important; border: none; font-size: 1.05rem;">
+                                <i class='bx bxs-magic-wand me-2 fs-4'></i> เริ่มประมวลผลจัดตาราง (AI Run)
+                            </button>
+                        </div>
                     </div>
                     <div id="aiReportContainer" class="mt-4 text-start mx-auto" style="max-width: 800px;">
                         <!-- Report generated by JS -->
-                        <div class="row mt-4">
-                            <div class="col-md-8 mx-auto">
-                                <div class="alert alert-info border-0 shadow-sm d-flex align-items-center">
-                                    <i class='bx bx-info-circle fs-4 me-2'></i>
-                                    <div class="small">หมายเหตุ: ระบบจะลบข้อมูลตารางเดิมของเทอมนี้และจัดให้ใหม่ตามเงื่อนไขที่ล็อคไว้</div>
+                        <div class="row mt-3">
+                            <div class="col-md-9 mx-auto">
+                                <div class="alert alert-info border-0 shadow-xs d-flex align-items-center rounded-3 mb-0">
+                                    <i class='bx bx-info-circle fs-4 me-2 text-info'></i>
+                                    <div class="small"><b>หมายเหตุ:</b> ระบบจะคงวิชาและเวลาที่คุณล็อคไว้ในขั้นตอนที่ 3 เสมอ และจัดเฉพาะคาบอิสระที่เหลือให้ลงตัวครับ</div>
                                 </div>
                             </div>
                         </div>
@@ -705,7 +888,24 @@
 
             <!-- --- STEP 5: FINISH --- -->
             <div class="wizard-step d-none" id="step-5">
-                <div class="p-4">
+                <div class="step-header-banner">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="avatar avatar-md bg-label-success rounded-3 d-flex align-items-center justify-content-center">
+                                <i class="bx bx-check-double fs-3 text-success"></i>
+                            </div>
+                            <div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="badge bg-label-success rounded-pill px-2 py-1 small">ขั้นตอนที่ 5</span>
+                                    <h5 class="mb-0 fw-bold text-dark">ตรวจสอบและอนุมัติตารางสอน</h5>
+                                </div>
+                                <p class="text-muted small mb-0 mt-1">แสดงผลภาพรวม ตรวจสอบคุณภาพตารางเรียน และส่งต่อไปยัง Editor</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-4 p-lg-5">
                     <?php if($overall_progress < 100): ?>
                     <div class="text-center py-5">
                         <div class="mb-4">
@@ -2540,6 +2740,21 @@ $(document).ready(function() {
             }
         });
     });
+    // --- 🧭 Wizard Navigation Buttons (Next / Prev) ---
+    $(document).on('click', '.next-step, #btnNext', function(e) {
+        e.preventDefault();
+        if (currentStep < totalSteps) {
+            goToStep(currentStep + 1);
+        }
+    });
+
+    $(document).on('click', '.prev-step, #btnPrev', function(e) {
+        e.preventDefault();
+        if (currentStep > 1) {
+            goToStep(currentStep - 1);
+        }
+    });
+
     // --- 🎉 Step 5: Finish & Review ---
     $('.select2-simple').select2({ theme: 'bootstrap-5', width: '100%' });
 

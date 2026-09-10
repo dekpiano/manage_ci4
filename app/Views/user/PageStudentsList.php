@@ -160,7 +160,7 @@ $currentList = $_GET['studentList'] ?? '';
                 <h4 class="fw-bold py-1 mb-0 text-dark d-flex align-items-center">
                     <i class="bx bx-group me-2 text-primary-custom fs-4"></i>รายชื่อนักเรียน
                 </h4>
-                <span class="badge bg-primary-custom text-white px-3 py-2 rounded-pill fs-7">ปีการศึกษา <?= esc($schoolyear->schyear_year) ?></span>
+                <span class="badge bg-primary-custom text-white px-3 py-2 rounded-pill fs-7">ปีการศึกษา <?= esc($schoolyear->schyear_year ?? (function_exists('get_selected_year') ? get_selected_year() : '')) ?></span>
             </div>
         </div>
     </div>
@@ -278,7 +278,7 @@ $currentList = $_GET['studentList'] ?? '';
                                        aria-controls="tab-<?= $key ?>" 
                                        aria-selected="false" 
                                        key_studyline="<?= esc($v_checkLine->StudentStudyLine); ?>" 
-                                       key_room="<?php $SubRoom = explode('.', $v_checkLine->StudentClass); echo esc($SubRoom[1] ?? ''); ?>">
+                                       key_room="<?php $roomStr = $v_checkLine->StudentClass ?? $currentList; $SubRoom = explode('.', $roomStr); echo esc($SubRoom[1] ?? $roomStr); ?>">
                                         <?= esc($v_checkLine->StudentStudyLine) ?>
                                     </a>
                                 </li>

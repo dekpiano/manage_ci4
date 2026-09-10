@@ -493,7 +493,8 @@
         <li class="menu-header small text-uppercase">
             <span class="menu-header-text">กิจกรรมพัฒนาผู้เรียน</span>
         </li>
-        <li class="menu-item <?= ($totalSegments >= 3 && ($s3 == 'DevelopStudents' || $s4 == 'student-registrations') ? 'active open' : '' ) ?>">
+        <!-- 5.1 กิจกรรมชุมนุม -->
+        <li class="menu-item <?= ($totalSegments >= 3 && (($s3 == 'DevelopStudents' && $s4 == 'Clubs') || $s4 == 'student-registrations') ? 'active open' : '' ) ?>">
             <a href="javascript:void(0);" class="menu-link menu-toggle">
                 <i class="menu-icon tf-icons bx bx-extension"></i>
                 <div data-i18n="กิจกรรมชุมนุม">กิจกรรมชุมนุม</div>
@@ -517,6 +518,26 @@
                 <li class="menu-item <?= ($s4 == 'Clubs' && $s5 == 'Report' ? 'active' : '') ?>">
                     <a href="<?=base_url('Admin/Acade/DevelopStudents/Clubs/Report');?>" class="menu-link">
                         <div data-i18n="รายงานสรุปชุมนุม">รายงานสรุปชุมนุม</div>
+                    </a>
+                </li>
+            </ul>
+        </li>
+
+        <!-- 5.2 กิจกรรมลูกเสือ - เนตรนารี -->
+        <li class="menu-item <?= ($totalSegments >= 4 && $s3 == 'DevelopStudents' && $s4 == 'Scout' ? 'active open' : '' ) ?>">
+            <a href="javascript:void(0);" class="menu-link menu-toggle">
+                <i class="menu-icon tf-icons bx bx-compass"></i>
+                <div data-i18n="กิจกรรมลูกเสือ - เนตรนารี">กิจกรรมลูกเสือ - เนตรนารี</div>
+            </a>
+            <ul class="menu-sub">
+                <li class="menu-item <?= ($s4 == 'Scout' && ($s5 == 'All' || $s5 == '') ? 'active' : '') ?>">
+                    <a href="<?=base_url('Admin/Acade/DevelopStudents/Scout/All');?>" class="menu-link">
+                        <div data-i18n="จัดการกองลูกเสือ-เนตรนารี">จัดการกองลูกเสือ-เนตรนารี</div>
+                    </a>
+                </li>
+                <li class="menu-item <?= ($s4 == 'Scout' && $s5 == 'Report' ? 'active' : '') ?>">
+                    <a href="<?=base_url('Admin/Acade/DevelopStudents/Scout/Report');?>" class="menu-link">
+                        <div data-i18n="รายงานสรุปลูกเสือ">รายงานสรุปลูกเสือ</div>
                     </a>
                 </li>
             </ul>

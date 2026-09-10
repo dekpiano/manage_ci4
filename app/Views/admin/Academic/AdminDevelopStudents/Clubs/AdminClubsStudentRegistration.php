@@ -2,122 +2,67 @@
 
 <?= $this->section('content') ?>
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=K2D:wght@200;300;400;500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap');
-
     :root {
         --primary-green: #15a362;
-        --primary-green-rgb: 21, 163, 98;
         --secondary-green: #2ecc71;
         --soft-bg: #f8fafc;
-        --card-shadow: 0 8px 26px rgba(0, 0, 0, 0.03);
-        --hover-shadow: 0 15px 30px rgba(21, 163, 98, 0.1);
-        --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+        --hover-shadow: 0 10px 24px rgba(21, 163, 98, 0.12);
+        --transition-smooth: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    body {
-        font-family: 'Outfit', 'K2D', sans-serif !important;
-        background-color: var(--soft-bg);
-    }
-
-    /* Mobile First Padding */
     .registration-container {
-        padding: 1rem;
-        animation: fadeIn 0.6s ease-out;
-    }
-
-    @media (min-width: 768px) {
-        .registration-container {
-            padding: 2rem;
-        }
+        animation: fadeIn 0.4s ease-out;
     }
 
     @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(15px); }
+        from { opacity: 0; transform: translateY(10px); }
         to { opacity: 1; transform: translateY(0); }
     }
 
-    /* Green Theme Badges & Overrides */
     .bg-light-green {
         background-color: rgba(21, 163, 98, 0.08) !important;
         color: var(--primary-green) !important;
     }
 
-    /* Stat Cards - Mobile First Grid */
     .stats-card {
         background: #ffffff;
-        border: none;
-        border-radius: 16px;
+        border: 1px solid #eef2f6;
+        border-radius: 12px;
         box-shadow: var(--card-shadow);
         transition: var(--transition-smooth);
         overflow: hidden;
     }
 
     .stats-card:hover {
-        transform: translateY(-4px);
+        transform: translateY(-3px);
         box-shadow: var(--hover-shadow);
     }
 
-    .stats-card .card-body {
-        padding: 1rem;
-    }
-
-    @media (min-width: 768px) {
-        .stats-card .card-body {
-            padding: 1.5rem;
-        }
-    }
-
     .stats-avatar {
-        width: 38px;
-        height: 38px;
+        width: 42px;
+        height: 42px;
         border-radius: 10px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 1.2rem;
+        font-size: 1.35rem;
     }
 
-    @media (min-width: 768px) {
-        .stats-avatar {
-            width: 46px;
-            height: 46px;
-            border-radius: 12px;
-            font-size: 1.5rem;
-        }
-    }
-
-    /* Borders matching green and colors */
     .card-border-green { border-bottom: 3.5px solid var(--primary-green) !important; }
     .card-border-success { border-bottom: 3.5px solid var(--secondary-green) !important; }
     .card-border-danger { border-bottom: 3.5px solid #ff3e1d !important; }
+    .card-border-info { border-bottom: 3.5px solid #03c3ec !important; }
 
-    /* Custom Table Style */
     #studentClubRegisTable thead th { 
         text-transform: uppercase; 
         font-size: 0.8rem; 
         letter-spacing: 0.5px; 
         color: #566a7f;
-        background-color: rgba(21, 163, 98, 0.05) !important;
+        background-color: #f8fafc !important;
         border-bottom: 2px solid rgba(21, 163, 98, 0.15) !important;
-        padding-top: 1rem;
-        padding-bottom: 1rem;
-    }
-
-    /* Search & Page Length Controls spacing for mobile */
-    .dataTables_wrapper .dataTables_filter,
-    .dataTables_wrapper .dataTables_length,
-    .dataTables_wrapper .dataTables_info,
-    .dataTables_wrapper .dataTables_paginate {
-        padding: 0.75rem 1rem;
-    }
-
-    @media (min-width: 768px) {
-        .dataTables_wrapper .dataTables_filter,
-        .dataTables_wrapper .dataTables_length,
-        .dataTables_wrapper .dataTables_info,
-        .dataTables_wrapper .dataTables_paginate {
-            padding: 1rem 1.5rem;
-        }
+        padding-top: 0.85rem;
+        padding-bottom: 0.85rem;
     }
 
     .page-link.active, .active > .page-link {
@@ -144,73 +89,93 @@
 </style>
 
 <div class="container-xxl flex-grow-1 container-p-y registration-container">
-    <!-- Page Header - Mobile First -->
-    <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
+    <!-- Page Header -->
+    <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
         <div class="page-title">
-            <h4 class="fw-bold py-1 mb-0" style="font-size: calc(1.1rem + 0.5vw);">
+            <h4 class="fw-bold py-1 mb-0">
                 <span class="text-muted fw-light">วิชาการ / พัฒนาผู้เรียน / ชุมนุม /</span> ข้อมูลการลงทะเบียน
             </h4>
             <div class="text-muted small">ตรวจสอบและส่งออกข้อมูลนักเรียนที่ลงทะเบียนในแต่ละชุมนุม</div>
         </div>
-        <nav aria-label="breadcrumb" class="d-none d-sm-block">
+        <nav aria-label="breadcrumb">
             <ol class="breadcrumb mb-0">
-                <li class="breadcrumb-item"><a href="<?= site_url('Admin/Acade/DevelopStudents/Clubs/Main') ?>" class="text-success">หน้าแรกชุมนุม</a></li>
+                <li class="breadcrumb-item"><a href="<?= site_url('Admin/Acade/DevelopStudents/Clubs/Main') ?>" class="text-success">หน้าแรกพัฒนาผู้เรียน</a></li>
                 <li class="breadcrumb-item active">ข้อมูลการลงทะเบียน</li>
             </ol>
         </nav>
     </div>
 
-    <!-- Quick Stats Tiles - 2 Columns on Mobile, 4 Columns on Desktop -->
-    <div class="row g-3 mb-4">
+    <!-- Quick Stats Tiles - 4 Balanced KPI Cards -->
+    <div class="row g-3 mb-4 stats-row">
         <div class="col-6 col-lg-3">
             <div class="stats-card card-border-green h-100">
-                <div class="card-body">
-                    <div class="d-flex align-items-center mb-2">
-                        <div class="stats-avatar bg-light-green me-2">
-                            <i class="bx bx-user text-success"></i>
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="text-muted small fw-semibold">นักเรียนทั้งหมด</span>
+                        <div class="stats-avatar bg-light-green">
+                            <i class="bx bx-group text-success"></i>
                         </div>
-                        <h4 class="ms-1 mb-0 fw-bold" id="totalStudents" style="font-size: calc(1rem + 0.4vw);">0</h4>
                     </div>
-                    <p class="mb-0 text-muted small">นักเรียนในระบบ</p>
+                    <div class="d-flex align-items-baseline">
+                        <h4 class="mb-0 fw-bold text-dark" id="totalStudents">0</h4>
+                        <span class="text-muted ms-1 small">คน</span>
+                    </div>
+                    <small class="text-muted" style="font-size: 0.75rem;">ตามฐานข้อมูลปัจจุบัน</small>
                 </div>
             </div>
         </div>
         
         <div class="col-6 col-lg-3">
             <div class="stats-card card-border-success h-100">
-                <div class="card-body">
-                    <div class="d-flex align-items-center mb-2">
-                        <div class="stats-avatar bg-light-green me-2">
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="text-muted small fw-semibold">ลงทะเบียนแล้ว</span>
+                        <div class="stats-avatar bg-light-green">
                             <i class="bx bx-check-circle text-success"></i>
                         </div>
-                        <h4 class="ms-1 mb-0 fw-bold" id="registeredStudents" style="font-size: calc(1rem + 0.4vw);">0</h4>
                     </div>
-                    <p class="mb-0 text-muted small text-truncate" id="regisPercent">ลงทะเบียนแล้ว (0%)</p>
+                    <div class="d-flex align-items-baseline">
+                        <h4 class="mb-0 fw-bold text-success" id="registeredStudents">0</h4>
+                        <span class="text-muted ms-1 small">คน</span>
+                    </div>
+                    <small class="text-success fw-semibold" id="regisPercent" style="font-size: 0.75rem;">คิดเป็น 0%</small>
                 </div>
             </div>
         </div>
 
         <div class="col-6 col-lg-3">
             <div class="stats-card card-border-danger h-100">
-                <div class="card-body">
-                    <div class="d-flex align-items-center mb-2">
-                        <div class="stats-avatar bg-light-danger me-2" style="background-color: rgba(255, 62, 29, 0.08) !important;">
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="text-muted small fw-semibold">ยังไม่เลือกชุมนุม</span>
+                        <div class="stats-avatar" style="background-color: rgba(255, 62, 29, 0.08) !important;">
                             <i class="bx bx-error-circle text-danger"></i>
                         </div>
-                        <h4 class="ms-1 mb-0 fw-bold" id="notRegisteredStudents" style="font-size: calc(1rem + 0.4vw);">0</h4>
                     </div>
-                    <p class="mb-0 text-muted small text-truncate" id="unregisPercent">ยังไม่เลือกชุมนุม (0%)</p>
+                    <div class="d-flex align-items-baseline">
+                        <h4 class="mb-0 fw-bold text-danger" id="notRegisteredStudents">0</h4>
+                        <span class="text-muted ms-1 small">คน</span>
+                    </div>
+                    <small class="text-danger fw-semibold" id="unregisPercent" style="font-size: 0.75rem;">รอลงทะเบียน 0%</small>
                 </div>
             </div>
         </div>
 
         <div class="col-6 col-lg-3">
-            <div class="stats-card h-100">
-                <div class="card-body d-flex flex-column justify-content-center h-100">
-                    <label class="form-label fw-bold text-uppercase mb-1" style="font-size: 0.75rem;"><i class="bx bx-filter-alt me-1 text-success"></i> กรองห้องเรียน</label>
-                    <select id="filterClassroom" class="form-select select2 py-1">
-                        <option value="">ทุกห้องเรียน</option>
-                    </select>
+            <div class="stats-card card-border-info h-100">
+                <div class="card-body p-3">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="text-muted small fw-semibold">อัตราลงทะเบียนรวม</span>
+                        <div class="stats-avatar" style="background-color: rgba(3, 195, 236, 0.08) !important;">
+                            <i class="bx bx-pie-chart-alt-2 text-info"></i>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-baseline">
+                        <h4 class="mb-0 fw-bold text-info" id="completionRateDisplay">0%</h4>
+                    </div>
+                    <div class="progress mt-2" style="height: 5px; background-color: #f0f2f5; border-radius: 6px;">
+                        <div class="progress-bar bg-info" id="overallProgressBar" role="progressbar" style="width: 0%; border-radius: 6px;"></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -223,16 +188,40 @@
                 <div class="p-2 bg-light-green rounded me-1">
                     <i class="bx bx-list-check fs-4"></i>
                 </div>
-                <h5 class="mb-0 fw-bold">รายชื่อนักเรียนแยกตามชุมนุม</h5>
+                <div>
+                    <h5 class="mb-0 fw-bold">รายชื่อนักเรียนและสถานะการลงทะเบียน</h5>
+                    <small class="text-muted">ตรวจสอบรายชื่อนักเรียนและชุมนุมที่เลือก</small>
+                </div>
             </div>
             
-            <div class="d-flex align-items-center gap-2">
-                <button type="button" class="btn btn-outline-success shadow-none px-3" id="btnExportExcel">
-                    <i class="bx bx-spreadsheet me-1"></i> Excel
-                </button>
-                <button type="button" class="btn btn-outline-secondary shadow-none px-3" id="btnPrintTable">
-                    <i class="bx bx-printer me-1"></i> พิมพ์
-                </button>
+            <!-- Toolbar Filters & Actions -->
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <!-- Classroom Filter -->
+                <div class="input-group input-group-merge shadow-sm" style="min-width: 170px;">
+                    <span class="input-group-text bg-light border-end-0 py-1"><i class="bx bx-door-open text-muted"></i></span>
+                    <select id="filterClassroom" class="form-select border-start-0 py-1 fw-semibold small">
+                        <option value="">ทุกห้องเรียน</option>
+                    </select>
+                </div>
+
+                <!-- Status Filter -->
+                <div class="input-group input-group-merge shadow-sm" style="min-width: 180px;">
+                    <span class="input-group-text bg-light border-end-0 py-1"><i class="bx bx-filter text-muted"></i></span>
+                    <select id="filterStatus" class="form-select border-start-0 py-1 fw-semibold small">
+                        <option value="">ทุกสถานะ</option>
+                        <option value="registered">ลงทะเบียนแล้ว</option>
+                        <option value="not_registered">ยังไม่ได้เลือกชุมนุม</option>
+                    </select>
+                </div>
+
+                <div class="btn-group shadow-sm">
+                    <button type="button" class="btn btn-outline-success px-3 py-1" id="btnExportExcel" title="ส่งออกข้อมูลเป็นไฟล์ Excel">
+                        <i class="bx bx-spreadsheet me-1"></i> Excel
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary px-3 py-1" id="btnPrintTable" title="พิมพ์หน้ารายการนี้">
+                        <i class="bx bx-printer me-1"></i> พิมพ์
+                    </button>
+                </div>
             </div>
         </div>
         
@@ -254,7 +243,7 @@
                         <tr>
                             <td colspan="6" class="text-center py-5">
                                 <div class="spinner-border text-success" role="status">
-                                    <span class="visually-hidden">Loading...</span>
+                                    <span class="visually-hidden">กำลังโหลด...</span>
                                 </div>
                                 <p class="mt-2 mb-0 text-muted">กำลังดึงข้อมูล...</p>
                             </td>
@@ -270,9 +259,6 @@
 <?= $this->section('script') ?>
 <script>
 $(document).ready(function() {
-    // Initializing Select2 for premium feel
-    $('.select2').select2({ theme: 'bootstrap-5' });
-
     // Load Classrooms for Filter
     $.get('<?= base_url("admin/academic/ConAdminDevelopStudents/ClubGetClassroom") ?>', function(res) {
         if(res.classrooms) {
@@ -282,6 +268,22 @@ $(document).ready(function() {
         }
     });
 
+    // Custom DataTables filter for Status (Registered vs Not Registered)
+    $.fn.dataTable.ext.search.push(
+        function(settings, data, dataIndex, rowData, counter) {
+            if (!settings || !settings.nTable || settings.nTable.id !== 'studentClubRegisTable') return true;
+            const statusFilter = $('#filterStatus').val();
+            if (!statusFilter) return true;
+            const isNotRegis = (rowData && rowData.club_name === 'ยังไม่ได้เลือกชุมนุม');
+            if (statusFilter === 'registered') {
+                return !isNotRegis;
+            } else if (statusFilter === 'not_registered') {
+                return isNotRegis;
+            }
+            return true;
+        }
+    );
+
     // Initialize DataTable
     const table = $('#studentClubRegisTable').DataTable({
         "processing": true,
@@ -289,8 +291,8 @@ $(document).ready(function() {
             "url": "<?= base_url('admin/academic/ConAdminDevelopStudents/ClubGetStudentRegisterClub') ?>",
             "type": "GET",
             "dataSrc": function(json) {
-                updateQuickStats(json.data);
-                return json.data;
+                updateQuickStats(json.data || []);
+                return json.data || [];
             }
         },
         "columns": [
@@ -311,9 +313,9 @@ $(document).ready(function() {
                 "data": "club_name",
                 "render": function(data, type, row) {
                     if (data === 'ยังไม่ได้เลือกชุมนุม') {
-                        return `<span class="text-danger fw-bold"><i class="bx bx-error-circle me-1"></i>${data}</span>`;
+                        return `<span class="badge bg-label-danger px-2 py-1"><i class="bx bx-error-circle me-1"></i>${data}</span>`;
                     } else {
-                        return `<span class="text-success fw-bold"><i class="bx bx-check-double me-1"></i>${data}</span>`;
+                        return `<span class="badge bg-label-success px-2 py-1"><i class="bx bx-check-double me-1"></i>${data}</span>`;
                     }
                 }
             }
@@ -336,10 +338,6 @@ $(document).ready(function() {
                 "last": "หน้าสุดท้าย",
                 "next": "ถัดไป",
                 "previous": "ก่อนหน้า"
-            },
-            "aria": {
-                "sortAscending": ": เปิดใช้งานการเรียงข้อมูลจากน้อยไปมาก",
-                "sortDescending": ": เปิดใช้งานการเรียงข้อมูลจากมากไปน้อย"
             }
         },
         "dom": '<"d-flex justify-content-between align-items-center mx-1 row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>B t <"d-flex justify-content-between mx-1 row"<"col-sm-12 col-md-6"i><"col-sm-12 col-md-6"p>>',
@@ -369,6 +367,11 @@ $(document).ready(function() {
         table.column(3).search(this.value).draw();
     });
 
+    // Filter by Status
+    $('#filterStatus').on('change', function() {
+        table.draw();
+    });
+
     // Stats Updater
     function updateQuickStats(data) {
         const total = data.length;
@@ -384,6 +387,8 @@ $(document).ready(function() {
         
         $('#regisPercent').text(`ลงทะเบียนแล้ว (${regisPercent}%)`);
         $('#unregisPercent').text(`ยังไม่เลือกชุมนุม (${unregisPercent}%)`);
+        $('#completionRateDisplay').text(`${regisPercent}%`);
+        $('#overallProgressBar').css('width', `${regisPercent}%`);
     }
 
     // Export & Print Connectors

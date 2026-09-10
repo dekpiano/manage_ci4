@@ -90,6 +90,13 @@ $(document).ready(function() {
         editForm.addEventListener('submit', function(e) {
             e.preventDefault();
             
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const origHtml = submitBtn ? submitBtn.innerHTML : '';
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> กำลังบันทึกข้อมูล...';
+            }
+
             const formData = new FormData(this);
             
             Swal.fire({
@@ -118,10 +125,18 @@ $(document).ready(function() {
                         window.location.reload();
                     });
                 } else {
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = origHtml;
+                    }
                     Swal.fire('ผิดพลาด', data.message || 'บันทึกข้อมูลไม่สำเร็จ', 'error');
                 }
             })
             .catch(error => {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = origHtml;
+                }
                 console.error('Error:', error);
                 Swal.fire('ผิดพลาด', 'เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์', 'error');
             });

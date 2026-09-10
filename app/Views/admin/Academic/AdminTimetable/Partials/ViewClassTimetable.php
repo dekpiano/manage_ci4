@@ -1,6 +1,6 @@
 <div class="table-responsive">
     <table class="table table-bordered text-center mb-0" style="table-layout: fixed; min-width: 800px;">
-        <thead class="bg-light">
+        <thead class="modern-table-header">
             <tr>
                 <th style="width: 100px;">วัน / คาบ</th>
                 <?php foreach($periods as $p): 

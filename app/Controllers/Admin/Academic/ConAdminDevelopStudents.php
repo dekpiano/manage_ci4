@@ -7,6 +7,7 @@ use App\Models\Admin\Academic\ModAdminClubs;
 
 class ConAdminDevelopStudents extends BaseController
 {
+    protected $db;
     protected $DBpersonnel; // Declare DBpersonnel property
     protected $datethai; // Declare datethai property
     protected $ModAdminClubs;
@@ -141,6 +142,7 @@ class ConAdminDevelopStudents extends BaseController
             }
         }
         $data['CheckOnoffClubParsed'] = [$activeYear, $activeTerm];
+        $data['CheckOnoffClub'] = $activeConfig;
 
         // Fetch student, teacher, and system registration periods
         $onoffData = $this->db->table('tb_club_onoff')
@@ -295,7 +297,7 @@ class ConAdminDevelopStudents extends BaseController
     public function ClubsAll()
     {
         $data = $this->AllData();
-        $data['title'] = "ชุมนุมทัังหมด";
+        $data['title'] = "ชุมนุมทั้งหมด";
         $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
         $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();
 
@@ -312,10 +314,36 @@ class ConAdminDevelopStudents extends BaseController
                                     ->get()->getResult();
 
         $data['YearAll'] = $this->ClubsViweYearAll();
+        $data['is_scout_page'] = false;
+        $data['default_category'] = $this->request->getGet('category') ?? 'club';
 
-        
         echo view('admin/Academic/AdminDevelopStudents/Clubs/AdminClubsAll', $data);
-        
+    }
+
+    public function ScoutAll()
+    {
+        $data = $this->AllData();
+        $data['title'] = "กิจกรรมลูกเสือ - เนตรนารี";
+        $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
+        $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();
+
+        $data['Teacher'] = $this->DBpersonnel->table('tb_personnel')
+                                    ->select('pers_id,pers_img,pers_prefix,pers_firstname,pers_lastname')
+                                    ->where('pers_status', 'กำลังใช้งาน')
+                                    ->groupStart()
+                                        ->where('pers_position', 'posi_003')
+                                        ->orWhere('pers_position', 'posi_004')
+                                        ->orWhere('pers_position', 'posi_005')
+                                        ->orWhere('pers_position', 'posi_006')
+                                    ->groupEnd()
+                                    ->where('pers_status', 'กำลังใช้งาน')
+                                    ->get()->getResult();
+
+        $data['YearAll'] = $this->ClubsViweYearAll();
+        $data['is_scout_page'] = true;
+        $data['default_category'] = 'scout';
+
+        echo view('admin/Academic/AdminDevelopStudents/Clubs/AdminClubsAll', $data);
     }
 
     public function ClubsShow()
@@ -332,10 +360,30 @@ class ConAdminDevelopStudents extends BaseController
                         ->groupBy('club_id')
                         ->get()->getResult();
 
-        return $this->response->setJSON(["filters" => [
-            "year" => $year
-        ],
-            'data' => $clubs]); // ส่งข้อมูลกลับในรูปแบบ JSON
+        $countClub = 0;
+        $countScout = 0;
+        foreach ($clubs as $c) {
+            $isScout = $this->isScoutClub($c->club_name);
+            $c->is_scout = $isScout;
+            $c->activity_type = $isScout ? 'scout' : 'club';
+            if ($isScout) {
+                $countScout++;
+            } else {
+                $countClub++;
+            }
+        }
+
+        return $this->response->setJSON([
+            "filters" => [
+                "year" => $year
+            ],
+            "counts" => [
+                "all" => count($clubs),
+                "club" => $countClub,
+                "scout" => $countScout,
+            ],
+            'data' => $clubs
+        ]); // ส่งข้อมูลกลับในรูปแบบ JSON
     }
 
     public function ClubsInsert()
@@ -505,67 +553,344 @@ class ConAdminDevelopStudents extends BaseController
         return $this->response->setJSON($teachers);
     }
 
+    /**
+     * Check if a club is categorized as a Scout/Activity club (ลูกเสือ/เนตรนารี/ยุวกาชาด/ฯลฯ)
+     */
+    private function isScoutClub(?string $clubName): bool
+    {
+        if (empty($clubName)) {
+            return false;
+        }
+        $keywords = ['ลูกเสือ', 'เนตรนารี', 'ยุวกาชาด', 'ผู้บำเพ็ญประโยชน์', 'นศท', 'รักษาดินแดน', 'รด.'];
+        foreach ($keywords as $kw) {
+            if (mb_stripos($clubName, $kw) !== false) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public function ClubGetStudentsByClass()
+    {
+        $club_id = $this->request->getVar('club_id');
+        $classrooms = $this->request->getVar('classrooms');
+        $gender = $this->request->getVar('gender') ?? 'all';
+
+        if (empty($classrooms)) {
+            return $this->response->setJSON([
+                'status' => 'success',
+                'students' => [],
+                'summary' => [
+                    'total' => 0,
+                    'male' => 0,
+                    'female' => 0,
+                    'available' => 0,
+                    'already_here' => 0,
+                    'in_other_club' => 0,
+                ]
+            ]);
+        }
+
+        // Get club year and term
+        $club = $this->db->table('tb_clubs')->where('club_id', $club_id)->get()->getRow();
+        $sameTermClubIds = [];
+        $clubNameMap = [];
+        $scoutClubIds = [];
+        $regularClubIds = [];
+
+        if ($club) {
+            $sameTermClubs = $this->db->table('tb_clubs')
+                                     ->select('club_id, club_name')
+                                     ->where('club_year', $club->club_year)
+                                     ->where('club_trem', $club->club_trem)
+                                     ->get()->getResultArray();
+            foreach ($sameTermClubs as $c) {
+                $cid = (int)$c['club_id'];
+                $sameTermClubIds[] = $cid;
+                $clubNameMap[$cid] = $c['club_name'];
+                if ($this->isScoutClub($c['club_name'])) {
+                    $scoutClubIds[] = $cid;
+                } else {
+                    $regularClubIds[] = $cid;
+                }
+            }
+        }
+
+        $isCurrentClubScout = $club ? $this->isScoutClub($club->club_name) : false;
+
+        $builder = $this->db->table('tb_students')
+            ->select('
+                tb_students.StudentID,
+                tb_students.StudentCode,
+                tb_students.StudentPrefix,
+                tb_students.StudentFirstName,
+                tb_students.StudentLastName,
+                tb_students.StudentClass,
+                tb_students.StudentNumber,
+                tb_students.StudentSex,
+                CONCAT(StudentPrefix, StudentFirstName, " ", StudentLastName) AS FullName
+            ')
+            ->where('StudentStatus', '1/ปกติ');
+
+        if (is_array($classrooms)) {
+            $builder->whereIn('StudentClass', $classrooms);
+        } else {
+            $builder->where('StudentClass', $classrooms);
+        }
+
+        if ($gender === 'male') {
+            $builder->groupStart()
+                ->where('StudentSex', 'ชาย')
+                ->orWhereIn('StudentPrefix', ['เด็กชาย', 'นาย'])
+                ->groupEnd();
+        } else if ($gender === 'female') {
+            $builder->groupStart()
+                ->where('StudentSex', 'หญิง')
+                ->orWhereIn('StudentPrefix', ['เด็กหญิง', 'นางสาว'])
+                ->groupEnd();
+        }
+
+        $builder->orderBy('StudentClass', 'ASC')
+                ->orderBy('CAST(StudentNumber AS UNSIGNED)', 'ASC')
+                ->orderBy('StudentNumber', 'ASC');
+
+        $students = $builder->get()->getResultArray();
+
+        // Check active memberships in this term (categorized into scout and regular)
+        $studentIds = array_column($students, 'StudentID');
+        $studentMemberships = []; // [StudentID => ['scout' => [club_id, club_name], 'regular' => [club_id, club_name]]]
+
+        if (!empty($studentIds) && !empty($sameTermClubIds)) {
+            $memberRows = $this->db->table('tb_club_members')
+                ->select('member_student_id, member_club_id')
+                ->where('member_status', 'active')
+                ->whereIn('member_club_id', $sameTermClubIds)
+                ->whereIn('member_student_id', $studentIds)
+                ->get()->getResultArray();
+
+            foreach ($memberRows as $mr) {
+                $sid = $mr['member_student_id'];
+                $cid = (int)$mr['member_club_id'];
+                $cname = $clubNameMap[$cid] ?? '';
+                $isScout = in_array($cid, $scoutClubIds);
+                $key = $isScout ? 'scout' : 'regular';
+                $studentMemberships[$sid][$key] = [
+                    'club_id'   => $cid,
+                    'club_name' => $cname
+                ];
+            }
+        }
+
+        $total = count($students);
+        $maleCount = 0;
+        $femaleCount = 0;
+        $availableCount = 0;
+        $alreadyHereCount = 0;
+        $inOtherClubCount = 0;
+
+        foreach ($students as &$s) {
+            $sid = $s['StudentID'];
+            $isMale = in_array($s['StudentPrefix'], ['เด็กชาย', 'นาย']) || $s['StudentSex'] === 'ชาย';
+            $s['computed_sex'] = $isMale ? 'ชาย' : 'หญิง';
+            if ($isMale) {
+                $maleCount++;
+            } else {
+                $femaleCount++;
+            }
+
+            $mScout = $studentMemberships[$sid]['scout'] ?? null;
+            $mRegular = $studentMemberships[$sid]['regular'] ?? null;
+
+            // 1. ตรวจสอบว่าอยู่ในชุมนุมปัจจุบันนี้แล้วหรือไม่
+            $isAlreadyInThisClub = ($mScout && $mScout['club_id'] == $club_id) || ($mRegular && $mRegular['club_id'] == $club_id);
+
+            if ($isAlreadyInThisClub) {
+                $s['status_code'] = 'already_here';
+                $s['status_text'] = 'อยู่ในชุมนุมนี้แล้ว';
+                $s['can_select'] = false;
+                $s['is_checked'] = false;
+                $alreadyHereCount++;
+            } else if ($isCurrentClubScout) {
+                // ชุมนุมเป้าหมายคือ "ชุมนุมลูกเสือ"
+                if ($mScout) {
+                    // อยู่ในชุมนุมลูกเสืออื่นอยู่แล้ว -> ต้องย้าย
+                    $s['status_code'] = 'in_other_club';
+                    $s['status_text'] = 'อยู่: ' . $mScout['club_name'];
+                    $s['other_club_id'] = $mScout['club_id'];
+                    $s['other_club_name'] = $mScout['club_name'];
+                    $s['can_select'] = true;
+                    $s['is_checked'] = false;
+                    $inOtherClubCount++;
+                } else {
+                    // ยังไม่มีชุมนุมลูกเสือ (มีชุมนุมทั่วไปอยู่แล้ว ก็สามารถเพิ่มได้ นักเรียนจะมี 2 ชุมนุม)
+                    $s['status_code'] = 'available';
+                    $s['can_select'] = true;
+                    $s['is_checked'] = true;
+                    if ($mRegular) {
+                        $s['status_text'] = 'พร้อมเพิ่ม (มี ' . $mRegular['club_name'] . ')';
+                        $s['has_dual_club'] = true;
+                        $s['other_club_name'] = $mRegular['club_name'];
+                    } else {
+                        $s['status_text'] = 'พร้อมเพิ่ม';
+                    }
+                    $availableCount++;
+                }
+            } else {
+                // ชุมนุมเป้าหมายคือ "ชุมนุมทั่วไป"
+                if ($mRegular) {
+                    // อยู่ในชุมนุมทั่วไปอื่นอยู่แล้ว -> ต้องย้าย
+                    $s['status_code'] = 'in_other_club';
+                    $s['status_text'] = 'อยู่: ' . $mRegular['club_name'];
+                    $s['other_club_id'] = $mRegular['club_id'];
+                    $s['other_club_name'] = $mRegular['club_name'];
+                    $s['can_select'] = true;
+                    $s['is_checked'] = false;
+                    $inOtherClubCount++;
+                } else {
+                    // ยังไม่มีชุมนุมทั่วไป (มีชุมนุมลูกเสืออยู่แล้ว ก็สามารถเพิ่มได้ นักเรียนจะมี 2 ชุมนุม)
+                    $s['status_code'] = 'available';
+                    $s['can_select'] = true;
+                    $s['is_checked'] = true;
+                    if ($mScout) {
+                        $s['status_text'] = 'พร้อมเพิ่ม (มี ' . $mScout['club_name'] . ')';
+                        $s['has_dual_club'] = true;
+                        $s['other_club_name'] = $mScout['club_name'];
+                    } else {
+                        $s['status_text'] = 'พร้อมเพิ่ม';
+                    }
+                    $availableCount++;
+                }
+            }
+        }
+        unset($s);
+
+        return $this->response->setJSON([
+            'status' => 'success',
+            'students' => $students,
+            'summary' => [
+                'total' => $total,
+                'male' => $maleCount,
+                'female' => $femaleCount,
+                'available' => $availableCount,
+                'already_here' => $alreadyHereCount,
+                'in_other_club' => $inOtherClubCount,
+            ]
+        ]);
+    }
+
     public function ClubsAddStudentToClub()
     {
-        $rules = [
-            'club_id' => 'required|numeric',
-        ];
-
-        if (!$this->validate($rules)) {
-            return $this->response->setJSON(['status' => 'error', 'message' => $this->validator->getErrors()]);
-        }
-
-        $student_ids = $this->request->getVar('student_ids');
-        $club_id = $this->request->getVar('club_id');
-
-        if (empty($student_ids) || !is_array($student_ids)) {
-            return $this->response->setJSON(['status' => 'error', 'message' => ['student_ids' => 'กรุณาเลือกนักเรียนอย่างน้อยหนึ่งคน']]);
-        }
-
-        // เช็ดข้อมูลซ้ำ (เฉพาะ active members)
-        $result = $this->db->table('tb_club_members')
-                            ->select('
-                                CONCAT(StudentCode," ",StudentPrefix,StudentFirstName," ",StudentLastName," ",tb_students.StudentClass) AS Fullname,
-                                tb_students.StudentID,
-                                tb_students.StudentNumber,
-                                tb_club_members.member_club_id,
-                                tb_club_members.member_student_id')
-                            ->join('tb_students', 'tb_students.StudentID = tb_club_members.member_student_id')
-                            ->where('member_club_id', $club_id)
-                            ->where('tb_club_members.member_status', 'active')
-                            ->whereIn('member_student_id', $student_ids)
-                            ->get()->getResultArray();
-        $duplicate_students = array_column($result, 'Fullname');
-
-        if (! empty($duplicate_students)) {
-            return $this->response->setJSON([
-                'status'             => 'duplicate',
-                'duplicate_students' => $duplicate_students,
-            ]);
-        }
-
-        $d_join = new \DateTime();
-        $date_join = $d_join->format('d/m/') . ((int)$d_join->format('Y') + 543);
-
-        $data = [];
-        foreach ($student_ids as $student_id) {
-            $data[] = [
-                'member_club_id'    => $club_id,
-                'member_student_id' => $student_id,
-                'member_join_date'  => $date_join,
-                'member_role'       => 'Member',
+        try {
+            $rules = [
+                'club_id' => 'required|numeric',
             ];
-        }
-        // เพิ่มนักเรียนเข้าชุมนุม
-        $result = $this->db->table('tb_club_members')->insertBatch($data);
 
-        if ($result) {
-            return $this->response->setJSON([
-                'status'       => 'success',
-                'message'      => 'บันทึกสำเร็จ',
+            if (!$this->validate($rules)) {
+                return $this->response->setJSON(['status' => 'error', 'message' => $this->validator->getErrors()]);
+            }
+
+            $student_ids = $this->request->getVar('student_ids');
+            $club_id = $this->request->getVar('club_id');
+            $allow_transfer = $this->request->getVar('allow_transfer'); // '1' or '0'
+
+            if (empty($student_ids) || !is_array($student_ids)) {
+                return $this->response->setJSON(['status' => 'error', 'message' => ['student_ids' => 'กรุณาเลือกนักเรียนอย่างน้อยหนึ่งคน']]);
+            }
+
+            // Check students already active in THIS club
+            $alreadyInClub = $this->db->table('tb_club_members')
+                ->select('member_student_id')
+                ->where('member_club_id', $club_id)
+                ->where('member_status', 'active')
+                ->whereIn('member_student_id', $student_ids)
+                ->get()->getResultArray();
+            $alreadyIds = array_column($alreadyInClub, 'member_student_id');
+
+            $toAddIds = array_values(array_diff($student_ids, $alreadyIds));
+
+            if (empty($toAddIds)) {
+                return $this->response->setJSON([
+                    'status' => 'info',
+                    'message' => 'นักเรียนทุกคนที่เลือกอยู่ในชุมนุมนี้เรียบร้อยแล้ว'
+                ]);
+            }
+
+            // Transfer logic: Remove only from conflicting clubs of the SAME category (scout vs regular)
+            $transferredCount = 0;
+            $currentClub = $this->db->table('tb_clubs')->where('club_id', $club_id)->get()->getRow();
+            if ($currentClub) {
+                $isCurrentClubScout = $this->isScoutClub($currentClub->club_name);
+
+                $sameTermClubs = $this->db->table('tb_clubs')
+                    ->select('club_id, club_name')
+                    ->where('club_year', $currentClub->club_year)
+                    ->where('club_trem', $currentClub->club_trem)
+                    ->get()->getResultArray();
+
+                $targetConflictingClubIds = [];
+                foreach ($sameTermClubs as $c) {
+                    if ((int)$c['club_id'] === (int)$club_id) {
+                        continue;
+                    }
+                    $cIsScout = $this->isScoutClub($c['club_name']);
+                    // ถ้าชุมนุมปัจจุบันคือ "ลูกเสือ" -> ย้ายเฉพาะจากชุมนุมลูกเสืออื่น (ไม่ลบชุมนุมทั่วไป)
+                    // ถ้าชุมนุมปัจจุบันคือ "ชุมนุมทั่วไป" -> ย้ายเฉพาะจากชุมนุมทั่วไปอื่น (ไม่ลบลูกเสือ)
+                    if ($isCurrentClubScout && $cIsScout) {
+                        $targetConflictingClubIds[] = (int)$c['club_id'];
+                    } else if (!$isCurrentClubScout && !$cIsScout) {
+                        $targetConflictingClubIds[] = (int)$c['club_id'];
+                    }
+                }
+
+                if (!empty($allow_transfer) && !empty($targetConflictingClubIds)) {
+                    $this->db->table('tb_club_members')
+                        ->whereIn('member_club_id', $targetConflictingClubIds)
+                        ->whereIn('member_student_id', $toAddIds)
+                        ->delete();
+                    $transferredCount = $this->db->affectedRows();
+                }
+
+                // Ensure any inactive/cancelled duplicate record in this specific club is cleared before insert
+                $this->db->table('tb_club_members')
+                    ->where('member_club_id', $club_id)
+                    ->whereIn('member_student_id', $toAddIds)
+                    ->delete();
+            }
+
+            // Correct MySQL DATE format (YYYY-MM-DD)
+            $date_join = date('Y-m-d');
+
+            $data = [];
+            foreach ($toAddIds as $sid) {
+                $data[] = [
+                    'member_club_id'    => $club_id,
+                    'member_student_id' => $sid,
+                    'member_join_date'  => $date_join,
+                    'member_role'       => 'Member',
+                    'member_status'     => 'active',
+                ];
+            }
+
+            // เพิ่มนักเรียนเข้าชุมนุม
+            $result = $this->db->table('tb_club_members')->insertBatch($data);
+
+            if ($result) {
+                return $this->response->setJSON([
+                    'status'            => 'success',
+                    'added_count'       => count($toAddIds),
+                    'skipped_count'     => count($alreadyIds),
+                    'transferred_count' => $transferredCount,
+                    'message'           => 'เพิ่มนักเรียนเข้าชุมนุมเรียบร้อยแล้วจำนวน ' . count($toAddIds) . ' คน'
+                ]);
+            } else {
+                return $this->response->setJSON(['status' => 'error', 'message' => 'เกิดข้อผิดพลาดในการบันทึกข้อมูล']);
+            }
+        } catch (\Throwable $e) {
+            log_message('error', 'ClubsAddStudentToClub error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
+            return $this->response->setStatusCode(500)->setJSON([
+                'status' => 'error',
+                'message' => 'เกิดข้อผิดพลาดในการบันทึกข้อมูล: ' . $e->getMessage()
             ]);
-        } else {
-            return $this->response->setJSON(['status' => 'error', 'message' => 'เกิดข้อผิดพลาด']);
         }
     }
 
@@ -580,11 +905,14 @@ class ConAdminDevelopStudents extends BaseController
                             tb_students.StudentID,
                             tb_students.StudentClass,
                             tb_students.StudentNumber,
+                            tb_students.StudentSex,
+                            tb_students.StudentPrefix,
                             tb_club_members.member_club_id')
                         ->join('tb_students', 'tb_students.StudentID = tb_club_members.member_student_id')
                         ->where('member_club_id', $club_id)
                         ->where('tb_club_members.member_status', 'active')
                         ->orderBy('tb_students.StudentClass', 'ASC')
+                        ->orderBy('CAST(tb_students.StudentNumber AS UNSIGNED)', 'ASC')
                         ->orderBy('tb_students.StudentNumber', 'ASC')
                         ->get();
         return $this->response->setJSON($query->getResultArray());
@@ -601,8 +929,8 @@ class ConAdminDevelopStudents extends BaseController
             return $this->response->setJSON(['status' => 'error', 'message' => $this->validator->getErrors()]);
         }
 
-        $club_id = $this->request->getPost('club_id');
-        $student_id = $this->request->getPost('student_id');
+        $club_id = $this->request->getVar('club_id');
+        $student_id = $this->request->getVar('student_id');
 
         // ลบข้อมูลนักเรียนออกจากชุมนุม
         $this->db->table('tb_club_members')
@@ -611,10 +939,31 @@ class ConAdminDevelopStudents extends BaseController
                 ->delete();
 
         if ($this->db->affectedRows() > 0) {
-            return $this->response->setJSON(['status' => 'success']);
+            return $this->response->setJSON(['status' => 'success', 'message' => 'ลบนักเรียนออกจากชุมนุมแล้ว']);
         } else {
             return $this->response->setJSON(['status' => 'error', 'message' => 'ไม่สามารถลบข้อมูลได้']);
         }
+    }
+
+    public function ClubBatchDeleteStudents()
+    {
+        $club_id = $this->request->getVar('club_id');
+        $student_ids = $this->request->getVar('student_ids');
+
+        if (empty($club_id) || empty($student_ids) || !is_array($student_ids)) {
+            return $this->response->setJSON(['status' => 'error', 'message' => 'ข้อมูลไม่ถูกต้อง']);
+        }
+
+        $this->db->table('tb_club_members')
+                ->where('member_club_id', $club_id)
+                ->whereIn('member_student_id', $student_ids)
+                ->delete();
+
+        return $this->response->setJSON([
+            'status' => 'success',
+            'deleted_count' => $this->db->affectedRows(),
+            'message' => 'ลบรายชื่อนักเรียนออกจากชุมนุมเรียบร้อยแล้ว'
+        ]);
     }
 
     //------------------------ แดชบอร์ด --------------------------
@@ -966,6 +1315,7 @@ class ConAdminDevelopStudents extends BaseController
     public function ClubsReport()
     {
         $data['title'] = 'รายงานผลการประเมินชุมนุม';
+        $data['is_scout_page'] = false;
         $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
         $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();
 
@@ -979,18 +1329,116 @@ class ConAdminDevelopStudents extends BaseController
 
         // ดึงปีปัจจุบันจาก club_onoff
         $activeConfig = $this->db->table('tb_club_onoff')
-            ->select('c_onoff_year')
+            ->select('c_onoff_year, c_onoff_term')
             ->where('c_onoff_for', 'active_config')
             ->get()->getRow();
-        $data['currentYear'] = $activeConfig->c_onoff_year ?? '';
+        $data['currentYear'] = $activeConfig->c_onoff_year ?? get_selected_year_only();
+        $data['currentTerm'] = $activeConfig->c_onoff_term ?? get_selected_term_only();
 
-        // ดึงรายชื่อชุมนุมทั้งหมด
-        $data['Clubs'] = $this->db->table('tb_clubs')
+        // ดึงรายชื่อชุมนุมทั้งหมดของปี/เทอมปัจจุบัน (ชุมนุมทั่วไป)
+        $allClubs = $this->db->table('tb_clubs')
             ->select('club_id, club_name')
+            ->where('club_year', $data['currentYear'])
+            ->where('club_trem', $data['currentTerm'])
             ->orderBy('club_name', 'ASC')
             ->get()->getResult();
 
+        $data['Clubs'] = array_values(array_filter($allClubs, function($c) {
+            return !$this->isScoutClub($c->club_name);
+        }));
+
         echo view('admin/Academic/AdminDevelopStudents/Clubs/AdminClubsReport', $data);
+    }
+
+    /**
+     * แสดงหน้ารายงานผลการประเมินกิจกรรมลูกเสือ - เนตรนารี
+     */
+    public function ScoutReport()
+    {
+        $data['title'] = 'รายงานผลการประเมินกิจกรรมลูกเสือ - เนตรนารี';
+        $data['is_scout_page'] = true;
+        $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
+        $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();
+
+        // ดึงปีการศึกษาจาก tb_clubs
+        $data['AcademicYears'] = $this->db->table('tb_clubs')
+            ->select('club_year')
+            ->where('club_year IS NOT NULL')
+            ->groupBy('club_year')
+            ->orderBy('club_year', 'DESC')
+            ->get()->getResult();
+
+        // ดึงปีปัจจุบันจาก club_onoff
+        $activeConfig = $this->db->table('tb_club_onoff')
+            ->select('c_onoff_year, c_onoff_term')
+            ->where('c_onoff_for', 'active_config')
+            ->get()->getRow();
+        $data['currentYear'] = $activeConfig->c_onoff_year ?? get_selected_year_only();
+        $data['currentTerm'] = $activeConfig->c_onoff_term ?? get_selected_term_only();
+
+        // ดึงเฉพาะกิจกรรมลูกเสือ-เนตรนารีของปี/เทอมปัจจุบัน
+        $allClubs = $this->db->table('tb_clubs')
+            ->select('club_id, club_name')
+            ->where('club_year', $data['currentYear'])
+            ->where('club_trem', $data['currentTerm'])
+            ->orderBy('club_name', 'ASC')
+            ->get()->getResult();
+
+        $data['Clubs'] = array_values(array_filter($allClubs, function($c) {
+            return $this->isScoutClub($c->club_name);
+        }));
+
+        echo view('admin/Academic/AdminDevelopStudents/Clubs/AdminClubsReport', $data);
+    }
+
+    /**
+     * Helper: กรองประเภทกิจกรรม (ชุมนุมทั่วไป VS ลูกเสือ-เนตรนารี) ใน Query Builder
+     */
+    protected function applyActivityTypeFilter($builder, string $activityType, string $column = 'c.club_name')
+    {
+        $scoutKeywords = ['ลูกเสือ', 'เนตรนารี', 'ยุวกาชาด', 'ผู้บำเพ็ญประโยชน์', 'นศท', 'รักษาดินแดน'];
+        if ($activityType === 'scout') {
+            $builder->groupStart();
+            foreach ($scoutKeywords as $i => $kw) {
+                if ($i === 0) {
+                    $builder->like($column, $kw);
+                } else {
+                    $builder->orLike($column, $kw);
+                }
+            }
+            $builder->groupEnd();
+        } else if ($activityType === 'club') {
+            $builder->groupStart();
+            foreach ($scoutKeywords as $kw) {
+                $builder->notLike($column, $kw);
+            }
+            $builder->groupEnd();
+        }
+        return $builder;
+    }
+
+    /**
+     * AJAX: ดึงรายชื่อกิจกรรมตามปี/เทอมและประเภทกิจกรรม (สำหรับ Dropdown หน้ารายงาน)
+     */
+    public function ClubGetClubsByYearTerm()
+    {
+        $year = $this->request->getVar('year');
+        $term = $this->request->getVar('term');
+        $activityType = $this->request->getVar('activity_type') ?? 'club';
+
+        $builder = $this->db->table('tb_clubs')
+            ->select('club_id, club_name')
+            ->where('club_year', $year)
+            ->where('club_trem', $term);
+
+        $this->applyActivityTypeFilter($builder, $activityType, 'club_name');
+
+        $clubs = $builder->orderBy('club_name', 'ASC')->get()->getResult();
+
+        return $this->response->setJSON([
+            'status' => 'success',
+            'clubs' => $clubs
+        ]);
     }
 
     /**
@@ -1002,6 +1450,7 @@ class ConAdminDevelopStudents extends BaseController
             $year   = $this->request->getPost('year');
             $term   = $this->request->getPost('term');
             $clubId = $this->request->getPost('club_id');
+            $activityType = $this->request->getPost('activity_type') ?? ($this->request->getPost('is_scout') == '1' ? 'scout' : 'club');
 
             // 1. ดึงสมาชิกชุมนุม
             $builder = $this->db->table('tb_club_members AS m')
@@ -1024,6 +1473,8 @@ class ConAdminDevelopStudents extends BaseController
 
             if ($clubId && $clubId !== 'all') {
                 $builder->where('m.member_club_id', $clubId);
+            } else {
+                $this->applyActivityTypeFilter($builder, $activityType, 'c.club_name');
             }
 
             $builder->orderBy('c.club_name', 'ASC')
@@ -1181,6 +1632,7 @@ class ConAdminDevelopStudents extends BaseController
             $year   = $this->request->getPost('year');
             $term   = $this->request->getPost('term');
             $clubId = $this->request->getPost('club_id');
+            $activityType = $this->request->getPost('activity_type') ?? ($this->request->getPost('is_scout') == '1' ? 'scout' : 'club');
 
             // ดึงสัปดาห์ทั้งหมดของปี/เทอมนี้
             $weeks = $this->db->table('tb_club_settings_schedule')
@@ -1201,6 +1653,8 @@ class ConAdminDevelopStudents extends BaseController
 
             if ($clubId && $clubId !== 'all') {
                 $memberBuilder->where('m.member_club_id', $clubId);
+            } else {
+                $this->applyActivityTypeFilter($memberBuilder, $activityType, 'c.club_name');
             }
 
             $memberBuilder->orderBy('c.club_name', 'ASC')

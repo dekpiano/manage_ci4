@@ -56,6 +56,36 @@ class Classroom {
         return $list;
     }
 
+    /**
+     * Validate and sanitize a StudentStudyLine value.
+     * Returns the trimmed value if it is in the valid list, otherwise returns empty string.
+     * Use this method to prevent invalid data from being saved to the database.
+     *
+     * @param string|null $value The study line value to validate
+     * @return string The validated study line or empty string
+     */
+    function sanitizeStudyLine($value)
+    {
+        $validLines = $this->studentStudyLineOptions();
+        $trimmed = trim($value ?? '');
+        $upper = mb_strtoupper($trimmed);
+
+        // Check exact match first
+        if (in_array($trimmed, $validLines, true)) {
+            return $trimmed;
+        }
+
+        // Check case-insensitive match
+        foreach ($validLines as $valid) {
+            if (mb_strtoupper($valid) === $upper) {
+                return $valid; // Return the canonical form
+            }
+        }
+
+        // Not a valid study line
+        return '';
+    }
+
 
 
 }

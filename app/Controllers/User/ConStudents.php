@@ -45,17 +45,38 @@ class ConStudents extends BaseController
         $data['description'] = "รายชื่อนักเรียน";  
         $data['full_url'] = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
         $data['banner'] = base_url('assets/images/Students/banner.png');
-        $data['checkLine'] = $this->db->table('tb_students')->select('StudentStudyLine')
-        ->where('StudentClass','ม.'.$this->request->getGet('studentList'))
-        ->groupBy('StudentStudyLine')
+
+        $data['schoolyear'] = $this->db->table('tb_schoolyear')->get()->getRow();
+        $subYear = !empty($data['schoolyear']->schyear_year) ? explode('/', $data['schoolyear']->schyear_year) : ['', ''];
+
+        $studentList = $this->request->getGet('studentList');
+        $className = 'ม.' . $studentList;
+
+        $data['checkLine'] = $this->db->table('tb_students')->select('StudentStudyLine, StudentClass')
+        ->where('StudentClass', $className)
+        ->groupBy(['StudentStudyLine', 'StudentClass'])
         ->get()->getResult();
 
         $data['selStudent'] = $this->db->table('tb_students')->select('StudentNumber,StudentCode,StudentPrefix,StudentFirstName,StudentLastName,StudentStudyLine,StudentBehavior')
         ->where('StudentStatus','1/ปกติ')  
         ->where('StudentBehavior !=','จำหน่่าย')      
-        ->where('StudentClass','ม.'.$this->request->getGet('studentList'))
+        ->where('StudentClass', $className)
         ->orderBy('StudentNumber','ASC')
         ->get()->getResult();
+
+        $data['TeacRoom'] = [];
+        if (!empty($studentList) && !empty($subYear[1])) {
+            $data['TeacRoom'] = $this->db->table('tb_regclass')->select([
+                'skjacth_personnel.tb_personnel.pers_prefix',
+                'skjacth_personnel.tb_personnel.pers_firstname',
+                'skjacth_personnel.tb_personnel.pers_lastname',
+                'tb_regclass.Reg_Class'
+            ])
+            ->join('skjacth_personnel.tb_personnel','skjacth_personnel.tb_personnel.pers_id = tb_regclass.class_teacher')
+            ->where('Reg_Year', $subYear[1])
+            ->where('Reg_Class', $studentList)
+            ->get()->getResult();
+        }
                 
         return view('user/PageStudentsList', $data);
     }

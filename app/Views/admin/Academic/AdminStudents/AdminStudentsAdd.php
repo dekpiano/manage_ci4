@@ -655,6 +655,10 @@ $(document).ready(function() {
     });
 
     function syncExecution(isDryRun) {
+        const $btn = isDryRun ? $('#googleSheetImportForm').find('button[type="submit"]') : $('#confirmSyncBtn');
+        const origHtml = $btn.html();
+        $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>' + (isDryRun ? 'กำลังตรวจสอบ...' : 'กำลังบันทึก...'));
+
         const modeText = isDryRun ? 'กำลังตรวจสอบข้อมูล...' : 'กำลังบันทึกข้อมูลเข้าฐานข้อมูล...';
 
         Swal.fire({
@@ -704,6 +708,9 @@ $(document).ready(function() {
             },
             error: function() {
                 Swal.fire('เชื่อมต่อล้มเหลว', 'โปรดตรวจสอบการเชื่อมต่ออินเทอร์เน็ตหรือลองอีกครั้ง', 'error');
+            },
+            complete: function() {
+                $btn.prop('disabled', false).html(origHtml);
             }
         });
     }
@@ -752,6 +759,13 @@ $(document).ready(function() {
     });
 
     function submitForm($form, successMsg, redirect) {
+        const $btns = $form.find('button[type="submit"]');
+        const origHtmls = [];
+        $btns.each(function() {
+            origHtmls.push($(this).html());
+            $(this).prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>กำลังบันทึก...');
+        });
+
         Swal.fire({ title: 'กำลังบันทึก...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
         $.ajax({
             url: $form.attr('action'),
@@ -767,6 +781,14 @@ $(document).ready(function() {
                 } else {
                     Swal.fire('ผิดพลาด', res.message, 'error');
                 }
+            },
+            error: function() {
+                Swal.fire('ผิดพลาด', 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้', 'error');
+            },
+            complete: function() {
+                $btns.each(function(i) {
+                    $(this).prop('disabled', false).html(origHtmls[i]);
+                });
             }
         });
     }
@@ -1014,7 +1036,7 @@ $(document).ready(function() {
                     $('#admPreviewCount').text(res.students.length);
 
                     const studyLineOptions = [
-                        "SMT(S)", "SMT(T)", "CEP", "CP", "PAP1", "PAP2", "PAP3", "PAP4", "SP1", "SP2", "SP3", "SP4"
+                        "GENERAL", "SMT(S)", "SMT(T)", "CEP", "CP", "PAP1", "PAP2", "PAP3", "PAP4", "SP1", "SP2", "SP3", "SP4"
                     ];
 
                     const classRoomOptions = [
@@ -1032,9 +1054,7 @@ $(document).ready(function() {
 
                         const slVal = (s.StudentStudyLine || '').trim();
                         const isPredefined = studyLineOptions.includes(slVal);
-                        const selectedOption = isPredefined ? slVal : (slVal ? 'custom' : studyLineOptions[0]);
-                        const showInputClass = (selectedOption === 'custom') ? '' : 'd-none';
-                        const inputVal = (selectedOption === 'custom') ? slVal : '';
+                        const selectedOption = isPredefined ? slVal : studyLineOptions[0];
 
                         const optionsHtml = studyLineOptions.map(opt => 
                             `<option value="${opt}" ${selectedOption === opt ? 'selected' : ''}>${opt}</option>`
@@ -1078,13 +1098,9 @@ $(document).ready(function() {
                                     ${dupWarning}
                                 </td>
                                 <td>
-                                    <div class="d-flex flex-column gap-1">
-                                        <select class="form-select form-select-sm row-student-studyline-select" style="width: 150px;" onchange="handleStudyLineSelectChange(this)">
-                                            ${optionsHtml}
-                                            <option value="custom" ${selectedOption === 'custom' ? 'selected' : ''}>✏️ อื่นๆ...</option>
-                                        </select>
-                                        <input type="text" class="form-control form-control-sm row-student-studyline-input ${showInputClass}" value="${inputVal}" placeholder="ระบุสายการเรียน..." style="width: 150px;">
-                                    </div>
+                                    <select class="form-select form-select-sm row-student-studyline-select" style="width: 150px;">
+                                        ${optionsHtml}
+                                    </select>
                                 </td>
                                 <td class="pe-4">
                                     <input type="text" class="form-control form-control-sm text-center row-student-entrance" value="${s.StudentDateEntrance}" style="width: 110px;">
@@ -1132,9 +1148,6 @@ $(document).ready(function() {
             const birth = $row.find('.row-student-birth').val().trim();
             const idcard = $row.find('.row-student-idcard').val().trim();
             let studyline = $row.find('.row-student-studyline-select').val();
-            if (studyline === 'custom') {
-                studyline = $row.find('.row-student-studyline-input').val().trim();
-            }
             const entrance = $row.find('.row-student-entrance').val().trim();
             const region = $row.find('.row-student-region').val().trim();
             const yearin = $row.find('.row-student-yearin').val().trim();
@@ -1183,6 +1196,10 @@ $(document).ready(function() {
             customClass: { confirmButton: 'rounded-pill px-4 fw-bold me-2', cancelButton: 'rounded-pill px-4' }
         }).then((result) => {
             if (result.isConfirmed) {
+                const $btnConfirm = $('#confirmAdmissionImportBtn');
+                const origBtnHtml = $btnConfirm.html();
+                $btnConfirm.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>กำลังบันทึกข้อมูล...');
+
                 Swal.fire({
                     title: 'กำลังบันทึกข้อมูล...',
                     html: `
@@ -1244,21 +1261,16 @@ $(document).ready(function() {
                             text: errorMsg,
                             confirmButtonColor: '#15a362'
                         });
+                    },
+                    complete: function() {
+                        $btnConfirm.prop('disabled', false).html(origBtnHtml);
                     }
                 });
             }
         });
     });
 
-    window.handleStudyLineSelectChange = function(selectEl) {
-        const $select = $(selectEl);
-        const $input = $select.siblings('.row-student-studyline-input');
-        if ($select.val() === 'custom') {
-            $input.removeClass('d-none').focus();
-        } else {
-            $input.addClass('d-none');
-        }
-    };
+    // Study line dropdown - only predefined valid options allowed (no custom input)
 
     // Enter key สำหรับ search
     $('#admissionSearch').on('keypress', function(e) {
