@@ -65,6 +65,9 @@ class ConAdminResearch extends BaseController
 
         $data['research_base_url'] = getenv('upload.server.baseurl.research');
 
+        $skjDb = $db_skj->getDatabase();
+        $academicDb = $this->db->getDatabase();
+
         if ($learning_group) {
             // If a group is selected, fetch all teachers from that group
             $group_info = $db_skj->table('tb_learning')->where('lear_id', $learning_group)->get()->getRow();
@@ -73,7 +76,8 @@ class ConAdminResearch extends BaseController
             }
 
             $builder = $this->DBpersonnel->table('tb_personnel as p');
-            $builder->select('p.pers_id, p.pers_prefix, p.pers_firstname, p.pers_lastname, p.pers_img, r.seres_ID, r.seres_research_name, r.seres_status, r.seres_file, r.seres_year, r.seres_term');
+            $builder->select('p.pers_id, p.pers_prefix, p.pers_firstname, p.pers_lastname, p.pers_img, p.pers_learning, p.pers_numberGroup, l.lear_namethai, r.seres_ID, r.seres_research_name, r.seres_status, r.seres_file, r.seres_year, r.seres_term');
+            $builder->join($skjDb . '.tb_learning as l', 'l.lear_id = p.pers_learning', 'left');
             $builder->where('p.pers_learning', $learning_group);
             $builder->where('p.pers_status', 'กำลังใช้งาน'); // Filter for active teachers
             $builder->whereIn('p.pers_position', ['posi_003', 'posi_004', 'posi_005', 'posi_006']); // Filter for teacher positions (posi_003 - posi_006)
@@ -85,14 +89,18 @@ class ConAdminResearch extends BaseController
             if ($term) {
                 $join_condition .= " AND r.seres_term = " . $this->db->escape($term);
             }
-            $builder->join($this->db->getDatabase().'.tb_send_research as r', $join_condition, 'left');
+            $builder->join($academicDb . '.tb_send_research as r', $join_condition, 'left');
             
-            $data['submissions'] = $builder->orderBy('p.pers_firstname', 'ASC')->get()->getResult();
+            $data['submissions'] = $builder
+                ->orderBy("CASE WHEN p.pers_numberGroup IS NULL OR p.pers_numberGroup = '' OR p.pers_numberGroup = '0' THEN 9999 ELSE CAST(p.pers_numberGroup AS UNSIGNED) END", 'ASC', false)
+                ->orderBy('p.pers_firstname', 'ASC')
+                ->get()->getResult();
 
         } else {
             // Default: Show all active teachers and their research for the current/selected academic year/term
             $builder = $this->DBpersonnel->table('tb_personnel as p');
-            $builder->select('p.pers_id, p.pers_prefix, p.pers_firstname, p.pers_lastname, p.pers_img, r.seres_ID, r.seres_research_name, r.seres_status, r.seres_file, r.seres_year, r.seres_term');
+            $builder->select('p.pers_id, p.pers_prefix, p.pers_firstname, p.pers_lastname, p.pers_img, p.pers_learning, p.pers_numberGroup, l.lear_namethai, r.seres_ID, r.seres_research_name, r.seres_status, r.seres_file, r.seres_year, r.seres_term');
+            $builder->join($skjDb . '.tb_learning as l', 'l.lear_id = p.pers_learning', 'left');
             $builder->where('p.pers_status', 'กำลังใช้งาน');
             $builder->whereIn('p.pers_position', ['posi_003', 'posi_004', 'posi_005', 'posi_006']); // Filter for teacher positions (posi_003 - posi_006)
 
@@ -103,9 +111,14 @@ class ConAdminResearch extends BaseController
             if ($term) {
                 $join_condition .= " AND r.seres_term = " . $this->db->escape($term);
             }
-            $builder->join($this->db->getDatabase().'.tb_send_research as r', $join_condition, 'left');
+            $builder->join($academicDb . '.tb_send_research as r', $join_condition, 'left');
 
-            $data['submissions'] = $builder->orderBy('p.pers_firstname', 'ASC')->get()->getResult();
+            $data['submissions'] = $builder
+                ->orderBy("CASE WHEN p.pers_learning IS NULL OR p.pers_learning = '' THEN 9999 ELSE 0 END", 'ASC', false)
+                ->orderBy('p.pers_learning', 'ASC')
+                ->orderBy("CASE WHEN p.pers_numberGroup IS NULL OR p.pers_numberGroup = '' OR p.pers_numberGroup = '0' THEN 9999 ELSE CAST(p.pers_numberGroup AS UNSIGNED) END", 'ASC', false)
+                ->orderBy('p.pers_firstname', 'ASC')
+                ->get()->getResult();
         }
 
         echo view('admin/Academic/AdminResearch/AdminResearchReport', $data);

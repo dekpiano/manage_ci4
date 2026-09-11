@@ -201,11 +201,12 @@ class ModAdminTeachingSchedule extends Model
     {
         // ดึงครูในกลุ่มสาระ
         $teachers = $this->dbPersonnel->table('tb_personnel')
-            ->select('pers_id, pers_prefix, pers_firstname, pers_lastname, pers_img, pers_position, pers_academic, pers_learning, pers_groupleade, pers_phone')
-            ->where('pers_learning', $groupId)
-            ->where('pers_status', 'กำลังใช้งาน')
-            ->orderBy("CASE WHEN pers_groupleade LIKE '%หัวหน้ากลุ่มสาระ%' THEN 0 ELSE 1 END", 'ASC', false)
-            ->orderBy('pers_firstname', 'ASC')
+            ->select('tb_personnel.pers_id, tb_personnel.pers_prefix, tb_personnel.pers_firstname, tb_personnel.pers_lastname, tb_personnel.pers_img, skjacth_skj.tb_position.posi_name as pers_position, tb_personnel.pers_academic, tb_personnel.pers_learning, tb_personnel.pers_groupleade, tb_personnel.pers_phone')
+            ->join('skjacth_skj.tb_position', 'skjacth_skj.tb_position.posi_id = tb_personnel.pers_position', 'left')
+            ->where('tb_personnel.pers_learning', $groupId)
+            ->where('tb_personnel.pers_status', 'กำลังใช้งาน')
+            ->orderBy("CASE WHEN tb_personnel.pers_groupleade LIKE '%หัวหน้ากลุ่มสาระ%' THEN 0 ELSE 1 END", 'ASC', false)
+            ->orderBy('tb_personnel.pers_firstname', 'ASC')
             ->get()
             ->getResult();
 
@@ -219,7 +220,7 @@ class ModAdminTeachingSchedule extends Model
 
         // ดึงรายการตารางสอนของครูในกลุ่มนี้
         $schedules = $this->dbAcademic->table('tb_teaching_schedule')
-            ->select('teacher_id, credit, hours_per_week, total_hours')
+            ->select('teacher_id, subject_code, credit, hours_per_week, total_hours')
             ->where('year', $year)
             ->where('term', $term)
             ->whereIn('teacher_id', $teacherIds)
@@ -249,9 +250,13 @@ class ModAdminTeachingSchedule extends Model
         foreach ($schedules as $s) {
             $tid = trim($s->teacher_id);
             if (!isset($scheduleStats[$tid])) {
-                $scheduleStats[$tid] = ['subjects' => 0, 'credits' => 0, 'hours' => 0];
+                $scheduleStats[$tid] = ['subject_codes' => [], 'subjects' => 0, 'credits' => 0, 'hours' => 0];
             }
-            $scheduleStats[$tid]['subjects']++;
+            $subCode = trim($s->subject_code ?? '');
+            if ($subCode !== '' && !in_array($subCode, $scheduleStats[$tid]['subject_codes'])) {
+                $scheduleStats[$tid]['subject_codes'][] = $subCode;
+                $scheduleStats[$tid]['subjects']++;
+            }
             $scheduleStats[$tid]['credits'] += (float)($s->credit ?? 0);
             $scheduleStats[$tid]['hours']   += (float)($s->hours_per_week ?? 0);
         }
