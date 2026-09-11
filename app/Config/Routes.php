@@ -198,6 +198,14 @@ $routes->get('Admin/Acade/Course/TeachingSchedule/print-all/(:segment)', [ConAdm
 $routes->get('Admin/Acade/Course/TeachingSchedule/print/(:segment)/(:num)/(:num)', [ConAdminTeachingSchedule::class, 'printTeacherWorkload']);
 $routes->get('Admin/Acade/Course/TeachingSchedule/print/(:segment)', [ConAdminTeachingSchedule::class, 'printTeacherWorkload']);
 $routes->match(['get', 'post'], 'admin/academic/teaching-schedule/teacher-detail', [ConAdminTeachingSchedule::class, 'getTeacherDetailAjax']);
+$routes->match(['get', 'post'], 'admin/academic/teaching-schedule/get-raw-data', [ConAdminTeachingSchedule::class, 'getTeacherRawDataAjax']);
+$routes->post('admin/academic/teaching-schedule/save-item', [ConAdminTeachingSchedule::class, 'saveScheduleItemAjax']);
+$routes->post('admin/academic/teaching-schedule/delete-item', [ConAdminTeachingSchedule::class, 'deleteScheduleItemAjax']);
+$routes->post('admin/academic/teaching-schedule/save-activity', [ConAdminTeachingSchedule::class, 'saveActivityItemAjax']);
+$routes->post('admin/academic/teaching-schedule/delete-activity', [ConAdminTeachingSchedule::class, 'deleteActivityItemAjax']);
+$routes->post('admin/academic/teaching-schedule/save-duty', [ConAdminTeachingSchedule::class, 'saveDutyItemAjax']);
+$routes->post('admin/academic/teaching-schedule/delete-duty', [ConAdminTeachingSchedule::class, 'deleteDutyItemAjax']);
+$routes->get('admin/academic/teaching-schedule/search-subjects', [ConAdminTeachingSchedule::class, 'searchMasterSubjectsAjax']);
 
 $routes->get('Admin/Acade/Course/RegisterSubject', [ConAdminRegisterSubject::class, 'AdminRegisterSubjectMain']);
 $routes->match(['get', 'post'], 'admin/academic/ConAdminRegisterSubject/AdminRegisterSubjectGetMaster', [ConAdminRegisterSubject::class, 'AdminRegisterSubjectGetMaster']);
@@ -223,6 +231,7 @@ $routes->post('admin/academic/course/delete_teacher_subject', [ConAdminCourse::c
 $routes->post('admin/academic/course/update_setting', [ConAdminCourse::class, 'UpdateSettingSendPlan']);
 $routes->get('admin/academic/course/getPlansTableData', [ConAdminCourse::class, 'getPlansTableData']);
 $routes->get('admin/academic/course/getSubjectsByYear', [ConAdminCourse::class, 'getSubjectsByYear']);
+$routes->post('admin/academic/course/sync_from_schedule', [ConAdminCourse::class, 'SyncFromTeachingSchedule']);
 $routes->post('Admin/Settings/UpdateSchoolYear', [ConAdminCourse::class, 'updateSchoolYear']);
 
 // Research Submission Settings Routes

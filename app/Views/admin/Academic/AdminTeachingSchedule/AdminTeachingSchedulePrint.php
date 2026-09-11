@@ -320,7 +320,7 @@
                             <td class="text-center"><?= esc($sub['grade_level']) ?></td>
                             <td class="text-center"><?= esc($sub['room_text']) ?></td>
                             <td class="text-center fw-bold"><?= $sub['total_weekly_hours'] ?></td>
-                            <td class="text-center" style="font-size: 11.5px;"><?= esc($sub['final_remark']) ?></td>
+                            <td class="text-center" style="font-size: 11.5px;"><?= !empty($sub['final_remark']) ? esc($sub['final_remark']) : '-' ?></td>
                         </tr>
                     <?php endforeach; ?>
                 <?php else: ?>

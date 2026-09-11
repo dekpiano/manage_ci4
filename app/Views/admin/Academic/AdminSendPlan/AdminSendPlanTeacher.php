@@ -20,6 +20,9 @@
     .text-primary-emerald {
         color: var(--primary-emerald) !important;
     }
+    .swal2-container {
+        z-index: 9999 !important;
+    }
     .btn-white {
         background-color: #ffffff !important;
         color: var(--dark-emerald) !important;
@@ -154,20 +157,20 @@
 
     /* Custom Buttons */
     .btn-emerald-premium {
-        background: var(--primary-emerald);
-        color: white;
+        background: var(--primary-emerald) !important;
+        color: #ffffff !important;
         border-radius: 12px;
         padding: 0.8rem 1.5rem;
-        font-weight: 600;
+        font-weight: 700;
         border: none;
         box-shadow: 0 4px 15px rgba(21, 163, 98, 0.3);
         transition: all 0.3s ease;
     }
 
     .btn-emerald-premium:hover {
-        background: var(--dark-emerald);
+        background: var(--dark-emerald) !important;
         transform: scale(1.02);
-        color: white;
+        color: #ffffff !important;
     }
 
     /* Avatar & Badges */
@@ -303,7 +306,33 @@
                     <div class="bg-label-success p-2 rounded-3 me-3">
                         <i class="bx bx-link-alt fs-4"></i>
                     </div>
-                    <h4 class="mb-0 fw-bold">มอบหมายงานใหม่</h4>
+                    <div>
+                        <h4 class="mb-0 fw-bold text-dark">มอบหมายงานสอน</h4>
+                        <small class="text-secondary fw-semibold" style="color: #475569 !important;">กำหนดวิชาที่ครูต้องส่งแผนการสอน</small>
+                    </div>
+                </div>
+
+                <!-- Quick Sync Card จากตารางสอน (วิธีที่สะดวกและเร็วที่สุด) -->
+                <div class="p-3 mb-4 rounded-3 shadow-xs border" style="background-color: #f0fdf4; border-color: #86efac !important;">
+                    <div class="d-flex align-items-start gap-3">
+                        <div class="rounded-circle p-2 bg-white shadow-xs flex-shrink-0" style="color: #15a362 !important; border: 1px solid #bbf7d0;">
+                            <i class="bx bx-bolt-circle fs-3"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <h6 class="fw-bold mb-1" style="color: #064e3b !important; font-size: 0.95rem;">ดึงข้อมูลจากตารางสอน</h6>
+                            <p class="small mb-3" style="color: #334155 !important; font-size: 0.82rem; line-height: 1.45;">
+                                ดึงรายวิชาที่ครูสอนจากระบบตารางสอนมาสร้างรายการส่งแผนให้อัตโนมัติทุกกลุ่มสาระ
+                            </p>
+                            <button type="button" class="btn btn-sm rounded-pill px-3 fw-bold w-100 shadow-sm" id="btnSyncFromSchedule" style="background-color: #15a362 !important; color: #ffffff !important; border: none; padding: 9px 16px; font-size: 0.88rem;">
+                                <i class="bx bx-sync me-1"></i> ซิงก์รายวิชาจากตารางสอน
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="position-relative text-center my-4">
+                    <hr style="border-color: #cbd5e1;">
+                    <span class="badge bg-white border position-absolute top-50 start-50 translate-middle px-3 py-1 shadow-xs" style="color: #475569 !important; font-weight: 700; font-size: 0.8rem;">หรือ มอบหมายรายบุคคล</span>
                 </div>
 
                 <form id="FormUpdateSendPlan" class="row g-4">
@@ -393,6 +422,9 @@
                             <option <?= ($term.'/'.$year == $val) ? "selected" : ""?> value="<?= esc($val) ?>"><?= esc($val) ?></option>
                             <?php endforeach; ?>
                         </select>
+                        <button type="button" class="btn btn-sm rounded-pill px-3 shadow-xs fw-bold d-inline-flex align-items-center" id="btnQuickSync" title="ดึงข้อมูลจากตารางสอนประจำภาคเรียนนี้" style="background-color: #15a362 !important; color: #ffffff !important; border: none; font-size: 0.82rem;">
+                            <i class="bx bx-sync me-1"></i> ซิงก์จากตารางสอน
+                        </button>
                     </div>
                 </div>
                 <div class="card-body p-0">
@@ -839,6 +871,172 @@ $(document).ready(function() {
                 $.post('<?= base_url('admin/academic/course/delete_teacher_subject') ?>', delData, function(res) {
                     Swal.fire({icon: 'success', title: 'ลบสำเร็จ', timer: 1000, showConfirmButton: false, toast: true, position: 'top-end'});
                     table.ajax.reload();
+                });
+            }
+        });
+    });
+
+    // Event Quick Sync Click -> Trigger Main Sync
+    $('#btnQuickSync').on('click', function(e) {
+        e.preventDefault();
+        $('#btnSyncFromSchedule').trigger('click');
+    });
+
+    // รายการปีการศึกษาที่สามารถเลือกซิงก์ได้ (จากตารางสอน + ประวัติ + ปีล่วงหน้า)
+    <?php
+        $syncYearsList = [];
+        if (!empty($ScheduleYears)) {
+            foreach ($ScheduleYears as $sy) {
+                if (!empty($sy->term) && !empty($sy->year)) {
+                    $syncYearsList[] = $sy->term . '/' . $sy->year;
+                }
+            }
+        }
+        if (!empty($CheckYearSendPlan)) {
+            foreach ($CheckYearSendPlan as $cy) {
+                if (!empty($cy->seplan_term) && !empty($cy->seplan_year)) {
+                    $syncYearsList[] = $cy->seplan_term . '/' . $cy->seplan_year;
+                }
+            }
+        }
+        $currBE = (int)date('Y') + 543;
+        for ($y = $currBE - 1; $y <= $currBE + 2; $y++) {
+            $syncYearsList[] = "1/{$y}";
+            $syncYearsList[] = "2/{$y}";
+        }
+        $syncYearsList = array_unique(array_filter($syncYearsList));
+        usort($syncYearsList, function($a, $b) {
+            $pa = explode('/', $a); $pb = explode('/', $b);
+            return ($pa[1] == $pb[1]) ? ($pb[0] - $pa[0]) : ($pb[1] - $pa[1]);
+        });
+    ?>
+    const availableSyncYears = <?= json_encode(array_values($syncYearsList)) ?>;
+
+    // Event Sync from Teaching Schedule
+    $('#btnSyncFromSchedule').on('click', function(e) {
+        e.preventDefault();
+        const currentActiveYear = $('#onoff_year').val() || $('#SelectYear').val() || '<?= ($term ?? '1') . '/' . ($year ?? ((int)date('Y')+543)) ?>';
+
+        // สร้าง Options สำหรับ Dropdown ใน SweetAlert
+        let optionsHtml = '';
+        availableSyncYears.forEach(function(item) {
+            const isSel = (item === currentActiveYear) ? 'selected' : '';
+            optionsHtml += `<option value="${item}" ${isSel}>ภาคเรียนที่ ${item}</option>`;
+        });
+
+        const modalBodyHtml = `
+            <div class="text-start">
+                <p class="text-dark mb-3" style="font-size: 0.92rem; line-height: 1.5;">
+                    ระบบจะอ่านรายชื่อวิชาและครูผู้สอนจาก <strong>ตารางสอน</strong> เพื่อสร้างรายการสำหรับส่งแผนการสอนให้อัตโนมัติทุกกลุ่มสาระ
+                </p>
+                <div class="p-3 rounded-3 shadow-xs border" style="background-color: #f8fafc; border-color: #cbd5e1 !important;">
+                    <label class="form-label fw-bold text-dark mb-1 d-flex align-items-center" style="font-size: 0.9rem;">
+                        <i class="bx bx-calendar-event text-success me-1 fs-5"></i> เลือกภาคเรียน / ปีการศึกษาที่จะดึงข้อมูล:
+                    </label>
+                    <select id="swal_sync_year_term" class="form-select form-select-lg rounded-3 fw-bold text-dark mt-2 shadow-xs" style="border: 2px solid #15a362; font-size: 1rem;">
+                        ${optionsHtml}
+                    </select>
+                    <small class="text-muted d-block mt-2" style="font-size: 0.8rem; line-height: 1.35;">
+                        <i class="bx bx-info-circle me-1 text-primary"></i> สามารถเลือกเทอมล่วงหน้าหรือเทอมที่ต้องการได้ โดยวิชาที่เคยมีอยู่แล้วจะถูกข้ามโดยอัตโนมัติ
+                    </small>
+                </div>
+            </div>
+        `;
+
+        Swal.fire({
+            title: '<span class="text-dark fw-bold" style="font-size: 1.35rem;"><i class="bx bx-sync text-success me-2"></i>ดึงข้อมูลจากตารางสอน</span>',
+            html: modalBodyHtml,
+            showCancelButton: true,
+            confirmButtonColor: '#15a362',
+            cancelButtonColor: '#8592a3',
+            confirmButtonText: '<i class="bx bx-check-circle me-1"></i> ยืนยันการซิงก์ข้อมูล',
+            cancelButtonText: 'ยกเลิก',
+            focusConfirm: false,
+            preConfirm: () => {
+                const selectedVal = $('#swal_sync_year_term').val();
+                if (!selectedVal || !selectedVal.includes('/')) {
+                    Swal.showValidationMessage('กรุณาเลือกภาคเรียน/ปีการศึกษา');
+                    return false;
+                }
+                return selectedVal;
+            }
+        }).then((result) => {
+            if (result.isConfirmed && result.value) {
+                const chosenYearTerm = result.value;
+                const [chosenTerm, chosenYear] = chosenYearTerm.split('/');
+
+                // แสดง Loading
+                Swal.fire({
+                    title: 'กำลังซิงก์ข้อมูล...',
+                    html: `ระบบกำลังดึงข้อมูลจากตารางสอน <strong>ภาคเรียนที่ ${chosenTerm}/${chosenYear}</strong><br><small class="text-muted">กรุณารอสักครู่...</small>`,
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
+                $.ajax({
+                    url: '<?= base_url('admin/academic/course/sync_from_schedule') ?>',
+                    type: 'POST',
+                    data: {
+                        year_term: chosenYearTerm,
+                        year: chosenYear,
+                        term: chosenTerm,
+                        '<?= csrf_token() ?>': '<?= csrf_hash() ?>'
+                    },
+                    dataType: 'json',
+                    success: function(response) {
+                        if (response.status === 'success') {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'ซิงก์ข้อมูลสำเร็จ!',
+                                html: `<div class="text-center">
+                                         <p class="mb-2">ภาคเรียนที่ <strong>${chosenTerm}/${chosenYear}</strong></p>
+                                         <div class="alert alert-soft-emerald py-2 px-3 mb-0">${response.message}</div>
+                                       </div>`,
+                                confirmButtonColor: '#15a362',
+                                confirmButtonText: 'ตกลง'
+                            });
+
+                            // อัปเดต Dropdown เลือกปีในตารางให้ตรงกับปีที่เพิ่งซิงก์
+                            if ($('#onoff_year option[value="' + chosenYearTerm + '"]').length === 0) {
+                                $('#onoff_year').prepend(new Option(chosenYearTerm, chosenYearTerm, true, true));
+                            } else {
+                                $('#onoff_year').val(chosenYearTerm);
+                            }
+                            table.ajax.reload();
+
+                        } else if (response.status === 'warning') {
+                            Swal.fire({
+                                icon: 'warning',
+                                title: 'แจ้งเตือน',
+                                html: `<div class="text-center">
+                                         <p class="mb-2">ภาคเรียนที่ <strong>${chosenTerm}/${chosenYear}</strong></p>
+                                         <div class="alert alert-soft-warning py-2 px-3 mb-0">${response.message}</div>
+                                       </div>`,
+                                confirmButtonColor: '#15a362',
+                                confirmButtonText: 'รับทราบ'
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'เกิดข้อผิดพลาด',
+                                html: response.message || 'ไม่สามารถซิงก์ข้อมูลได้',
+                                confirmButtonColor: '#ff3e1d',
+                                confirmButtonText: 'ปิด'
+                            });
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'เกิดข้อผิดพลาดในการเชื่อมต่อ',
+                            text: 'ไม่สามารถติดต่อเซิร์ฟเวอร์ได้ (' + error + ')',
+                            confirmButtonColor: '#ff3e1d',
+                            confirmButtonText: 'ปิด'
+                        });
+                    }
                 });
             }
         });

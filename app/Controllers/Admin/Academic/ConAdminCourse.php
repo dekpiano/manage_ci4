@@ -7,6 +7,7 @@ use App\Controllers\BaseController;
 class ConAdminCourse extends BaseController
 {
     protected $DBpersonnel; // Declare DBpersonnel property
+    protected $db;
 
     public function __construct()
     {
@@ -16,14 +17,16 @@ class ConAdminCourse extends BaseController
 
         // CI3 session check equivalent
         if (empty(session()->get('fullname'))) {
-            return redirect()->to(base_url('LogoutTeacher'));
+            header('Location: ' . base_url('LogoutTeacher'));
+            exit();
         }
 
         $check_status_data = $this->db->table('tb_admin_rloes')->where('admin_rloes_userid', session()->get('login_id'))->get()->getRow();
 
         if (empty($check_status_data) || (! in_array($check_status_data->admin_rloes_status, ["admin", "manager", "superadmin"]))) {
             session()->setFlashdata(['msg' => 'OK', 'messge' => 'คุณไม่มีสิทธ์ในระบบจัดข้อมูลนี้ ติดต่อเจ้าหน้าที่คอม', 'alert' => 'error']);
-            return redirect()->to(base_url('welcome'));
+            header('Location: ' . base_url('welcome'));
+            exit();
         }
     }
 
@@ -52,6 +55,12 @@ class ConAdminCourse extends BaseController
                                             ->select('seplan_year,seplan_term')
                                             ->groupBy('seplan_year,seplan_term')
                                             ->get()->getResult();
+        $data['ScheduleYears'] = $this->db->table('tb_teaching_schedule')
+                                          ->select('year, term')
+                                          ->groupBy('year, term')
+                                          ->orderBy('year', 'DESC')
+                                          ->orderBy('term', 'DESC')
+                                          ->get()->getResult();
         $data['CheckYear'] = $this->db->table('tb_send_plan_setup')->get()->getResult();
 
         // ลำดับความสำคัญของปีการศึกษา: GET -> Session -> Latest Data -> Setup Table
@@ -526,4 +535,174 @@ class ConAdminCourse extends BaseController
         }
     }
 
+    /**
+     * ซิงก์รายวิชาที่ครูสอนจากระบบตารางสอน (tb_teaching_schedule) มายังระบบส่งแผน (tb_send_plan)
+     */
+    public function SyncFromTeachingSchedule()
+    {
+        try {
+            $yearTerm = $this->request->getPost('year_term');
+            $year = $this->request->getPost('year');
+            $term = $this->request->getPost('term');
+
+            if (!empty($yearTerm) && strpos($yearTerm, '/') !== false) {
+                list($term, $year) = explode('/', $yearTerm);
+            }
+
+            if (empty($year) || empty($term)) {
+                return $this->response->setJSON([
+                    'status' => 'error', 
+                    'message' => 'กรุณาระบุปีการศึกษาและภาคเรียน'
+                ]);
+            }
+
+            // 1. ดึงประเภทแผนการสอน
+            $typePlan = $this->db->table('tb_send_plan_type')->get()->getResult();
+            if (empty($typePlan)) {
+                return $this->response->setJSON([
+                    'status' => 'error', 
+                    'message' => 'ไม่พบข้อมูลประเภทแผนการสอนในระบบ'
+                ]);
+            }
+
+            // 2. ดึงข้อมูลตารางสอนประจำภาคเรียน/ปีการศึกษา
+            $schedules = $this->db->table('tb_teaching_schedule')
+                ->select('teacher_id, subject_code, subject_name, subject_type, grade_level')
+                ->where('year', $year)
+                ->where('term', $term)
+                ->groupBy('teacher_id, subject_code')
+                ->get()
+                ->getResult();
+
+            if (empty($schedules)) {
+                return $this->response->setJSON([
+                    'status' => 'warning', 
+                    'message' => "ไม่พบข้อมูลตารางสอนในภาคเรียนที่ {$term}/{$year} กรุณาตรวจสอบการจัดตารางสอนก่อน"
+                ]);
+            }
+
+            // 3. ดึงข้อมูลกลุ่มสาระของครูจาก tb_personnel
+            $teacherIds = array_unique(array_filter(array_map(function($s) { 
+                return trim($s->teacher_id); 
+            }, $schedules)));
+
+            $teachersMap = [];
+            if (!empty($teacherIds)) {
+                $teachers = $this->DBpersonnel->table('tb_personnel')
+                    ->select('pers_id, pers_learning')
+                    ->whereIn('pers_id', $teacherIds)
+                    ->get()
+                    ->getResult();
+                foreach ($teachers as $t) {
+                    $teachersMap[trim($t->pers_id)] = $t->pers_learning;
+                }
+            }
+
+            // 4. ดึงรายการที่มีอยู่แล้วใน tb_send_plan สำหรับเทอมนี้เพื่อป้องกันการบันทึกซ้ำ
+            $existingPlans = $this->db->table('tb_send_plan')
+                ->select('seplan_coursecode, seplan_usersend')
+                ->where('seplan_year', $year)
+                ->where('seplan_term', $term)
+                ->groupBy('seplan_coursecode, seplan_usersend')
+                ->get()
+                ->getResult();
+
+            $existingMap = [];
+            foreach ($existingPlans as $ep) {
+                $key = trim($ep->seplan_coursecode) . '_' . trim($ep->seplan_usersend);
+                $existingMap[$key] = true;
+            }
+
+            // 5. วนลูปเตรียมข้อมูลเพื่อ Insert
+            $insertBatch = [];
+            $successCount = 0;
+            $skipCount = 0;
+
+            foreach ($schedules as $s) {
+                $tId = trim($s->teacher_id);
+                $cCode = trim($s->subject_code);
+                $checkKey = $cCode . '_' . $tId;
+
+                if (isset($existingMap[$checkKey])) {
+                    $skipCount++;
+                    continue;
+                }
+
+                // สกัดประเภทวิชาและระดับชั้น
+                $SubjectType_arr = explode('/', $s->subject_type ?? '');
+                $cleanType = (count($SubjectType_arr) > 1) ? $SubjectType_arr[1] : ($s->subject_type ?? '');
+                
+                $SubjectClass_arr = explode('.', $s->grade_level ?? '');
+                $cleanGrade = (count($SubjectClass_arr) > 1) ? $SubjectClass_arr[1] : ($s->grade_level ?? '');
+
+                foreach ($typePlan as $v_typePlan) {
+                    $insertBatch[] = [
+                        'seplan_namesubject'  => $s->subject_name,
+                        'seplan_coursecode'   => $cCode,
+                        'seplan_typesubject'  => $cleanType,
+                        'seplan_year'         => $year,
+                        'seplan_term'         => $term,
+                        'seplan_status1'      => "รอตรวจ",
+                        'seplan_status2'      => "รอตรวจ",
+                        'seplan_sendcomment'  => '',
+                        'seplan_gradelevel'   => $cleanGrade,
+                        'seplan_typeplan'     => $v_typePlan->type_name,
+                        'seplan_typeplan_id'  => $v_typePlan->type_id,
+                        'seplan_usersend'     => $tId,
+                        'seplan_learning'     => $teachersMap[$tId] ?? null,
+                        'seplan_createdate'   => date('Y-m-d H:i:s'),
+                        'seplan_inspector1'   => '',
+                        'seplan_inspector2'   => '',
+                        'seplan_comment1'     => '',
+                        'seplan_comment2'     => '',
+                        'seplan_file'         => '',
+                        'seplan_checkdate1'   => '0000-00-00 00:00:00',
+                        'seplan_checkdate2'   => '0000-00-00 00:00:00',
+                    ];
+                }
+                $existingMap[$checkKey] = true; // บันทึกไว้ใน map เพื่อกันซ้ำในรอบเดียวกัน
+                $successCount++;
+            }
+
+            // 6. บันทึกลงฐานข้อมูลแบบ Batch (ถ้ามี)
+            if (!empty($insertBatch)) {
+                // แบ่งเป็นชิ้นย่อยละ 100 แถวเพื่อความปลอดภัยของ Memory
+                $chunks = array_chunk($insertBatch, 100);
+                $this->db->transStart();
+                foreach ($chunks as $chunk) {
+                    $this->db->table('tb_send_plan')->insertBatch($chunk);
+                }
+                $this->db->transComplete();
+
+                if ($this->db->transStatus() === false) {
+                    return $this->response->setJSON([
+                        'status' => 'error', 
+                        'message' => 'เกิดข้อผิดพลาดในการบันทึกข้อมูลลงฐานข้อมูล'
+                    ]);
+                }
+            }
+
+            $message = "ซิงก์ข้อมูลจากตารางสอนสำเร็จ <strong>{$successCount}</strong> รายการ";
+            if ($skipCount > 0) {
+                $message .= "<br><small class='text-muted'>(ข้าม {$skipCount} รายการที่มีข้อมูลในระบบส่งแผนอยู่แล้ว)</small>";
+            }
+
+            return $this->response->setJSON([
+                'status' => 'success',
+                'successCount' => $successCount,
+                'skipCount' => $skipCount,
+                'totalSchedules' => count($schedules),
+                'message' => $message
+            ]);
+
+        } catch (\Exception $e) {
+            log_message('error', '[SyncFromTeachingSchedule ERROR] ' . $e->getMessage());
+            return $this->response->setJSON([
+                'status' => 'error', 
+                'message' => 'เกิดข้อผิดพลาด: ' . $e->getMessage()
+            ]);
+        }
+    }
+
 }
+

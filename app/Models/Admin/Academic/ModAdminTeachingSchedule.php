@@ -399,13 +399,20 @@ class ModAdminTeachingSchedule extends Model
             // รวม study_plan และ remark เป็นข้อความเดียว
             $remarkParts = [];
             $uniquePlans = array_values(array_unique(array_filter($sub['study_plans'])));
-            if (!empty($uniquePlans)) {
-                $remarkParts[] = implode(', ', $uniquePlans);
+
+            // กฎ: ถ้ามีห้องมากกว่า 1 ห้อง ในส่วนของ แผนการเรียน ไม่ต้องแสดงผล
+            if ($sub['room_count'] > 1) {
+                $sub['study_plan'] = '-';
+            } else {
+                $sub['study_plan'] = !empty($uniquePlans) ? implode(', ', $uniquePlans) : '-';
+                if (!empty($uniquePlans)) {
+                    $remarkParts[] = implode(', ', $uniquePlans);
+                }
             }
+
             if (!empty($sub['remarks'])) {
                 $remarkParts[] = implode(', ', $sub['remarks']);
             }
-            $sub['study_plan'] = !empty($uniquePlans) ? implode(', ', $uniquePlans) : '';
             $sub['remark'] = implode(' ', $remarkParts);
         }
         unset($sub);
@@ -595,10 +602,6 @@ class ModAdminTeachingSchedule extends Model
             }
 
             $remarkParts = [];
-            $uniquePlans = array_values(array_unique(array_filter($sub['study_plans'])));
-            if (!empty($uniquePlans)) {
-                $remarkParts[] = implode(', ', $uniquePlans);
-            }
             if (!empty($sub['remarks'])) {
                 $remarkParts[] = implode(', ', $sub['remarks']);
             }
@@ -890,5 +893,152 @@ class ModAdminTeachingSchedule extends Model
             'vice_director'=> $viceDirector,
         ];
     }
+
+    /**
+     * ดึงข้อมูลดิบรายวิชา กิจกรรม และหน้าที่พิเศษทั้งหมดของครู เพื่อการแก้ไข
+     */
+    public function getTeacherRawData(string $teacherId, string $year, string $term)
+    {
+        // ข้อมูลครู
+        $teacher = $this->dbPersonnel->table('tb_personnel')
+            ->select('pers_id, pers_prefix, pers_firstname, pers_lastname, pers_img, pers_position, pers_academic, pers_learning')
+            ->where('pers_id', $teacherId)
+            ->get()->getRow();
+
+        if (!$teacher) {
+            return null;
+        }
+
+        // ข้อมูลกลุ่มสาระ
+        $group = null;
+        if (!empty($teacher->pers_learning)) {
+            $group = $this->dbSkj->table('tb_learning')->where('lear_id', $teacher->pers_learning)->get()->getRow();
+        }
+
+        // รายวิชาดิบทั้งหมด (tb_teaching_schedule)
+        $schedules = $this->dbAcademic->table('tb_teaching_schedule')
+            ->where('teacher_id', $teacherId)
+            ->where('year', $year)
+            ->where('term', $term)
+            ->orderBy('grade_level', 'ASC')
+            ->orderBy('subject_code', 'ASC')
+            ->orderBy('room', 'ASC')
+            ->get()->getResultArray();
+
+        // กิจกรรมดิบทั้งหมด (tb_teaching_schedule_activity)
+        $activities = $this->dbAcademic->table('tb_teaching_schedule_activity')
+            ->where('teacher_id', $teacherId)
+            ->where('year', $year)
+            ->where('term', $term)
+            ->orderBy('activity_id', 'ASC')
+            ->get()->getResultArray();
+
+        // หน้าที่พิเศษดิบทั้งหมด (tb_teaching_schedule_duty)
+        $duties = $this->dbAcademic->table('tb_teaching_schedule_duty')
+            ->where('teacher_id', $teacherId)
+            ->where('year', $year)
+            ->where('term', $term)
+            ->orderBy('duty_order', 'ASC')
+            ->get()->getResultArray();
+
+        return [
+            'teacher'    => $teacher,
+            'group'      => $group,
+            'year'       => $year,
+            'term'       => $term,
+            'year_term'  => "{$term}/{$year}",
+            'schedules'  => $schedules,
+            'activities' => $activities,
+            'duties'     => $duties
+        ];
+    }
+
+    /**
+     * เพิ่มหรืออัปเดตรายวิชาสอนใน tb_teaching_schedule
+     */
+    public function saveTeachingScheduleItem(array $data)
+    {
+        $scheduleId = !empty($data['schedule_id']) ? (int)$data['schedule_id'] : null;
+        unset($data['schedule_id']);
+
+        if ($scheduleId) {
+            $this->dbAcademic->table('tb_teaching_schedule')
+                ->where('schedule_id', $scheduleId)
+                ->update($data);
+            return $scheduleId;
+        } else {
+            $this->dbAcademic->table('tb_teaching_schedule')->insert($data);
+            return $this->dbAcademic->insertID();
+        }
+    }
+
+    /**
+     * ลบรายวิชาสอนใน tb_teaching_schedule
+     */
+    public function deleteTeachingScheduleItem(int $scheduleId)
+    {
+        return $this->dbAcademic->table('tb_teaching_schedule')
+            ->where('schedule_id', $scheduleId)
+            ->delete();
+    }
+
+    /**
+     * เพิ่มหรืออัปเดตกิจกรรมใน tb_teaching_schedule_activity
+     */
+    public function saveActivityItem(array $data)
+    {
+        $activityId = !empty($data['activity_id']) ? (int)$data['activity_id'] : null;
+        unset($data['activity_id']);
+
+        if ($activityId) {
+            $this->dbAcademic->table('tb_teaching_schedule_activity')
+                ->where('activity_id', $activityId)
+                ->update($data);
+            return $activityId;
+        } else {
+            $this->dbAcademic->table('tb_teaching_schedule_activity')->insert($data);
+            return $this->dbAcademic->insertID();
+        }
+    }
+
+    /**
+     * ลบกิจกรรมใน tb_teaching_schedule_activity
+     */
+    public function deleteActivityItem(int $activityId)
+    {
+        return $this->dbAcademic->table('tb_teaching_schedule_activity')
+            ->where('activity_id', $activityId)
+            ->delete();
+    }
+
+    /**
+     * เพิ่มหรืออัปเดตหน้าที่พิเศษใน tb_teaching_schedule_duty
+     */
+    public function saveDutyItem(array $data)
+    {
+        $dutyId = !empty($data['duty_id']) ? (int)$data['duty_id'] : null;
+        unset($data['duty_id']);
+
+        if ($dutyId) {
+            $this->dbAcademic->table('tb_teaching_schedule_duty')
+                ->where('duty_id', $dutyId)
+                ->update($data);
+            return $dutyId;
+        } else {
+            $this->dbAcademic->table('tb_teaching_schedule_duty')->insert($data);
+            return $this->dbAcademic->insertID();
+        }
+    }
+
+    /**
+     * ลบหน้าที่พิเศษใน tb_teaching_schedule_duty
+     */
+    public function deleteDutyItem(int $dutyId)
+    {
+        return $this->dbAcademic->table('tb_teaching_schedule_duty')
+            ->where('duty_id', $dutyId)
+            ->delete();
+    }
 }
+
 
