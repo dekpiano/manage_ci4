@@ -3,6 +3,168 @@
 <?= $this->section('content') ?>
 
 <style>
+    /* === Modern Modal Styles & SweetAlert2 High Layering === */
+    .swal2-container,
+    .swal2-highest-zindex {
+        z-index: 999999 !important;
+    }
+    
+    /* Smooth modern dialog pop-in */
+    .modal.fade .modal-dialog {
+        transform: scale(0.96);
+        transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease-out;
+    }
+    .modal.show .modal-dialog {
+        transform: scale(1);
+    }
+
+    /* Glassmorphism modal backdrop */
+    .modal-backdrop {
+        background-color: rgba(15, 23, 42, 0.65) !important;
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+    }
+
+    .room-pill-btn {
+        font-size: 0.82rem;
+        font-weight: 600;
+        border-radius: 50rem;
+        padding: 0.3rem 0.85rem;
+        border: 1px solid #cbd5e1;
+        background: #ffffff;
+        color: #475569;
+        cursor: pointer;
+        transition: all 0.15s ease-in-out;
+        user-select: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+    .room-pill-btn:hover {
+        border-color: #15a362;
+        color: #15a362;
+        background: #f0fdf4;
+        transform: translateY(-1px);
+    }
+    .room-pill-btn.active {
+        background: #15a362 !important;
+        border-color: #15a362 !important;
+        color: #ffffff !important;
+        box-shadow: 0 2px 8px rgba(21, 163, 98, 0.35);
+        transform: translateY(-1px);
+    }
+    /* === Modern Search Box & Dropdown Styling === */
+    .search-input-group {
+        border-radius: 12px;
+        overflow: hidden;
+        border: 2px solid #cbd5e1;
+        transition: all 0.2s ease-in-out;
+        background: #ffffff;
+    }
+    .search-input-group:focus-within {
+        border-color: #15a362 !important;
+        box-shadow: 0 0 0 4px rgba(21, 163, 98, 0.2) !important;
+    }
+    .search-input-group input:focus {
+        box-shadow: none !important;
+    }
+
+    .search-suggest-dropdown {
+        position: absolute;
+        top: calc(100% + 6px);
+        left: 0;
+        right: 0;
+        width: 100%;
+        min-width: 320px;
+        z-index: 100000 !important;
+        background: #ffffff !important;
+        border-radius: 14px;
+        border: 2px solid #15a362;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25), 0 4px 15px rgba(21, 163, 98, 0.15) !important;
+        max-height: 330px;
+        overflow-y: auto;
+        padding: 0;
+    }
+    .search-suggest-dropdown::-webkit-scrollbar {
+        width: 6px;
+    }
+    .search-suggest-dropdown::-webkit-scrollbar-thumb {
+        background: #a7f3d0;
+        border-radius: 10px;
+    }
+    .search-suggest-dropdown::-webkit-scrollbar-thumb:hover {
+        background: #15a362;
+    }
+
+    .search-dropdown-header {
+        background: #f8fafc;
+        border-bottom: 1px solid #e2e8f0;
+        padding: 0.5rem 0.85rem;
+        font-size: 0.78rem;
+        font-weight: 700;
+        color: #475569;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+
+    .search-suggest-item {
+        padding: 0.65rem 1rem !important;
+        border-left: 4px solid transparent;
+        transition: all 0.15s ease-in-out;
+        border-bottom: 1px solid #f1f5f9;
+        text-decoration: none !important;
+        display: block;
+        background: #ffffff;
+        cursor: pointer;
+    }
+    .search-suggest-item:last-child {
+        border-bottom: none;
+    }
+    .search-suggest-item:hover,
+    .search-suggest-item:focus {
+        background-color: #f0fdf4 !important;
+        border-left-color: #15a362 !important;
+    }
+
+    .modal-form-card {
+        border-radius: 16px;
+        border: 1px solid #e2e8f0;
+        background: #ffffff;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+        overflow: hidden;
+        margin-bottom: 1rem;
+        transition: border-color 0.2s;
+    }
+    .modal-form-card:hover {
+        border-color: #cbd5e1;
+    }
+    .modal-form-card-header {
+        background: #ffffff;
+        padding: 0.75rem 1.15rem;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    .nav-pills-emerald .nav-link {
+        color: #475569;
+        font-weight: 600;
+        border-radius: 50rem;
+        padding: 0.55rem 1.25rem;
+        transition: all 0.2s;
+    }
+    .nav-pills-emerald .nav-link.active {
+        background-color: #15a362 !important;
+        color: #ffffff !important;
+        box-shadow: 0 4px 12px rgba(21, 163, 98, 0.35) !important;
+    }
+    .nav-pills-emerald .nav-link:hover:not(.active) {
+        background-color: #f0fdf4;
+        color: #15a362;
+    }
+
     :root {
         --primary-emerald: #15a362;
         --dark-emerald: #0d6d41;
@@ -288,7 +450,7 @@
     }
 
     .swal2-container {
-        z-index: 9999 !important;
+        z-index: 999999 !important;
     }
 </style>
 
@@ -563,7 +725,7 @@
 <!-- ========================================== -->
 <!-- Modal: รายละเอียดภาระงานสอนรายบุคคล (ดีไซน์โมเดิร์น สัดส่วนลงตัว) -->
 <!-- ========================================== -->
-<div class="modal fade animate__animated animate__fadeIn" id="modalTeacherScheduleDetail" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="modalTeacherScheduleDetail" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content shadow-lg border-0" style="border-radius: 20px; overflow: hidden;">
             
@@ -774,27 +936,27 @@
 <!-- ========================================== -->
 <!-- Modal: จัดการและแก้ไขตารางสอนกลุ่มของครู (Edit Teacher Schedule Modal) -->
 <!-- ========================================== -->
-<div class="modal fade animate__animated animate__fadeIn" id="modalEditTeacherSchedule" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+<div class="modal fade" id="modalEditTeacherSchedule" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
     <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content shadow-lg border-0" style="border-radius: 20px; overflow: hidden;">
             
-            <!-- Modal Header -->
-            <div class="modal-header px-4 py-3 border-0 text-white" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);">
+            <!-- Modal Header (Modern Emerald Gradient with Status Badge) -->
+            <div class="modal-header modal-teaching-header px-4 py-3 border-0 text-white">
                 <div class="d-flex align-items-center gap-3">
-                    <img id="edit-m-teacher-img" src="https://skj.ac.th/uploads/logo/LogoSKJ_4.png" alt="ครูผู้สอน" class="modal-avatar-lg shadow-sm" style="border-color: #f59e0b;">
+                    <img id="edit-m-teacher-img" src="https://skj.ac.th/uploads/logo/LogoSKJ_4.png" alt="ครูผู้สอน" class="modal-avatar-lg shadow-sm" style="border: 3px solid rgba(255,255,255,0.9);">
                     <div>
-                        <div class="d-flex align-items-center gap-2 mb-1">
+                        <div class="d-flex align-items-center flex-wrap gap-2 mb-1">
                             <h4 class="fw-bold text-white mb-0" id="edit-m-teacher-name">จัดการและแก้ไขตารางสอนครู</h4>
-                            <span class="badge rounded-pill fw-bold px-3 py-1 bg-warning text-dark shadow-xs" style="font-size: 0.75rem;">
-                                <i class="bx bx-edit-alt me-1"></i> โหมดแก้ไข
+                            <span class="badge rounded-pill fw-bold px-3 py-1 bg-warning text-dark shadow-xs" style="font-size: 0.78rem;">
+                                <i class="bx bx-edit-alt me-1"></i> โหมดจัดการตารางสอน
                             </span>
                         </div>
-                        <div class="d-flex align-items-center flex-wrap gap-2 text-white text-opacity-75 small">
+                        <div class="d-flex align-items-center flex-wrap gap-2 text-white text-opacity-90 small">
                             <span id="edit-m-teacher-position"><i class="bx bx-briefcase me-1"></i>ตำแหน่ง</span>
                             <span>•</span>
                             <span id="edit-m-teacher-group"><i class="bx bx-category me-1"></i>กลุ่มสาระ</span>
                             <span>•</span>
-                            <span class="badge bg-white text-dark rounded-pill px-2 py-0" id="edit-m-teacher-term">ภาคเรียนที่ -</span>
+                            <span class="badge bg-white text-emerald rounded-pill px-3 py-1 fw-bold" id="edit-m-teacher-term">ภาคเรียนที่ -</span>
                         </div>
                     </div>
                 </div>
@@ -804,24 +966,24 @@
             <!-- Modal Body -->
             <div class="modal-body p-4" style="background-color: #f8fafc;">
                 
-                <!-- Nav Tabs (Sneat modern pills) -->
-                <ul class="nav nav-pills nav-fill mb-4 bg-white p-2 rounded-4 shadow-2xs border" id="editScheduleTab" role="tablist">
+                <!-- Nav Tabs (Modern Emerald Pills) -->
+                <ul class="nav nav-pills nav-fill nav-pills-emerald mb-4 bg-white p-2 rounded-4 shadow-sm border" id="editScheduleTab" role="tablist">
                     <li class="nav-item" role="presentation">
                         <button class="nav-link active rounded-pill fw-bold d-flex align-items-center justify-content-center gap-2 py-2" id="tab-schedules-btn" data-bs-toggle="pill" data-bs-target="#tab-edit-schedules" type="button" role="tab">
                             <i class="bx bx-book-open fs-5"></i> 1. ตารางสอนรายวิชา
-                            <span class="badge rounded-pill bg-success text-white px-2 py-1" id="badge-edit-sched-count">0</span>
+                            <span class="badge rounded-pill bg-white text-emerald px-2 py-1 shadow-2xs fw-bold" id="badge-edit-sched-count">0</span>
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link rounded-pill fw-bold d-flex align-items-center justify-content-center gap-2 py-2 text-secondary" id="tab-activities-btn" data-bs-toggle="pill" data-bs-target="#tab-edit-activities" type="button" role="tab">
+                        <button class="nav-link rounded-pill fw-bold d-flex align-items-center justify-content-center gap-2 py-2" id="tab-activities-btn" data-bs-toggle="pill" data-bs-target="#tab-edit-activities" type="button" role="tab">
                             <i class="bx bx-run fs-5"></i> 2. กิจกรรมพัฒนาผู้เรียน
-                            <span class="badge rounded-pill bg-info text-white px-2 py-1" id="badge-edit-act-count">0</span>
+                            <span class="badge rounded-pill bg-info text-white px-2 py-1 shadow-2xs" id="badge-edit-act-count">0</span>
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link rounded-pill fw-bold d-flex align-items-center justify-content-center gap-2 py-2 text-secondary" id="tab-duties-btn" data-bs-toggle="pill" data-bs-target="#tab-edit-duties" type="button" role="tab">
+                        <button class="nav-link rounded-pill fw-bold d-flex align-items-center justify-content-center gap-2 py-2" id="tab-duties-btn" data-bs-toggle="pill" data-bs-target="#tab-edit-duties" type="button" role="tab">
                             <i class="bx bx-task fs-5"></i> 3. หน้าที่พิเศษ / คำสั่ง
-                            <span class="badge rounded-pill bg-warning text-dark px-2 py-1" id="badge-edit-duty-count">0</span>
+                            <span class="badge rounded-pill bg-warning text-dark px-2 py-1 shadow-2xs" id="badge-edit-duty-count">0</span>
                         </button>
                     </li>
                 </ul>
@@ -845,92 +1007,7 @@
                             </button>
                         </div>
 
-                        <!-- Collapsible Form: เพิ่ม/แก้ไขรายวิชา -->
-                        <div class="card border border-2 border-success rounded-4 shadow-sm mb-4 d-none" id="card-schedule-form">
-                            <div class="card-header bg-success text-white py-2 px-3 d-flex align-items-center justify-content-between">
-                                <span class="fw-bold small" id="form-schedule-title"><i class="bx bx-edit me-1"></i> แบบฟอร์มรายวิชาสอน</span>
-                                <button type="button" class="btn-close btn-close-white btn-sm" id="btn-close-schedule-form"></button>
-                            </div>
-                            <div class="card-body p-3 bg-white">
-                                <form id="formTeachingSchedule">
-                                    <input type="hidden" name="schedule_id" id="f_sch_id" value="">
-                                    <input type="hidden" name="teacher_id" id="f_sch_teacher_id" value="">
-                                    <input type="hidden" name="subject_id" id="f_sch_subject_id" value="">
-                                    <input type="hidden" name="year" id="f_sch_year" value="">
-                                    <input type="hidden" name="term" id="f_sch_term" value="">
-
-                                    <div class="row g-2 mb-2">
-                                        <div class="col-md-3">
-                                            <label class="form-label small fw-bold text-dark mb-1">รหัสวิชา <span class="text-danger">*</span></label>
-                                            <div class="input-group input-group-sm">
-                                                <input type="text" class="form-control fw-bold" name="subject_code" id="f_sch_code" placeholder="เช่น ว30284" required autocomplete="off">
-                                                <button class="btn btn-outline-secondary" type="button" id="btn-search-subject" title="ค้นหาจากคลังวิชา"><i class="bx bx-search"></i></button>
-                                            </div>
-                                            <div id="subject-search-results" class="list-group position-absolute shadow-lg d-none" style="z-index: 1050; max-height: 200px; overflow-y: auto; width: 300px;"></div>
-                                        </div>
-                                        <div class="col-md-5">
-                                            <label class="form-label small fw-bold text-dark mb-1">ชื่อวิชา <span class="text-danger">*</span></label>
-                                            <input type="text" class="form-control form-control-sm fw-medium" name="subject_name" id="f_sch_name" placeholder="ชื่อรายวิชา" required>
-                                        </div>
-                                        <div class="col-md-2">
-                                            <label class="form-label small fw-bold text-dark mb-1">ประเภทวิชา</label>
-                                            <select class="form-select form-select-sm" name="subject_type" id="f_sch_type">
-                                                <option value="พื้นฐาน">พื้นฐาน</option>
-                                                <option value="เพิ่มเติม">เพิ่มเติม</option>
-                                            </select>
-                                        </div>
-                                        <div class="col-md-2">
-                                            <label class="form-label small fw-bold text-dark mb-1">ระดับชั้น</label>
-                                            <select class="form-select form-select-sm" name="grade_level" id="f_sch_grade">
-                                                <option value="ม.1">ม.1</option>
-                                                <option value="ม.2">ม.2</option>
-                                                <option value="ม.3">ม.3</option>
-                                                <option value="ม.4">ม.4</option>
-                                                <option value="ม.5">ม.5</option>
-                                                <option value="ม.6">ม.6</option>
-                                            </select>
-                                        </div>
-                                    </div>
-
-                                    <div class="row g-2 mb-2">
-                                        <div class="col-md-2">
-                                            <label class="form-label small fw-bold text-dark mb-1">ห้องเรียน</label>
-                                            <input type="text" class="form-control form-control-sm text-center fw-bold" name="room" id="f_sch_room" placeholder="เช่น 1 หรือ 2">
-                                        </div>
-                                        <div class="col-md-2">
-                                            <label class="form-label small fw-bold text-dark mb-1">หน่วยกิต</label>
-                                            <input type="number" step="0.5" class="form-control form-control-sm text-center fw-bold" name="credit" id="f_sch_credit" placeholder="1.0" value="1.0">
-                                        </div>
-                                        <div class="col-md-2">
-                                            <label class="form-label small fw-bold text-dark mb-1">คาบ/สัปดาห์</label>
-                                            <input type="number" class="form-control form-control-sm text-center fw-bold text-success" name="hours_per_week" id="f_sch_hours" placeholder="2" value="2">
-                                        </div>
-                                        <div class="col-md-2">
-                                            <label class="form-label small fw-bold text-dark mb-1">คาบรวมทั้งเทอม</label>
-                                            <input type="number" class="form-control form-control-sm text-center" name="total_hours" id="f_sch_total_hours" placeholder="40" value="40">
-                                        </div>
-                                        <div class="col-md-4">
-                                            <label class="form-label small fw-bold text-dark mb-1">แผนการเรียน</label>
-                                            <input type="text" class="form-control form-control-sm" name="study_plan" id="f_sch_plan" placeholder="เช่น วิทย์-คณิต, SMT(T)">
-                                        </div>
-                                    </div>
-
-                                    <div class="row g-2 mb-3">
-                                        <div class="col-12">
-                                            <label class="form-label small fw-bold text-dark mb-1">หมายเหตุ</label>
-                                            <input type="text" class="form-control form-control-sm" name="remark" id="f_sch_remark" placeholder="หมายเหตุเพิ่มเติม (ถ้ามี)">
-                                        </div>
-                                    </div>
-
-                                    <div class="d-flex justify-content-end gap-2 border-top pt-2">
-                                        <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3" id="btn-cancel-schedule-form">ยกเลิก</button>
-                                        <button type="submit" class="btn btn-sm btn-emerald rounded-pill px-4 fw-bold shadow-xs">
-                                            <i class="bx bx-save me-1"></i> บันทึกข้อมูลรายวิชา
-                                        </button>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
+ 
 
                         <!-- Schedules Table -->
                         <div class="card border rounded-4 overflow-hidden shadow-2xs bg-white">
@@ -974,52 +1051,7 @@
                             </button>
                         </div>
 
-                        <!-- Collapsible Form: เพิ่ม/แก้ไขกิจกรรม -->
-                        <div class="card border border-2 border-info rounded-4 shadow-sm mb-4 d-none" id="card-activity-form">
-                            <div class="card-header bg-info text-white py-2 px-3 d-flex align-items-center justify-content-between">
-                                <span class="fw-bold small" id="form-activity-title"><i class="bx bx-edit me-1"></i> แบบฟอร์มกิจกรรมพัฒนาผู้เรียน</span>
-                                <button type="button" class="btn-close btn-close-white btn-sm" id="btn-close-activity-form"></button>
-                            </div>
-                            <div class="card-body p-3 bg-white">
-                                <form id="formTeachingActivity">
-                                    <input type="hidden" name="activity_id" id="f_act_id" value="">
-                                    <input type="hidden" name="teacher_id" id="f_act_teacher_id" value="">
-                                    <input type="hidden" name="year" id="f_act_year" value="">
-                                    <input type="hidden" name="term" id="f_act_term" value="">
-
-                                    <div class="row g-2 mb-2">
-                                        <div class="col-md-5">
-                                            <label class="form-label small fw-bold text-dark mb-1">ชื่อกิจกรรม <span class="text-danger">*</span></label>
-                                            <input type="text" class="form-control form-control-sm" name="activity_name" id="f_act_name" placeholder="เช่น แนะแนว, ลูกเสือ-เนตรนารี, ชุมนุม" required>
-                                        </div>
-                                        <div class="col-md-2">
-                                            <label class="form-label small fw-bold text-dark mb-1">ระดับชั้น</label>
-                                            <input type="text" class="form-control form-control-sm" name="grade_level" id="f_act_grade" placeholder="เช่น ม.1">
-                                        </div>
-                                        <div class="col-md-2">
-                                            <label class="form-label small fw-bold text-dark mb-1">ห้อง</label>
-                                            <input type="text" class="form-control form-control-sm text-center" name="room" id="f_act_room" placeholder="เช่น 1 หรือ ทุกห้อง">
-                                        </div>
-                                        <div class="col-md-3">
-                                            <label class="form-label small fw-bold text-dark mb-1">คาบ/สัปดาห์</label>
-                                            <input type="number" class="form-control form-control-sm text-center fw-bold" name="hours_per_week" id="f_act_hours" placeholder="1" value="1">
-                                        </div>
-                                    </div>
-                                    <div class="row g-2 mb-3">
-                                        <div class="col-12">
-                                            <label class="form-label small fw-bold text-dark mb-1">หมายเหตุ</label>
-                                            <input type="text" class="form-control form-control-sm" name="remark" id="f_act_remark" placeholder="หมายเหตุเพิ่มเติม">
-                                        </div>
-                                    </div>
-                                    <div class="d-flex justify-content-end gap-2 border-top pt-2">
-                                        <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3" id="btn-cancel-activity-form">ยกเลิก</button>
-                                        <button type="submit" class="btn btn-sm btn-info text-white rounded-pill px-4 fw-bold shadow-xs">
-                                            <i class="bx bx-save me-1"></i> บันทึกกิจกรรม
-                                        </button>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
+ 
 
                         <!-- Activities Table -->
                         <div class="card border rounded-4 overflow-hidden shadow-2xs bg-white">
@@ -1059,38 +1091,7 @@
                             </button>
                         </div>
 
-                        <!-- Collapsible Form: เพิ่ม/แก้ไขหน้าที่พิเศษ -->
-                        <div class="card border border-2 border-warning rounded-4 shadow-sm mb-4 d-none" id="card-duty-form">
-                            <div class="card-header bg-warning text-dark py-2 px-3 d-flex align-items-center justify-content-between">
-                                <span class="fw-bold small" id="form-duty-title"><i class="bx bx-edit me-1"></i> แบบฟอร์มหน้าที่พิเศษ</span>
-                                <button type="button" class="btn-close btn-sm" id="btn-close-duty-form"></button>
-                            </div>
-                            <div class="card-body p-3 bg-white">
-                                <form id="formTeachingDuty">
-                                    <input type="hidden" name="duty_id" id="f_duty_id" value="">
-                                    <input type="hidden" name="teacher_id" id="f_duty_teacher_id" value="">
-                                    <input type="hidden" name="year" id="f_duty_year" value="">
-                                    <input type="hidden" name="term" id="f_duty_term" value="">
-
-                                    <div class="row g-2 mb-2">
-                                        <div class="col-md-9">
-                                            <label class="form-label small fw-bold text-dark mb-1">ชื่องาน / คำสั่งหน้าที่พิเศษ <span class="text-danger">*</span></label>
-                                            <input type="text" class="form-control form-control-sm" name="duty_name" id="f_duty_name" placeholder="เช่น ปฏิบัติหน้าที่หัวหน้างานกลุ่มบริหารงานบุคคล" required>
-                                        </div>
-                                        <div class="col-md-3">
-                                            <label class="form-label small fw-bold text-dark mb-1">ลำดับการแสดงผล</label>
-                                            <input type="number" class="form-control form-control-sm text-center" name="duty_order" id="f_duty_order" placeholder="1" value="1">
-                                        </div>
-                                    </div>
-                                    <div class="d-flex justify-content-end gap-2 border-top pt-2">
-                                        <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3" id="btn-cancel-duty-form">ยกเลิก</button>
-                                        <button type="submit" class="btn btn-sm btn-warning text-dark rounded-pill px-4 fw-bold shadow-xs">
-                                            <i class="bx bx-save me-1"></i> บันทึกหน้าที่พิเศษ
-                                        </button>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
+ 
 
                         <!-- Duties Table -->
                         <div class="card border rounded-4 overflow-hidden shadow-2xs bg-white">
@@ -1129,6 +1130,388 @@
     </div>
 </div>
 
+<!-- ========================================== -->
+<!-- Modal 1: แบบฟอร์มเพิ่ม/แก้ไขรายวิชาสอน (Modern UX/UI) -->
+<!-- ========================================== -->
+<div class="modal fade" id="modalEditSubject" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content shadow-lg border-0" style="border-radius: 20px;">
+            
+            <!-- Modal Header (Emerald Modern Gradient) -->
+            <div class="modal-header px-4 py-3 border-0 text-white" style="background: linear-gradient(135deg, #15a362 0%, #0d6d41 100%); border-top-left-radius: 20px; border-top-right-radius: 20px;">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="avatar avatar-md rounded-circle bg-white bg-opacity-20 d-flex align-items-center justify-content-center text-white shadow-xs">
+                        <i class="bx bx-book-bookmark fs-3"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold text-white mb-0" id="title-modal-subject">แบบฟอร์มรายวิชาสอน</h5>
+                        <small class="text-white text-opacity-75">กำหนดข้อมูลรายวิชา ห้องเรียน และแผนการเรียนสำหรับจัดตารางสอน</small>
+                    </div>
+                </div>
+                <button type="button" class="btn-close btn-close-white btn-back-to-schedule-modal" aria-label="Close"></button>
+            </div>
+
+            <!-- Form -->
+            <form id="formTeachingSchedule">
+                <div class="modal-body p-4" style="background-color: #f8fafc; overflow: visible !important;">
+                    <input type="hidden" name="schedule_id" id="f_sch_id" value="">
+                    <input type="hidden" name="teacher_id" id="f_sch_teacher_id" value="">
+                    <input type="hidden" name="subject_id" id="f_sch_subject_id" value="">
+                    <input type="hidden" name="year" id="f_sch_year" value="">
+                    <input type="hidden" name="term" id="f_sch_term" value="">
+
+                    <!-- การ์ด 1: ข้อมูลรายวิชา (ดึงจากคลังวิชา) -->
+                    <div class="card border rounded-4 shadow-sm mb-3 bg-white" style="overflow: visible !important;">
+                        <div class="card-header bg-white py-2 px-3 border-bottom d-flex align-items-center justify-content-between flex-wrap gap-2" style="border-top-left-radius: 16px; border-top-right-radius: 16px;">
+                            <span class="fw-bold text-dark small d-flex align-items-center">
+                                <i class="bx bx-book-content text-success fs-5 me-1"></i> 1. ค้นหาและระบุรายวิชา (จากคลังวิชา)
+                            </span>
+                            <span class="badge bg-label-danger small rounded-pill">
+                                <i class="bx bx-lock-alt me-1"></i> ข้อมูลวิชาส่วนกลาง (ห้ามแก้ไขโดยตรง)
+                            </span>
+                        </div>
+                        <div class="card-body p-3" style="overflow: visible !important; position: relative;">
+                            <!-- แถบค้นหาจากคลังวิชา ดีไซน์โมเดิร์น โดดเด่น ชัดเจน มองเห็นดร๊อปดาวน์แน่นอน 100% -->
+                            <div class="subject-search-wrapper mb-3 position-relative" style="z-index: 1050;">
+                                <label class="form-label small fw-bold text-dark mb-1 d-flex align-items-center justify-content-between">
+                                    <span class="d-flex align-items-center gap-1">
+                                        <i class="bx bx-search-alt text-success fs-5"></i>
+                                        <span class="text-dark fw-bold">ดึงจากคลังวิชา</span>
+                                        <span class="badge bg-success text-white px-2 py-0 ms-1" style="font-size: 0.72rem;">ค้นหาด่วน</span>
+                                    </span>
+                                    <small class="text-muted fw-normal"><i class="bx bx-info-circle text-info me-1"></i>คลิกหรือพิมพ์เพื่อเลือกวิชา</small>
+                                </label>
+                                <div class="input-group search-input-group shadow-sm">
+                                    <span class="input-group-text bg-white border-end-0 text-success pe-2">
+                                        <i class="bx bx-search fs-5"></i>
+                                    </span>
+                                    <input type="text" class="form-control border-start-0 border-end-0 ps-1 fw-bold text-dark" 
+                                           id="f_sch_search_box" 
+                                           placeholder="คลิกหรือพิมพ์รหัสวิชา / ชื่อวิชา เช่น ว30284, ฟิสิกส์, ท21101..." 
+                                           autocomplete="off"
+                                           style="font-size: 0.95rem; color: #0d6d41; cursor: pointer;">
+                                    <span class="input-group-text bg-white border-start-0 border-end-0 px-2 d-none" id="sch-search-spinner">
+                                        <div class="spinner-border spinner-border-sm text-success" role="status" style="width: 1rem; height: 1rem;"></div>
+                                    </span>
+                                    <button class="btn btn-outline-secondary bg-white border-start-0 border-end-0 px-2 text-muted" type="button" id="btn-clear-subject-search" title="ล้างข้อความ">
+                                        <i class="bx bx-x fs-5"></i>
+                                    </button>
+                                    <button class="btn btn-emerald bg-success text-white border-start-0 px-3 fw-semibold d-flex align-items-center gap-1" type="button" id="btn-toggle-subject-dropdown" title="เปิด/ปิด รายการวิชา">
+                                        <span class="d-none d-sm-inline small">เลือกวิชา</span>
+                                        <i class="bx bx-chevron-down fs-5"></i>
+                                    </button>
+                                </div>
+
+                                <!-- แถบแสดงวิชาที่เลือกปัจจุบัน (Selected Subject Banner) -->
+                                <div id="sch-selected-banner" class="mt-2 p-2 px-3 rounded-3 border border-success-subtle bg-success-subtle d-none d-flex align-items-center justify-content-between flex-wrap gap-2">
+                                    <div class="d-flex align-items-center flex-wrap gap-2">
+                                        <span class="badge bg-success text-white font-monospace fs-6" id="banner-sub-code"></span>
+                                        <span class="fw-bold text-dark" id="banner-sub-name"></span>
+                                        <span class="badge bg-white text-dark border" id="banner-sub-grade"></span>
+                                        <span class="badge bg-label-success" id="banner-sub-type"></span>
+                                        <span class="small text-muted" id="banner-sub-details"></span>
+                                    </div>
+                                    <span class="badge bg-success text-white small"><i class="bx bx-check me-1"></i>ดึงข้อมูลแล้ว</span>
+                                </div>
+
+                                <!-- Dropdown รายการผลลัพธ์ -->
+                                <div id="subject-search-results" class="search-suggest-dropdown shadow-lg d-none"></div>
+                            </div>
+
+                            <!-- แถวที่ 1: รหัสวิชา, ชื่อวิชา, ประเภทวิชา (ล็อค แก้ไขไม่ได้) -->
+                            <div class="row g-2 mb-2">
+                                <div class="col-md-3 col-12">
+                                    <label class="form-label small fw-semibold text-secondary mb-1">
+                                        <i class="bx bx-lock-alt text-muted me-1"></i> รหัสวิชา <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" class="form-control form-control-sm fw-bold text-center bg-light text-dark" name="subject_code" id="f_sch_code" placeholder="รหัสวิชา" readonly required style="cursor: not-allowed;">
+                                </div>
+                                <div class="col-md-6 col-12">
+                                    <label class="form-label small fw-semibold text-secondary mb-1">
+                                        <i class="bx bx-lock-alt text-muted me-1"></i> ชื่อวิชา <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" class="form-control form-control-sm fw-medium bg-light text-dark" name="subject_name" id="f_sch_name" placeholder="ชื่อรายวิชา" readonly required style="cursor: not-allowed;">
+                                </div>
+                                <div class="col-md-3 col-12">
+                                    <label class="form-label small fw-semibold text-secondary mb-1">
+                                        <i class="bx bx-lock-alt text-muted me-1"></i> ประเภทวิชา
+                                    </label>
+                                    <input type="text" class="form-control form-control-sm text-center bg-light text-dark fw-semibold" name="subject_type" id="f_sch_type" placeholder="พื้นฐาน / เพิ่มเติม" readonly style="cursor: not-allowed;">
+                                </div>
+                            </div>
+
+                            <!-- แถวที่ 2: ระดับชั้น, หน่วยกิต, คาบ/สัปดาห์, รวมคาบ (ล็อค แก้ไขไม่ได้) -->
+                            <div class="row g-2">
+                                <div class="col-md-3 col-6">
+                                    <label class="form-label small fw-semibold text-secondary mb-1">
+                                        <i class="bx bx-lock-alt text-muted me-1"></i> ระดับชั้น
+                                    </label>
+                                    <input type="text" class="form-control form-control-sm text-center bg-light text-dark fw-bold" name="grade_level" id="f_sch_grade" placeholder="ม.1 - ม.6" readonly style="cursor: not-allowed;">
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <label class="form-label small fw-semibold text-secondary mb-1">
+                                        <i class="bx bx-lock-alt text-muted me-1"></i> หน่วยกิต
+                                    </label>
+                                    <input type="number" step="0.5" class="form-control form-control-sm text-center bg-light text-dark fw-bold" name="credit" id="f_sch_credit" placeholder="1.0" readonly style="cursor: not-allowed;">
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <label class="form-label small fw-semibold text-secondary mb-1">
+                                        <i class="bx bx-lock-alt text-muted me-1"></i> คาบ/สัปดาห์
+                                    </label>
+                                    <input type="number" class="form-control form-control-sm text-center bg-light text-success fw-bold" name="hours_per_week" id="f_sch_hours" placeholder="2" readonly style="cursor: not-allowed;">
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <label class="form-label small fw-semibold text-secondary mb-1">
+                                        <i class="bx bx-lock-alt text-muted me-1"></i> รวมคาบทั้งเทอม
+                                    </label>
+                                    <input type="number" class="form-control form-control-sm text-center bg-light text-muted" name="total_hours" id="f_sch_total_hours" placeholder="40" readonly style="cursor: not-allowed;">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- การ์ด 2: กำหนดห้องเรียนและแผนการเรียน (ส่วนที่ต้องกรอก) -->
+                    <div class="card border rounded-4 shadow-2xs mb-2 overflow-hidden bg-white">
+                        <div class="card-header bg-white py-2 px-3 border-bottom d-flex align-items-center justify-content-between flex-wrap gap-2">
+                            <span class="fw-bold text-dark small d-flex align-items-center">
+                                <i class="bx bx-door-open text-primary fs-5 me-1"></i> 2. กำหนดห้องเรียนและแผนการเรียน
+                            </span>
+                            <!-- Quick Selection Buttons -->
+                            <div class="btn-group btn-group-sm" role="group">
+                                <button type="button" class="btn btn-xs btn-outline-primary btn-quick-room-range" data-range="1-6" title="เลือกห้อง 1 ถึง 6">ห้อง 1-6</button>
+                                <button type="button" class="btn btn-xs btn-outline-primary btn-quick-room-range" data-range="all" title="เลือกทุกห้อง 1 ถึง 12">ห้อง 1-12</button>
+                                <button type="button" class="btn btn-xs btn-outline-secondary btn-quick-room-range" data-range="clear" title="ล้างการเลือก">ล้าง</button>
+                            </div>
+                        </div>
+                        <div class="card-body p-3">
+                            <!-- ปุ่มคลิกเลือกห้องแบบ Pills -->
+                            <div class="mb-2">
+                                <label class="form-label small fw-bold text-dark mb-1 d-flex align-items-center justify-content-between">
+                                    <span><i class="bx bx-select-multiple text-primary me-1"></i> คลิกเลือกห้องเรียน:</span>
+                                    <small class="text-muted fw-normal">คลิกเพื่อเปิด/ปิดห้องได้ทันที</small>
+                                </label>
+                                <div class="d-flex flex-wrap gap-1" id="room-pills-container">
+                                    <?php for ($r = 1; $r <= 12; $r++): ?>
+                                        <button type="button" class="room-pill-btn" data-room="<?= $r ?>">ห้อง <?= $r ?></button>
+                                    <?php endfor; ?>
+                                </div>
+                            </div>
+
+                            <!-- ช่องกรอกห้องเรียนจริง & Real-time Badges -->
+                            <div class="mb-3">
+                                <div class="input-group input-group-sm mb-1">
+                                    <span class="input-group-text bg-light text-muted border-end-0 py-1" style="font-size: 0.8rem;">
+                                        <i class="bx bx-pencil me-1"></i> ระบุห้อง:
+                                    </span>
+                                    <input type="text" class="form-control form-control-sm border-start-0 ps-1 fw-bold text-primary" name="room" id="f_sch_room" placeholder="เช่น 1, 2, 3 หรือ 1-6" required>
+                                </div>
+                                <div id="preview-selected-rooms" class="d-flex flex-wrap align-items-center gap-1 mt-1"></div>
+                            </div>
+
+                            <!-- แผนการเรียน & หมายเหตุ -->
+                            <div class="row g-2">
+                                <div class="col-md-6 col-12">
+                                    <label class="form-label small fw-semibold text-secondary mb-1">
+                                        <i class="bx bx-git-branch text-primary me-1"></i> แผนการเรียน <span class="text-danger">*</span>
+                                    </label>
+                                    <select class="form-select form-select-sm" name="study_plan" id="f_sch_plan">
+                                        <option value="-- ตามแผนของแต่ละห้องอัตโนมัติ (จากฐานข้อมูล) --">-- ตามแผนของแต่ละห้องอัตโนมัติ (จากฐานข้อมูล) [แนะนำ] --</option>
+                                        <optgroup label="แผนวิทย์-คณิต-เทคโนโลยี">
+                                            <option value="SMT(S)">SMT(S) - วิทย์-คณิต-เทคโนโลยี (สสวท.)</option>
+                                            <option value="SMT(T)">SMT(T) - วิทย์-คณิต-เทคโนโลยี (สพฐ.)</option>
+                                        </optgroup>
+                                        <optgroup label="แผนภาษาต่างประเทศ">
+                                            <option value="CEP">CEP - Creative English Program (ภาษาอังกฤษ)</option>
+                                        </optgroup>
+                                        <optgroup label="แผนการงานอาชีพ">
+                                            <option value="CP">CP - Career Program (การงานอาชีพ)</option>
+                                        </optgroup>
+                                        <optgroup label="แผนเตรียมวิชาการ / ศิลปกรรม (Pre-Academic Program)">
+                                            <option value="PAP1">PAP1</option>
+                                            <option value="PAP2">PAP2</option>
+                                            <option value="PAP3">PAP3</option>
+                                            <option value="PAP4">PAP4</option>
+                                        </optgroup>
+                                        <optgroup label="แผนส่งเสริมความเป็นเลิศด้านกีฬา (Sport Program)">
+                                            <option value="SP1">SP1</option>
+                                            <option value="SP2">SP2</option>
+                                            <option value="SP3">SP3</option>
+                                            <option value="SP4">SP4</option>
+                                            <option value="กรีฑา">กรีฑา</option>
+                                            <option value="Extreme">Extreme</option>
+                                        </optgroup>
+                                        <optgroup label="แผนทั่วไป">
+                                            <option value="GENERAL">GENERAL - แผนทั่วไป</option>
+                                        </optgroup>
+                                    </select>
+                                    <div id="plan-multi-room-hint" class="d-none"></div>
+                                    <small class="text-muted d-block mt-1" id="plan-single-room-hint" style="font-size: 0.72rem;">
+                                        <i class="bx bx-info-circle me-1"></i>ระบบจะดึงแผนของห้องให้อัตโนมัติ (หรือระบุแผนเจาะจงได้)
+                                    </small>
+                                </div>
+                                <div class="col-md-6 col-12">
+                                    <label class="form-label small fw-semibold text-secondary mb-1">
+                                        <i class="bx bx-comment-detail text-muted me-1"></i> หมายเหตุ <small class="text-muted">(ถ้ามี)</small>
+                                    </label>
+                                    <input type="text" class="form-control form-control-sm" name="remark" id="f_sch_remark" placeholder="เช่น ห้องเรียนพิเศษ, สอนร่วม, ฯลฯ">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Modal Footer -->
+                <div class="modal-footer px-4 py-3 bg-white border-top d-flex justify-content-between align-items-center">
+                    <button type="button" class="btn btn-label-secondary rounded-pill px-4 btn-back-to-schedule-modal">
+                        <i class="bx bx-arrow-back me-1"></i> ยกเลิก / ย้อนกลับ
+                    </button>
+                    <button type="submit" class="btn btn-emerald rounded-pill px-4 fw-bold shadow-sm" id="btn-save-subject-sch">
+                        <i class="bx bx-save me-1"></i> บันทึกข้อมูลรายวิชา
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================== -->
+<!-- Modal 2: แบบฟอร์มเพิ่ม/แก้ไขกิจกรรมพัฒนาผู้เรียน (Modern UX/UI) -->
+<!-- ========================================== -->
+<div class="modal fade" id="modalEditActivity" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content shadow-lg border-0" style="border-radius: 20px; overflow: hidden;">
+            <div class="modal-header px-4 py-3 border-0 text-white" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="avatar avatar-md rounded-circle bg-white bg-opacity-20 d-flex align-items-center justify-content-center text-white shadow-xs">
+                        <i class="bx bx-run fs-3"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold text-white mb-0" id="title-modal-activity">แบบฟอร์มกิจกรรมพัฒนาผู้เรียน</h5>
+                        <small class="text-white text-opacity-75">จัดการกิจกรรม เช่น ชุมนุม ลูกเสือ แนะแนว PLC โฮมรูม</small>
+                    </div>
+                </div>
+                <button type="button" class="btn-close btn-close-white btn-back-to-schedule-modal" aria-label="Close"></button>
+            </div>
+            <form id="formTeachingActivity">
+                <div class="modal-body p-4" style="background-color: #f8fafc;">
+                    <input type="hidden" name="activity_id" id="f_act_id" value="">
+                    <input type="hidden" name="teacher_id" id="f_act_teacher_id" value="">
+                    <input type="hidden" name="year" id="f_act_year" value="">
+                    <input type="hidden" name="term" id="f_act_term" value="">
+
+                    <!-- Preset Quick Add Chips -->
+                    <div class="card border border-info mb-3 bg-white rounded-3 shadow-2xs">
+                        <div class="card-body p-2 d-flex flex-wrap align-items-center gap-1">
+                            <span class="small fw-bold text-info me-1"><i class="bx bx-bolt-circle me-1"></i>เลือกด่วน:</span>
+                            <button type="button" class="btn btn-xs btn-outline-info rounded-pill quick-act-btn" data-name="สวนกุหลาบศึกษา" data-hours="1">+ สวนกุหลาบศึกษา (1 ชม.)</button>
+                            <button type="button" class="btn btn-xs btn-outline-info rounded-pill quick-act-btn" data-name="ชุมนุม" data-hours="2">+ ชุมนุม (2 ชม.)</button>
+                            <button type="button" class="btn btn-xs btn-outline-info rounded-pill quick-act-btn" data-name="ลูกเสือ-เนตรนารี" data-hours="1">+ ลูกเสือ (1 ชม.)</button>
+                            <button type="button" class="btn btn-xs btn-outline-info rounded-pill quick-act-btn" data-name="PLC" data-hours="2">+ PLC (2 ชม.)</button>
+                            <button type="button" class="btn btn-xs btn-outline-info rounded-pill quick-act-btn" data-name="โฮมรูม" data-hours="1">+ โฮมรูม (1 ชม.)</button>
+                            <button type="button" class="btn btn-xs btn-outline-info rounded-pill quick-act-btn" data-name="แนะแนว" data-hours="1">+ แนะแนว (1 ชม.)</button>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-dark mb-1">ชื่อกิจกรรม <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control form-control-sm fw-semibold" name="activity_name" id="f_act_name" placeholder="เช่น แนะแนว, ลูกเสือ-เนตรนารี, ชุมนุม, PLC" required>
+                    </div>
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-4">
+                            <label class="form-label small fw-bold text-dark mb-1">ระดับชั้น</label>
+                            <input type="text" class="form-control form-control-sm text-center" name="grade_level" id="f_act_grade" placeholder="เช่น ม.1 หรือ -">
+                        </div>
+                        <div class="col-4">
+                            <label class="form-label small fw-bold text-dark mb-1">ห้อง</label>
+                            <input type="text" class="form-control form-control-sm text-center" name="room" id="f_act_room" placeholder="เช่น 1 หรือ ทุกห้อง">
+                        </div>
+                        <div class="col-4">
+                            <label class="form-label small fw-bold text-dark mb-1">คาบ/สัปดาห์ <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control form-control-sm text-center fw-bold text-info" name="hours_per_week" id="f_act_hours" placeholder="1" value="1" required>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="form-label small fw-bold text-dark mb-1">หมายเหตุ</label>
+                        <input type="text" class="form-control form-control-sm" name="remark" id="f_act_remark" placeholder="หมายเหตุเพิ่มเติม (ถ้ามี)">
+                    </div>
+                </div>
+
+                <div class="modal-footer px-4 py-3 bg-white border-top d-flex justify-content-between align-items-center">
+                    <button type="button" class="btn btn-label-secondary rounded-pill px-4 btn-back-to-schedule-modal">
+                        <i class="bx bx-arrow-back me-1"></i> ยกเลิก / ย้อนกลับ
+                    </button>
+                    <button type="submit" class="btn btn-info text-white rounded-pill px-4 fw-bold shadow-sm">
+                        <i class="bx bx-save me-1"></i> บันทึกกิจกรรม
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================== -->
+<!-- Modal 3: แบบฟอร์มเพิ่ม/แก้ไขหน้าที่พิเศษ (Modern UX/UI) -->
+<!-- ========================================== -->
+<div class="modal fade" id="modalEditDuty" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content shadow-lg border-0" style="border-radius: 20px; overflow: hidden;">
+            <div class="modal-header px-4 py-3 border-0 text-dark" style="background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%);">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="avatar avatar-md rounded-circle bg-white bg-opacity-30 d-flex align-items-center justify-content-center text-dark shadow-xs">
+                        <i class="bx bx-task fs-3"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold text-dark mb-0" id="title-modal-duty">แบบฟอร์มหน้าที่พิเศษ / คำสั่ง</h5>
+                        <small class="text-dark text-opacity-75">หน้าที่พิเศษตามคำสั่งโรงเรียนที่มอบหมายให้ครู</small>
+                    </div>
+                </div>
+                <button type="button" class="btn-close btn-close-white btn-back-to-schedule-modal" aria-label="Close"></button>
+            </div>
+            <form id="formTeachingDuty">
+                <div class="modal-body p-4" style="background-color: #f8fafc;">
+                    <input type="hidden" name="duty_id" id="f_duty_id" value="">
+                    <input type="hidden" name="teacher_id" id="f_duty_teacher_id" value="">
+                    <input type="hidden" name="year" id="f_duty_year" value="">
+                    <input type="hidden" name="term" id="f_duty_term" value="">
+
+                    <!-- Preset Quick Add Chips -->
+                    <div class="card border border-warning mb-3 bg-white rounded-3 shadow-2xs">
+                        <div class="card-body p-2 d-flex flex-wrap align-items-center gap-1">
+                            <span class="small fw-bold text-warning text-dark me-1"><i class="bx bx-bolt-circle me-1"></i>เลือกด่วน:</span>
+                            <button type="button" class="btn btn-xs btn-outline-warning text-dark rounded-pill quick-duty-btn" data-name="หัวหน้ากลุ่มสาระฯ">+ หัวหน้ากลุ่มสาระฯ</button>
+                            <button type="button" class="btn btn-xs btn-outline-warning text-dark rounded-pill quick-duty-btn" data-name="ครูที่ปรึกษา">+ ครูที่ปรึกษา</button>
+                            <button type="button" class="btn btn-xs btn-outline-warning text-dark rounded-pill quick-duty-btn" data-name="ครูเวรประจำวัน">+ ครูเวรประจำวัน</button>
+                            <button type="button" class="btn btn-xs btn-outline-warning text-dark rounded-pill quick-duty-btn" data-name="ปฏิบัติหน้าที่หัวหน้างาน...">+ หัวหน้างาน...</button>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-dark mb-1">ชื่องาน / คำสั่งหน้าที่พิเศษ <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control form-control-sm fw-medium" name="duty_name" id="f_duty_name" placeholder="เช่น ปฏิบัติหน้าที่หัวหน้างานกลุ่มบริหารงานบุคคล" required>
+                    </div>
+
+                    <div>
+                        <label class="form-label small fw-bold text-dark mb-1">ลำดับความสำคัญ / การเรียง</label>
+                        <input type="number" class="form-control form-control-sm text-center" name="duty_order" id="f_duty_order" placeholder="1" value="1">
+                    </div>
+                </div>
+
+                <div class="modal-footer px-4 py-3 bg-white border-top d-flex justify-content-between align-items-center">
+                    <button type="button" class="btn btn-label-secondary rounded-pill px-4 btn-back-to-schedule-modal">
+                        <i class="bx bx-arrow-back me-1"></i> ยกเลิก / ย้อนกลับ
+                    </button>
+                    <button type="submit" class="btn btn-warning text-dark rounded-pill px-4 fw-bold shadow-sm">
+                        <i class="bx bx-save me-1"></i> บันทึกหน้าที่พิเศษ
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <?= $this->endSection() ?>
 
 <?= $this->section('script') ?>
@@ -1140,6 +1523,70 @@ $(document).ready(function() {
     let currentEditingTeacherId = null;
     let hasDataModified = false;
     let cachedTeacherRawData = null;
+    let isModalSwitching = false;
+
+    // === Helper: สลับ Modal อย่างราบรื่นและปลอดภัย (ป้องกัน Backdrop ค้าง / จอมืด 100%) ===
+    function switchModal(hideModalSelector, showModalSelector, callbackBeforeShow) {
+        const $hideModal = $(hideModalSelector);
+        const $showModal = $(showModalSelector);
+
+        // ป้องกัน Accessibility error โดยปลด focus ก่อน modal ซ่อน
+        if (document.activeElement) {
+            document.activeElement.blur();
+        }
+
+        isModalSwitching = true;
+        $('body').addClass('modal-switching');
+
+        if ($hideModal && $hideModal.length && $hideModal.hasClass('show')) {
+            $hideModal.one('hidden.bs.modal', function() {
+                // ล้าง backdrop เก่าที่อาจตกค้าง
+                $('.modal-backdrop').remove();
+                $('body').removeClass('modal-open').css({ overflow: '', paddingRight: '' });
+
+                if (typeof callbackBeforeShow === 'function') {
+                    callbackBeforeShow();
+                }
+
+                setTimeout(function() {
+                    if ($showModal && $showModal.length) {
+                        $showModal.modal('show');
+                    }
+                }, 50);
+            });
+            $hideModal.modal('hide');
+        } else {
+            $('.modal-backdrop').remove();
+            $('body').removeClass('modal-open').css({ overflow: '', paddingRight: '' });
+
+            if (typeof callbackBeforeShow === 'function') {
+                callbackBeforeShow();
+            }
+            if ($showModal && $showModal.length) {
+                $showModal.modal('show');
+            }
+        }
+    }
+
+    $(document).on('shown.bs.modal', function() {
+        isModalSwitching = false;
+        $('body').removeClass('modal-switching');
+    });
+
+    $(document).on('hidden.bs.modal', function() {
+        setTimeout(function() {
+            if (!isModalSwitching && $('.modal.show').length === 0) {
+                $('.modal-backdrop').remove();
+                $('body').removeClass('modal-open modal-switching').css({ overflow: '', paddingRight: '' });
+            }
+        }, 150);
+    });
+
+    // ปุ่มย้อนกลับ/ปิดใน Sub-modals เพื่อสลับกลับไปยัง Modal จัดการตารางสอนหลัก
+    $(document).on('click', '.btn-back-to-schedule-modal', function() {
+        const $currentModal = $(this).closest('.modal');
+        switchModal('#' + $currentModal.attr('id'), '#modalEditTeacherSchedule');
+    });
 
     // Toast Notification helper using SweetAlert2
     const Toast = Swal.mixin({
@@ -1225,10 +1672,15 @@ $(document).ready(function() {
     // 4. Click "แก้ไขตารางสอน" จากปุ่มใน Modal รายละเอียด
     $('#btn-modal-open-edit').on('click', function() {
         if (!currentEditingTeacherId) return;
-        $('#modalTeacherScheduleDetail').modal('hide');
-        setTimeout(() => {
-            openEditTeacherScheduleModal(currentEditingTeacherId);
-        }, 300);
+        switchModal('#modalTeacherScheduleDetail', '#modalEditTeacherSchedule', function() {
+            hasDataModified = false;
+            hideAllEditForms();
+            $('#edit-m-teacher-name').text('กำลังโหลดข้อมูล...');
+            $('#tbody-edit-schedules').html('<tr><td colspan="11" class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm text-success me-2"></div>กำลังโหลดรายวิชา...</td></tr>');
+            $('#tbody-edit-activities').html('<tr><td colspan="8" class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm text-info me-2"></div>กำลังโหลดกิจกรรม...</td></tr>');
+            $('#tbody-edit-duties').html('<tr><td colspan="3" class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm text-warning me-2"></div>กำลังโหลดหน้าที่พิเศษ...</td></tr>');
+            loadTeacherRawData(currentEditingTeacherId);
+        });
     });
 
     // 5. Click "แก้ไข" Button จากตารางรายชื่อครูโดยตรง
@@ -1361,68 +1813,110 @@ $(document).ready(function() {
         $('#tbody-edit-schedules').html(html);
     }
 
-    // แสดงฟอร์มเพิ่มรายวิชา
-    $('#btn-show-add-schedule').on('click', function() {
-        resetScheduleForm();
-        $('#form-schedule-title').html('<i class="bx bx-plus-circle me-1"></i> เพิ่มรายวิชาสอนใหม่');
-        $('#card-schedule-form').removeClass('d-none');
-        $('html, body, #modalEditTeacherSchedule .modal-body').animate({
-            scrollTop: $('#card-schedule-form').offset().top - 100
-        }, 200);
-        $('#f_sch_code').focus();
-    });
-
-    $('#btn-close-schedule-form, #btn-cancel-schedule-form').on('click', function() {
-        $('#card-schedule-form').addClass('d-none');
-        resetScheduleForm();
-    });
-
-    function resetScheduleForm() {
-        $('#formTeachingSchedule')[0].reset();
-        $('#f_sch_id').value = '';
-        $('#f_sch_id').val('');
-        $('#f_sch_subject_id').val('');
-        $('#f_sch_teacher_id').val(currentEditingTeacherId);
-        $('#f_sch_year').val(activeYear);
-        $('#f_sch_term').val(activeTerm);
-        $('#f_sch_type').val('พื้นฐาน');
-        $('#f_sch_credit').val('1.0');
-        $('#f_sch_hours').val('2');
-        $('#f_sch_total_hours').val('40');
-        $('#subject-search-results').addClass('d-none').empty();
+    // === Room Pills & Range Selection (เหมือนระบบครู) ===
+    function parseRooms(roomStr) {
+        if (!roomStr) return [];
+        let clean = String(roomStr).replace(/\s+/g, '');
+        let parts = clean.split(',');
+        let results = [];
+        parts.forEach(p => {
+            if (p.includes('-')) {
+                let range = p.split('-');
+                let start = parseInt(range[0], 10);
+                let end = parseInt(range[1], 10);
+                if (!isNaN(start) && !isNaN(end)) {
+                    for (let i = start; i <= end; i++) {
+                        results.push(String(i));
+                    }
+                }
+            } else if (p) {
+                results.push(p);
+            }
+        });
+        return [...new Set(results)].sort((a, b) => {
+            let na = parseInt(a, 10), nb = parseInt(b, 10);
+            if (!isNaN(na) && !isNaN(nb)) return na - nb;
+            return a.localeCompare(b);
+        });
     }
 
-    // คลิกแก้ไขรายวิชาในตาราง
-    $(document).on('click', '.btn-edit-sch-item', function() {
-        const schId = $(this).data('id');
-        if (!cachedTeacherRawData || !cachedTeacherRawData.schedules) return;
+    function updateRoomPillsUI() {
+        const val = $('#f_sch_room').val().trim();
+        const selected = parseRooms(val);
 
-        const item = cachedTeacherRawData.schedules.find(x => x.schedule_id == schId);
-        if (!item) return;
+        $('.room-pill-btn').each(function() {
+            const r = String($(this).data('room'));
+            if (selected.includes(r)) {
+                $(this).addClass('active');
+            } else {
+                $(this).removeClass('active');
+            }
+        });
 
-        $('#f_sch_id').val(item.schedule_id);
-        $('#f_sch_teacher_id').val(currentEditingTeacherId);
-        $('#f_sch_subject_id').val(item.subject_id || '');
-        $('#f_sch_year').val(activeYear);
-        $('#f_sch_term').val(activeTerm);
-        $('#f_sch_code').val(item.subject_code);
-        $('#f_sch_name').val(item.subject_name);
-        $('#f_sch_type').val(item.subject_type || 'พื้นฐาน');
-        $('#f_sch_grade').val(item.grade_level || 'ม.1');
-        $('#f_sch_room').val(item.room || '');
-        $('#f_sch_credit').val(item.credit || '1.0');
-        $('#f_sch_hours').val(item.hours_per_week || '2');
-        $('#f_sch_total_hours').val(item.total_hours || '40');
-        $('#f_sch_plan').val(item.study_plan || '');
-        $('#f_sch_remark').val(item.remark || '');
+        // Update preview badges
+        let previewHtml = '';
+        if (selected.length > 0) {
+            selected.forEach(r => {
+                previewHtml += `<span class="badge bg-emerald text-white rounded-pill px-2 py-1 shadow-2xs me-1" style="font-size: 0.75rem;">ห้อง ${r}</span>`;
+            });
+            previewHtml += `<span class="text-muted small ms-1">(รวม ${selected.length} ห้อง)</span>`;
+        } else {
+            previewHtml = '<span class="text-muted small"><i class="bx bx-info-circle me-1"></i>ยังไม่ได้เลือกห้องเรียน</span>';
+        }
+        $('#preview-selected-rooms').html(previewHtml);
 
-        $('#form-schedule-title').html(`<i class="bx bx-edit me-1"></i> แก้ไขรายวิชา: ${item.subject_code} ${item.subject_name}`);
-        $('#card-schedule-form').removeClass('d-none');
-        
-        $('html, body, #modalEditTeacherSchedule .modal-body').animate({
-            scrollTop: $('#card-schedule-form').offset().top - 100
-        }, 200);
-        $('#f_sch_name').focus();
+        // กรณีเลือกห้องเรียนมากกว่า 1 ห้อง: ไม่ต้องเก็บแผนการเรียน
+        if (selected.length > 1) {
+            $('#f_sch_plan').val('').prop('disabled', true);
+            $('#plan-single-room-hint').addClass('d-none');
+            $('#plan-multi-room-hint').html(`
+                <span class="badge bg-label-warning text-dark border d-flex align-items-center gap-1 mt-1 p-2 rounded-2" style="font-size: 0.74rem;">
+                    <i class="bx bx-info-circle text-warning fs-6"></i>
+                    <span>เลือก ${selected.length} ห้อง: ระบบจะไม่เก็บแผนการเรียน (ปล่อยว่างอัตโนมัติ)</span>
+                </span>
+            `).removeClass('d-none');
+        } else {
+            $('#f_sch_plan').prop('disabled', false);
+            $('#plan-single-room-hint').removeClass('d-none');
+            $('#plan-multi-room-hint').empty().addClass('d-none');
+            if (!$('#f_sch_plan').val()) {
+                $('#f_sch_plan').val('-- ตามแผนของแต่ละห้องอัตโนมัติ (จากฐานข้อมูล) --');
+            }
+        }
+    }
+
+    // เมื่อพิมพ์ในช่องห้องเรียน
+    $('#f_sch_room').on('input', function() {
+        updateRoomPillsUI();
+    });
+
+    // เมื่อกดปุ่ม Room Pill
+    $(document).on('click', '.room-pill-btn', function() {
+        const roomNum = String($(this).data('room'));
+        let selected = parseRooms($('#f_sch_room').val());
+        if (selected.includes(roomNum)) {
+            selected = selected.filter(x => x !== roomNum);
+        } else {
+            selected.push(roomNum);
+        }
+        selected.sort((a, b) => parseInt(a) - parseInt(b));
+        $('#f_sch_room').val(selected.join(', '));
+        updateRoomPillsUI();
+    });
+
+    // เมื่อกดปุ่ม Quick Range (1-6, all, clear)
+    $(document).on('click', '.btn-quick-room-range', function() {
+        const range = $(this).data('range');
+        if (range === 'clear') {
+            $('#f_sch_room').val('');
+        } else if (range === '1-6') {
+            $('#f_sch_room').val('1, 2, 3, 4, 5, 6');
+        } else if (range === 'all') {
+            let allRooms = [];
+            for (let i = 1; i <= 12; i++) allRooms.push(i);
+            $('#f_sch_room').val(allRooms.join(', '));
+        }
+        updateRoomPillsUI();
     });
 
     // Auto-calculate Total Hours เมื่อเปลี่ยน Hours per week
@@ -1431,82 +1925,259 @@ $(document).ready(function() {
         $('#f_sch_total_hours').val(hpw * 20);
     });
 
-    // Auto-suggest รายวิชาจาก tb_subjects
+    $('#btn-show-add-schedule').on('click', function(e) {
+        $(this).blur();
+        switchModal('#modalEditTeacherSchedule', '#modalEditSubject', function() {
+            resetScheduleForm();
+            $('#title-modal-subject').html('<i class="bx bx-plus-circle me-1"></i> เพิ่มรายวิชาสอนใหม่');
+        });
+        setTimeout(() => { $('#f_sch_search_box').focus(); }, 400);
+    });
+
+    function resetScheduleForm() {
+        $('#formTeachingSchedule')[0].reset();
+        $('#f_sch_id').val('');
+        $('#f_sch_subject_id').val('');
+        $('#f_sch_teacher_id').val(currentEditingTeacherId);
+        $('#f_sch_year').val(activeYear);
+        $('#f_sch_term').val(activeTerm);
+        $('#f_sch_code').val('');
+        $('#f_sch_name').val('');
+        $('#f_sch_type').val('');
+        $('#f_sch_grade').val('');
+        $('#f_sch_credit').val('');
+        $('#f_sch_hours').val('');
+        $('#f_sch_total_hours').val('');
+        $('#f_sch_search_box').val('');
+        $('#f_sch_room').val('');
+        $('#f_sch_plan').val('-- ตามแผนของแต่ละห้องอัตโนมัติ (จากฐานข้อมูล) --');
+        $('#f_sch_remark').val('');
+        $('#sch-selected-banner').addClass('d-none');
+        $('#subject-search-results').addClass('d-none').empty();
+        updateRoomPillsUI();
+    }
+
+    // คลิกแก้ไขรายวิชาในตาราง
+    $(document).on('click', '.btn-edit-sch-item', function(e) {
+        $(this).blur();
+        const schId = $(this).data('id');
+        if (!cachedTeacherRawData || !cachedTeacherRawData.schedules) return;
+
+        const item = cachedTeacherRawData.schedules.find(x => x.schedule_id == schId);
+        if (!item) return;
+
+        switchModal('#modalEditTeacherSchedule', '#modalEditSubject', function() {
+            $('#f_sch_id').val(item.schedule_id);
+            $('#f_sch_teacher_id').val(currentEditingTeacherId);
+            $('#f_sch_subject_id').val(item.subject_id || '');
+            $('#f_sch_year').val(activeYear);
+            $('#f_sch_term').val(activeTerm);
+            $('#f_sch_code').val(item.subject_code);
+            $('#f_sch_name').val(item.subject_name);
+            $('#f_sch_type').val(item.subject_type || 'พื้นฐาน');
+            $('#f_sch_grade').val(item.grade_level || 'ม.1');
+            $('#f_sch_room').val(item.room || '');
+            $('#f_sch_credit').val(item.credit || '1.0');
+            $('#f_sch_hours').val(item.hours_per_week || '2');
+            $('#f_sch_total_hours').val(item.total_hours || (parseInt(item.hours_per_week || 2) * 20));
+            const planVal = item.study_plan || '-- ตามแผนของแต่ละห้องอัตโนมัติ (จากฐานข้อมูล) --';
+            if (planVal && $('#f_sch_plan').find(`option[value="${planVal}"]`).length === 0) {
+                $('#f_sch_plan').append(`<option value="${planVal}">${planVal}</option>`);
+            }
+            $('#f_sch_plan').val(planVal);
+            $('#f_sch_remark').val(item.remark || '');
+            $('#f_sch_search_box').val(`${item.subject_code} ${item.subject_name} (${item.grade_level || ''})`);
+            $('#title-modal-subject').html(`<i class="bx bx-edit me-1"></i> แก้ไขรายวิชา: ${item.subject_code} ${item.subject_name}`);
+
+            // แสดงแบนเนอร์วิชาที่เลือก
+            $('#banner-sub-code').text(item.subject_code);
+            $('#banner-sub-name').text(item.subject_name);
+            $('#banner-sub-grade').text(item.grade_level || 'ม.1');
+            $('#banner-sub-type').text(item.subject_type || 'พื้นฐาน');
+            $('#banner-sub-details').text(`(${item.credit || '1.0'} นก. | ${item.hours_per_week || '2'} คาบ/สัปดาห์ • รวม ${item.total_hours || (parseInt(item.hours_per_week || 2) * 20)} ชม.)`);
+            $('#sch-selected-banner').removeClass('d-none');
+
+            updateRoomPillsUI();
+        });
+        
+        setTimeout(() => { $('#f_sch_room').focus(); }, 400);
+    });
+
+    // ฟังก์ชันดึงและแสดงรายการวิชาจากคลัง (Ajax)
+    function fetchSubjectsList(queryText) {
+        $('#sch-search-spinner').removeClass('d-none');
+
+        $.ajax({
+            url: '<?= base_url('admin/academic/teaching-schedule/search-subjects') ?>',
+            type: 'GET',
+            data: { 
+                q: queryText || '',
+                year: activeYear,
+                term: activeTerm
+            },
+            dataType: 'json',
+            success: function(subjects) {
+                $('#sch-search-spinner').addClass('d-none');
+                if (!subjects || subjects.length === 0) {
+                    $('#subject-search-results').html(`
+                        <div class="search-dropdown-header">
+                            <span><i class="bx bx-book-bookmark me-1 text-success"></i>คลังรายวิชา (ภาคเรียนที่ ${activeTerm}/${activeYear})</span>
+                            <span class="text-danger">0 วิชา</span>
+                        </div>
+                        <div class="p-4 text-center text-muted small">
+                            <i class="bx bx-search-alt text-warning fs-2 mb-2 d-block"></i>
+                            ไม่พบรายวิชาที่ตรงกับคำค้นหา
+                            <div class="text-secondary mt-1">ลองพิมพ์เฉพาะรหัสวิชา เช่น ว30 หรือชื่อวิชา</div>
+                        </div>
+                    `).removeClass('d-none');
+                    return;
+                }
+
+                let resHtml = `
+                    <div class="search-dropdown-header">
+                        <span><i class="bx bx-book-bookmark me-1 text-success"></i>คลังรายวิชา (ภาคเรียนที่ ${activeTerm}/${activeYear})</span>
+                        <span class="badge bg-label-success rounded-pill">พบ ${subjects.length} รายวิชา (คลิกเพื่อเลือก)</span>
+                    </div>
+                `;
+
+                subjects.forEach(sub => {
+                    const sId = sub.id || sub.SubjectID || '';
+                    const sCode = sub.subject_code || sub.SubjectCode || '';
+                    const sName = sub.subject_name || sub.SubjectName || '';
+                    const sType = sub.subject_type || sub.SubjectType || 'พื้นฐาน';
+                    const sCredit = sub.credit || sub.SubjectUnit || '1.0';
+                    const sHpw = sub.hours_per_week || sub.SubjectHour || '2';
+                    const sTotalH = sub.total_hours || (parseInt(sHpw) * 20);
+                    const sClass = sub.grade_level || sub.SubjectClass || 'ม.1';
+
+                    resHtml += `
+                        <a href="javascript:void(0);" class="list-group-item list-group-item-action search-suggest-item item-suggest-subject py-2 px-3 border-bottom" 
+                           data-id="${sId}"
+                           data-code="${sCode}" 
+                           data-name="${sName}"
+                           data-type="${sType}"
+                           data-unit="${sCredit}"
+                           data-hour="${sHpw}"
+                           data-total-hours="${sTotalH}"
+                           data-class="${sClass}">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="badge bg-success text-white font-monospace px-2 py-1 fs-6">${sCode}</span>
+                                <div>
+                                    <span class="badge bg-white text-dark border me-1">${sClass}</span>
+                                    <span class="badge ${sType === 'เพิ่มเติม' ? 'bg-label-info' : 'bg-label-success'}">${sType}</span>
+                                </div>
+                            </div>
+                            <div class="small text-dark fw-bold text-truncate">${sName}</div>
+                            <div class="d-flex justify-content-between align-items-center mt-1 text-muted small" style="font-size: 0.78rem;">
+                                <span>หน่วยกิต: <b class="text-dark">${sCredit}</b> | คาบสอน: <b class="text-success">${sHpw} คาบ/สัปดาห์</b></span>
+                                <span class="badge bg-light text-secondary border">รวม ${sTotalH} ชม.</span>
+                            </div>
+                        </a>
+                    `;
+                });
+                $('#subject-search-results').html(resHtml).removeClass('d-none');
+            },
+            error: function() {
+                $('#sch-search-spinner').addClass('d-none');
+                $('#subject-search-results').html('<div class="p-3 text-center text-danger small"><i class="bx bx-error me-1"></i>ไม่สามารถโหลดรายวิชาได้</div>').removeClass('d-none');
+            }
+        });
+    }
+
+    // Auto-suggest เมื่อพิมพ์ค้นหา
     let searchTimer = null;
-    $('#f_sch_code').on('input', function() {
+    $('#f_sch_search_box').on('input', function() {
         const q = $(this).val().trim();
         clearTimeout(searchTimer);
-        if (q.length < 2) {
-            $('#subject-search-results').addClass('d-none').empty();
-            return;
-        }
-
         searchTimer = setTimeout(() => {
-            $.ajax({
-                url: '<?= base_url('admin/academic/teaching-schedule/search-subjects') ?>',
-                type: 'GET',
-                data: { q: q },
-                dataType: 'json',
-                success: function(subjects) {
-                    if (!subjects || subjects.length === 0) {
-                        $('#subject-search-results').addClass('d-none').empty();
-                        return;
-                    }
-                    let resHtml = '';
-                    subjects.forEach(sub => {
-                        resHtml += `
-                            <a href="javascript:void(0);" class="list-group-item list-group-item-action item-suggest-subject py-2" 
-                               data-id="${sub.SubjectID || ''}"
-                               data-code="${sub.SubjectCode}" 
-                               data-name="${sub.SubjectName}"
-                               data-type="${sub.SubjectType || 'พื้นฐาน'}"
-                               data-unit="${sub.SubjectUnit || '1.0'}"
-                               data-hour="${sub.SubjectHour || '2'}"
-                               data-class="${sub.SubjectClass || ''}">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <strong class="text-success font-monospace">${sub.SubjectCode}</strong>
-                                    <span class="badge bg-light text-dark border">${sub.SubjectType || 'พื้นฐาน'}</span>
-                                </div>
-                                <div class="small text-dark text-truncate">${sub.SubjectName}</div>
-                                <small class="text-muted">${sub.SubjectClass || ''} | ${sub.SubjectUnit || 0} หน่วยกิต (${sub.SubjectHour || 0} คาบ)</small>
-                            </a>
-                        `;
-                    });
-                    $('#subject-search-results').html(resHtml).removeClass('d-none');
-                }
-            });
-        }, 300);
+            fetchSubjectsList(q);
+        }, 200);
+    });
+
+    // แสดง Dropdown ทันทีเมื่อคลิกหรือ Focus ที่ช่องค้นหา
+    $('#f_sch_search_box').on('click focus', function() {
+        if ($('#subject-search-results').hasClass('d-none')) {
+            const q = $(this).val().trim();
+            fetchSubjectsList(q);
+        }
+    });
+
+    // ปุ่มเปิด/ปิด Dropdown รายการวิชา
+    $('#btn-toggle-subject-dropdown').on('click', function(e) {
+        e.stopPropagation();
+        if ($('#subject-search-results').hasClass('d-none')) {
+            const q = $('#f_sch_search_box').val().trim();
+            fetchSubjectsList(q);
+            $('#f_sch_search_box').focus();
+        } else {
+            $('#subject-search-results').addClass('d-none');
+        }
+    });
+
+    // ล้างข้อความค้นหาและค่าที่เลือก
+    $('#btn-clear-subject-search').on('click', function(e) {
+        e.stopPropagation();
+        $('#f_sch_search_box').val('').focus();
+        $('#f_sch_subject_id').val('');
+        $('#f_sch_code').val('');
+        $('#f_sch_name').val('');
+        $('#f_sch_type').val('');
+        $('#f_sch_grade').val('');
+        $('#f_sch_credit').val('');
+        $('#f_sch_hours').val('');
+        $('#f_sch_total_hours').val('');
+        $('#sch-selected-banner').addClass('d-none');
+        fetchSubjectsList('');
     });
 
     // เมื่อคลิกเลือกวิชาจาก Suggestion
     $(document).on('click', '.item-suggest-subject', function() {
-        const id = $(this).data('id');
-        const code = $(this).data('code');
-        const name = $(this).data('name');
-        const type = $(this).data('type');
-        const unit = $(this).data('unit');
-        const hour = $(this).data('hour');
+        const id     = $(this).data('id');
+        const code   = $(this).data('code');
+        const name   = $(this).data('name');
+        const type   = $(this).data('type');
+        const unit   = $(this).data('unit');
+        const hour   = $(this).data('hour');
         const sClass = $(this).data('class');
+        const totalH = $(this).data('total-hours');
 
         $('#f_sch_subject_id').val(id || '');
         $('#f_sch_code').val(code);
         $('#f_sch_name').val(name);
-        if (type) $('#f_sch_type').val(type);
-        if (unit) $('#f_sch_credit').val(unit);
-        if (hour) {
-            $('#f_sch_hours').val(hour);
-            $('#f_sch_total_hours').val(parseInt(hour) * 20);
-        }
-        if (sClass && sClass.startsWith('ม.')) {
-            $('#f_sch_grade').val(sClass);
-        }
+        $('#f_sch_type').val(type || 'พื้นฐาน');
+        $('#f_sch_grade').val(sClass || 'ม.1');
+        $('#f_sch_credit').val(unit || '1.0');
+        $('#f_sch_hours').val(hour || '2');
+        $('#f_sch_total_hours').val(totalH || (parseInt(hour || 2) * 20));
+        $('#f_sch_search_box').val(`${code} ${name} (${sClass})`);
 
-        $('#subject-search-results').addClass('d-none').empty();
+        // อัปเดตแบนเนอร์วิชาที่เลือก
+        $('#banner-sub-code').text(code);
+        $('#banner-sub-name').text(name);
+        $('#banner-sub-grade').text(sClass || 'ม.1');
+        $('#banner-sub-type').text(type || 'พื้นฐาน');
+        $('#banner-sub-details').text(`(${unit || '1.0'} นก. | ${hour || '2'} คาบ/สัปดาห์ • รวม ${totalH} ชม.)`);
+        $('#sch-selected-banner').removeClass('d-none');
+
+        $('#subject-search-results').addClass('d-none');
+
+        // Flash visual indication on populated fields
+        const $lockedFields = $('#f_sch_code, #f_sch_name, #f_sch_type, #f_sch_grade, #f_sch_credit, #f_sch_hours, #f_sch_total_hours');
+        $lockedFields.addClass('is-valid');
+        setTimeout(() => $lockedFields.removeClass('is-valid'), 1200);
+
+        // รีเฟรชปุ่มเลือกห้องตามระดับชั้น
+        updateRoomPillsUI();
+
+        // Move focus directly to room input
+        setTimeout(() => {
+            $('#f_sch_room').focus();
+        }, 150);
     });
 
     // ปิด Suggestion เมื่อคลิกด้านนอก
     $(document).on('click', function(e) {
-        if (!$(e.target).closest('#f_sch_code, #subject-search-results').length) {
+        if (!$(e.target).closest('.subject-search-wrapper').length) {
             $('#subject-search-results').addClass('d-none');
         }
     });
@@ -1514,7 +2185,15 @@ $(document).ready(function() {
     // ส่งฟอร์มบันทึกรายวิชา
     $('#formTeachingSchedule').on('submit', function(e) {
         e.preventDefault();
+        const $planInput = $('#f_sch_plan');
+        const wasDisabled = $planInput.prop('disabled');
+        if (wasDisabled) {
+            $planInput.prop('disabled', false);
+        }
         const formData = $(this).serialize();
+        if (wasDisabled) {
+            $planInput.prop('disabled', true);
+        }
 
         $.ajax({
             url: '<?= base_url('admin/academic/teaching-schedule/save-item') ?>',
@@ -1528,9 +2207,10 @@ $(document).ready(function() {
                         icon: 'success',
                         title: res.message || 'บันทึกรายวิชาเรียบร้อยแล้ว'
                     });
-                    $('#card-schedule-form').addClass('d-none');
-                    resetScheduleForm();
-                    loadTeacherRawData(currentEditingTeacherId);
+                    switchModal('#modalEditSubject', '#modalEditTeacherSchedule', function() {
+                        resetScheduleForm();
+                        loadTeacherRawData(currentEditingTeacherId);
+                    });
                 } else {
                     Swal.fire({
                         icon: 'error',
@@ -1639,16 +2319,13 @@ $(document).ready(function() {
         $('#tbody-edit-activities').html(html);
     }
 
-    $('#btn-show-add-activity').on('click', function() {
-        resetActivityForm();
-        $('#form-activity-title').html('<i class="bx bx-plus-circle me-1"></i> เพิ่มกิจกรรมใหม่');
-        $('#card-activity-form').removeClass('d-none');
-        $('#f_act_name').focus();
-    });
-
-    $('#btn-close-activity-form, #btn-cancel-activity-form').on('click', function() {
-        $('#card-activity-form').addClass('d-none');
-        resetActivityForm();
+    $('#btn-show-add-activity').on('click', function(e) {
+        $(this).blur();
+        switchModal('#modalEditTeacherSchedule', '#modalEditActivity', function() {
+            resetActivityForm();
+            $('#title-modal-activity').html('<i class="bx bx-plus-circle me-1"></i> เพิ่มกิจกรรมใหม่');
+        });
+        setTimeout(() => { $('#f_act_name').focus(); }, 400);
     });
 
     function resetActivityForm() {
@@ -1660,26 +2337,35 @@ $(document).ready(function() {
         $('#f_act_hours').val('1');
     }
 
-    $(document).on('click', '.btn-edit-act-item', function() {
+    // Quick Add Chips for Activity
+    $(document).on('click', '.quick-act-btn', function() {
+        const name = $(this).data('name');
+        const hours = $(this).data('hours');
+        $('#f_act_name').val(name);
+        $('#f_act_hours').val(hours);
+    });
+
+    $(document).on('click', '.btn-edit-act-item', function(e) {
+        $(this).blur();
         const actId = $(this).data('id');
         if (!cachedTeacherRawData || !cachedTeacherRawData.activities) return;
 
         const item = cachedTeacherRawData.activities.find(x => x.activity_id == actId);
         if (!item) return;
 
-        $('#f_act_id').val(item.activity_id);
-        $('#f_act_teacher_id').val(currentEditingTeacherId);
-        $('#f_act_year').val(activeYear);
-        $('#f_act_term').val(activeTerm);
-        $('#f_act_name').val(item.activity_name);
-        $('#f_act_grade').val(item.grade_level || '');
-        $('#f_act_room').val(item.room || '');
-        $('#f_act_hours').val(item.hours_per_week || '1');
-        $('#f_act_remark').val(item.remark || '');
-
-        $('#form-activity-title').html(`<i class="bx bx-edit me-1"></i> แก้ไขกิจกรรม: ${item.activity_name}`);
-        $('#card-activity-form').removeClass('d-none');
-        $('#f_act_name').focus();
+        switchModal('#modalEditTeacherSchedule', '#modalEditActivity', function() {
+            $('#f_act_id').val(item.activity_id);
+            $('#f_act_teacher_id').val(currentEditingTeacherId);
+            $('#f_act_year').val(activeYear);
+            $('#f_act_term').val(activeTerm);
+            $('#f_act_name').val(item.activity_name);
+            $('#f_act_grade').val(item.grade_level || '');
+            $('#f_act_room').val(item.room || '');
+            $('#f_act_hours').val(item.hours_per_week || '1');
+            $('#f_act_remark').val(item.remark || '');
+            $('#title-modal-activity').html(`<i class="bx bx-edit me-1"></i> แก้ไขกิจกรรม: ${item.activity_name}`);
+        });
+        setTimeout(() => { $('#f_act_name').focus(); }, 400);
     });
 
     $('#formTeachingActivity').on('submit', function(e) {
@@ -1695,9 +2381,10 @@ $(document).ready(function() {
                 if (res.status === 'success') {
                     hasDataModified = true;
                     Toast.fire({ icon: 'success', title: res.message || 'บันทึกกิจกรรมเรียบร้อยแล้ว' });
-                    $('#card-activity-form').addClass('d-none');
-                    resetActivityForm();
-                    loadTeacherRawData(currentEditingTeacherId);
+                    switchModal('#modalEditActivity', '#modalEditTeacherSchedule', function() {
+                        resetActivityForm();
+                        loadTeacherRawData(currentEditingTeacherId);
+                    });
                 } else {
                     Swal.fire({ icon: 'error', title: 'ผิดพลาด', text: res.message, customClass: { container: 'swal2-highest-zindex' } });
                 }
@@ -1774,16 +2461,13 @@ $(document).ready(function() {
         $('#tbody-edit-duties').html(html);
     }
 
-    $('#btn-show-add-duty').on('click', function() {
-        resetDutyForm();
-        $('#form-duty-title').html('<i class="bx bx-plus-circle me-1"></i> เพิ่มหน้าที่พิเศษใหม่');
-        $('#card-duty-form').removeClass('d-none');
-        $('#f_duty_name').focus();
-    });
-
-    $('#btn-close-duty-form, #btn-cancel-duty-form').on('click', function() {
-        $('#card-duty-form').addClass('d-none');
-        resetDutyForm();
+    $('#btn-show-add-duty').on('click', function(e) {
+        $(this).blur();
+        switchModal('#modalEditTeacherSchedule', '#modalEditDuty', function() {
+            resetDutyForm();
+            $('#title-modal-duty').html('<i class="bx bx-plus-circle me-1"></i> เพิ่มหน้าที่พิเศษใหม่');
+        });
+        setTimeout(() => { $('#f_duty_name').focus(); }, 400);
     });
 
     function resetDutyForm() {
@@ -1795,23 +2479,30 @@ $(document).ready(function() {
         $('#f_duty_order').val('1');
     }
 
-    $(document).on('click', '.btn-edit-duty-item', function() {
+    // Quick Add Chips for Duty
+    $(document).on('click', '.quick-duty-btn', function() {
+        const name = $(this).data('name');
+        $('#f_duty_name').val(name);
+    });
+
+    $(document).on('click', '.btn-edit-duty-item', function(e) {
+        $(this).blur();
         const dutyId = $(this).data('id');
         if (!cachedTeacherRawData || !cachedTeacherRawData.duties) return;
 
         const item = cachedTeacherRawData.duties.find(x => x.duty_id == dutyId);
         if (!item) return;
 
-        $('#f_duty_id').val(item.duty_id);
-        $('#f_duty_teacher_id').val(currentEditingTeacherId);
-        $('#f_duty_year').val(activeYear);
-        $('#f_duty_term').val(activeTerm);
-        $('#f_duty_name').val(item.duty_name);
-        $('#f_duty_order').val(item.duty_order || '1');
-
-        $('#form-duty-title').html(`<i class="bx bx-edit me-1"></i> แก้ไขหน้าที่พิเศษ`);
-        $('#card-duty-form').removeClass('d-none');
-        $('#f_duty_name').focus();
+        switchModal('#modalEditTeacherSchedule', '#modalEditDuty', function() {
+            $('#f_duty_id').val(item.duty_id);
+            $('#f_duty_teacher_id').val(currentEditingTeacherId);
+            $('#f_duty_year').val(activeYear);
+            $('#f_duty_term').val(activeTerm);
+            $('#f_duty_name').val(item.duty_name);
+            $('#f_duty_order').val(item.duty_order || '1');
+            $('#title-modal-duty').html(`<i class="bx bx-edit me-1"></i> แก้ไขหน้าที่พิเศษ`);
+        });
+        setTimeout(() => { $('#f_duty_name').focus(); }, 400);
     });
 
     $('#formTeachingDuty').on('submit', function(e) {
@@ -1827,9 +2518,10 @@ $(document).ready(function() {
                 if (res.status === 'success') {
                     hasDataModified = true;
                     Toast.fire({ icon: 'success', title: res.message || 'บันทึกหน้าที่พิเศษเรียบร้อยแล้ว' });
-                    $('#card-duty-form').addClass('d-none');
-                    resetDutyForm();
-                    loadTeacherRawData(currentEditingTeacherId);
+                    switchModal('#modalEditDuty', '#modalEditTeacherSchedule', function() {
+                        resetDutyForm();
+                        loadTeacherRawData(currentEditingTeacherId);
+                    });
                 } else {
                     Swal.fire({ icon: 'error', title: 'ผิดพลาด', text: res.message, customClass: { container: 'swal2-highest-zindex' } });
                 }

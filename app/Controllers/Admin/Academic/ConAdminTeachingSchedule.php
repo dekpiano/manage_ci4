@@ -307,6 +307,57 @@ class ConAdminTeachingSchedule extends BaseController
             ]);
         }
 
+        // ตรวจสอบจำนวนห้องเรียน: หากเลือกห้องเรียนมากกว่า 1 ห้อง ไม่ต้องเก็บแผนการเรียน
+        $cleanRoom = trim($room);
+        $expandedRooms = [];
+        if (mb_strpos($cleanRoom, 'ทั้งหมด') !== false || mb_strtolower($cleanRoom) === 'all') {
+            $expandedRooms = ['1', '2', '3', '4', '5', '6'];
+        } elseif (preg_match('/^(\d+)\s*-\s*(\d+)$/', $cleanRoom, $m)) {
+            $start = (int)$m[1];
+            $end   = (int)$m[2];
+            if ($start <= $end) {
+                for ($i = $start; $i <= $end; $i++) {
+                    $expandedRooms[] = (string)$i;
+                }
+            } else {
+                $expandedRooms = [$cleanRoom];
+            }
+        } elseif (strpos($cleanRoom, ',') !== false) {
+            $parts = explode(',', $cleanRoom);
+            foreach ($parts as $p) {
+                $p = trim($p);
+                if (!empty($p)) {
+                    if (preg_match('/^(\d+)\s*-\s*(\d+)$/', $p, $m)) {
+                        for ($i = (int)$m[1]; $i <= (int)$m[2]; $i++) {
+                            $expandedRooms[] = (string)$i;
+                        }
+                    } else {
+                        $expandedRooms[] = $p;
+                    }
+                }
+            }
+            $expandedRooms = array_values(array_unique($expandedRooms));
+        } else {
+            $expandedRooms = empty($cleanRoom) ? [] : [$cleanRoom];
+        }
+
+        // กรณีเลือกมากกว่า 1 ห้อง ไม่ต้องเก็บแผนการเรียน (บันทึกเป็น null)
+        if (count($expandedRooms) > 1) {
+            $studyPlan = null;
+        } elseif ($studyPlan === '-- ตามแผนของแต่ละห้องอัตโนมัติ (จากฐานข้อมูล) --') {
+            $mappedPlan = null;
+            if ($this->db->tableExists('tb_classroom_study_plans') && !empty($gradeLevel) && !empty($expandedRooms[0])) {
+                $cRow = $this->db->table('tb_classroom_study_plans')
+                    ->where('grade_level', $gradeLevel)
+                    ->where('room', $expandedRooms[0])
+                    ->get()->getRow();
+                if ($cRow && !empty($cRow->study_plan)) {
+                    $mappedPlan = trim($cRow->study_plan);
+                }
+            }
+            $studyPlan = $mappedPlan;
+        }
+
         $saveData = [
             'schedule_id'    => $scheduleId ? (int)$scheduleId : null,
             'teacher_id'     => $teacherId,
@@ -492,9 +543,6 @@ class ConAdminTeachingSchedule extends BaseController
     public function searchMasterSubjectsAjax()
     {
         $q = trim($this->request->getGet('q') ?? '');
-        if (empty($q)) {
-            return $this->response->setJSON([]);
-        }
 
         $parsed = parse_selected_year();
         $targetYear = $this->request->getGet('year') ?: ($parsed['year'] ?? null);
@@ -502,42 +550,84 @@ class ConAdminTeachingSchedule extends BaseController
         $targetSubjectYear = (!empty($targetTerm) && !empty($targetYear)) ? ($targetTerm . '/' . $targetYear) : null;
 
         $builder = $this->db->table('tb_subjects');
-        $builder->select('SubjectID, SubjectCode, SubjectName, SubjectUnit, SubjectHour, SubjectType, SubjectClass, SubjectYear');
+        $builder->select('MAX(SubjectID) as SubjectID, SubjectCode, SubjectName, SubjectUnit, SubjectHour, SubjectType, SubjectClass, SubjectYear', false);
 
         if (!empty($targetSubjectYear)) {
             $builder->where('SubjectYear', $targetSubjectYear);
         }
 
-        $builder->groupStart()
-            ->like('SubjectCode', $q)
-            ->orLike('SubjectName', $q)
-        ->groupEnd()
-        ->groupBy(['SubjectCode', 'SubjectName', 'SubjectClass', 'SubjectType', 'SubjectUnit', 'SubjectHour', 'SubjectYear'])
-        ->orderBy('SubjectCode', 'ASC')
-        ->limit(20);
-
-        $results = $builder->get()->getResult();
-
-        // Fallback: หากไม่พบในเทอมปัจจุบัน ให้ค้นหาจากหลักสูตรล่าสุด (Max SubjectID)
-        if (empty($results) && !empty($targetSubjectYear)) {
-            $subQuery = $this->db->table('tb_subjects')
-                ->select('MAX(SubjectID) as max_id')
-                ->groupStart()
-                    ->like('SubjectCode', $q)
-                    ->orLike('SubjectName', $q)
-                ->groupEnd()
-                ->groupBy('SubjectCode');
-
-            $results = $this->db->table('tb_subjects s')
-                ->select('s.SubjectID, s.SubjectCode, s.SubjectName, s.SubjectUnit, s.SubjectHour, s.SubjectType, s.SubjectClass, s.SubjectYear')
-                ->join("({$subQuery->getCompiledSelect()}) latest", 'latest.max_id = s.SubjectID')
-                ->orderBy('s.SubjectCode', 'ASC')
-                ->limit(20)
-                ->get()
-                ->getResult();
+        if (!empty($q)) {
+            $builder->groupStart()
+                ->like('SubjectCode', $q)
+                ->orLike('SubjectName', $q)
+            ->groupEnd();
         }
 
-        return $this->response->setJSON($results);
+        $builder->groupBy(['SubjectCode', 'SubjectName', 'SubjectClass', 'SubjectType', 'SubjectUnit', 'SubjectHour', 'SubjectYear'])
+        ->orderBy('SubjectCode', 'ASC')
+        ->limit(50);
+
+        $results = $builder->get()->getResultArray();
+
+        // Fallback: หากไม่พบในเทอมปัจจุบัน ให้ค้นหาจากหลักสูตรล่าสุด
+        if (empty($results) && !empty($targetSubjectYear)) {
+            $builderFallback = $this->db->table('tb_subjects');
+            $builderFallback->select('MAX(SubjectID) as SubjectID, SubjectCode, SubjectName, SubjectUnit, SubjectHour, SubjectType, SubjectClass, SubjectYear', false);
+            if (!empty($q)) {
+                $builderFallback->groupStart()
+                    ->like('SubjectCode', $q)
+                    ->orLike('SubjectName', $q)
+                ->groupEnd();
+            }
+            $builderFallback->groupBy(['SubjectCode', 'SubjectName', 'SubjectClass', 'SubjectType', 'SubjectUnit', 'SubjectHour', 'SubjectYear'])
+            ->orderBy("SUBSTRING_INDEX(SubjectYear, '/', -1) DESC, SUBSTRING_INDEX(SubjectYear, '/', 1) DESC, SubjectID DESC", '', false)
+            ->limit(50);
+
+            $results = $builderFallback->get()->getResultArray();
+        }
+
+        $formatted = [];
+        foreach ($results as $s) {
+            $rawType = $s['SubjectType'] ?? '';
+            $cleanType = 'พื้นฐาน';
+            if (mb_strpos($rawType, 'เพิ่มเติม') !== false) {
+                $cleanType = 'เพิ่มเติม';
+            } elseif (mb_strpos($rawType, 'กิจกรรม') !== false) {
+                $cleanType = 'กิจกรรมพัฒนาผู้เรียน';
+            }
+
+            $rawHour = (float)($s['SubjectHour'] ?? 0);
+            $hoursPerWeek = $rawHour > 0 ? (int)ceil($rawHour / 20) : 2;
+            $totalHours = $rawHour > 0 ? (int)$rawHour : ($hoursPerWeek * 20);
+
+            $gradeLevel = trim($s['SubjectClass'] ?? '');
+            if (!empty($gradeLevel) && !str_starts_with($gradeLevel, 'ม.')) {
+                $gradeLevel = 'ม.' . $gradeLevel;
+            }
+
+            $credit = (float)($s['SubjectUnit'] ?? 0);
+
+            $formatted[] = [
+                'id'             => $s['SubjectID'],
+                'SubjectID'      => $s['SubjectID'],
+                'subject_code'   => $s['SubjectCode'],
+                'SubjectCode'    => $s['SubjectCode'],
+                'subject_name'   => $s['SubjectName'],
+                'SubjectName'    => $s['SubjectName'],
+                'subject_type'   => $cleanType,
+                'SubjectType'    => $cleanType,
+                'credit'         => $credit > 0 ? $credit : 1.0,
+                'SubjectUnit'    => $credit > 0 ? $credit : 1.0,
+                'hours_per_week' => $hoursPerWeek,
+                'SubjectHour'    => $hoursPerWeek,
+                'total_hours'    => $totalHours,
+                'grade_level'    => $gradeLevel ?: 'ม.1',
+                'SubjectClass'   => $gradeLevel ?: 'ม.1',
+                'SubjectYear'    => $s['SubjectYear'] ?? ''
+            ];
+        }
+
+        return $this->response->setJSON($formatted);
     }
 
     /**
