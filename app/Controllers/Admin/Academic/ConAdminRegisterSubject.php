@@ -21,14 +21,16 @@ class ConAdminRegisterSubject extends BaseController
 
         // CI3 session check equivalent
         if (empty(session()->get('fullname'))) {
-            return redirect()->to(base_url('LogoutTeacher'));
+            redirect()->to(base_url('LogoutTeacher'))->send();
+            exit;
         }
 
         $check_status_data = $this->db->table('tb_admin_rloes')->where('admin_rloes_userid', session()->get('login_id'))->get()->getRow();
 
         if (empty($check_status_data) || (! in_array($check_status_data->admin_rloes_status, ["admin", "manager", "superadmin"]))) {
             session()->setFlashdata(['msg' => 'OK', 'messge' => 'คุณไม่มีสิทธ์ในระบบจัดข้อมูลนี้ ติดต่อเจ้าหน้าที่คอม', 'alert' => 'error']);
-            return redirect()->to(base_url('welcome'));
+            redirect()->to(base_url('welcome'))->send();
+            exit;
         }
     }
 
@@ -124,7 +126,8 @@ class ConAdminRegisterSubject extends BaseController
                 "SubjectType" => !empty($record->SubjectType) ? $record->SubjectType : null,
                 "FirstGroup" => !empty($record->FirstGroup) ? $record->FirstGroup : null,
                 "SubjectClass" => !empty($record->SubjectClass) ? $record->SubjectClass : null,
-                "SubjectYear" => !empty($record->SubjectYear) ? $record->SubjectYear : null,
+                "SubjectUnit" => !empty($record->SubjectUnit) ? $record->SubjectUnit : null,
+                "SubjectHour" => !empty($record->SubjectHour) ? $record->SubjectHour : null,
                 "SubjectID" => !empty($record->SubjectID) ? $record->SubjectID : null,
                 "keyYear" => $this->request->getPost('keyYear')
             );
@@ -213,17 +216,60 @@ class ConAdminRegisterSubject extends BaseController
     }
 
     public function AdminRegisterSubjectUpdate(){      
-        $data = array('SubjectCode' => $this->request->getPost('Up_SubjectCode'),
-        'SubjectName' => $this->request->getPost('Up_SubjectName'),
-        'SubjectUnit' => $this->request->getPost('Up_SubjectUnit'),
-        'SubjectHour' => $this->request->getPost('Up_SubjectHour'),
-        'SubjectType' => $this->request->getPost('Up_SubjectType'),
-        'FirstGroup' => $this->request->getPost('Up_FirstGroup'),
-        'SecondGroup' => $this->request->getPost('Up_SecondGroup'), 
-        'SubjectClass' => $this->request->getPost('Up_SubjectClass'),
-        'SubjectYear' => $this->request->getPost('Up_SubjectYear'));  
-        $key = $this->request->getPost('Up_SubjectID');
-        echo $this->modAdminRegisterSubject->ModSubjectUpdate($data,$key);
+        $data = array(
+            'SubjectCode' => trim($this->request->getPost('Up_SubjectCode') ?? ''),
+            'SubjectName' => trim($this->request->getPost('Up_SubjectName') ?? ''),
+            'SubjectUnit' => $this->request->getPost('Up_SubjectUnit'),
+            'SubjectHour' => $this->request->getPost('Up_SubjectHour'),
+            'SubjectType' => $this->request->getPost('Up_SubjectType'),
+            'FirstGroup' => $this->request->getPost('Up_FirstGroup'),
+            'SecondGroup' => $this->request->getPost('Up_SecondGroup'), 
+            'SubjectClass' => $this->request->getPost('Up_SubjectClass'),
+            'SubjectYear' => trim($this->request->getPost('Up_SubjectYear') ?? '')
+        );  
+        $key = (int)$this->request->getPost('Up_SubjectID');
+        $result = $this->modAdminRegisterSubject->ModSubjectUpdate($data, $key);
+
+        // ซิงค์ข้อมูลการเปลี่ยนแปลงไปยัง tb_teaching_schedule โดยตรงทันที
+        try {
+            if ($this->db->tableExists('tb_teaching_schedule')) {
+                $updateScheduleData = [
+                    'subject_code' => $data['SubjectCode'],
+                    'subject_name' => $data['SubjectName'],
+                    'subject_type' => $data['SubjectType'],
+                    'credit'       => (float)$data['SubjectUnit'],
+                    'total_hours'  => (int)$data['SubjectHour'],
+                ];
+
+                // 1. อัปเดตรายการที่ผูก subject_id ตรงกับวิชานี้
+                if ($this->db->fieldExists('subject_id', 'tb_teaching_schedule') && $key > 0) {
+                    $this->db->table('tb_teaching_schedule')
+                        ->where('subject_id', $key)
+                        ->update($updateScheduleData);
+                }
+
+                // 2. อัปเดตรายการที่มีรหัสวิชาและปีการศึกษาตรงกัน
+                if (!empty($data['SubjectCode'])) {
+                    $termYear = $data['SubjectYear'] ?? '';
+                    $parts = explode('/', $termYear);
+                    $schBuilder = $this->db->table('tb_teaching_schedule')
+                        ->where('subject_code', $data['SubjectCode']);
+                    if (count($parts) === 2) {
+                        $schBuilder->where('term', trim($parts[0]))
+                                   ->where('year', trim($parts[1]));
+                    }
+                    $schUpdate = $updateScheduleData;
+                    if ($this->db->fieldExists('subject_id', 'tb_teaching_schedule') && $key > 0) {
+                        $schUpdate['subject_id'] = $key;
+                    }
+                    $schBuilder->update($schUpdate);
+                }
+            }
+        } catch (\Throwable $e) {
+            log_message('error', 'Auto sync subject to teaching schedule error: ' . $e->getMessage());
+        }
+
+        echo $result;
     }
 
     public function AdminRegisterSubjectEdit(){ 
@@ -285,7 +331,7 @@ class ConAdminRegisterSubject extends BaseController
                 'onoff_id' => 16,
                 'onoff_name' => 'จัดการวิชาเรียน',
                 'onoff_status' => $status,
-                'onoff_year' => get_selected_year(),
+                'onoff_year' => '1/' . (date('Y') + 543),
                 'onoff_Level' => '',
                 'onoff_detail' => 'งานหลักสูตร',
                 'onoff_StartDate' => date('Y-m-d H:i:s'),

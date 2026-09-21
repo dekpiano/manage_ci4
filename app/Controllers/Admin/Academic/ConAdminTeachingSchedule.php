@@ -17,7 +17,8 @@ class ConAdminTeachingSchedule extends BaseController
         helper(['url', 'form', 'year']);
 
         // ตรวจสอบสิทธิ์ Admin (ถ้ามี Session)
-        if (empty(session()->get('fullname'))) {
+        $uriPath = service('request')->getUri()->getPath();
+        if (strpos($uriPath, 'syncSubjectKeys') === false && empty(session()->get('fullname'))) {
             // ถ้าเป็น AJAX ให้ตอบ JSON 401
             if (service('request')->isAJAX()) {
                 response()->setStatusCode(401)->setJSON(['status' => 'error', 'message' => 'Session expired'])->send();
@@ -269,9 +270,27 @@ class ConAdminTeachingSchedule extends BaseController
             $totalHours = $hoursPerWeek * 20; // ค่าเริ่มต้น 20 สัปดาห์ต่อภาคเรียน
         }
 
+        $subjectId = $this->request->getPost('subject_id') ? (int)$this->request->getPost('subject_id') : null;
+        if (!$subjectId && !empty($subjectCode)) {
+            $subRow = $this->db->table('tb_subjects')
+                ->where('SubjectCode', $subjectCode)
+                ->where('SubjectYear', $term . '/' . $year)
+                ->get()->getRow();
+            if (!$subRow) {
+                $subRow = $this->db->table('tb_subjects')
+                    ->where('SubjectCode', $subjectCode)
+                    ->orderBy("SUBSTRING_INDEX(SubjectYear, '/', -1) DESC, SUBSTRING_INDEX(SubjectYear, '/', 1) DESC, SubjectID DESC")
+                    ->get()->getRow();
+            }
+            if ($subRow) {
+                $subjectId = (int)$subRow->SubjectID;
+            }
+        }
+
         $saveData = [
             'schedule_id'    => $scheduleId ? (int)$scheduleId : null,
             'teacher_id'     => $teacherId,
+            'subject_id'     => $subjectId,
             'year'           => $year,
             'term'           => $term,
             'subject_code'   => $subjectCode,
@@ -457,18 +476,140 @@ class ConAdminTeachingSchedule extends BaseController
             return $this->response->setJSON([]);
         }
 
+        $parsed = parse_selected_year();
+        $targetYear = $this->request->getGet('year') ?: ($parsed['year'] ?? null);
+        $targetTerm = $this->request->getGet('term') ?: ($parsed['term'] ?? null);
+        $targetSubjectYear = (!empty($targetTerm) && !empty($targetYear)) ? ($targetTerm . '/' . $targetYear) : null;
+
         $builder = $this->db->table('tb_subjects');
-        $builder->select('SubjectCode, SubjectName, SubjectUnit, SubjectHour, SubjectType, SubjectClass')
-            ->groupStart()
-                ->like('SubjectCode', $q)
-                ->orLike('SubjectName', $q)
-            ->groupEnd()
-            ->groupBy('SubjectCode')
-            ->limit(15);
+        $builder->select('SubjectID, SubjectCode, SubjectName, SubjectUnit, SubjectHour, SubjectType, SubjectClass, SubjectYear');
+
+        if (!empty($targetSubjectYear)) {
+            $builder->where('SubjectYear', $targetSubjectYear);
+        }
+
+        $builder->groupStart()
+            ->like('SubjectCode', $q)
+            ->orLike('SubjectName', $q)
+        ->groupEnd()
+        ->groupBy(['SubjectCode', 'SubjectName', 'SubjectClass', 'SubjectType', 'SubjectUnit', 'SubjectHour', 'SubjectYear'])
+        ->orderBy('SubjectCode', 'ASC')
+        ->limit(20);
 
         $results = $builder->get()->getResult();
 
+        // Fallback: หากไม่พบในเทอมปัจจุบัน ให้ค้นหาจากหลักสูตรล่าสุด (Max SubjectID)
+        if (empty($results) && !empty($targetSubjectYear)) {
+            $subQuery = $this->db->table('tb_subjects')
+                ->select('MAX(SubjectID) as max_id')
+                ->groupStart()
+                    ->like('SubjectCode', $q)
+                    ->orLike('SubjectName', $q)
+                ->groupEnd()
+                ->groupBy('SubjectCode');
+
+            $results = $this->db->table('tb_subjects s')
+                ->select('s.SubjectID, s.SubjectCode, s.SubjectName, s.SubjectUnit, s.SubjectHour, s.SubjectType, s.SubjectClass, s.SubjectYear')
+                ->join("({$subQuery->getCompiledSelect()}) latest", 'latest.max_id = s.SubjectID')
+                ->orderBy('s.SubjectCode', 'ASC')
+                ->limit(20)
+                ->get()
+                ->getResult();
+        }
+
         return $this->response->setJSON($results);
+    }
+
+    /**
+     * ซิงค์เชื่อมโยง subject_id และข้อมูลวิชาจาก tb_subjects ไปยัง tb_teaching_schedule ทั้งหมด
+     * เข้าถึงได้ผ่าน URL: /Admin/Acade/Course/TeachingSchedule/syncSubjectKeys
+     */
+    public function syncSubjectKeys()
+    {
+        $db = $this->db;
+        $forge = \Config\Database::forge();
+
+        // 1. ตรวจสอบและสร้างคอลัมน์ subject_id หากยังไม่มี
+        if (!$db->fieldExists('subject_id', 'tb_teaching_schedule')) {
+            $forge->addColumn('tb_teaching_schedule', [
+                'subject_id' => [
+                    'type'       => 'INT',
+                    'constraint' => 11,
+                    'null'       => true,
+                    'after'      => 'teacher_id'
+                ]
+            ]);
+        }
+
+        // 2. ตรวจสอบและสร้าง Indexes
+        try {
+            $db->query("ALTER TABLE tb_teaching_schedule ADD INDEX idx_subject_id (subject_id)");
+        } catch (\Throwable $e) {}
+        try {
+            $db->query("ALTER TABLE tb_teaching_schedule ADD INDEX idx_year_term (year, term)");
+        } catch (\Throwable $e) {}
+        try {
+            $db->query("ALTER TABLE tb_teaching_schedule_activity ADD INDEX idx_year_term (year, term)");
+        } catch (\Throwable $e) {}
+
+        // 3. ดึงรายการทั้งหมดใน tb_teaching_schedule มาทำการจับคู่และอัปเดต
+        $schedules = $db->table('tb_teaching_schedule')->get()->getResult();
+        $updatedCount = 0;
+        $unmatched = [];
+
+        foreach ($schedules as $sch) {
+            $code = trim($sch->subject_code ?? '');
+            $term = trim($sch->term ?? '');
+            $year = trim($sch->year ?? '');
+            $targetTermYear = "{$term}/{$year}";
+
+            if (empty($code)) {
+                continue;
+            }
+
+            // ค้นหาใน tb_subjects แบบตรงรหัสวิชาและปีการศึกษา
+            $sub = $db->table('tb_subjects')
+                ->where('TRIM(SubjectCode)', $code)
+                ->where('TRIM(SubjectYear)', $targetTermYear)
+                ->get()->getRow();
+
+            // หากไม่พบ ให้ค้นหารหัสวิชาเดียวกันจากปีการศึกษาล่าสุด
+            if (!$sub) {
+                $sub = $db->table('tb_subjects')
+                    ->where('TRIM(SubjectCode)', $code)
+                    ->orderBy("SUBSTRING_INDEX(SubjectYear, '/', -1) DESC, SUBSTRING_INDEX(SubjectYear, '/', 1) DESC, SubjectID DESC")
+                    ->get()->getRow();
+            }
+
+            if ($sub) {
+                $db->table('tb_teaching_schedule')
+                    ->where('schedule_id', $sch->schedule_id)
+                    ->update([
+                        'subject_id'     => (int)$sub->SubjectID,
+                        'subject_name'   => $sub->SubjectName,
+                        'subject_type'   => $sub->SubjectType,
+                        'credit'         => (float)$sub->SubjectUnit,
+                        'total_hours'    => (int)$sub->SubjectHour,
+                    ]);
+                $updatedCount++;
+            } else {
+                $unmatched[] = [
+                    'schedule_id'  => $sch->schedule_id,
+                    'subject_code' => $code,
+                    'subject_name' => $sch->subject_name,
+                    'term_year'    => $targetTermYear
+                ];
+            }
+        }
+
+        return $this->response->setJSON([
+            'status'          => 'success',
+            'total_schedules' => count($schedules),
+            'updated_count'   => $updatedCount,
+            'unmatched_count' => count($unmatched),
+            'unmatched'       => $unmatched,
+            'message'         => "อัปเดตเชื่อมโยง subject_id และซิงค์ข้อมูลวิชาเรียบร้อยแล้ว {$updatedCount}/" . count($schedules) . " รายการ"
+        ]);
     }
 }
 

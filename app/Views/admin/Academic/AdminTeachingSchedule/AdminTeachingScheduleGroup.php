@@ -855,6 +855,7 @@
                                 <form id="formTeachingSchedule">
                                     <input type="hidden" name="schedule_id" id="f_sch_id" value="">
                                     <input type="hidden" name="teacher_id" id="f_sch_teacher_id" value="">
+                                    <input type="hidden" name="subject_id" id="f_sch_subject_id" value="">
                                     <input type="hidden" name="year" id="f_sch_year" value="">
                                     <input type="hidden" name="term" id="f_sch_term" value="">
 
@@ -1380,6 +1381,7 @@ $(document).ready(function() {
         $('#formTeachingSchedule')[0].reset();
         $('#f_sch_id').value = '';
         $('#f_sch_id').val('');
+        $('#f_sch_subject_id').val('');
         $('#f_sch_teacher_id').val(currentEditingTeacherId);
         $('#f_sch_year').val(activeYear);
         $('#f_sch_term').val(activeTerm);
@@ -1400,6 +1402,7 @@ $(document).ready(function() {
 
         $('#f_sch_id').val(item.schedule_id);
         $('#f_sch_teacher_id').val(currentEditingTeacherId);
+        $('#f_sch_subject_id').val(item.subject_id || '');
         $('#f_sch_year').val(activeYear);
         $('#f_sch_term').val(activeTerm);
         $('#f_sch_code').val(item.subject_code);
@@ -1453,6 +1456,7 @@ $(document).ready(function() {
                     subjects.forEach(sub => {
                         resHtml += `
                             <a href="javascript:void(0);" class="list-group-item list-group-item-action item-suggest-subject py-2" 
+                               data-id="${sub.SubjectID || ''}"
                                data-code="${sub.SubjectCode}" 
                                data-name="${sub.SubjectName}"
                                data-type="${sub.SubjectType || 'พื้นฐาน'}"
@@ -1476,6 +1480,7 @@ $(document).ready(function() {
 
     // เมื่อคลิกเลือกวิชาจาก Suggestion
     $(document).on('click', '.item-suggest-subject', function() {
+        const id = $(this).data('id');
         const code = $(this).data('code');
         const name = $(this).data('name');
         const type = $(this).data('type');
@@ -1483,6 +1488,7 @@ $(document).ready(function() {
         const hour = $(this).data('hour');
         const sClass = $(this).data('class');
 
+        $('#f_sch_subject_id').val(id || '');
         $('#f_sch_code').val(code);
         $('#f_sch_name').val(name);
         if (type) $('#f_sch_type').val(type);

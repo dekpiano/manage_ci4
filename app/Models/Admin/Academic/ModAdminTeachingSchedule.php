@@ -19,6 +19,25 @@ class ModAdminTeachingSchedule extends Model
     }
 
     /**
+     * คืนค่า Query Builder ของ tb_teaching_schedule ที่ LEFT JOIN กับ tb_subjects
+     * เพื่อให้ดึงชื่อวิชา, หน่วยกิต, จำนวนชั่วโมง, คาบสอน ที่ตรงตามทะเบียนหลักสูตรปัจจุบันเสมอ
+     */
+    protected function getScheduleWithSubjectBuilder()
+    {
+        $builder = $this->dbAcademic->table('tb_teaching_schedule');
+        $builder->select('
+            tb_teaching_schedule.*,
+            COALESCE(sub.SubjectUnit, tb_teaching_schedule.credit) as credit,
+            COALESCE(sub.SubjectName, tb_teaching_schedule.subject_name) as subject_name,
+            COALESCE(sub.SubjectType, tb_teaching_schedule.subject_type) as subject_type,
+            COALESCE(sub.SubjectHour, tb_teaching_schedule.total_hours) as total_hours,
+            tb_teaching_schedule.hours_per_week as hours_per_week
+        ');
+        $builder->join('tb_subjects sub', 'sub.SubjectID = tb_teaching_schedule.subject_id', 'left');
+        return $builder;
+    }
+
+    /**
      * ดึงรายการปีการศึกษาและภาคเรียนที่มีข้อมูลในระบบ
      */
     public function getDistinctYearTerms()
@@ -83,11 +102,13 @@ class ModAdminTeachingSchedule extends Model
             ->get()
             ->getResult();
 
-        // 3. ดึงครูที่มีตารางสอนในเทอมนี้จาก tb_teaching_schedule
-        $schedules = $this->dbAcademic->table('tb_teaching_schedule')
-            ->select('teacher_id, hours_per_week, total_hours')
-            ->where('year', $year)
-            ->where('term', $term)
+        // 3. ดึงครูที่มีตารางสอนในเทอมนี้จาก tb_teaching_schedule (เชื่อม tb_subjects เพื่อชั่วโมงสอนล่าสุด)
+        $schedules = $this->getScheduleWithSubjectBuilder()
+            ->select('tb_teaching_schedule.teacher_id, 
+                tb_teaching_schedule.hours_per_week as hours_per_week, 
+                COALESCE(sub.SubjectHour, tb_teaching_schedule.total_hours) as total_hours')
+            ->where('tb_teaching_schedule.year', $year)
+            ->where('tb_teaching_schedule.term', $term)
             ->get()
             ->getResult();
 
@@ -218,12 +239,19 @@ class ModAdminTeachingSchedule extends Model
             return trim($t->pers_id);
         }, $teachers);
 
-        // ดึงรายการตารางสอนของครูในกลุ่มนี้
-        $schedules = $this->dbAcademic->table('tb_teaching_schedule')
-            ->select('teacher_id, subject_code, credit, hours_per_week, total_hours')
-            ->where('year', $year)
-            ->where('term', $term)
-            ->whereIn('teacher_id', $teacherIds)
+        // ดึงรายการตารางสอนของครูในกลุ่มนี้ (เชื่อม tb_subjects)
+        $schedules = $this->getScheduleWithSubjectBuilder()
+            ->select('tb_teaching_schedule.teacher_id, tb_teaching_schedule.subject_code, 
+                COALESCE(sub.SubjectUnit, tb_teaching_schedule.credit) as credit, 
+                CASE 
+                    WHEN sub.SubjectHour IS NOT NULL AND sub.SubjectHour > 0 
+                    THEN CEIL(sub.SubjectHour / 20) 
+                    ELSE tb_teaching_schedule.hours_per_week 
+                END as hours_per_week, 
+                COALESCE(sub.SubjectHour, tb_teaching_schedule.total_hours) as total_hours')
+            ->where('tb_teaching_schedule.year', $year)
+            ->where('tb_teaching_schedule.term', $term)
+            ->whereIn('tb_teaching_schedule.teacher_id', $teacherIds)
             ->get()
             ->getResult();
 
@@ -338,13 +366,13 @@ class ModAdminTeachingSchedule extends Model
                 ->getRow();
         }
 
-        // 3. ตารางสอนรายวิชา - ดึง raw แล้วจัดกลุ่มตาม subject_code + grade_level
-        $rawSchedules = $this->dbAcademic->table('tb_teaching_schedule')
-            ->where('teacher_id', $teacherId)
-            ->where('year', $year)
-            ->where('term', $term)
-            ->orderBy('grade_level', 'ASC')
-            ->orderBy('subject_code', 'ASC')
+        // 3. ตารางสอนรายวิชา - ดึง raw แล้วจัดกลุ่มตาม subject_code + grade_level (เชื่อม tb_subjects สด)
+        $rawSchedules = $this->getScheduleWithSubjectBuilder()
+            ->where('tb_teaching_schedule.teacher_id', $teacherId)
+            ->where('tb_teaching_schedule.year', $year)
+            ->where('tb_teaching_schedule.term', $term)
+            ->orderBy('tb_teaching_schedule.grade_level', 'ASC')
+            ->orderBy('tb_teaching_schedule.subject_code', 'ASC')
             ->get()
             ->getResultArray();
 
@@ -529,13 +557,13 @@ class ModAdminTeachingSchedule extends Model
             }
         }
 
-        // 3. ดึงวิชาสอนและรวมวิชาที่เหมือนกัน (subject_code + grade_level)
-        $rawSchedules = $this->dbAcademic->table('tb_teaching_schedule')
-            ->where('teacher_id', $teacherId)
-            ->where('year', $year)
-            ->where('term', $term)
-            ->orderBy('grade_level', 'ASC')
-            ->orderBy('subject_code', 'ASC')
+        // 3. ดึงวิชาสอนและรวมวิชาที่เหมือนกัน (subject_code + grade_level) (เชื่อม tb_subjects สด)
+        $rawSchedules = $this->getScheduleWithSubjectBuilder()
+            ->where('tb_teaching_schedule.teacher_id', $teacherId)
+            ->where('tb_teaching_schedule.year', $year)
+            ->where('tb_teaching_schedule.term', $term)
+            ->orderBy('tb_teaching_schedule.grade_level', 'ASC')
+            ->orderBy('tb_teaching_schedule.subject_code', 'ASC')
             ->get()->getResultArray();
 
         $groupedSubjects = [];
@@ -730,13 +758,13 @@ class ModAdminTeachingSchedule extends Model
             }
         }
 
-        // 3. ดึงรายการตารางสอนของครูทุกคนในกลุ่มสาระ
-        $rawSchedules = $this->dbAcademic->table('tb_teaching_schedule')
-            ->whereIn('teacher_id', $teacherIds)
-            ->where('year', $year)
-            ->where('term', $term)
-            ->orderBy('grade_level', 'ASC')
-            ->orderBy('subject_code', 'ASC')
+        // 3. ดึงรายการตารางสอนของครูทุกคนในกลุ่มสาระ (เชื่อม tb_subjects สด)
+        $rawSchedules = $this->getScheduleWithSubjectBuilder()
+            ->whereIn('tb_teaching_schedule.teacher_id', $teacherIds)
+            ->where('tb_teaching_schedule.year', $year)
+            ->where('tb_teaching_schedule.term', $term)
+            ->orderBy('tb_teaching_schedule.grade_level', 'ASC')
+            ->orderBy('tb_teaching_schedule.subject_code', 'ASC')
             ->get()
             ->getResultArray();
 
@@ -915,14 +943,14 @@ class ModAdminTeachingSchedule extends Model
             $group = $this->dbSkj->table('tb_learning')->where('lear_id', $teacher->pers_learning)->get()->getRow();
         }
 
-        // รายวิชาดิบทั้งหมด (tb_teaching_schedule)
-        $schedules = $this->dbAcademic->table('tb_teaching_schedule')
-            ->where('teacher_id', $teacherId)
-            ->where('year', $year)
-            ->where('term', $term)
-            ->orderBy('grade_level', 'ASC')
-            ->orderBy('subject_code', 'ASC')
-            ->orderBy('room', 'ASC')
+        // รายวิชาดิบทั้งหมด (tb_teaching_schedule เชื่อม tb_subjects สด)
+        $schedules = $this->getScheduleWithSubjectBuilder()
+            ->where('tb_teaching_schedule.teacher_id', $teacherId)
+            ->where('tb_teaching_schedule.year', $year)
+            ->where('tb_teaching_schedule.term', $term)
+            ->orderBy('tb_teaching_schedule.grade_level', 'ASC')
+            ->orderBy('tb_teaching_schedule.subject_code', 'ASC')
+            ->orderBy('tb_teaching_schedule.room', 'ASC')
             ->get()->getResultArray();
 
         // กิจกรรมดิบทั้งหมด (tb_teaching_schedule_activity)

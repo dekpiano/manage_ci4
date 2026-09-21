@@ -206,6 +206,7 @@ $routes->post('admin/academic/teaching-schedule/delete-activity', [ConAdminTeach
 $routes->post('admin/academic/teaching-schedule/save-duty', [ConAdminTeachingSchedule::class, 'saveDutyItemAjax']);
 $routes->post('admin/academic/teaching-schedule/delete-duty', [ConAdminTeachingSchedule::class, 'deleteDutyItemAjax']);
 $routes->get('admin/academic/teaching-schedule/search-subjects', [ConAdminTeachingSchedule::class, 'searchMasterSubjectsAjax']);
+$routes->match(['get', 'post'], 'Admin/Acade/Course/TeachingSchedule/syncSubjectKeys', [ConAdminTeachingSchedule::class, 'syncSubjectKeys']);
 
 $routes->get('Admin/Acade/Course/RegisterSubject', [ConAdminRegisterSubject::class, 'AdminRegisterSubjectMain']);
 $routes->match(['get', 'post'], 'admin/academic/ConAdminRegisterSubject/AdminRegisterSubjectGetMaster', [ConAdminRegisterSubject::class, 'AdminRegisterSubjectGetMaster']);
