@@ -31,7 +31,11 @@ class ModAdminTeachingSchedule extends Model
             COALESCE(sub.SubjectName, tb_teaching_schedule.subject_name) as subject_name,
             COALESCE(sub.SubjectType, tb_teaching_schedule.subject_type) as subject_type,
             COALESCE(sub.SubjectHour, tb_teaching_schedule.total_hours) as total_hours,
-            tb_teaching_schedule.hours_per_week as hours_per_week
+            CASE 
+                WHEN sub.SubjectHour IS NOT NULL AND sub.SubjectHour > 0 
+                THEN CEIL(sub.SubjectHour / 20) 
+                ELSE tb_teaching_schedule.hours_per_week 
+            END as hours_per_week
         ');
         $builder->join('tb_subjects sub', 'sub.SubjectID = tb_teaching_schedule.subject_id', 'left');
         return $builder;
@@ -104,9 +108,6 @@ class ModAdminTeachingSchedule extends Model
 
         // 3. ดึงครูที่มีตารางสอนในเทอมนี้จาก tb_teaching_schedule (เชื่อม tb_subjects เพื่อชั่วโมงสอนล่าสุด)
         $schedules = $this->getScheduleWithSubjectBuilder()
-            ->select('tb_teaching_schedule.teacher_id, 
-                tb_teaching_schedule.hours_per_week as hours_per_week, 
-                COALESCE(sub.SubjectHour, tb_teaching_schedule.total_hours) as total_hours')
             ->where('tb_teaching_schedule.year', $year)
             ->where('tb_teaching_schedule.term', $term)
             ->get()
@@ -227,6 +228,7 @@ class ModAdminTeachingSchedule extends Model
             ->where('tb_personnel.pers_learning', $groupId)
             ->where('tb_personnel.pers_status', 'กำลังใช้งาน')
             ->orderBy("CASE WHEN tb_personnel.pers_groupleade LIKE '%หัวหน้ากลุ่มสาระ%' THEN 0 ELSE 1 END", 'ASC', false)
+            ->orderBy('tb_personnel.pers_position', 'ASC')
             ->orderBy('tb_personnel.pers_firstname', 'ASC')
             ->get()
             ->getResult();
@@ -241,14 +243,6 @@ class ModAdminTeachingSchedule extends Model
 
         // ดึงรายการตารางสอนของครูในกลุ่มนี้ (เชื่อม tb_subjects)
         $schedules = $this->getScheduleWithSubjectBuilder()
-            ->select('tb_teaching_schedule.teacher_id, tb_teaching_schedule.subject_code, 
-                COALESCE(sub.SubjectUnit, tb_teaching_schedule.credit) as credit, 
-                CASE 
-                    WHEN sub.SubjectHour IS NOT NULL AND sub.SubjectHour > 0 
-                    THEN CEIL(sub.SubjectHour / 20) 
-                    ELSE tb_teaching_schedule.hours_per_week 
-                END as hours_per_week, 
-                COALESCE(sub.SubjectHour, tb_teaching_schedule.total_hours) as total_hours')
             ->where('tb_teaching_schedule.year', $year)
             ->where('tb_teaching_schedule.term', $term)
             ->whereIn('tb_teaching_schedule.teacher_id', $teacherIds)
@@ -278,15 +272,21 @@ class ModAdminTeachingSchedule extends Model
         foreach ($schedules as $s) {
             $tid = trim($s->teacher_id);
             if (!isset($scheduleStats[$tid])) {
-                $scheduleStats[$tid] = ['subject_codes' => [], 'subjects' => 0, 'credits' => 0, 'hours' => 0];
+                $scheduleStats[$tid] = ['group_keys' => [], 'subjects' => 0, 'credits' => 0, 'hours' => 0];
             }
             $subCode = trim($s->subject_code ?? '');
-            if ($subCode !== '' && !in_array($subCode, $scheduleStats[$tid]['subject_codes'])) {
-                $scheduleStats[$tid]['subject_codes'][] = $subCode;
+            $gradeLevel = trim($s->grade_level ?? '');
+            $groupKey = $subCode . '_' . $gradeLevel;
+            
+            // นับวิชาและหน่วยกิตเฉพาะ subject_code + grade_level ที่ไม่ซ้ำ (เหมือน getTeacherDetail)
+            if ($subCode !== '' && !in_array($groupKey, $scheduleStats[$tid]['group_keys'])) {
+                $scheduleStats[$tid]['group_keys'][] = $groupKey;
                 $scheduleStats[$tid]['subjects']++;
+                $scheduleStats[$tid]['credits'] += (float)($s->credit ?? 0);
             }
-            $scheduleStats[$tid]['credits'] += (float)($s->credit ?? 0);
-            $scheduleStats[$tid]['hours']   += (float)($s->hours_per_week ?? 0);
+            
+            // ส่วนคาบสอน (hours) บวกเพิ่มทุกห้อง (ทุกแถว)
+            $scheduleStats[$tid]['hours'] += (float)($s->hours_per_week ?? 0);
         }
 
         $activityStats = [];
@@ -720,6 +720,7 @@ class ModAdminTeachingSchedule extends Model
             ->where('pers_learning', $groupId)
             ->where('pers_status', 'กำลังใช้งาน')
             ->orderBy("CASE WHEN pers_groupleade LIKE '%หัวหน้ากลุ่มสาระ%' THEN 0 ELSE 1 END", 'ASC', false)
+            ->orderBy('pers_position', 'ASC')
             ->orderBy('pers_firstname', 'ASC')
             ->get()
             ->getResult();
@@ -841,7 +842,7 @@ class ModAdminTeachingSchedule extends Model
             if ($itemCount === 0) {
                 // ถ้าครูยังไม่ได้จัดตารางสอน
                 $reportRows[] = [
-                    'row_no'             => $rowNumber++,
+                    'row_no'             => $rowNumber,
                     'teacher_name'       => $t->fullname,
                     'teacher_id'         => $tid,
                     'teacher_total_hours'=> 0,
@@ -858,6 +859,7 @@ class ModAdminTeachingSchedule extends Model
                     'total_weekly_hours' => 0,
                     'remark'             => '-',
                 ];
+                $rowNumber++;
             } else {
                 foreach ($processedSubs as $idx => $item) {
                     $isBasic = false;
@@ -870,7 +872,7 @@ class ModAdminTeachingSchedule extends Model
                     }
 
                     $reportRows[] = [
-                        'row_no'             => $rowNumber++,
+                        'row_no'             => $rowNumber,
                         'teacher_name'       => $t->fullname,
                         'teacher_id'         => $tid,
                         'teacher_total_hours'=> $teacherTotalHours,
@@ -888,6 +890,7 @@ class ModAdminTeachingSchedule extends Model
                         'remark'             => !empty($item['remarks']) ? implode(' ', $item['remarks']) : '',
                     ];
                 }
+                $rowNumber++;
             }
         }
 

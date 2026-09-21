@@ -10,6 +10,13 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     
     <style>
+        @font-face {
+            font-family: 'TH Sarabun PSK';
+            src: url('<?= base_url('assets/fonts/THSarabun.ttf') ?>') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+        }
+
         @page {
             size: A4 portrait;
             margin: 12mm 15mm 12mm 15mm;
@@ -22,8 +29,8 @@
         }
 
         body {
-            font-family: 'Sarabun', 'TH Sarabun New', sans-serif;
-            font-size: 14px;
+            font-family: 'TH Sarabun PSK', 'TH Sarabun New', 'Sarabun', sans-serif;
+            font-size: 15pt;
             line-height: 1.35;
             color: #000;
             background: #f4f6f9;
@@ -88,23 +95,27 @@
         /* Document Header */
         .doc-header {
             text-align: center;
-            margin-bottom: 14px;
+            margin-bottom: 12px;
         }
 
         .doc-title {
-            font-size: 18px;
             font-weight: 700;
             margin: 0 0 4px 0;
         }
 
         .school-name {
-            font-size: 16px;
             font-weight: 700;
-            margin: 0 0 6px 0;
+            margin: 0 0 4px 0;
         }
 
-        .meta-line {
-            font-size: 14px;
+        .teacher-name {
+            font-weight: 700;
+            margin: 0;
+            color: #1e293b;
+        }
+
+        /* Summary Boxes Top */
+        .summary-boxes {
             display: flex;
             justify-content: center;
             gap: 20px;
@@ -115,7 +126,6 @@
         /* Tables */
         .table-section-title {
             font-weight: 700;
-            font-size: 14px;
             margin: 10px 0 4px 0;
         }
 
@@ -123,7 +133,7 @@
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 8px;
-            font-size: 13px;
+            font-size: 15pt;
         }
 
         table.schedule-table th, 
@@ -149,7 +159,6 @@
             border: 1px solid #000;
             padding: 6px 12px;
             margin: 8px 0 12px 0;
-            font-size: 14px;
             font-weight: 700;
             text-align: right;
             background-color: #f8f9fa;
@@ -163,14 +172,12 @@
 
         .duty-title {
             font-weight: 700;
-            font-size: 14px;
             margin-bottom: 4px;
         }
 
         .duty-list {
             margin: 0;
             padding-left: 24px;
-            font-size: 13.5px;
         }
 
         .duty-list li {
@@ -192,7 +199,6 @@
             flex-direction: column;
             gap: 16px;
             page-break-inside: avoid;
-            font-size: 13.5px;
         }
 
         .sig-row {

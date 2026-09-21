@@ -287,6 +287,26 @@ class ConAdminTeachingSchedule extends BaseController
             }
         }
 
+        // ตรวจสอบข้อมูลซ้ำ (ครู 1 คน สอน 1 วิชา 1 ห้อง ใน 1 เทอม)
+        $checkDup = $this->db->table('tb_teaching_schedule')
+            ->where('teacher_id', $teacherId)
+            ->where('year', $year)
+            ->where('term', $term)
+            ->where('subject_code', $subjectCode)
+            ->where('grade_level', $gradeLevel)
+            ->where('room', $room);
+            
+        if ($scheduleId) {
+            $checkDup->where('schedule_id !=', $scheduleId);
+        }
+        
+        if ($checkDup->countAllResults() > 0) {
+            return $this->response->setJSON([
+                'status' => 'error', 
+                'message' => 'ไม่สามารถบันทึกได้ เนื่องจากมีข้อมูลรายวิชานี้ในห้องเรียนนี้อยู่แล้ว'
+            ]);
+        }
+
         $saveData = [
             'schedule_id'    => $scheduleId ? (int)$scheduleId : null,
             'teacher_id'     => $teacherId,

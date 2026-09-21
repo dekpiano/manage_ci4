@@ -10,6 +10,13 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     
     <style>
+        @font-face {
+            font-family: 'TH Sarabun PSK';
+            src: url('<?= base_url('assets/fonts/THSarabun.ttf') ?>') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+        }
+
         @page {
             size: A4 portrait;
             margin: 10mm 12mm 10mm 12mm;
@@ -22,8 +29,8 @@
         }
 
         body {
-            font-family: 'Sarabun', 'TH Sarabun New', sans-serif;
-            font-size: 13.5px;
+            font-family: 'TH Sarabun PSK', 'TH Sarabun New', 'Sarabun', sans-serif;
+            font-size: 15pt;
             line-height: 1.3;
             color: #000;
             background: #f4f6f9;
@@ -92,13 +99,11 @@
         }
 
         .doc-title {
-            font-size: 17px;
             font-weight: 700;
             margin: 0 0 4px 0;
         }
 
         .school-name {
-            font-size: 16px;
             font-weight: 700;
             margin: 0 0 6px 0;
         }
@@ -107,7 +112,7 @@
         table.schedule-table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 13px;
+            font-size: 15pt;
         }
 
         table.schedule-table th, 
@@ -141,7 +146,6 @@
             display: inline-block;
             white-space: nowrap;
             transform-origin: left center;
-            font-size: 13px;
         }
 
         .teacher-name-cell {
@@ -156,7 +160,6 @@
             display: inline-block;
             white-space: nowrap;
             transform-origin: left center;
-            font-size: 13.5px;
         }
 
         /* Grand Total Row */
@@ -177,7 +180,6 @@
             flex-direction: column;
             gap: 22px;
             page-break-inside: avoid;
-            font-size: 14px;
         }
 
         .sig-row {
@@ -297,17 +299,16 @@
                     foreach ($rows as $r): 
                 ?>
                 <tr>
-                    <!-- ลำดับที่ (1, 2, 3...) -->
-                    <td class="text-center"><?= $r['row_no'] ?></td>
+                    <!-- ลำดับที่ (1, 2, 3...) (rowspan ตามจำนวนวิชาของครูท่านนั้น) -->
+                    <?php if ($r['is_first_sub']): ?>
+                        <td rowspan="<?= $r['rowspan'] ?>" class="text-center" style="vertical-align: middle;"><?= $r['row_no'] ?></td>
+                    <?php endif; ?>
 
                     <!-- ครูผู้สอน (rowspan ตามจำนวนวิชาของครูท่านนั้น ห้ามขึ้นบรรทัดใหม่ ย่อขนาดอัตโนมัติ) -->
                     <?php if ($r['is_first_sub']): ?>
                         <td rowspan="<?= $r['rowspan'] ?>" class="teacher-name-cell" style="vertical-align: middle;">
                             <span class="teacher-name-inner" title="<?= esc($r['teacher_name']) ?>">
                                 <strong><?= esc($r['teacher_name']) ?></strong>
-                                <?php if (!empty($r['teacher_total_hours'])): ?>
-                                    <span>(<?= $r['teacher_total_hours'] ?>)</span>
-                                <?php endif; ?>
                             </span>
                         </td>
                     <?php endif; ?>
@@ -340,7 +341,7 @@
                     <td class="text-center"><?= esc($r['grade_level']) ?></td>
 
                     <!-- ห้อง (เช่น 6, 1-3, PAP) -->
-                    <td class="text-center"><?= esc($r['room_text']) ?></td>
+                    <td class="text-center" style="white-space: nowrap;"><?= esc($r['room_text']) ?></td>
 
                     <!-- รวม (คาบต่อสัปดาห์ x จำนวนห้อง) -->
                     <td class="text-center"><?= ($r['total_weekly_hours'] > 0) ? (float)$r['total_weekly_hours'] : '-' ?></td>
@@ -393,7 +394,7 @@
             const inner = cell.querySelector('.subject-name-inner');
             if (!inner) return;
 
-            inner.style.fontSize = '13px';
+            inner.style.fontSize = '15pt';
             inner.style.letterSpacing = 'normal';
 
             const maxWidth = cell.clientWidth - 8;
@@ -401,8 +402,8 @@
 
             if (currentWidth > maxWidth && maxWidth > 0) {
                 let scaleRatio = maxWidth / currentWidth;
-                let newSize = Math.max(13 * scaleRatio, 9.5);
-                inner.style.fontSize = newSize.toFixed(1) + 'px';
+                let newSize = Math.max(15 * scaleRatio, 11);
+                inner.style.fontSize = newSize.toFixed(1) + 'pt';
 
                 if (inner.scrollWidth > maxWidth) {
                     inner.style.letterSpacing = '-0.3px';
@@ -415,7 +416,7 @@
             const inner = cell.querySelector('.teacher-name-inner');
             if (!inner) return;
 
-            inner.style.fontSize = '13.5px';
+            inner.style.fontSize = '15pt';
             inner.style.letterSpacing = 'normal';
 
             const maxWidth = cell.clientWidth - 10;
@@ -423,8 +424,8 @@
 
             if (currentWidth > maxWidth && maxWidth > 0) {
                 let scaleRatio = maxWidth / currentWidth;
-                let newSize = Math.max(13.5 * scaleRatio, 10);
-                inner.style.fontSize = newSize.toFixed(1) + 'px';
+                let newSize = Math.max(15 * scaleRatio, 11);
+                inner.style.fontSize = newSize.toFixed(1) + 'pt';
 
                 if (inner.scrollWidth > maxWidth) {
                     inner.style.letterSpacing = '-0.3px';
