@@ -62,13 +62,15 @@ class ConAdminStudents extends BaseController
         // หากสิ่งที่ส่งมา ไม่ใช่ลิงก์ (ไม่มี http) แสดงว่าเป็นแค่ ID ของชีตแน่ๆ
         // เราจะทำการแปลงร่างให้เป็นลิงก์ดึง CSV ให้เลยแบบอัตโนมัติครับ! 💎
         if (!preg_match('/^https?:\/\//i', $input)) {
-            $csvUrl = "https://docs.google.com/spreadsheets/d/{$input}/export?format=csv&gid=0";
+            $csvUrl = "https://docs.google.com/spreadsheets/d/{$input}/gviz/tq?tqx=out:csv&gid=0";
         }
 
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $csvUrl);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+        // บังคับ IPv4 เพื่อหลีกเลี่ยงปัญหา DNS/IPv6 ใน Docker บางเครื่อง
+        curl_setopt($ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
         curl_setopt($ch, CURLOPT_TIMEOUT, 30);
         // เพิ่ม User-Agent เพื่อให้ Google ไม่มองว่าเป็นบอทแปลกปลอม
@@ -1733,27 +1735,49 @@ class ConAdminStudents extends BaseController
     {
         $this->response->setHeader('Content-Type', 'application/json');
         $csvUrl = $this->request->getPost('spreadsheet_id') ?: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS1yjCeCmtPr8KRN_TLuLmMME2yjL8mlGShG36iivJEtmrfX81Le9Do9iqYJ5mbHekkO6_PSyO7f9rO/pub?gid=0&single=true&output=csv';
-        $syncMode = $this->request->getPost('sync_mode') ?: 'upsert'; 
+        $syncMode = $this->request->getPost('sync_mode') ?: 'append'; 
         $targetClass = $this->request->getPost('target_class') ?: 'all'; 
         $isDryRun = $this->request->getPost('dry_run') === 'true';
-
+        $offset = max(0, (int) ($this->request->getPost('offset') ?? 0));
+        $batchSize = min(100, max(10, (int) ($this->request->getPost('batch_size') ?? 50)));
+        
         try {
             $values = $this->getSheetsData($csvUrl);
             if (empty($values)) return $this->response->setJSON(['status' => 'error', 'message' => 'ไม่พบข้อมูลใน CSV หรือลิงก์ไม่ถูกต้อง']);
 
-            $successCount = 0; $conflictCount = 0; $skippedCount = 0; $invalidIdCount = 0; $filteredOutCount = 0;
+            $dataRows = array_slice($values, 1);
+            $totalRows = count($dataRows);
+
+            // โหลดข้อมูลนักเรียนเดิมครั้งเดียวต่อคำขอ แล้วค้นหาจากหน่วยความจำ
+            $existingStudents = $this->db->table('tb_students')
+                ->select('StudentID, StudentCode, StudentIDNumber, StudentStatus')
+                ->get()->getResult();
+            $studentsByCode = [];
+            $studentsByIdNumber = [];
+            foreach ($existingStudents as $student) {
+                if (!empty($student->StudentCode)) {
+                    $studentsByCode[(string) $student->StudentCode] = $student;
+                }
+                if (!empty($student->StudentIDNumber)) {
+                    $normalizedExistingId = str_replace(['-', ' '], '', (string) $student->StudentIDNumber);
+                    if ($normalizedExistingId !== '') {
+                        $studentsByIdNumber[$normalizedExistingId] = $student;
+                    }
+                }
+            }
+
+            if (!$isDryRun) {
+                $dataRows = array_slice($dataRows, $offset, $batchSize);
+            }
+
+            if (empty($values)) return $this->response->setJSON(['status' => 'error', 'message' => 'ไม่พบข้อมูลใน CSV หรือลิงก์ไม่ถูกต้อง']);
+
+            $successCount = 0; $conflictCount = 0; $skippedCount = 0; $invalidIdCount = 0; $filteredOutCount = 0; $failedCount = 0;
+            $failedRows = [];
             $processedIdentifiers = [];
             $previewData = [];
 
-            if (!$isDryRun) $this->db->transStart();
-
-            $isHeader = true;
-            foreach ($values as $row) {
-                // ข้ามแถวหัวตารางครับ 💎
-                if ($isHeader) {
-                    $isHeader = false;
-                    continue;
-                }
+            foreach ($dataRows as $row) {
                 
                 // ข้ามแถวว่าง (ตรวจสอบจากเลขประจำตัวที่ Col 2)
                 if (!isset($row[2]) || empty(trim($row[2]))) continue;
@@ -1800,8 +1824,8 @@ class ConAdminStudents extends BaseController
                 if (in_array($identifierKey, $processedIdentifiers)) { $skippedCount++; continue; }
                 $processedIdentifiers[] = $identifierKey;
 
-                $studentByCode = !empty($studentCode) ? $this->db->table('tb_students')->where('StudentCode', $studentCode)->get()->getRow() : null;
-                $studentByIdNumber = !empty($studentIdNumber) ? $this->db->table('tb_students')->where('REPLACE(StudentIDNumber, "-", "")', $studentIdNumber)->get()->getRow() : null;
+                $studentByCode = !empty($studentCode) ? ($studentsByCode[$studentCode] ?? null) : null;
+                $studentByIdNumber = !empty($studentIdNumber) ? ($studentsByIdNumber[$studentIdNumber] ?? null) : null;
                 
                 $isConflict = ($studentByCode && $studentByIdNumber && $studentByCode->StudentID !== $studentByIdNumber->StudentID);
                 
@@ -1857,28 +1881,61 @@ class ConAdminStudents extends BaseController
                         'Action' => $action, 'Notes' => $notes
                     ];
                 } else {
-                    $data_main = [
-                        'StudentNumber' => $studentNumber, 
-                        'StudentClass' => $studentClass, 'StudentCode' => $studentCode,
-                        'StudentPrefix' => $prefix, 'StudentFirstName' => $firstName, 'StudentLastName' => $lastName,
-                        'StudentDateBirth' => $dateBirth, 'StudentIDNumber' => $idNumberRaw, 
-                        'StudentStatus' => $status, 'StudentBehavior' => $behavior, 
-                        'StudentStudyLine' => $studyLine, 'StudentDateEntrance' => $dateEntrance,
-                        'StudentSex' => in_array($prefix, ['เด็กชาย', 'นาย']) ? 'ชาย' : 'หญิง'
-                    ];
-                    if ($existingStudent) $this->modAdminStudents->update($existingStudent->StudentID, $data_main);
-                    else $this->modAdminStudents->insert($data_main);
-                    
-                    $data_p = ['stu_prefix'=>$prefix, 'stu_fristName'=>$firstName, 'stu_lastName'=>$lastName, 'stu_iden'=>$idNumberRaw];
-                    $ex_p = $this->DBpersonnel->table('tb_students')->where('REPLACE(stu_iden, "-", "")', $studentIdNumber)->countAllResults();
-                    if ($ex_p > 0) $this->DBpersonnel->table('tb_students')->where('REPLACE(stu_iden, "-", "")', $studentIdNumber)->update($data_p);
-                    else $this->DBpersonnel->table('tb_students')->insert($data_p);
+                    try {
+                        $data_main = [
+                            'StudentNumber' => $studentNumber,
+                            'StudentClass' => $studentClass, 'StudentCode' => $studentCode,
+                            'StudentPrefix' => $prefix, 'StudentFirstName' => $firstName, 'StudentLastName' => $lastName,
+                            'StudentDateBirth' => $dateBirth, 'StudentIDNumber' => $idNumberRaw,
+                            'StudentStatus' => $status, 'StudentBehavior' => $behavior,
+                            'StudentStudyLine' => $studyLine, 'StudentDateEntrance' => $dateEntrance,
+                            'StudentSex' => in_array($prefix, ['เด็กชาย', 'นาย']) ? 'ชาย' : 'หญิง'
+                        ];
+
+                        $saved = $existingStudent
+                            ? $this->modAdminStudents->update($existingStudent->StudentID, $data_main)
+                            : $this->modAdminStudents->insert($data_main);
+
+                        if (!$saved) {
+                            $modelErrors = $this->modAdminStudents->errors();
+                            $saveMessage = !empty($modelErrors)
+                                ? implode(', ', array_values($modelErrors))
+                                : 'ไม่สามารถบันทึกข้อมูลนักเรียนลงฐานข้อมูลได้';
+                            throw new \RuntimeException($saveMessage);
+                        }
+
+                        $data_p = ['stu_prefix'=>$prefix, 'stu_fristName'=>$firstName, 'stu_lastName'=>$lastName, 'stu_iden'=>$idNumberRaw];
+                        $personnelWhere = "REPLACE(stu_iden, '-', '') = " . $this->DBpersonnel->escape($studentIdNumber);
+                        $ex_p = $this->DBpersonnel->table('tb_students')
+                            ->where($personnelWhere, null, false)
+                            ->countAllResults();
+
+                        if ($ex_p > 0) {
+                            $this->DBpersonnel->table('tb_students')
+                                ->where($personnelWhere, null, false)
+                                ->update($data_p);
+                        } else {
+                            $this->DBpersonnel->table('tb_students')->insert($data_p);
+                        }
+
+                        $successCount++;
+                    } catch (\Throwable $saveException) {
+                        $failedCount++;
+                        $failedRows[] = [
+                            'StudentNumber' => $studentNumber,
+                            'StudentCode' => $studentCode,
+                            'StudentClass' => $studentClass,
+                            'StudentName' => trim($prefix . ' ' . $firstName . ' ' . $lastName),
+                            'Error' => $saveException->getMessage()
+                        ];
+                    }
                 }
-                $successCount++;
             }
-            if (!$isDryRun) $this->db->transComplete();
-            
-            $msg = ($isDryRun ? "<b>[PREVIEW]</b> " : "สำเร็จ! ") . "ผลลัพธ์: พบ {$successCount} รายการ | ขัดแย้ง {$conflictCount} | ผิดพลาด {$invalidIdCount} | ไม่ตรงกลุ่ม {$filteredOutCount} | ข้าม {$skippedCount}";
+            $processedRows = min($offset + count($dataRows), $totalRows);
+            $done = $processedRows >= $totalRows;
+            $progress = $totalRows > 0 ? round(($processedRows / $totalRows) * 100, 1) : 100;
+
+            $msg = ($isDryRun ? "<b>[PREVIEW]</b> " : "นำเข้าเสร็จสิ้น! ") . "ผลลัพธ์: สำเร็จ {$successCount} รายการ | ขัดแย้ง {$conflictCount} | ข้อมูลไม่ถูกต้อง {$invalidIdCount} | ไม่ตรงกลุ่ม {$filteredOutCount} | ข้าม {$skippedCount} | บันทึกไม่สำเร็จ {$failedCount}";
             
             $response = [
                 'status' => 'success',
@@ -1888,12 +1945,23 @@ class ConAdminStudents extends BaseController
                     'conflict' => $conflictCount,
                     'invalid' => $invalidIdCount,
                     'filtered' => $filteredOutCount,
-                    'skipped' => $skippedCount
+                    'skipped' => $skippedCount,
+                    'failed' => $failedCount
+                ],
+                'failed_rows' => $failedRows,
+                'progress' => [
+                    'offset' => $offset,
+                    'processed' => $processedRows,
+                    'total' => $totalRows,
+                    'percent' => $progress,
+                    'done' => $done,
+                    'next_offset' => $processedRows
                 ]
             ];
 
             if ($isDryRun) {
                 $response['preview'] = $previewData;
+
             }
 
             return $this->response->setJSON($response);

@@ -24,6 +24,40 @@
                         <!-- Include the form partial -->
                         <?= view('admin/Academic/AdminStudents/_student_details_form') ?>
 
+                        <?php if (!empty($student->updated_at) || !empty($student->created_at)): ?>
+                        <div class="alert alert-light border d-flex align-items-center gap-3 py-2 px-3 mt-4 mb-3" role="alert" style="font-size: 0.85rem;">
+                            <i class='bx bx-history fs-4 text-secondary'></i>
+                            <div>
+                                <?php if (!empty($student->updated_at)): ?>
+                                    <?php
+                                        $updatedDt = new \DateTime($student->updated_at);
+                                        $updatedBE = (int)$updatedDt->format('Y') + 543;
+                                        $updatedStr = $updatedDt->format('d/m/') . $updatedBE . ' ' . $updatedDt->format('H:i') . ' น.';
+                                    ?>
+                                    <span class="text-muted">แก้ไขล่าสุด:</span>
+                                    <strong><?= esc($updatedStr) ?></strong>
+                                    <?php if (!empty($student->updated_by)): ?>
+                                        <span class="text-muted">โดย</span>
+                                        <span class="badge bg-label-primary"><?= esc($student->updated_by) ?></span>
+                                    <?php endif; ?>
+                                <?php endif; ?>
+                                <?php if (!empty($student->created_at)): ?>
+                                    <?php
+                                        $createdDt = new \DateTime($student->created_at);
+                                        $createdBE = (int)$createdDt->format('Y') + 543;
+                                        $createdStr = $createdDt->format('d/m/') . $createdBE . ' ' . $createdDt->format('H:i') . ' น.';
+                                    ?>
+                                    <span class="ms-3 text-muted">สร้างเมื่อ:</span>
+                                    <strong><?= esc($createdStr) ?></strong>
+                                    <?php if (!empty($student->created_by)): ?>
+                                        <span class="text-muted">โดย</span>
+                                        <span class="badge bg-label-secondary"><?= esc($student->created_by) ?></span>
+                                    <?php endif; ?>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                        <?php endif; ?>
+
                         <div class="text-end mt-4">
                             <button type="submit" class="btn btn-primary px-5 py-2 fw-bold">
                                 <i class="bx bx-save me-1"></i> บันทึกการแก้ไขข้อมูล

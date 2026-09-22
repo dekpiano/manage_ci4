@@ -259,14 +259,14 @@
                                 <label class="form-label fw-bold"><i class='bx bx-git-pull-request me-1'></i>รูปแบบการจัดการข้อมูล</label>
                                 <div class="bg-light p-3 rounded-3 border">
                                     <div class="form-check mb-2">
-                                        <input class="form-check-input" type="radio" name="sync_mode" id="modeUpsert" value="upsert" checked>
+                                        <input class="form-check-input" type="radio" name="sync_mode" id="modeUpsert" value="upsert">
                                         <label class="form-check-label fw-semibold" for="modeUpsert">
                                             เพิ่มใหม่ + อัปเดตข้อมูลเก่า
                                         </label>
                                         <div class="small text-muted" style="margin-left: 1.5rem; font-size: 0.7rem;">ทับข้อมูลเดิมที่มีอยู่แล้วด้วยข้อมูลล่าสุดจาก Sheet</div>
                                     </div>
                                     <div class="form-check">
-                                        <input class="form-check-input" type="radio" name="sync_mode" id="modeAppend" value="append">
+                                        <input class="form-check-input" type="radio" name="sync_mode" id="modeAppend" value="append" checked>
                                         <label class="form-check-label fw-semibold" for="modeAppend">
                                             เพิ่มเฉพาะรายชื่อใหม่เท่านั้น
                                         </label>
@@ -657,62 +657,235 @@ $(document).ready(function() {
     function syncExecution(isDryRun) {
         const $btn = isDryRun ? $('#googleSheetImportForm').find('button[type="submit"]') : $('#confirmSyncBtn');
         const origHtml = $btn.html();
-        $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>' + (isDryRun ? 'กำลังตรวจสอบ...' : 'กำลังบันทึก...'));
-
-        const modeText = isDryRun ? 'กำลังตรวจสอบข้อมูล...' : 'กำลังบันทึกข้อมูลเข้าฐานข้อมูล...';
-
-        Swal.fire({
-            title: isDryRun ? 'เตรียมข้อมูลพรีวิว' : 'ระบบกำลังทำงาน',
-            html: `
-                <div class="text-center p-4">
-                    <div class="spinner-border text-success border-3 mb-3" style="width: 3.5rem; height: 3.5rem; color: #15a362 !important;"></div>
-                    <h5 class="fw-bold mb-1 text-success" style="color: #15a362 !important;">${modeText}</h5>
-                    <p class="text-muted small mb-0">อาจใช้เวลาสักครู่ ขึ้นอยู่กับปริมาณข้อมูล</p>
-                </div>`,
-            allowOutsideClick: false,
-            showConfirmButton: false,
-            didOpen: () => { Swal.showLoading(); }
-        });
+        $btn.prop('disabled', true);
 
         const form = $('#googleSheetImportForm')[0];
-        const formData = new FormData(form);
-        formData.set('dry_run', isDryRun ? 'true' : 'false');
+        const formDataBase = new FormData(form);
+        formDataBase.set('dry_run', isDryRun ? 'true' : 'false');
 
-        $.ajax({
-            url: $(form).attr('action'),
-            method: 'POST',
-            data: formData,
-            processData: false,
-            contentType: false,
-            success: function(res) {
-                if (res.status === 'success') {
-                    if (isDryRun) {
-                        Swal.close();
-                        showPreviewModal(res);
-                    } else {
-                        Swal.close();
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'ซิงค์ข้อมูลสำเร็จ!',
-                            html: `<div class="p-3 fs-6">${res.message}</div>`,
-                            confirmButtonText: 'เรียบร้อย',
-                            confirmButtonColor: '#15a362',
-                            customClass: { confirmButton: 'rounded-pill px-5 fw-bold' }
-                        }).then(() => {
-                            window.location.href = "<?= base_url('Admin/Acade/Registration/Students') ?>";
-                        });
+        if (isDryRun) {
+            $btn.html('<span class="spinner-border spinner-border-sm me-2" role="status"></span>กำลังเตรียมพรีวิว...');
+            Swal.fire({
+                title: 'เตรียมข้อมูลพรีวิว',
+                html: '<div class="text-center px-3 pt-2">' +
+                    '<div class="d-flex justify-content-between align-items-end mb-2">' +
+                        '<span id="previewProgressStatus" class="fw-semibold text-success">กำลังอ่านข้อมูลจาก Google Sheet...</span>' +
+                        '<strong id="previewProgressPercent" class="text-success fs-5">0%</strong>' +
+                    '</div>' +
+                    '<div class="progress" style="height:18px;border-radius:10px;background:#e9ecef;">' +
+                        '<div id="previewProgressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-success" role="progressbar" style="width:0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>' +
+                    '</div>' +
+                    '<div class="small text-muted mt-2" id="previewProgressCount">กำลังเริ่มต้น...</div>' +
+                '</div>',
+                allowOutsideClick: false,
+                showConfirmButton: false
+            });
+        } else {
+            Swal.fire({
+                title: 'กำลังนำเข้าข้อมูลนักเรียน',
+                html: `
+                    <div class="text-center px-3 pt-2">
+                        <div class="d-flex justify-content-between align-items-end mb-2">
+                            <span id="importProgressStatus" class="fw-semibold text-success">กำลังเตรียมข้อมูล...</span>
+                            <strong id="importProgressPercent" class="text-success fs-5">0%</strong>
+                        </div>
+                        <div class="progress" style="height:18px;border-radius:10px;background:#e9ecef;">
+                            <div id="importProgressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-success"
+                                 role="progressbar" style="width:0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                        <div class="small text-muted mt-2" id="importProgressCount">กำลังเริ่มต้น...</div>
+                        <div class="row g-2 mt-3 text-center">
+                            <div class="col-3"><div class="border rounded-3 p-2"><div class="fw-bold text-success" id="importCountSuccess">0</div><small>เพิ่ม/แก้ไข</small></div></div>
+                            <div class="col-3"><div class="border rounded-3 p-2"><div class="fw-bold text-warning" id="importCountSkipped">0</div><small>ข้าม</small></div></div>
+                            <div class="col-3"><div class="border rounded-3 p-2"><div class="fw-bold text-danger" id="importCountInvalid">0</div><small>ผิดพลาด</small></div></div>
+                            <div class="col-3"><div class="border rounded-3 p-2"><div class="fw-bold text-danger" id="importCountConflict">0</div><small>ขัดแย้ง</small></div></div>
+                        </div>
+                    </div>`,
+                allowOutsideClick: false,
+                showConfirmButton: false
+            });
+        }
+
+        function updateImportProgress(progress, totals) {
+            const percent = Math.min(100, Math.max(0, Number(progress.percent || 0)));
+            $('#importProgressBar').css('width', percent + '%').attr('aria-valuenow', percent);
+            $('#importProgressPercent').text(percent.toFixed(1).replace('.0', '') + '%');
+            $('#importProgressCount').text('ประมวลผลแล้ว ' + Number(progress.processed || 0).toLocaleString() + ' / ' + Number(progress.total || 0).toLocaleString() + ' รายการ');
+            $('#importProgressStatus').text(percent >= 100 ? 'ประมวลผลเสร็จแล้ว กำลังสรุปผล...' : 'กำลังประมวลผลข้อมูลนักเรียน...');
+            $('#importCountSuccess').text(Number(totals.success).toLocaleString());
+            $('#importCountSkipped').text(Number(totals.skipped).toLocaleString());
+            $('#importCountInvalid').text(Number(totals.invalid).toLocaleString());
+            $('#importCountConflict').text(Number(totals.conflict).toLocaleString());
+        }
+
+        function escapeHtml(value) {
+            return String(value ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function runImportChunk(offset, totals) {
+            const formData = new FormData(form);
+            formData.set('dry_run', 'false');
+            formData.set('offset', String(offset));
+            formData.set('batch_size', '50');
+
+            $.ajax({
+                url: $(form).attr('action'),
+                method: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                dataType: 'json',
+                success: function(res) {
+                    if (res.status !== 'success') {
+                        Swal.fire({ title: 'นำเข้าข้อมูลไม่สำเร็จ', text: res.message || 'เกิดข้อผิดพลาด', icon: 'error' });
+                        $btn.prop('disabled', false).html(origHtml);
+                        return;
                     }
-                } else {
-                    Swal.fire({ title: 'ผิดพลาด', text: res.message, icon: 'error' });
+
+                    const c = res.counts || {};
+                    totals.success += Number(c.success || 0);
+                    totals.skipped += Number(c.skipped || 0);
+                    totals.invalid += Number(c.invalid || 0);
+                    totals.conflict += Number(c.conflict || 0);
+                    totals.filtered += Number(c.filtered || 0);
+                    totals.failed += Number(c.failed || 0);
+                    if (Array.isArray(res.failed_rows)) {
+                        totals.failedRows.push(...res.failed_rows);
+                    }
+
+                    updateImportProgress(res.progress || {}, totals);
+
+                    if (res.progress && res.progress.done) {
+                        $('#importProgressBar').removeClass('progress-bar-animated').css('width', '100%');
+                        $('#importProgressStatus').text('นำเข้าข้อมูลเสร็จสมบูรณ์');
+                        setTimeout(function() {
+                            const failedRowsHtml = totals.failedRows.length > 0
+                                ? `<div class="mt-3 text-start">
+                                    <div class="fw-bold text-danger mb-2">รายการที่บันทึกไม่สำเร็จ ${totals.failedRows.length.toLocaleString()} รายการ</div>
+                                    <div class="border rounded p-2" style="max-height:260px;overflow:auto;">
+                                        ${totals.failedRows.map((item, index) => `
+                                            <div class="py-2 ${index > 0 ? 'border-top' : ''}">
+                                                <div class="fw-semibold">${escapeHtml(item.StudentCode || '-')} — ${escapeHtml(item.StudentName || '-')}</div>
+                                                <div class="small text-muted">ชั้น ${escapeHtml(item.StudentClass || '-')} | เลขที่ ${escapeHtml(item.StudentNumber || '-')}</div>
+                                                <div class="small text-danger mt-1">${escapeHtml(item.Error || 'ไม่ทราบสาเหตุ')}</div>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>`
+                                : '';
+
+                            Swal.fire({
+                                icon: totals.failed > 0 ? 'warning' : 'success',
+                                title: totals.failed > 0 ? 'นำเข้าข้อมูลเสร็จแล้ว' : 'นำเข้าข้อมูลสำเร็จ!',
+                                html: `<div class="p-3 fs-6">
+                                    สำเร็จ ${totals.success.toLocaleString()} รายการ | ขัดแย้ง ${totals.conflict.toLocaleString()} | ข้อมูลไม่ถูกต้อง ${totals.invalid.toLocaleString()} | ไม่ตรงกลุ่ม ${totals.filtered.toLocaleString()} | ข้าม ${totals.skipped.toLocaleString()} | <span class="text-danger">บันทึกไม่สำเร็จ ${totals.failed.toLocaleString()}</span>
+                                    ${failedRowsHtml}
+                                </div>`,
+                                width: totals.failed > 0 ? 700 : 520,
+                                confirmButtonText: 'เรียบร้อย',
+                                confirmButtonColor: '#15a362'
+                            }).then(() => {
+                                window.location.href = "<?= base_url('Admin/Acade/Registration/Students') ?>";
+                            });
+                        }, 400);
+                    } else {
+                        runImportChunk(Number(res.progress.next_offset || (offset + 50)), totals);
+                    }
+                },
+                error: function(xhr) {
+                    const msg = xhr.responseJSON && xhr.responseJSON.message
+                        ? xhr.responseJSON.message
+                        : 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้';
+                    Swal.fire({ title: 'การนำเข้าหยุดลง', text: msg, icon: 'error' });
+                    $btn.prop('disabled', false).html(origHtml);
                 }
-            },
-            error: function() {
-                Swal.fire('เชื่อมต่อล้มเหลว', 'โปรดตรวจสอบการเชื่อมต่ออินเทอร์เน็ตหรือลองอีกครั้ง', 'error');
-            },
-            complete: function() {
-                $btn.prop('disabled', false).html(origHtml);
-            }
-        });
+            });
+        }
+
+        if (!isDryRun) {
+            runImportChunk(0, { success: 0, skipped: 0, invalid: 0, conflict: 0, filtered: 0, failed: 0, failedRows: [] });
+            return;
+        }
+
+        function updatePreviewWaiting(percent, status) {
+            const value = Math.min(90, Math.max(0, Number(percent || 0)));
+            $('#previewProgressBar').css('width', value + '%').attr('aria-valuenow', value);
+            $('#previewProgressPercent').text(Math.round(value) + '%');
+            $('#previewProgressStatus').text(status);
+            $('#previewProgressCount').text('กำลังอ่านและตรวจสอบข้อมูลทั้งหมด กรุณารอสักครู่...');
+        }
+
+        let previewTimer = null;
+
+        function startPreview() {
+            let progress = 8;
+            updatePreviewWaiting(progress, 'กำลังอ่านข้อมูลจาก Google Sheet...');
+
+            previewTimer = setInterval(function() {
+                if (progress < 45) {
+                    progress += 3;
+                    updatePreviewWaiting(progress, 'กำลังอ่านข้อมูลจาก Google Sheet...');
+                } else if (progress < 75) {
+                    progress += 2;
+                    updatePreviewWaiting(progress, 'กำลังตรวจสอบข้อมูลนักเรียน...');
+                } else if (progress < 90) {
+                    progress += 1;
+                    updatePreviewWaiting(progress, 'กำลังตรวจสอบข้อมูลซ้ำและเตรียมพรีวิว...');
+                }
+            }, 250);
+
+            const formData = new FormData(form);
+            formData.set('dry_run', 'true');
+            formData.set('offset', '0');
+            formData.set('batch_size', '50');
+
+            $.ajax({
+                url: $(form).attr('action'),
+                method: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                dataType: 'json',
+                success: function(res) {
+                    if (previewTimer) clearInterval(previewTimer);
+
+                    if (res.status !== 'success') {
+                        Swal.fire({ title: 'เตรียมพรีวิวไม่สำเร็จ', text: res.message || 'เกิดข้อผิดพลาด', icon: 'error' });
+                        $btn.prop('disabled', false).html(origHtml);
+                        return;
+                    }
+
+                    $('#previewProgressBar').removeClass('progress-bar-animated').css('width', '100%').attr('aria-valuenow', 100);
+                    $('#previewProgressPercent').text('100%');
+                    $('#previewProgressStatus').text('อ่านและตรวจสอบข้อมูลเสร็จแล้ว กำลังเปิดพรีวิว...');
+                    const previewResult = {
+                        ...res,
+                        preview: Array.isArray(res.preview) ? res.preview : []
+                    };
+
+                    setTimeout(function() {
+                        Swal.close();
+                        showPreviewModal(previewResult);
+                        $btn.prop('disabled', false).html(origHtml);
+                    }, 350);
+                },
+                error: function(xhr) {
+                    if (previewTimer) clearInterval(previewTimer);
+                    const msg = xhr.responseJSON && xhr.responseJSON.message
+                        ? xhr.responseJSON.message
+                        : 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้';
+                    Swal.fire({ title: 'เตรียมพรีวิวหยุดลง', text: msg, icon: 'error' });
+                    $btn.prop('disabled', false).html(origHtml);
+                }
+            });
+        }
+
+        startPreview();
     }
 
     function showPreviewModal(data) {

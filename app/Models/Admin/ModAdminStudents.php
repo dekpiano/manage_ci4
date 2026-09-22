@@ -9,6 +9,12 @@ class ModAdminStudents extends Model
     protected $table = 'tb_students'; // Primary table for this model
     protected $primaryKey = 'StudentID';
 
+    // === Audit: Auto-fill created_at / updated_at ===
+    protected $useTimestamps = true;
+    protected $dateFormat    = 'datetime';
+    protected $createdField  = 'created_at';
+    protected $updatedField  = 'updated_at';
+
     protected $allowedFields = [
         'StudentNumber',
         'StudentClass',
@@ -33,11 +39,16 @@ class ModAdminStudents extends Model
         'StudentPassword',
         'StudentRegion',
         'YearIn',
+        // Audit columns
+        'created_at',
+        'created_by',
+        'updated_at',
+        'updated_by',
     ]; // Fields that can be mass-assigned
 
-    // Model Event callbacks to sanitize StudentStudyLine on every insert/update
-    protected $beforeInsert = ['sanitizeStudyLine'];
-    protected $beforeUpdate = ['sanitizeStudyLine'];
+    // Model Event callbacks to sanitize StudentStudyLine and fill audit user on every insert/update
+    protected $beforeInsert = ['sanitizeStudyLine', 'fillCreatedBy'];
+    protected $beforeUpdate = ['sanitizeStudyLine', 'fillUpdatedBy'];
 
     /**
      * Sanitize StudentStudyLine before insert/update.
@@ -50,6 +61,24 @@ class ModAdminStudents extends Model
             $classroom = new \App\Libraries\Classroom();
             $data['data']['StudentStudyLine'] = $classroom->sanitizeStudyLine($data['data']['StudentStudyLine']);
         }
+        return $data;
+    }
+
+    /**
+     * Auto-fill created_by from session before insert.
+     */
+    protected function fillCreatedBy(array $data): array
+    {
+        $data['data']['created_by'] = session()->get('login_id') ?? 'system';
+        return $data;
+    }
+
+    /**
+     * Auto-fill updated_by from session before update.
+     */
+    protected function fillUpdatedBy(array $data): array
+    {
+        $data['data']['updated_by'] = session()->get('login_id') ?? 'system';
         return $data;
     }
 

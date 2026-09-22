@@ -937,7 +937,7 @@ $(document).ready(function() {
                         confirmButtonColor: '#15a362'
                     });
                     $('#studentDetailModal').modal('hide');
-                    tbStudent.ajax.reload();
+                    tbStudent.ajax.reload(null, false);
                 } else {
                     Swal.fire({
                         title: 'ผิดพลาด!',
@@ -995,7 +995,7 @@ $(document).ready(function() {
                                 icon: 'success',
                                 confirmButtonColor: '#15a362'
                             });
-                            tbStudent.ajax.reload();
+                            tbStudent.ajax.reload(null, false);
                         } else {
                             Swal.fire({
                                 title: 'ผิดพลาด!',
