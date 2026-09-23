@@ -304,26 +304,26 @@
             <!-- Clubs-specific Category Tabs -->
             <ul class="nav nav-pills" id="activityCategoryTabs" role="tablist">
                 <li class="nav-item">
-                    <button class="nav-link <?= ($initialCategory == 'club') ? 'active' : '' ?> fw-bold px-3 py-2" data-category="club" type="button">
-                        <i class="bx bx-extension me-1"></i> กิจกรรมชุมนุม 
-                        <span class="badge rounded-pill <?= ($initialCategory == 'club') ? 'bg-white text-dark shadow-sm' : 'bg-label-primary' ?> ms-1" id="badgeCountClub">0</span>
+                    <button class="nav-link active fw-bold px-3 py-2" data-category="club-all" type="button">
+                        <i class="bx bx-extension me-1"></i> ชุมนุมทั้งหมด 
+                        <span class="badge rounded-pill bg-white text-dark shadow-sm ms-1" id="badgeCountClubAll">0</span>
                     </button>
                 </li>
                 <li class="nav-item">
-                    <button class="nav-link <?= ($initialCategory == 'scout') ? 'active' : '' ?> fw-bold px-3 py-2" data-category="scout" type="button">
-                        <i class="bx bx-compass me-1"></i> กิจกรรมลูกเสือ - เนตรนารี
-                        <span class="badge rounded-pill <?= ($initialCategory == 'scout') ? 'bg-white text-dark shadow-sm' : 'bg-label-success' ?> ms-1" id="badgeCountScout">0</span>
+                    <button class="nav-link fw-bold px-3 py-2" data-category="club-junior" type="button">
+                        <i class="bx bx-user me-1"></i> ม.ต้น
+                        <span class="badge rounded-pill bg-label-primary ms-1" id="badgeCountClubJunior">0</span>
                     </button>
                 </li>
                 <li class="nav-item">
-                    <button class="nav-link <?= ($initialCategory == 'all') ? 'active' : '' ?> fw-bold px-3 py-2" data-category="all" type="button">
-                        <i class="bx bx-list-ul me-1"></i> ทั้งหมด
-                        <span class="badge rounded-pill bg-label-secondary ms-1" id="badgeCountAll">0</span>
+                    <button class="nav-link fw-bold px-3 py-2" data-category="club-senior" type="button">
+                        <i class="bx bx-user-plus me-1"></i> ม.ปลาย
+                        <span class="badge rounded-pill bg-label-info ms-1" id="badgeCountClubSenior">0</span>
                     </button>
                 </li>
             </ul>
             <div class="small text-muted d-none d-md-block" id="categoryDescText">
-                <i class="bx bx-extension me-1 text-primary"></i>กำลังแสดง: <b class="text-primary">กิจกรรมชุมนุม</b> (ตามความถนัด/สนใจ)
+                <i class="bx bx-extension me-1 text-primary"></i>กำลังแสดง: <b class="text-primary">ชุมนุมทั้งหมด</b> (ตามความถนัด/สนใจ)
             </div>
             <?php endif; ?>
         </div>
@@ -852,7 +852,7 @@
 <script>
 $(document).ready(function() {
     const isScoutPage = <?= $isScoutPage ? 'true' : 'false' ?>;
-    let currentActivityCategory = isScoutPage ? 'all-scout' : '<?= $initialCategory ?>';
+    let currentActivityCategory = isScoutPage ? 'all-scout' : 'club-all';
 
     $('#academicYearFilter').change(function() {
         table.ajax.reload();
@@ -864,7 +864,7 @@ $(document).ready(function() {
             if (!settings || !settings.nTable || settings.nTable.id !== 'TbClubs') return true;
             const name = (rowData && rowData.club_name) || '';
             const isScout = (rowData && (rowData.is_scout === true || rowData.activity_type === 'scout')) 
-                || /ลูกเสือ|เนตรนารี|ยุวกาชาด|ผู้บำเพ็ญประโยชน์|นศท|รักษาดินแดน|รด\./i.test(name);
+                || /ลูกเสือ|เนตรนารี|ยุวกาชาด|ผู้บำเพ็ญประโยชน์/i.test(name);
             
             if (isScoutPage) {
                 // On Scout page, only display scout/guidance activities
@@ -883,9 +883,17 @@ $(document).ready(function() {
                 }
                 return true;
             } else {
-                if (currentActivityCategory === 'all') return true;
-                if (currentActivityCategory === 'scout') return isScout;
-                if (currentActivityCategory === 'club') return !isScout;
+                if (isScout) return false;
+
+                if (currentActivityCategory === 'club-all') return true;
+                
+                const level = (rowData && rowData.club_level) || '';
+                
+                if (currentActivityCategory === 'club-junior') {
+                    return /ม\.ต้น/.test(level);
+                } else if (currentActivityCategory === 'club-senior') {
+                    return /ม\.ปลาย/.test(level);
+                }
                 return true;
             }
         }
@@ -896,7 +904,7 @@ $(document).ready(function() {
         if (!data) return;
         const scoutRows = data.filter(r => {
             return (r.is_scout === true || r.activity_type === 'scout') ||
-                /ลูกเสือ|เนตรนารี|ยุวกาชาด|ผู้บำเพ็ญประโยชน์|นศท|รักษาดินแดน|รด\./i.test(r.club_name || '');
+                /ลูกเสือ|เนตรนารี|ยุวกาชาด|ผู้บำเพ็ญประโยชน์/i.test(r.club_name || '');
         });
 
         const totalTroops = scoutRows.length;
@@ -950,7 +958,7 @@ $(document).ready(function() {
         if (!data) return;
         const clubRows = data.filter(r => {
             const isScout = (r.is_scout === true || r.activity_type === 'scout') ||
-                /ลูกเสือ|เนตรนารี|ยุวกาชาด|ผู้บำเพ็ญประโยชน์|นศท|รักษาดินแดน|รด\./i.test(r.club_name || '');
+                /ลูกเสือ|เนตรนารี|ยุวกาชาด|ผู้บำเพ็ญประโยชน์/i.test(r.club_name || '');
             return !isScout;
         });
 
@@ -958,6 +966,9 @@ $(document).ready(function() {
         let totalStudents = 0;
         let totalQuota = 0;
         const advisorSet = new Set();
+
+        let countJunior = 0;
+        let countSenior = 0;
 
         clubRows.forEach(r => {
             totalStudents += parseInt(r.member_count) || 0;
@@ -968,6 +979,10 @@ $(document).ready(function() {
                     if (clean) advisorSet.add(clean);
                 });
             }
+            
+            const level = r.club_level || '';
+            if (/ม\.ต้น/.test(level)) countJunior++;
+            if (/ม\.ปลาย/.test(level)) countSenior++;
         });
 
         const percent = totalQuota > 0 ? Math.round((totalStudents / totalQuota) * 100) : 0;
@@ -979,11 +994,9 @@ $(document).ready(function() {
         $('#statClubQuota').text(`จากเป้าหมาย ${totalQuota.toLocaleString()} คน`);
         $('#statClubProgressBar').css('width', (percent > 100 ? 100 : percent) + '%');
 
-        if (counts) {
-            $('#badgeCountAll').text(counts.all || data.length);
-            $('#badgeCountClub').text(counts.club || totalClubs);
-            $('#badgeCountScout').text(counts.scout || (data.length - totalClubs));
-        }
+        $('#badgeCountClubAll').text(totalClubs);
+        $('#badgeCountClubJunior').text(countJunior);
+        $('#badgeCountClubSenior').text(countSenior);
     }
 
     const table = $('#TbClubs').DataTable({
@@ -1053,7 +1066,7 @@ $(document).ready(function() {
                         }
                     } else {
                         const isScout = (row.is_scout === true || row.activity_type === 'scout')
-                            || /ลูกเสือ|เนตรนารี|ยุวกาชาด|ผู้บำเพ็ญประโยชน์|นศท|รักษาดินแดน|รด\./i.test(name);
+                            || /ลูกเสือ|เนตรนารี|ยุวกาชาด|ผู้บำเพ็ญประโยชน์/i.test(name);
                         typeBadge = isScout 
                             ? `<span class="badge bg-label-success text-success me-1 px-2 py-1"><i class="bx bx-compass me-1"></i>ลูกเสือ-เนตรนารี</span>` 
                             : `<span class="badge bg-label-success text-success me-1 px-2 py-1"><i class="bx bx-extension me-1"></i>ชุมนุม</span>`;
@@ -1208,29 +1221,27 @@ $(document).ready(function() {
                 const cat = $(this).data('category');
                 const badge = $(this).find('.badge');
                 if ($(this).hasClass('active')) {
-                    badge.removeClass('bg-label-primary bg-label-warning bg-label-secondary bg-label-success').addClass('bg-white text-dark shadow-sm');
+                    badge.removeClass('bg-label-primary bg-label-info bg-label-warning bg-label-secondary bg-label-success').addClass('bg-white text-dark shadow-sm');
                 } else {
                     badge.removeClass('bg-white text-dark shadow-sm');
-                    if (cat === 'club') badge.addClass('bg-label-success text-success');
-                    else if (cat === 'scout') badge.addClass('bg-label-success text-success');
+                    if (cat === 'club-all') badge.addClass('bg-label-success text-success');
+                    else if (cat === 'club-junior') badge.addClass('bg-label-primary text-primary');
+                    else if (cat === 'club-senior') badge.addClass('bg-label-info text-info');
                     else badge.addClass('bg-label-secondary text-secondary');
                 }
             });
 
             // Update description text and add button text
-            if (currentActivityCategory === 'club') {
-                $('#categoryDescText').html('<i class="bx bx-extension me-1 text-success"></i>กำลังแสดง: <b class="text-success">กิจกรรมชุมนุม</b> (ตามความถนัด/สนใจ)');
-                $('#btnAddClubText').html('<i class="bx bx-plus-circle me-1"></i> เพิ่มชุมนุมใหม่');
-                $('.BtnAddClub').removeClass('btn-warning').addClass('btn-skj-green');
-            } else if (currentActivityCategory === 'scout') {
-                $('#categoryDescText').html('<i class="bx bx-compass me-1 text-success"></i>กำลังแสดง: <b class="text-success">กิจกรรมลูกเสือ - เนตรนารี</b> (กิจกรรมภาคบังคับ)');
-                $('#btnAddClubText').html('<i class="bx bx-plus-circle me-1"></i> เพิ่มกิจกรรมลูกเสือ/เนตรนารี');
-                $('.BtnAddClub').removeClass('btn-warning').addClass('btn-skj-green');
-            } else {
-                $('#categoryDescText').html('<i class="bx bx-list-ul me-1 text-secondary"></i>กำลังแสดง: <b>กิจกรรมทั้งหมด</b> (ชุมนุม + ลูกเสือ-เนตรนารี)');
-                $('#btnAddClubText').html('<i class="bx bx-plus-circle me-1"></i> เพิ่มกิจกรรมใหม่');
-                $('.BtnAddClub').removeClass('btn-warning').addClass('btn-skj-green');
+            if (currentActivityCategory === 'club-all') {
+                $('#categoryDescText').html('<i class="bx bx-extension me-1 text-success"></i>กำลังแสดง: <b class="text-success">ชุมนุมทั้งหมด</b>');
+            } else if (currentActivityCategory === 'club-junior') {
+                $('#categoryDescText').html('<i class="bx bx-user me-1 text-primary"></i>กำลังแสดง: <b class="text-primary">ชุมนุมระดับชั้น ม.ต้น</b>');
+            } else if (currentActivityCategory === 'club-senior') {
+                $('#categoryDescText').html('<i class="bx bx-user-plus me-1 text-info"></i>กำลังแสดง: <b class="text-info">ชุมนุมระดับชั้น ม.ปลาย</b>');
             }
+            
+            $('#btnAddClubText').html('<i class="bx bx-plus-circle me-1"></i> เพิ่มชุมนุมใหม่');
+            $('.BtnAddClub').removeClass('btn-warning').addClass('btn-skj-green');
         }
 
         table.draw();
@@ -1349,7 +1360,7 @@ $(document).ready(function() {
                 $('#club_level').val(data.club_level);
 
                 // Preselect activity category radio
-                const isClubScout = /ลูกเสือ|เนตรนารี|ยุวกาชาด|ผู้บำเพ็ญประโยชน์|นศท|รักษาดินแดน/.test(data.club_name || '');
+                const isClubScout = /ลูกเสือ|เนตรนารี|ยุวกาชาด|ผู้บำเพ็ญประโยชน์/.test(data.club_name || '');
                 if (isClubScout) {
                     $('#modal_type_scout').prop('checked', true).trigger('change');
                 } else {
@@ -1548,7 +1559,7 @@ $(document).ready(function() {
         const clubname = $(this).attr('clubname');
         current_max = parseInt($(this).attr('max')) || 0;
         
-        const isClubScout = /ลูกเสือ|เนตรนารี|ยุวกาชาด|ผู้บำเพ็ญประโยชน์|นศท|รักษาดินแดน|รด\./i.test(clubname || '');
+        const isClubScout = /ลูกเสือ|เนตรนารี|ยุวกาชาด|ผู้บำเพ็ญประโยชน์/i.test(clubname || '');
         const typeBadge = isClubScout 
             ? '<span class="badge bg-label-success ms-2"><i class="bx bx-compass me-1"></i>ลูกเสือ - เนตรนารี</span>'
             : '<span class="badge bg-label-primary ms-2"><i class="bx bx-extension me-1"></i>ชุมนุม</span>';

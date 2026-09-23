@@ -289,46 +289,96 @@ $(document).ajaxError(function(event, jqXHR, ajaxSettings, thrownError) {
         }
     });
 
+<?php 
+    $db = \Config\Database::connect();
+    $realSchoolYearObj = $db->table('tb_schoolyear')->get()->getRow();
+    $realSchoolYear = $realSchoolYearObj->schyear_year ?? (date('Y') + 543);
+?>
 /**
- * Global Year Selection Handler
- * Automatically saves selected year to session when any common year dropdown changes
+ * Global Year Selection Handler (Only for Sidebar Active Year)
+ * Automatically saves selected year to session when the sidebar dropdown changes
  */
-$(document).on('change', '#onoff_year, [name="keyYear"], #CheckYearMain, #selectYear, #schyear_year_sidebar', function() {
+$(document).on('change', '#schyear_year_sidebar', function() {
     var selectedYear = $(this).val();
+    var realSchoolYear = "<?= $realSchoolYear ?>";
+    
+    // Check if the selected year is in the past (สิ้นสุดแล้ว)
+    var isPast = false;
+    if (selectedYear && realSchoolYear) {
+        var sParts = selectedYear.split('/');
+        var rParts = realSchoolYear.split('/');
+        if (sParts.length === 2 && rParts.length === 2) {
+            var sTerm = parseInt(sParts[0]), sYear = parseInt(sParts[1]);
+            var rTerm = parseInt(rParts[0]), rYear = parseInt(rParts[1]);
+            
+            if (sYear < rYear) {
+                isPast = true;
+            } else if (sYear === rYear && sTerm < rTerm) {
+                isPast = true;
+            }
+        }
+    }
+
     if (selectedYear) {
-        $.ajax({
-            url: "<?= site_url('Admin/SetSelectedYear') ?>",
-            type: 'POST',
-            data: { 
-                year: selectedYear,
-                "<?= csrf_token() ?>": "<?= csrf_hash() ?>"
-            },
-            dataType: 'json',
-            success: function(response) {
-                if (response.status === 'success') {
-                    location.reload();
-                } else {
+        var executeAjax = function() {
+            $.ajax({
+                url: "<?= site_url('Admin/SetSelectedYear') ?>",
+                type: 'POST',
+                data: { 
+                    year: selectedYear,
+                    "<?= csrf_token() ?>": "<?= csrf_hash() ?>"
+                },
+                dataType: 'json',
+                success: function(response) {
+                    if (response.status === 'success') {
+                        location.reload();
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'ไม่สามารถบันทึกปีการศึกษาได้',
+                            text: response.message || 'กรุณาลองใหม่อีกครั้ง',
+                            customClass: { popup: 'swal2-popup-on-top' }
+                        });
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('SetSelectedYear Error:', status, error, xhr.responseText);
                     Swal.fire({
-                        icon: 'error',
-                        title: 'ไม่สามารถบันทึกปีการศึกษาได้',
-                        text: response.message || 'กรุณาลองใหม่อีกครั้ง',
+                        icon: 'warning',
+                        title: 'เกิดข้อผิดพลาด',
+                        text: 'ไม่สามารถเปลี่ยนปีการศึกษาได้ กรุณา Refresh หน้าใหม่แล้วลองอีกครั้ง',
+                        confirmButtonColor: '#15a362',
                         customClass: { popup: 'swal2-popup-on-top' }
+                    }).then(() => {
+                        location.reload();
                     });
                 }
-            },
-            error: function(xhr, status, error) {
-                console.error('SetSelectedYear Error:', status, error, xhr.responseText);
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'เกิดข้อผิดพลาด',
-                    text: 'ไม่สามารถเปลี่ยนปีการศึกษาได้ กรุณา Refresh หน้าใหม่แล้วลองอีกครั้ง',
-                    confirmButtonColor: '#15a362',
-                    customClass: { popup: 'swal2-popup-on-top' }
-                }).then(() => {
-                    location.reload();
-                });
-            }
-        });
+            });
+        };
+
+        if (!isPast) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'แจ้งเตือน!',
+                html: 'การแก้ไข <b>"ปีการศึกษาที่ใช้งาน"</b> ไปยังปีการศึกษาปัจจุบันหรือปีการศึกษาในอนาคต จะส่งผลต่อระบบทั้งหมด!<br>หากตั้งค่าเป็นปีการศึกษาที่ยังไม่ถึง ระบบบางระบบในงานวิชาการอาจทำงานผิดพลาดหรือแสดงข้อมูลคลาดเคลื่อน<br><br><span class="text-danger fw-bold">ยืนยันการเปลี่ยนแปลงหรือไม่?</span>',
+                showCancelButton: true,
+                confirmButtonColor: '#15a362',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'ยืนยัน',
+                cancelButtonText: 'ยกเลิก',
+                customClass: { popup: 'swal2-popup-on-top' }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    executeAjax();
+                } else {
+                    // Revert to original by reloading the page
+                    location.reload(); 
+                }
+            });
+        } else {
+            // ปีการศึกษาอดีต (สิ้นสุดแล้ว) สามารถเปลี่ยนได้เลยโดยไม่ต้องแจ้งเตือน
+            executeAjax();
+        }
     }
 });
 

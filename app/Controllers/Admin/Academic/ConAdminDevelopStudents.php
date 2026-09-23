@@ -561,7 +561,7 @@ class ConAdminDevelopStudents extends BaseController
         if (empty($clubName)) {
             return false;
         }
-        $keywords = ['ลูกเสือ', 'เนตรนารี', 'ยุวกาชาด', 'ผู้บำเพ็ญประโยชน์', 'นศท', 'รักษาดินแดน', 'รด.'];
+        $keywords = ['ลูกเสือ', 'เนตรนารี', 'ยุวกาชาด', 'ผู้บำเพ็ญประโยชน์'];
         foreach ($keywords as $kw) {
             if (mb_stripos($clubName, $kw) !== false) {
                 return true;
