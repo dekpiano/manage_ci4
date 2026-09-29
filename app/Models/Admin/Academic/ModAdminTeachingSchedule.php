@@ -101,8 +101,12 @@ class ModAdminTeachingSchedule extends Model
 
         // 2. ดึงครูที่กำลังใช้งานทั้งหมดจาก tb_personnel
         $teachers = $this->dbPersonnel->table('tb_personnel')
-            ->select('pers_id, pers_prefix, pers_firstname, pers_lastname, pers_img, pers_position, pers_academic, pers_learning, pers_groupleade')
+            ->select('pers_id, pers_prefix, pers_firstname, pers_lastname, pers_img, pers_position, pers_academic, pers_learning, pers_groupleade, pers_numberGroup')
             ->where('pers_status', 'กำลังใช้งาน')
+            ->orderBy("CASE WHEN pers_groupleade LIKE '%หัวหน้ากลุ่มสาระ%' AND pers_groupleade NOT LIKE '%รองหัวหน้ากลุ่มสาระ%' THEN 0 ELSE 1 END", 'ASC', false)
+            ->orderBy("pers_numberGroup = 0 OR pers_numberGroup = '' OR pers_numberGroup IS NULL", 'ASC', false)
+            ->orderBy("CAST(pers_numberGroup AS UNSIGNED)", 'ASC', false)
+            ->orderBy('pers_position', 'ASC')
             ->get()
             ->getResult();
 
@@ -168,7 +172,7 @@ class ModAdminTeachingSchedule extends Model
             $gid = trim($t->pers_learning ?? '');
             if (!empty($gid)) {
                 $teachersByGroup[$gid][] = $t;
-                if (!empty($t->pers_groupleade) && strpos($t->pers_groupleade, 'หัวหน้ากลุ่มสาระ') !== false) {
+                if (!isset($leadersByGroup[$gid]) && !empty($t->pers_groupleade) && ((strpos($t->pers_groupleade, 'หัวหน้ากลุ่มสาระ') !== false && strpos($t->pers_groupleade, 'รองหัวหน้ากลุ่มสาระ') === false) || $t->pers_groupleade == '1')) {
                     $leadersByGroup[$gid] = $t;
                 }
             }
@@ -246,11 +250,13 @@ class ModAdminTeachingSchedule extends Model
     {
         // ดึงครูในกลุ่มสาระ
         $teachers = $this->dbPersonnel->table('tb_personnel')
-            ->select('tb_personnel.pers_id, tb_personnel.pers_prefix, tb_personnel.pers_firstname, tb_personnel.pers_lastname, tb_personnel.pers_img, skjacth_skj.tb_position.posi_name as pers_position, tb_personnel.pers_academic, tb_personnel.pers_learning, tb_personnel.pers_groupleade, tb_personnel.pers_phone')
+            ->select('tb_personnel.pers_id, tb_personnel.pers_prefix, tb_personnel.pers_firstname, tb_personnel.pers_lastname, tb_personnel.pers_img, skjacth_skj.tb_position.posi_name as pers_position, tb_personnel.pers_academic, tb_personnel.pers_learning, tb_personnel.pers_groupleade, tb_personnel.pers_phone, tb_personnel.pers_numberGroup')
             ->join('skjacth_skj.tb_position', 'skjacth_skj.tb_position.posi_id = tb_personnel.pers_position', 'left')
             ->where('tb_personnel.pers_learning', $groupId)
             ->where('tb_personnel.pers_status', 'กำลังใช้งาน')
-            ->orderBy("CASE WHEN tb_personnel.pers_groupleade LIKE '%หัวหน้ากลุ่มสาระ%' THEN 0 ELSE 1 END", 'ASC', false)
+            ->orderBy("CASE WHEN tb_personnel.pers_groupleade LIKE '%หัวหน้ากลุ่มสาระ%' AND tb_personnel.pers_groupleade NOT LIKE '%รองหัวหน้ากลุ่มสาระ%' THEN 0 ELSE 1 END", 'ASC', false)
+            ->orderBy("tb_personnel.pers_numberGroup = 0 OR tb_personnel.pers_numberGroup = '' OR tb_personnel.pers_numberGroup IS NULL", 'ASC', false)
+            ->orderBy("CAST(tb_personnel.pers_numberGroup AS UNSIGNED)", 'ASC', false)
             ->orderBy('tb_personnel.pers_position', 'ASC')
             ->orderBy('tb_personnel.pers_firstname', 'ASC')
             ->get()
@@ -340,6 +346,8 @@ class ModAdminTeachingSchedule extends Model
 
         // ผสานข้อมูล
         $teacherList = [];
+        $hasFoundLeader = false; // ตัวแปรเก็บสถานะว่าเจอหัวหน้ากลุ่มแล้วหรือยัง (ให้มีได้คนเดียว)
+        
         foreach ($teachers as $t) {
             $tid = trim($t->pers_id);
             $subStat = $scheduleStats[$tid] ?? ['subjects' => 0, 'credits' => 0, 'hours' => 0];
@@ -348,6 +356,13 @@ class ModAdminTeachingSchedule extends Model
 
             $totalHours = $subStat['hours'] + $actStat['hours'];
             $hasData = ($subStat['subjects'] > 0 || $actStat['activities'] > 0 || $dutyCount > 0);
+
+            // เช็คความเป็นหัวหน้า (ถ้ายังไม่เคยเจอใครเป็นหัวหน้ามาก่อน)
+            $isLeader = false;
+            if (!$hasFoundLeader && !empty($t->pers_groupleade) && ((strpos($t->pers_groupleade, 'หัวหน้ากลุ่มสาระ') !== false && strpos($t->pers_groupleade, 'รองหัวหน้ากลุ่มสาระ') === false) || $t->pers_groupleade == '1')) {
+                $isLeader = true;
+                $hasFoundLeader = true; // ล็อคไว้ไม่ให้คนต่อไปเป็นหัวหน้าอีก
+            }
 
             $teacherList[] = (object)[
                 'pers_id'         => $t->pers_id,
@@ -359,7 +374,7 @@ class ModAdminTeachingSchedule extends Model
                 'pers_position'   => $t->pers_position,
                 'pers_academic'   => $t->pers_academic,
                 'pers_groupleade' => $t->pers_groupleade,
-                'is_leader'       => (!empty($t->pers_groupleade) && strpos($t->pers_groupleade, 'หัวหน้ากลุ่มสาระ') !== false),
+                'is_leader'       => $isLeader,
                 'subject_count'   => $subStat['subjects'],
                 'credit_total'    => $subStat['credits'],
                 'teaching_hours'  => $subStat['hours'],
@@ -749,10 +764,12 @@ class ModAdminTeachingSchedule extends Model
 
         // 2. ดึงครูทุกคนในกลุ่มสาระที่สถานะกำลังใช้งาน
         $teachers = $this->dbPersonnel->table('tb_personnel')
-            ->select('pers_id, pers_prefix, pers_firstname, pers_lastname, pers_img, pers_position, pers_academic, pers_learning, pers_groupleade')
+            ->select('pers_id, pers_prefix, pers_firstname, pers_lastname, pers_img, pers_position, pers_academic, pers_learning, pers_groupleade, pers_numberGroup')
             ->where('pers_learning', $groupId)
             ->where('pers_status', 'กำลังใช้งาน')
-            ->orderBy("CASE WHEN pers_groupleade LIKE '%หัวหน้ากลุ่มสาระ%' THEN 0 ELSE 1 END", 'ASC', false)
+            ->orderBy("CASE WHEN pers_groupleade LIKE '%หัวหน้ากลุ่มสาระ%' AND pers_groupleade NOT LIKE '%รองหัวหน้ากลุ่มสาระ%' THEN 0 ELSE 1 END", 'ASC', false)
+            ->orderBy("pers_numberGroup = 0 OR pers_numberGroup = '' OR pers_numberGroup IS NULL", 'ASC', false)
+            ->orderBy("CAST(pers_numberGroup AS UNSIGNED)", 'ASC', false)
             ->orderBy('pers_position', 'ASC')
             ->orderBy('pers_firstname', 'ASC')
             ->get()
@@ -785,7 +802,7 @@ class ModAdminTeachingSchedule extends Model
             $t->fullname = $fullName;
             $teacherMap[$tid] = $t;
 
-            if (!empty($t->pers_groupleade) && (strpos($t->pers_groupleade, 'หัวหน้ากลุ่มสาระ') !== false || $t->pers_groupleade == '1')) {
+            if (!empty($t->pers_groupleade) && ((strpos($t->pers_groupleade, 'หัวหน้ากลุ่มสาระ') !== false && strpos($t->pers_groupleade, 'รองหัวหน้ากลุ่มสาระ') === false) || $t->pers_groupleade == '1')) {
                 if (!$headTeacher) {
                     $headTeacher = $t;
                 }
