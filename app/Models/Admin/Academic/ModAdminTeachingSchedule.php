@@ -121,17 +121,40 @@ class ModAdminTeachingSchedule extends Model
             ->get()
             ->getResult();
 
-        // รวมยอดชั่วโมงและสถานะต่อครู
-        $teacherTeachingHours = [];
-        $teacherActivityHours = [];
-        $teacherHasSchedule   = [];
+        // รวมยอดชั่วโมงและสถานะต่อครู (จัดกลุ่มตาม subject_code + grade_level เพื่อคำนวณคาบสอนตามห้องจริง)
+        $teacherGroupedSubs = [];
+        $teacherHasSchedule = [];
 
         foreach ($schedules as $s) {
             $tid = trim($s->teacher_id);
             $teacherHasSchedule[$tid] = true;
-            $teacherTeachingHours[$tid] = ($teacherTeachingHours[$tid] ?? 0) + (float)$s->hours_per_week;
+            $subCode = trim($s->subject_code ?? '');
+            $gradeLevel = trim($s->grade_level ?? '');
+            $groupKey = $subCode . '_' . $gradeLevel;
+
+            if (!isset($teacherGroupedSubs[$tid][$groupKey])) {
+                $teacherGroupedSubs[$tid][$groupKey] = [
+                    'hours_per_week' => (float)($s->hours_per_week ?? 0),
+                    'rooms'          => []
+                ];
+            }
+
+            $r = trim((string)($s->room ?? ''));
+            if ($r !== '' && !in_array($r, $teacherGroupedSubs[$tid][$groupKey]['rooms'], true)) {
+                $teacherGroupedSubs[$tid][$groupKey]['rooms'][] = $r;
+            }
         }
 
+        $teacherTeachingHours = [];
+        foreach ($teacherGroupedSubs as $tid => $subs) {
+            $teacherTeachingHours[$tid] = 0;
+            foreach ($subs as $sub) {
+                $roomCount = max(count($sub['rooms']), 1);
+                $teacherTeachingHours[$tid] += ((float)$sub['hours_per_week'] * $roomCount);
+            }
+        }
+
+        $teacherActivityHours = [];
         foreach ($activities as $a) {
             $tid = trim($a->teacher_id);
             $teacherActivityHours[$tid] = ($teacherActivityHours[$tid] ?? 0) + (float)$a->hours_per_week;
@@ -267,26 +290,36 @@ class ModAdminTeachingSchedule extends Model
             ->get()
             ->getResult();
 
-        // จัดกลุ่มสรุปผล
-        $scheduleStats = [];
+        // จัดกลุ่มสรุปผล (จัดกลุ่มตาม subject_code + grade_level เพื่อคำนวณห้องเรียนและคาบสอนต่อสัปดาห์ที่ถูกต้อง)
+        $teacherGroupedSubs = [];
         foreach ($schedules as $s) {
             $tid = trim($s->teacher_id);
-            if (!isset($scheduleStats[$tid])) {
-                $scheduleStats[$tid] = ['group_keys' => [], 'subjects' => 0, 'credits' => 0, 'hours' => 0];
-            }
             $subCode = trim($s->subject_code ?? '');
             $gradeLevel = trim($s->grade_level ?? '');
             $groupKey = $subCode . '_' . $gradeLevel;
-            
-            // นับวิชาและหน่วยกิตเฉพาะ subject_code + grade_level ที่ไม่ซ้ำ (เหมือน getTeacherDetail)
-            if ($subCode !== '' && !in_array($groupKey, $scheduleStats[$tid]['group_keys'])) {
-                $scheduleStats[$tid]['group_keys'][] = $groupKey;
-                $scheduleStats[$tid]['subjects']++;
-                $scheduleStats[$tid]['credits'] += (float)($s->credit ?? 0);
+
+            if (!isset($teacherGroupedSubs[$tid][$groupKey])) {
+                $teacherGroupedSubs[$tid][$groupKey] = [
+                    'credit'         => (float)($s->credit ?? 0),
+                    'hours_per_week' => (float)($s->hours_per_week ?? 0),
+                    'rooms'          => []
+                ];
             }
-            
-            // ส่วนคาบสอน (hours) บวกเพิ่มทุกห้อง (ทุกแถว)
-            $scheduleStats[$tid]['hours'] += (float)($s->hours_per_week ?? 0);
+
+            $r = trim((string)($s->room ?? ''));
+            if ($r !== '' && !in_array($r, $teacherGroupedSubs[$tid][$groupKey]['rooms'], true)) {
+                $teacherGroupedSubs[$tid][$groupKey]['rooms'][] = $r;
+            }
+        }
+
+        $scheduleStats = [];
+        foreach ($teacherGroupedSubs as $tid => $subs) {
+            $scheduleStats[$tid] = ['subjects' => count($subs), 'credits' => 0, 'hours' => 0];
+            foreach ($subs as $sub) {
+                $roomCount = max(count($sub['rooms']), 1);
+                $scheduleStats[$tid]['credits'] += (float)$sub['credit'];
+                $scheduleStats[$tid]['hours'] += ((float)$sub['hours_per_week'] * $roomCount);
+            }
         }
 
         $activityStats = [];

@@ -19,7 +19,7 @@
 
         @page {
             size: A4 portrait;
-            margin: 12mm 15mm 12mm 15mm;
+            margin: 8mm 12mm 8mm 12mm;
         }
 
         * {
@@ -30,8 +30,8 @@
 
         body {
             font-family: 'TH Sarabun PSK', 'TH Sarabun New', 'Sarabun', sans-serif;
-            font-size: 15pt;
-            line-height: 1.35;
+            font-size: 14pt;
+            line-height: 1.25;
             color: #000;
             background: #f4f6f9;
             margin: 0;
@@ -87,7 +87,7 @@
             background: #ffffff;
             max-width: 820px;
             margin: 0 auto;
-            padding: 24px 28px;
+            padding: 18px 24px;
             box-shadow: 0 2px 12px rgba(0,0,0,0.12);
             border-radius: 2px;
         }
@@ -95,51 +95,47 @@
         /* Document Header */
         .doc-header {
             text-align: center;
-            margin-bottom: 12px;
+            margin-bottom: 6px;
         }
 
         .doc-title {
+            font-size: 17pt;
             font-weight: 700;
-            margin: 0 0 4px 0;
+            margin: 0 0 2px 0;
         }
 
         .school-name {
+            font-size: 14pt;
             font-weight: 700;
-            margin: 0 0 4px 0;
+            margin: 0 0 2px 0;
         }
 
-        .teacher-name {
-            font-weight: 700;
-            margin: 0;
-            color: #1e293b;
-        }
-
-        /* Summary Boxes Top */
-        .summary-boxes {
+        .meta-line {
+            font-size: 13.5pt;
             display: flex;
             justify-content: center;
-            gap: 20px;
-            flex-wrap: wrap;
-            margin-top: 4px;
+            gap: 15px;
         }
 
         /* Tables */
         .table-section-title {
+            font-size: 13.5pt;
             font-weight: 700;
-            margin: 10px 0 4px 0;
+            margin: 6px 0 2px 0;
         }
 
         table.schedule-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 8px;
-            font-size: 15pt;
+            margin-bottom: 4px;
+            font-size: 13pt;
+            line-height: 1.18;
         }
 
         table.schedule-table th, 
         table.schedule-table td {
             border: 1px solid #000;
-            padding: 4px 5px;
+            padding: 2.5px 3.5px;
             vertical-align: middle;
         }
 
@@ -147,6 +143,15 @@
             background-color: #f1f3f5;
             font-weight: 700;
             text-align: center;
+            font-size: 12.5pt;
+        }
+
+        .subject-name-cell {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 215px;
+            font-size: 12pt;
         }
 
         .text-center { text-align: center !important; }
@@ -157,48 +162,54 @@
         /* Grand Total Box */
         .grand-total-box {
             border: 1px solid #000;
-            padding: 6px 12px;
-            margin: 8px 0 12px 0;
+            padding: 3px 10px;
+            margin: 4px 0 6px 0;
             font-weight: 700;
+            font-size: 13.5pt;
             text-align: right;
             background-color: #f8f9fa;
         }
 
         /* Special Duties Section */
         .duty-section {
-            margin: 10px 0 16px 0;
+            margin: 4px 0 8px 0;
             page-break-inside: avoid;
         }
 
         .duty-title {
+            font-size: 13.5pt;
             font-weight: 700;
-            margin-bottom: 4px;
+            margin-bottom: 2px;
         }
 
         .duty-list {
             margin: 0;
-            padding-left: 24px;
+            padding-left: 20px;
+            font-size: 13pt;
+            line-height: 1.2;
         }
 
         .duty-list li {
-            margin-bottom: 3px;
+            margin-bottom: 1.5px;
         }
 
         .duty-blank-line {
-            margin-bottom: 3px;
+            margin-bottom: 2px;
             color: #333;
+            font-size: 13pt;
         }
 
-        /* Signatures Vertical (เรียงเป็นบรรทัดใคร บรรทัดมัน) */
+        /* Signatures Vertical */
         .signatures-vertical-container {
-            margin-top: 25px;
+            margin-top: 14px;
             margin-left: auto;
-            width: 440px;
+            width: 420px;
             max-width: 100%;
             display: flex;
             flex-direction: column;
-            gap: 16px;
+            gap: 10px;
             page-break-inside: avoid;
+            font-size: 13pt;
         }
 
         .sig-row {
@@ -215,12 +226,12 @@
         .sig-dots {
             flex: 1;
             border-bottom: 1px dotted #000;
-            margin: 0 8px 3px 4px;
+            margin: 0 6px 2px 4px;
             height: 1px;
         }
 
         .sig-role {
-            width: 165px;
+            width: 160px;
             text-align: left;
             white-space: nowrap;
             font-weight: normal;
@@ -228,10 +239,12 @@
 
         /* Print Media Styles */
         @media print {
-            body {
-                background: none;
-                padding: 0;
-                margin: 0;
+            html, body {
+                background: none !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                height: 100%;
+                overflow: hidden;
             }
 
             .no-print-bar {
@@ -239,11 +252,14 @@
             }
 
             .sheet-container {
-                box-shadow: none;
-                padding: 0;
-                margin: 0;
-                max-width: 100%;
-                border-radius: 0;
+                box-shadow: none !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                max-width: 100% !important;
+                width: 100% !important;
+                border-radius: 0 !important;
+                page-break-inside: avoid !important;
+                page-break-after: avoid !important;
             }
 
             table.schedule-table th {
@@ -318,7 +334,7 @@
                         <tr>
                             <td class="text-center"><?= $i++ ?></td>
                             <td class="text-center fw-bold"><?= esc($sub['subject_code']) ?></td>
-                            <td class="text-start"><?= esc($sub['subject_name']) ?></td>
+                            <td class="text-start subject-name-cell"><?= esc($sub['subject_name']) ?></td>
                             <td class="text-center"><?= !$isAdditional ? '/' : '' ?></td>
                             <td class="text-center"><?= $isAdditional ? '/' : '' ?></td>
                             <td class="text-center"><?= number_format($sub['credit'], 1) ?></td>
