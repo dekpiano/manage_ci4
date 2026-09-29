@@ -339,11 +339,6 @@
                         <div data-i18n="ตั้งค่าแสดงผลการเรียน">ตั้งค่าแสดงผลการเรียน</div>
                     </a>
                 </li>
-                <li class="menu-item <?= ($s4 == 'AcademicRepeat' ? 'active' : '') ?>">
-                    <a href="<?= base_url('Admin/Acade/Evaluate/AcademicRepeat'); ?>" class="menu-link">
-                        <div data-i18n="ตั้งค่าเรียนซ้ำ (มส)">ตั้งค่าเรียนซ้ำ (มส)</div>
-                    </a>
-                </li>
                 <li class="menu-item <?= ($s3 == 'characteristics' ? 'active' : '') ?>">
                     <a href="<?=base_url('admin/academic/characteristics/settings');?>" class="menu-link">
                         <div data-i18n="ประเมินคุณลักษณะ">ประเมินคุณลักษณะ</div>

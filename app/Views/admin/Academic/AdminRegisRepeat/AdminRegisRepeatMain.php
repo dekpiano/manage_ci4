@@ -66,6 +66,55 @@
     transform: translateY(-50%);
 }
 
+/* ===== Simple Workflow ===== */
+.repeat-workflow {
+    border-radius: 14px;
+    border: 1px solid #e9ecef;
+    background: #fff;
+}
+.repeat-workflow .workflow-title {
+    font-weight: 700;
+    color: #212529;
+}
+.workflow-step {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    padding: .8rem .9rem;
+    border-radius: 10px;
+    background: #f8f9fa;
+    height: 100%;
+}
+.workflow-step .step-icon {
+    width: 38px;
+    height: 38px;
+    min-width: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    font-size: 1.1rem;
+}
+.workflow-step .step-title {
+    font-weight: 600;
+    font-size: .88rem;
+    color: #343a40;
+}
+.workflow-step .step-desc {
+    font-size: .75rem;
+    color: #6c757d;
+}
+.workflow-arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #adb5bd;
+    font-size: 1.25rem;
+}
+@media (max-width: 767.98px) {
+    .workflow-arrow { display: none; }
+}
+
 /* ===== Stat Cards ===== */
 .stat-card {
     border-radius: 12px;
@@ -242,12 +291,17 @@
                     </div>
                 </div>
                 <div class="col-md-4 text-end d-none d-md-block">
-                    <a href="<?= site_url('Admin/Acade/Registration/Repeat/Report') ?>" class="btn btn-primary fw-semibold me-2">
-                        <i class="bx bx-bar-chart-alt-2 me-1"></i>ดูรายงานสรุป (ซ้ำ)
-                    </a>
-                    <button class="btn btn-light fw-semibold" onclick="showStudentDetailsModal()">
-                        <i class="bx bx-show me-1"></i>ดูรายชื่อนักเรียน (ซ้ำ)
-                    </button>
+                    <div class="d-flex justify-content-end align-items-center flex-nowrap gap-2">
+                        <button type="button" class="btn btn-light fw-semibold text-nowrap" data-bs-toggle="modal" data-bs-target="#repeatSettingsModal">
+                            <i class="bx bx-cog me-1"></i>ตั้งค่าการเรียนซ้ำ
+                        </button>
+                        <a href="<?= site_url('Admin/Acade/Registration/Repeat/Report') ?>" class="btn btn-primary fw-semibold text-nowrap">
+                            <i class="bx bx-bar-chart-alt-2 me-1"></i>ดูรายงานสรุป (ซ้ำ)
+                        </a>
+                        <button type="button" class="btn btn-light fw-semibold text-nowrap" onclick="showStudentDetailsModal()">
+                            <i class="bx bx-show me-1"></i>ดูรายชื่อนักเรียน (ซ้ำ)
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -256,6 +310,117 @@
         </div>
     </div>
 
+    <!-- Simple Workflow -->
+    <div class="card repeat-workflow shadow-sm mb-4">
+        <div class="card-body p-3 p-lg-4">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <div>
+                    <div class="workflow-title"><i class="bx bx-git-branch me-2 text-success"></i>ขั้นตอนการจัดการเรียนซ้ำ</div>
+                    <small class="text-muted">ทำตามลำดับจากซ้ายไปขวา ไม่ต้องค้นหาหลายหน้า</small>
+                </div>
+                <span class="badge bg-success bg-opacity-10 text-success px-3 py-2">4 ขั้นตอน</span>
+            </div>
+            <div class="row g-2 align-items-stretch">
+                <div class="col-md-3">
+                    <div class="workflow-step">
+                        <div class="step-icon bg-danger bg-opacity-10 text-danger"><i class="bx bx-error-circle"></i></div>
+                        <div><div class="step-title">1. ตรวจรายการ</div><div class="step-desc">นักเรียนที่ต้องเรียนซ้ำ</div></div>
+                    </div>
+                </div>
+                
+                <div class="col-md-3">
+                    <div class="workflow-step">
+                        <div class="step-icon bg-warning bg-opacity-10 text-warning"><i class="bx bx-user-plus"></i></div>
+                        <div><div class="step-title">2. มอบหมายครู</div><div class="step-desc">เลือกนักเรียนและครูผู้ดูแล</div></div>
+                    </div>
+                </div>
+                
+                <div class="col-md-3">
+                    <div class="workflow-step">
+                        <div class="step-icon bg-info bg-opacity-10 text-info"><i class="bx bx-refresh"></i></div>
+                        <div><div class="step-title">3. ติดตามผล</div><div class="step-desc">บันทึกผลการเรียนซ้ำ</div></div>
+                    </div>
+                </div>
+                
+                <div class="col-md-3">
+                    <div class="workflow-step">
+                        <div class="step-icon bg-success bg-opacity-10 text-success"><i class="bx bx-check-circle"></i></div>
+                        <div><div class="step-title">4. ยืนยันผล</div><div class="step-desc">ตรวจสอบและปิดรายการ</div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <?php
+        // Normalize repeat settings so the modal is safe even when no setting record exists.
+        $repeatSetting = $repeat_setting ?? null;
+        $repeatStatus = is_object($repeatSetting) ? ($repeatSetting->onoff_status ?? 'off') : 'off';
+        $repeatDetail = is_object($repeatSetting) ? ($repeatSetting->onoff_detail ?? '') : '';
+        $repeatYear = is_object($repeatSetting) ? ($repeatSetting->onoff_year ?? ($selectedYear ?? '')) : ($selectedYear ?? '');
+        $repeatStart = (is_object($repeatSetting) && !empty($repeatSetting->onoff_StartDate)) ? date('Y-m-d\\TH:i', strtotime($repeatSetting->onoff_StartDate)) : '';
+        $repeatEnd = (is_object($repeatSetting) && !empty($repeatSetting->onoff_EndDate)) ? date('Y-m-d\\TH:i', strtotime($repeatSetting->onoff_EndDate)) : '';
+    ?>
+
+    <!-- Repeat Settings Modal -->
+    <div class="modal fade" id="repeatSettingsModal" tabindex="-1" aria-labelledby="repeatSettingsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header">
+                    <div>
+                        <h5 class="modal-title fw-bold" id="repeatSettingsModalLabel"><i class="bx bx-cog me-2 text-primary"></i>ตั้งค่าการเรียนซ้ำ</h5>
+                        <small class="text-muted">จัดการการเปิดใช้งานและช่วงเวลาการเรียนซ้ำจากหน้านี้</small>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="ปิด"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="RepeatSettingStatus" class="form-label fw-semibold">สถานะระบบ</label>
+                            <select id="RepeatSettingStatus" class="form-select">
+                                <option value="on" <?= $repeatStatus === 'on' ? 'selected' : '' ?>>เปิดระบบ</option>
+                                <option value="off" <?= $repeatStatus !== 'on' ? 'selected' : '' ?>>ปิดระบบ</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="RepeatSettingYear" class="form-label fw-semibold">ปีการศึกษาที่ดำเนินการ</label>
+                            <select id="RepeatSettingYear" class="form-select">
+                                <?php foreach (($CountYear ?? []) as $vYear): ?>
+                                    <option value="<?= esc($vYear->RegisterYear) ?>" <?= $repeatYear === $vYear->RegisterYear ? 'selected' : '' ?>><?= esc($vYear->RegisterYear) ?></option>
+                                <?php endforeach; ?>
+                                <?php if (empty($CountYear)): ?><option value="<?= esc($repeatYear) ?>" selected><?= esc($repeatYear) ?></option><?php endif; ?>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="RepeatSettingAttempt" class="form-label fw-semibold">ครั้งที่เรียนซ้ำ</label>
+                            <select id="RepeatSettingAttempt" class="form-select">
+                                <?php foreach ([1,2,3,4] as $attempt): $attemptText = 'เรียนซ้ำครั้งที่ ' . $attempt; ?>
+                                    <option value="<?= $attemptText ?>" <?= $repeatDetail === $attemptText ? 'selected' : '' ?>><?= $attemptText ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="RepeatSettingStart" class="form-label fw-semibold">วันที่เริ่มต้น</label>
+                            <input type="datetime-local" id="RepeatSettingStart" class="form-control" value="<?= esc($repeatStart) ?>">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="RepeatSettingEnd" class="form-label fw-semibold">วันที่สิ้นสุด</label>
+                            <input type="datetime-local" id="RepeatSettingEnd" class="form-control" value="<?= esc($repeatEnd) ?>">
+                        </div>
+                    </div>
+                    <div class="alert alert-info mt-3 mb-0 py-2">
+                        <i class="bx bx-info-circle me-1"></i>การตั้งค่านี้ใช้ร่วมกับหน้ากรอกคะแนนเรียนซ้ำ
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">ปิด</button>
+                    <button type="button" id="btnSaveRepeatSettings" class="btn btn-primary">
+                        <i class="bx bx-save me-1"></i>บันทึกการตั้งค่า
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
     <!-- Dashboard Stats Cards -->
     <div class="row g-4 mb-4">
         <!-- Total Repeat Subjects Card -->
@@ -424,16 +589,16 @@
         <!-- Pending Registration Item -->
         <div class="accordion-item card shadow-sm mb-3">
             <h2 class="accordion-header" id="headingPending">
-                <button class="accordion-button collapsed py-3" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePending" aria-expanded="false" aria-controls="collapsePending" style="border-left: 4px solid #ffc107;">
+                <button class="accordion-button collapsed py-3" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePending" aria-expanded="true" aria-controls="collapsePending" style="border-left: 4px solid #ffc107;">
                     <div class="d-flex align-items-center w-100">
                         <i class="bx bx-time-five me-2 fs-4 text-warning"></i>
                         <span class="h5 mb-0 fw-bold">รายการรอลงทะเบียนเรียนซ้ำ</span>
                         <span class="badge bg-label-warning ms-2" id="pending-count">0</span>
-                        <small class="text-muted ms-auto me-3 d-none d-md-inline font-weight-normal"><i class="bx bx-info-circle me-1"></i>วิชาที่ได้ 0, ร หรือ มส ที่ยังไม่ได้มอบหมายครูดูแล</small>
+                        <small class="text-warning fw-semibold ms-auto me-3 d-none d-md-inline"><i class="bx bx-right-arrow-alt me-1"></i>เริ่มทำงานจากรายการนี้</small>
                     </div>
                 </button>
             </h2>
-            <div id="collapsePending" class="accordion-collapse collapse" aria-labelledby="headingPending" data-bs-parent="#accordionRepeatData">
+            <div id="collapsePending" class="accordion-collapse collapse show" aria-labelledby="headingPending" data-bs-parent="#accordionRepeatData">
                 <div class="accordion-body pt-0">
                     <div class="table-responsive">
                         <table class="table table-hover mb-0 w-100" id="tbRegisRepeatPending">
@@ -569,6 +734,47 @@
 
 <?= $this->section('script') ?>
 <script>
+// Save repeat settings from this page
+$(document).on('click', '#btnSaveRepeatSettings', function() {
+    var $btn = $(this);
+    var start = $('#RepeatSettingStart').val();
+    var end = $('#RepeatSettingEnd').val();
+
+    if (start && end && new Date(start) > new Date(end)) {
+        Swal.fire({ icon: 'warning', title: 'ตรวจสอบช่วงเวลา', text: 'วันที่เริ่มต้นต้องไม่มากกว่าวันที่สิ้นสุด' });
+        return;
+    }
+
+    $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span>กำลังบันทึก...');
+
+    $.ajax({
+        url: '<?= site_url('Admin/Acade/Evaluate/update_repeat_settings') ?>',
+        type: 'POST',
+        dataType: 'json',
+        data: {
+            setting_status: $('#RepeatSettingStatus').val(),
+            setting_year: $('#RepeatSettingYear').val(),
+            setting_time: $('#RepeatSettingAttempt').val(),
+            setting_start: start,
+            setting_end: end
+        },
+        success: function(response) {
+            if (response && response.status === 'success') {
+                Swal.fire({ icon: 'success', title: 'บันทึกเรียบร้อย', text: 'ตั้งค่าการเรียนซ้ำเรียบร้อยแล้ว', timer: 1400, showConfirmButton: false })
+                    .then(function() { window.location.reload(); });
+            } else {
+                Swal.fire({ icon: 'error', title: 'บันทึกไม่สำเร็จ', text: (response && response.message) ? response.message : 'ไม่สามารถบันทึกการตั้งค่าได้' });
+            }
+        },
+        error: function(xhr) {
+            Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: xhr.responseJSON?.message || 'ไม่สามารถเชื่อมต่อกับระบบได้' });
+        },
+        complete: function() {
+            $btn.prop('disabled', false).html('<i class="bx bx-save me-1"></i>บันทึกการตั้งค่า');
+        }
+    });
+});
+
 let tbRegisRepeatSubject;
 let tbRegisRepeatPending;
 let tbMainSubjects;
@@ -757,6 +963,26 @@ function animateValue(selector, value) {
     });
 }
 
+// Build the detail URL from SubjectYear (e.g. 2/2568) + SubjectID + TeacherID.
+// Keep this in one place so every table opens the same valid 4-segment route.
+function repeatDetailUrl(row) {
+    const subjectYear = String(row.SubjectYear || '').split('/');
+    const term = subjectYear[0] || '';
+    const year = subjectYear[1] || '';
+    const subjectId = encodeURIComponent(row.SubjectID || '');
+    const teacherId = encodeURIComponent(row.TeacherID || '');
+
+    if (!term || !year || !subjectId || !teacherId) {
+        return '#';
+    }
+
+    return <?= json_encode(site_url('Admin/Acade/Registration/Repeat/Detail/')) ?> +
+        encodeURIComponent(term) + '/' +
+        encodeURIComponent(year) + '/' +
+        subjectId + '/' +
+        teacherId;
+}
+
 // Function to load Main Subjects Table (All subjects with registered students)
 function TB_MainSubjects(Year) {
     if ($.fn.DataTable.isDataTable('#tbMainSubjects')) {
@@ -833,7 +1059,8 @@ function TB_MainSubjects(Year) {
                 data: 'SubjectID',
                 className: 'text-center',
                 render: function(data, type, row) {
-                    return '<a class="btn-register" style="background: linear-gradient(135deg, #6610f2 0%, #9b59b6 100%);" href="<?= site_url('Admin/Acade/Registration/Repeat/Detail/') ?>' + (row.SubjectYear ? row.SubjectYear : '') + '/' + (row.SubjectID ? row.SubjectID : '') + '/' + (row.TeacherID ? row.TeacherID : '') +'"><i class="bx bx-plus-circle"></i>ลงทะเบียนซ้ำ</a>';
+                    var detailUrl = repeatDetailUrl(row);
+                    return detailUrl === '#' ? '<span class="text-muted">ข้อมูลไม่ครบ</span>' : '<a class="btn-register" style="background: linear-gradient(135deg, #6610f2 0%, #9b59b6 100%);" href="' + detailUrl + '"><i class="bx bx-plus-circle"></i>ลงทะเบียนซ้ำ</a>';
                 }
             },
             {
@@ -918,7 +1145,8 @@ function TB_RegisRepeatPending(Year) {
                 data: 'SubjectID',
                 className: 'text-center',
                 render: function(data, type, row) {
-                    return '<a class="btn-register" style="background: linear-gradient(135deg, #ffc107 0%, #ffda44 100%); color: #212529;" href="<?= site_url('Admin/Acade/Registration/Repeat/Detail/') ?>' + (row.SubjectYear ? row.SubjectYear : '') + '/' + (row.SubjectID ? row.SubjectID : '') + '/' + (row.TeacherID ? row.TeacherID : '') +'"><i class="bx bx-user-plus"></i>มอบหมาย</a>';
+                    var detailUrl = repeatDetailUrl(row);
+                    return detailUrl === '#' ? '<span class="text-muted">ข้อมูลไม่ครบ</span>' : '<a class="btn-register" style="background: linear-gradient(135deg, #ffc107 0%, #ffda44 100%); color: #212529;" href="' + detailUrl + '"><i class="bx bx-user-plus"></i>มอบหมาย</a>';
                 }
             },
             {
@@ -1024,7 +1252,8 @@ function TB_RegisRepeatSubject(Year) {
                 data: 'SubjectID',
                 className: 'text-center',
                 render: function(data, type, row) {
-                    return '<a class="btn-register" href="<?= site_url('Admin/Acade/Registration/Repeat/Detail/') ?>' + (row.SubjectYear ? row.SubjectYear : '') + '/' + (row.SubjectID ? row.SubjectID : '') + '/' + (row.TeacherID ? row.TeacherID : '') +'"><i class="bx bx-edit-alt"></i>แก้ไข</a>';
+                    var detailUrl = repeatDetailUrl(row);
+                    return detailUrl === '#' ? '<span class="text-muted">ข้อมูลไม่ครบ</span>' : '<a class="btn-register" href="' + detailUrl + '"><i class="bx bx-edit-alt"></i>แก้ไข</a>';
                 }
             },
             {

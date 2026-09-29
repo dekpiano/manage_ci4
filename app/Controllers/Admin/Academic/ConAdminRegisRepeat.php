@@ -35,6 +35,12 @@ class ConAdminRegisRepeat extends BaseController
         $data['admin'] = $this->DBPers->table('tb_personnel')->select('pers_id,pers_img')->where('pers_id',session()->get('login_id'))->get()->getRow();
         $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
         $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult(); // Changed to getResult()
+        $data['repeat_setting'] = $this->db->table('tb_register_onoff')->where('onoff_name', 'เรียนซ้ำ')->get()->getRow();
+        $data['CountYear'] = $this->db->table('tb_register')
+            ->select('RegisterYear')
+            ->groupBy('RegisterYear')
+            ->orderBy('RegisterYear', 'DESC')
+            ->get()->getResult();
         
         // Use session-stored selected year
         $data['selectedYear'] = get_selected_year();

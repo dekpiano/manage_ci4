@@ -365,7 +365,7 @@ $routes->post('admin/academic/characteristics/update', [ConAdminCharacteristics:
 $routes->get('admin/academic/rwl/settings', [ConAdminRWL::class, 'index']);
 $routes->post('admin/academic/rwl/update', [ConAdminRWL::class, 'update']);
 
-$routes->get('Admin/Acade/Evaluate/AcademicRepeat', [ConAdminAcademicRepeat::class, 'AdminAcademicRepeatMain']);
+$routes->get('Admin/Acade/Evaluate/AcademicRepeat', function() { return redirect()->to(base_url('Admin/Acade/Registration/Repeat')); });
 $routes->get('Admin/Acade/Evaluate/AcademicRepeat/(:segment)/(:segment)/(:segment)', [ConAdminAcademicRepeat::class, 'AdminAcademicRepeatGrade']);
 $routes->get('Admin/Acade/Evaluate/AcademicResult', [ConAdminAcademinResult::class, 'AdminAcademinResultMain']);
     $routes->post('admin/academic/ConAdminAcademinResult/OnOffLevel', [ConAdminAcademinResult::class, 'OnOffLevel']);
