@@ -195,9 +195,14 @@ class ConAdminSubjectMaster extends BaseController
         ];
 
         if ($this->modAdminSubjectMaster->update($id, $data)) {
+            // ซิงค์การเปลี่ยนแปลงไปยัง tb_subjects (รายวิชาประจำเทอมทั้งหมด) และ tb_teaching_schedule
+            $oldCode = $subject->subject_code ?? ($subject['subject_code'] ?? $code);
+            $oldClass = $subject->subject_class ?? ($subject['subject_class'] ?? $class);
+            $this->propagateMasterToSemesterSubjects($oldCode, $oldClass, $data);
+
             return $this->response->setJSON([
                 'status'  => 'success',
-                'message' => 'ปรับปรุงข้อมูลรายวิชาสำเร็จ'
+                'message' => 'ปรับปรุงข้อมูลรายวิชาในคลังกลาง และซิงค์ข้อมูลไปยังรายวิชาประจำเทอมเรียบร้อยแล้ว'
             ]);
         }
 
@@ -205,6 +210,47 @@ class ConAdminSubjectMaster extends BaseController
             'status'  => 'error',
             'message' => 'เกิดข้อผิดพลาดในการปรับปรุงข้อมูล'
         ]);
+    }
+
+    /**
+     * ซิงค์ข้อมูลที่แก้ไขในคลังกลางไปยัง tb_subjects และ tb_teaching_schedule ทุกภาคเรียน
+     */
+    protected function propagateMasterToSemesterSubjects($oldCode, $oldClass, array $masterData)
+    {
+        try {
+            $tbSubjectUpdate = [
+                'SubjectCode'  => $masterData['subject_code'],
+                'SubjectName'  => $masterData['subject_name'],
+                'SubjectUnit'  => $masterData['subject_unit'],
+                'SubjectHour'  => $masterData['subject_hour'],
+                'SubjectType'  => $masterData['subject_type'],
+                'FirstGroup'   => $masterData['first_group'],
+                'SecondGroup'  => $masterData['second_group'],
+                'SubjectClass' => $masterData['subject_class'],
+            ];
+
+            if (!empty($oldCode)) {
+                $builder = $this->db->table('tb_subjects')->where('SubjectCode', $oldCode);
+                if (!empty($oldClass)) {
+                    $builder->where('SubjectClass', $oldClass);
+                }
+                $builder->update($tbSubjectUpdate);
+            }
+
+            if ($this->db->tableExists('tb_teaching_schedule') && !empty($oldCode)) {
+                $this->db->table('tb_teaching_schedule')
+                    ->where('subject_code', $oldCode)
+                    ->update([
+                        'subject_code' => $masterData['subject_code'],
+                        'subject_name' => $masterData['subject_name'],
+                        'subject_type' => $masterData['subject_type'],
+                        'credit'       => (float)$masterData['subject_unit'],
+                        'total_hours'  => (int)$masterData['subject_hour'],
+                    ]);
+            }
+        } catch (\Throwable $e) {
+            log_message('error', 'Propagate master subject update error: ' . $e->getMessage());
+        }
     }
 
     /**

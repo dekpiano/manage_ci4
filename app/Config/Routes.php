@@ -222,6 +222,7 @@ $routes->post('admin/academic/ConAdminRegisterSubject/AdminRegisterSubjectCopyFr
 $routes->match(['get', 'post'], 'admin/academic/ConAdminRegisterSubject/AdminRegisterSubjectGetCodesByYear', [ConAdminRegisterSubject::class, 'AdminRegisterSubjectGetCodesByYear']);
 $routes->post('admin/academic/ConAdminRegisterSubject/CheckOnOffRegisterSubject', [ConAdminRegisterSubject::class, 'CheckOnOffRegisterSubject']);
 $routes->post('admin/academic/ConAdminRegisterSubject/SaveSettingRegisterSubjectYear', [ConAdminRegisterSubject::class, 'SaveSettingRegisterSubjectYear']);
+$routes->post('admin/academic/ConAdminRegisterSubject/AdminRegisterSubjectSyncFromMaster', [ConAdminRegisterSubject::class, 'AdminRegisterSubjectSyncFromMaster']);
 $routes->get('Admin/Acade/Course/SendPlan', [ConAdminCourse::class, 'SendPlanMain']);
 $routes->get('Admin/Acade/Course/(:segment)/(:segment)', [ConAdminCourse::class, 'UpdateSendPlanYear/$1/$2']);
 $routes->match(['get', 'post'], 'admin/academic/course/get_filtered_plan_data', [ConAdminCourse::class, 'getFilteredPlanData']);

@@ -280,6 +280,139 @@ class ConAdminRegisterSubject extends BaseController
         echo $this->modAdminRegisterSubject->ModSubjectDelete($id); 
     }
 
+    /**
+     * ซิงค์ข้อมูลรายวิชาประจำเทอมให้ตรงกับคลังวิชาหลักสูตรกลาง (Single Source of Truth)
+     */
+    public function AdminRegisterSubjectSyncFromMaster()
+    {
+        if (!$this->request->isAJAX()) {
+            return $this->response->setStatusCode(400)->setJSON(['status' => 'error', 'message' => 'Invalid request']);
+        }
+
+        $termYear = $this->request->getPost('year') ?: get_selected_year();
+
+        // 1. ดึงข้อมูลวิชาทั้งหมดในคลังกลาง (tb_subjects_master)
+        $masterList = $this->db->table('tb_subjects_master')->get()->getResult();
+        if (empty($masterList)) {
+            return $this->response->setJSON([
+                'status'  => 'error',
+                'message' => 'ไม่พบข้อมูลในคลังวิชาหลักสูตรกลาง กรุณาตรวจสอบหรือเพิ่มวิชาในคลังหลักสูตรก่อน'
+            ]);
+        }
+
+        $masterMapByCodeAndClass = [];
+        $masterMapByCodeOnly = [];
+
+        foreach ($masterList as $m) {
+            $code = strtoupper(trim($m->subject_code ?? ''));
+            $class = trim($m->subject_class ?? '');
+            if (!empty($code)) {
+                $masterMapByCodeAndClass[$code . '|' . $class] = $m;
+                if (!isset($masterMapByCodeOnly[$code])) {
+                    $masterMapByCodeOnly[$code] = $m;
+                }
+            }
+        }
+
+        // 2. ดึงรายวิชาในเทอมที่ต้องการซิงค์
+        $builder = $this->db->table('tb_subjects');
+        if (!empty($termYear) && $termYear !== 'ทั้งหมด') {
+            $builder->where('SubjectYear', $termYear);
+        }
+        $semesterSubjects = $builder->get()->getResult();
+
+        if (empty($semesterSubjects)) {
+            return $this->response->setJSON([
+                'status'  => 'warning',
+                'message' => 'ไม่พบรายวิชาที่เปิดสอนในปีการศึกษาที่เลือก (' . ($termYear ?: 'ทั้งหมด') . ')'
+            ]);
+        }
+
+        $updatedCount = 0;
+        $unmatchedCount = 0;
+        $unmatchedCodes = [];
+
+        foreach ($semesterSubjects as $sub) {
+            $code = strtoupper(trim($sub->SubjectCode ?? ''));
+            $class = trim($sub->SubjectClass ?? '');
+
+            // ค้นหาจากรหัสวิชา + ระดับชั้น ก่อน ถ้าไม่เจอให้ค้นหาจากรหัสวิชา
+            $matchedMaster = $masterMapByCodeAndClass[$code . '|' . $class] ?? ($masterMapByCodeOnly[$code] ?? null);
+
+            if ($matchedMaster) {
+                $needsUpdate = (
+                    trim($sub->SubjectName ?? '') !== trim($matchedMaster->subject_name ?? '') ||
+                    (string)$sub->SubjectUnit !== (string)$matchedMaster->subject_unit ||
+                    (int)$sub->SubjectHour !== (int)$matchedMaster->subject_hour ||
+                    trim($sub->SubjectType ?? '') !== trim($matchedMaster->subject_type ?? '') ||
+                    trim($sub->FirstGroup ?? '') !== trim($matchedMaster->first_group ?? '') ||
+                    trim($sub->SecondGroup ?? '') !== trim($matchedMaster->second_group ?? '') ||
+                    trim($sub->SubjectClass ?? '') !== trim($matchedMaster->subject_class ?? '')
+                );
+
+                if ($needsUpdate) {
+                    $this->db->table('tb_subjects')
+                        ->where('SubjectID', $sub->SubjectID)
+                        ->update([
+                            'SubjectName'  => trim($matchedMaster->subject_name ?? ''),
+                            'SubjectUnit'  => $matchedMaster->subject_unit,
+                            'SubjectHour'  => (int)$matchedMaster->subject_hour,
+                            'SubjectType'  => trim($matchedMaster->subject_type ?? ''),
+                            'FirstGroup'   => trim($matchedMaster->first_group ?? ''),
+                            'SecondGroup'  => trim($matchedMaster->second_group ?? ''),
+                            'SubjectClass' => trim($matchedMaster->subject_class ?? $sub->SubjectClass),
+                        ]);
+                    $updatedCount++;
+                }
+            } else {
+                $unmatchedCount++;
+                $unmatchedCodes[] = $code;
+            }
+        }
+
+        // 3. ซิงค์ข้อมูลไปยัง tb_teaching_schedule ของเทอมนี้ด้วย
+        if ($updatedCount > 0 && $this->db->tableExists('tb_teaching_schedule')) {
+            try {
+                foreach ($semesterSubjects as $sub) {
+                    $code = strtoupper(trim($sub->SubjectCode ?? ''));
+                    $class = trim($sub->SubjectClass ?? '');
+                    $matchedMaster = $masterMapByCodeAndClass[$code . '|' . $class] ?? ($masterMapByCodeOnly[$code] ?? null);
+                    if ($matchedMaster) {
+                        $this->db->table('tb_teaching_schedule')
+                            ->where('subject_code', $sub->SubjectCode)
+                            ->update([
+                                'subject_name' => trim($matchedMaster->subject_name ?? ''),
+                                'subject_type' => trim($matchedMaster->subject_type ?? ''),
+                                'credit'       => (float)$matchedMaster->subject_unit,
+                                'total_hours'  => (int)$matchedMaster->subject_hour,
+                            ]);
+                    }
+                }
+            } catch (\Throwable $e) {
+                log_message('error', 'Auto sync teaching schedule error: ' . $e->getMessage());
+            }
+        }
+
+        $message = "ซิงค์ข้อมูลกับคลังวิชาหลักสูตรกลางสำเร็จ!";
+        if ($updatedCount > 0) {
+            $message .= " ปรับปรุงข้อมูลรายวิชาให้ตรงกับคลังหลัก {$updatedCount} รายการ";
+        } else {
+            $message .= " ข้อมูลรายวิชาทั้งหมดตรงกับคลังวิชาหลักสูตรกลางอยู่แล้ว";
+        }
+
+        if ($unmatchedCount > 0) {
+            $uniqueUnmatched = array_slice(array_unique($unmatchedCodes), 0, 5);
+            $message .= " (พบ {$unmatchedCount} รายการที่ไม่พบในคลังกลาง: " . implode(', ', $uniqueUnmatched) . ")";
+        }
+
+        return $this->response->setJSON([
+            'status'          => 'success',
+            'updated_count'   => $updatedCount,
+            'unmatched_count' => $unmatchedCount,
+            'message'         => $message
+        ]);
+    }
+
     public function AdminRegisterSubjectMain(){   
         $data['admin'] = $this->DBpersonnel->table('tb_personnel')->select('pers_id,pers_img')->where('pers_id',session()->get('login_id'))->get()->getRow();
         $data['GroupYear'] = $this->db->table('tb_subjects')

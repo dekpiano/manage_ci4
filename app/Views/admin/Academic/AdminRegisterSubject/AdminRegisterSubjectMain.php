@@ -270,6 +270,20 @@
                     <i class="bx bx-calendar-cog me-1"></i> ตั้งค่าปีการศึกษา
                 </button>
 
+                <!-- ปุ่มซิงค์ข้อมูลกับคลังวิชาหลัก -->
+                <button class="btn btn-outline-white fw-bold shadow-sm px-3 py-2 rounded-pill" 
+                    type="button" 
+                    id="btn-sync-with-master"
+                    title="ซิงค์ข้อมูลรายวิชาในเทอมนี้ให้ตรงกับคลังวิชาหลักสูตรกลาง (Single Source of Truth)">
+                    <i class="bx bx-sync me-1"></i> ซิงค์กับคลังวิชาหลัก
+                </button>
+
+                <a href="<?= base_url('Admin/Acade/Course/MasterSubject') ?>" 
+                    class="btn btn-outline-white fw-bold shadow-sm px-3 py-2 rounded-pill"
+                    title="ไปที่หน้าคลังวิชาหลักสูตรกลาง เพื่อจัดการข้อมูลรายวิชามาตรฐาน">
+                    <i class="bx bx-archive me-1"></i> คลังวิชาหลักสูตรกลาง
+                </a>
+
                 <button class="btn btn-outline-white fw-bold shadow-sm px-3 py-2 rounded-pill" 
                     type="button" 
                     id="btn-modal-compare"
@@ -348,16 +362,24 @@
 
     <!-- Data Table Card -->
     <div class="card settings-card">
-        <div class="settings-card-header d-flex align-items-center justify-content-between">
+        <div class="settings-card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
             <div class="d-flex align-items-center">
                 <div class="icon-wrapper me-3">
                     <i class="bx bx-list-ul"></i>
                 </div>
-                <h5 class="mb-0 fw-bold">รายการวิชาที่เปิดสอน</h5>
+                <div>
+                    <h5 class="mb-0 fw-bold d-flex align-items-center flex-wrap gap-2">
+                        <span>รายการวิชาที่เปิดสอน</span>
+                        <span id="table-selected-year-badge" class="badge badge-emerald rounded-pill px-3 py-1 fs-6">
+                            <i class="bx bx-calendar me-1"></i>ภาคเรียนที่ <?= esc($selectedYear) ?>
+                        </span>
+                    </h5>
+                    <small class="text-muted">รายวิชาที่จัดสอนในภาคเรียนนี้ เชื่อมโยงกับคลังวิชาหลักสูตรกลาง</small>
+                </div>
             </div>
             <div class="d-flex align-items-center gap-3">
                 <div class="d-flex align-items-center">
-                    <label class="me-2 fw-bold text-muted small uppercase">เลือกปีการศึกษา:</label>
+                    <label class="me-2 fw-bold text-muted small uppercase text-nowrap">เลือกปีการศึกษา:</label>
                     <select class="form-select form-select-sm SelectSubject shadow-sm border-emerald" style="min-width: 160px; border-radius: 12px;">
                         <option value="">ทั้งหมด</option>
                         <?php 
@@ -383,8 +405,10 @@
                             <th>ปีการศึกษา</th>
                             <th>รหัสวิชา</th>
                             <th>ชื่อรายวิชา</th>
+                            <th class="text-center">ระดับชั้น</th>
+                            <th class="text-center">หน่วยกิต / ชม.</th>
+                            <th>ประเภทวิชา</th>
                             <th>กลุ่มสาระ</th>
-                            <th>ระดับชั้น</th>
                             <th class="text-center">จัดการ</th>
                         </tr>
                     </thead>
@@ -982,8 +1006,9 @@ $(document).ready(function() {
 
     $(document).on('change', '.SelectSubject', function() {
         const selectedYear = $(this).val();
-        $('#headerYear').text(selectedYear || '-');
-        $('#stat-year').text(selectedYear || '-');
+        $('#headerYear').text(selectedYear || 'ทั้งหมด');
+        $('#stat-year').text(selectedYear || 'ทั้งหมด');
+        $('#table-selected-year-badge').html(selectedYear ? `<i class="bx bx-calendar me-1"></i>ภาคเรียนที่ ${selectedYear}` : '<i class="bx bx-calendar me-1"></i>ทุกภาคเรียน');
         if (selectedYear) {
             $('#compare-target-year').val(selectedYear);
             $('#SubjectYear').val(selectedYear);
@@ -1014,36 +1039,64 @@ $(document).ready(function() {
                 {
                     data: 'SubjectYear',
                     render: function(data) {
-                        return '<span class="badge badge-emerald rounded-pill px-3">' + data + '</span>';
+                        return '<span class="badge badge-emerald rounded-pill px-3">' + (data || '-') + '</span>';
                     }
                 },
                 {
                     data: 'SubjectCode',
                     render: function(data) {
-                        return '<span class="fw-bold text-dark">' + data + '</span>';
+                        return '<span class="fw-bold text-dark font-monospace">' + (data || '-') + '</span>';
                     }
                 },
-                { data: 'SubjectName', className: 'fw-medium' },
-                {
-                    data: 'FirstGroup',
+                { 
+                    data: 'SubjectName', 
+                    className: 'fw-medium',
                     render: function(data) {
-                        return '<span class="badge bg-label-info">' + data + '</span>';
+                        return '<span class="text-dark">' + (data || '-') + '</span>';
                     }
                 },
                 {
                     data: 'SubjectClass',
+                    className: 'text-center',
                     render: function(data) {
-                        return '<span class="badge bg-label-warning">' + data + '</span>';
+                        return '<span class="badge bg-label-warning fw-bold px-2 py-1">' + (data || '-') + '</span>';
+                    }
+                },
+                {
+                    data: null,
+                    className: 'text-center',
+                    render: function(data, type, row) {
+                        const unit = parseFloat(row.SubjectUnit || 0).toFixed(1);
+                        const hour = parseInt(row.SubjectHour || 0, 10);
+                        return `<span class="badge bg-label-secondary fw-bold">${unit} นก.</span> <span class="badge bg-light text-dark border ms-1">${hour} ชม.</span>`;
+                    }
+                },
+                {
+                    data: 'SubjectType',
+                    render: function(data) {
+                        const val = (data || '').toString();
+                        if (val.includes('พื้นฐาน') || val.startsWith('1')) {
+                            return '<span class="badge bg-label-success"><i class="bx bx-check-circle me-1"></i>พื้นฐาน</span>';
+                        } else if (val.includes('เพิ่มเติม') || val.startsWith('2')) {
+                            return '<span class="badge bg-label-info"><i class="bx bx-bookmark-plus me-1"></i>เพิ่มเติม</span>';
+                        }
+                        return '<span class="badge bg-label-secondary">' + (val || '-') + '</span>';
+                    }
+                },
+                {
+                    data: 'FirstGroup',
+                    render: function(data) {
+                        return '<span class="badge bg-label-primary">' + (data || '-') + '</span>';
                     }
                 },
                 {
                     data: 'SubjectID',
                     className: 'text-center',
-                    render: function(data) {
+                    render: function(data, type, row) {
                         return `
                         <div class="d-flex justify-content-center gap-2">
-                            <button type="button" class="btn btn-sm btn-icon btn-label-warning EditSubject" idSbuj="${data}" title="แก้ไขข้อมูลรายวิชา"><i class="bx bx-edit"></i></button>
-                            <button type="button" class="btn btn-sm btn-icon btn-label-danger delete_subject" idSbuj="${data}" title="ลบรายวิชา"><i class="bx bx-trash"></i></button>
+                            <a href="<?= base_url('Admin/Acade/Course/MasterSubject') ?>" target="_blank" class="btn btn-sm btn-icon btn-label-info" title="ตรวจสอบ/แก้ไขข้อมูลในคลังวิชาหลักสูตรกลาง"><i class="bx bx-archive"></i></a>
+                            <button type="button" class="btn btn-sm btn-icon btn-label-danger delete_subject" idSbuj="${data}" data-code="${row.SubjectCode || ''}" data-name="${row.SubjectName || ''}" title="ลบรายวิชาออกจากเทอมนี้"><i class="bx bx-trash"></i></button>
                         </div>`;
                     }
                 }
@@ -1278,41 +1331,62 @@ $(document).ready(function() {
         });
     });
 
-    // Edit and Delete
-    $(document).on('click', '.EditSubject', function() {
-        let id = $(this).attr('idSbuj');
-        $.ajax({
-            url: '<?= site_url('admin/academic/ConAdminRegisterSubject/AdminRegisterSubjectEdit') ?>',
-            type: 'post',
-            data: { KeySubj: id },
-            dataType: 'json',
-            success: function(data) {
-                let d = data[0];
-                $('#Up_SubjectYear').val(d.SubjectYear);
-                $('#Up_SubjectClass').val(d.SubjectClass);
-                $('#Up_SubjectCode').val(d.SubjectCode);
-                $('#Up_SubjectName').val(d.SubjectName);
-                $('#Up_SubjectUnit').val(d.SubjectUnit);
-                $('#Up_SubjectHour').val(d.SubjectHour);
-                $('#Up_SubjectType').val(d.SubjectType);
-                $('#Up_FirstGroup').val(d.FirstGroup);
-                $('#Up_SecondGroup').val(d.SecondGroup);
-                $('#Up_SubjectID').val(d.SubjectID);
-                $('#ModalUpdateSubject').modal('show');
-            }
-        });
-    });
+    // Sync semester subjects with master subjects catalog (Single Source of Truth)
+    $('#btn-sync-with-master').on('click', function() {
+        const currentYear = $('.SelectSubject').val() || $('#CheckYearNow').val() || '<?= esc($selectedYear) ?>';
+        
+        Swal.fire({
+            title: 'ซิงค์ข้อมูลกับคลังวิชาหลักสูตรกลาง?',
+            html: `ระบบจะตรวจสอบและปรับปรุงข้อมูลรายวิชาในเทอม <b>${currentYear}</b> (ชื่อวิชา, หน่วยกิต, ชม., กลุ่มสาระ) ให้ตรงกับคลังวิชาหลักสูตรกลาง (Single Source of Truth)`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#15a362',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: '<i class="bx bx-sync me-1"></i> ยืนยันซิงค์ข้อมูล',
+            cancelButtonText: 'ยกเลิก'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                Swal.fire({
+                    title: 'กำลังซิงค์ข้อมูล...',
+                    text: 'กรุณารอสักครู่ ระบบกำลังเทียบเคียงและปรับปรุงข้อมูล',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
 
-    $(document).on('submit', '#form-update-subject', function(e) {
-        e.preventDefault();
-        $.ajax({
-            url: '<?= site_url('admin/academic/ConAdminRegisterSubject/AdminRegisterSubjectUpdate') ?>',
-            type: 'post',
-            data: $(this).serialize(),
-            success: function(data) {
-                $('#ModalUpdateSubject').modal('hide');
-                Swal.fire({ icon: 'success', title: 'ปรับปรุงข้อมูลสำเร็จ', showConfirmButton: false, timer: 1500 });
-                tablel_Subject.ajax.reload();
+                $.ajax({
+                    url: '<?= site_url('admin/academic/ConAdminRegisterSubject/AdminRegisterSubjectSyncFromMaster') ?>',
+                    type: 'POST',
+                    data: { year: currentYear },
+                    dataType: 'json',
+                    success: function(res) {
+                        if (res.status === 'success') {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'ซิงค์สำเร็จ!',
+                                text: res.message,
+                                confirmButtonColor: '#15a362'
+                            });
+                            tablel_Subject.ajax.reload();
+                        } else {
+                            Swal.fire({
+                                icon: res.status || 'warning',
+                                title: 'แจ้งเตือน',
+                                text: res.message,
+                                confirmButtonColor: '#15a362'
+                            });
+                        }
+                    },
+                    error: function(xhr) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'เกิดข้อผิดพลาด',
+                            text: 'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้ กรุณาลองใหม่อีกครั้ง',
+                            confirmButtonColor: '#15a362'
+                        });
+                    }
+                });
             }
         });
     });
