@@ -525,29 +525,102 @@ class ConAdminReportResult extends BaseController
             $CheckSub[] = $studentRow;
         }
 
-        // Set headers with shortened room and year for cleaner filename
-        $roomShort = !empty($SubRoom1[1]) ? $SubRoom1[1] : $keyroom;
-        $cleanRoom = str_replace(['/', '.'], '_', $roomShort);
-        $cleanYear = str_replace('/', '_', $KeyCheckYear);
-        $filename = 'รายงานผลการเรียนรายห้อง_' . $cleanRoom . '_' . $cleanYear . '.xlsx';
-        ob_clean(); // Clean any previous output that might corrupt the Excel file
-        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment;filename="' . $filename . '"');
-        header('Cache-Control: max-age=0');
-
         // Add headers to Excel sheet
         $headers = ['ลำดับที่', 'ชื่อ - นามสกุล'];
         foreach ($data['subject'] as $v_subject) {
-            $headers[] = (isset($v_subject->SubjectCode) ? $v_subject->SubjectCode : '') . ' ' . (isset($v_subject->SubjectName) ? $v_subject->SubjectName : '');
+            $unitStr = isset($v_subject->SubjectUnit) ? '(' . $v_subject->SubjectUnit . ') ' : '';
+            $codeStr = isset($v_subject->SubjectCode) ? $v_subject->SubjectCode . ' ' : '';
+            $nameStr = isset($v_subject->SubjectName) ? $v_subject->SubjectName : '';
+            $headers[] = $unitStr . $codeStr . $nameStr;
         }
         $headers[] = 'GPA เกรดเฉลี่ย';
         $sheet->fromArray($headers, NULL, 'A1');
 
         // Add data rows to Excel sheet
-        $sheet->fromArray($CheckSub, NULL, 'A2');
+        if (!empty($CheckSub)) {
+            $sheet->fromArray($CheckSub, NULL, 'A2');
+        }
 
+        $highestCol = $sheet->getHighestColumn();
+        $highestRow = $sheet->getHighestRow();
+
+        // 1. Set row 1 height for rotated text
+        $sheet->getRowDimension(1)->setRowHeight(160);
+
+        // 2. Base header style (Bold)
+        $sheet->getStyle('A1:' . $highestCol . '1')->getFont()->setBold(true);
+
+        // 3. Col A: ลำดับที่
+        $sheet->getColumnDimension('A')->setWidth(7);
+        $sheet->getStyle('A1')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+        $sheet->getStyle('A1')->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+        $sheet->getStyle('A1')->getAlignment()->setWrapText(true);
+        if ($highestRow >= 2) {
+            $sheet->getStyle('A2:A' . $highestRow)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+        }
+
+        // 4. Col B: ชื่อ - นามสกุล
+        $sheet->getColumnDimension('B')->setWidth(26);
+        $sheet->getStyle('B1')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+        $sheet->getStyle('B1')->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+        if ($highestRow >= 2) {
+            $sheet->getStyle('B2:B' . $highestRow)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT);
+        }
+
+        // 5. Subject columns (from C to before last column) - Vertical 90 degrees & Compact width
+        $totalSubjectCount = count($data['subject']);
+        for ($i = 1; $i <= $totalSubjectCount; $i++) {
+            // Column index: A=1, B=2, C=3...
+            $colLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($i + 2);
+            $sheet->getColumnDimension($colLetter)->setWidth(6.5);
+            $sheet->getStyle($colLetter . '1')->getAlignment()->setTextRotation(90);
+            $sheet->getStyle($colLetter . '1')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle($colLetter . '1')->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_BOTTOM);
+            
+            if ($highestRow >= 2) {
+                $sheet->getStyle($colLetter . '2:' . $colLetter . $highestRow)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+            }
+        }
+
+        // 6. Last Column: GPA เกรดเฉลี่ย
+        $gpaColLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($totalSubjectCount + 3);
+        $sheet->getColumnDimension($gpaColLetter)->setWidth(7.5);
+        $sheet->getStyle($gpaColLetter . '1')->getAlignment()->setTextRotation(90);
+        $sheet->getStyle($gpaColLetter . '1')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+        $sheet->getStyle($gpaColLetter . '1')->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_BOTTOM);
+        if ($highestRow >= 2) {
+            $sheet->getStyle($gpaColLetter . '2:' . $gpaColLetter . $highestRow)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+        }
+
+        // 7. Grid borders for all cells
+        $sheet->getStyle('A1:' . $highestCol . $highestRow)->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+
+        // Set headers with shortened room and year for cleaner filename
+        $roomShort = !empty($SubRoom1[1]) ? $SubRoom1[1] : $keyroom;
+        $cleanRoom = str_replace(['/', '.'], '_', $roomShort);
+        $cleanYear = str_replace('/', '_', $KeyCheckYear);
+        $utf8Filename = 'รายงานผลการเรียนรายห้อง_' . $cleanRoom . '_' . $cleanYear . '.xlsx';
+        $asciiFilename = 'ReportRoom_' . $cleanRoom . '_' . $cleanYear . '.xlsx';
+        $encodedFilename = rawurlencode($utf8Filename);
+
+        // Write to temp file to isolate binary stream from any PHP deprecation notices
+        $tempFile = tempnam(sys_get_temp_dir(), 'report_room_');
         $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
-        $writer->save('php://output');
+        $writer->save($tempFile);
+
+        // Flush and clean all output buffer levels to prevent corrupting binary output
+        while (ob_get_level() > 0) {
+            ob_end_clean();
+        }
+
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment; filename="' . $asciiFilename . '"; filename*=UTF-8\'\'' . $encodedFilename);
+        header('Content-Length: ' . filesize($tempFile));
+        header('Cache-Control: max-age=0, no-cache, must-revalidate');
+        header('Pragma: public');
+
+        readfile($tempFile);
+        @unlink($tempFile);
         exit();
     }
 
@@ -1196,6 +1269,98 @@ class ConAdminReportResult extends BaseController
         $builder->orderBy('TeacherID, SubjectID, StudentClass');
         
         $data['Showdata'] = $builder->get()->getResult();
+
+        // Selected learning group name
+        $data['selectedLernName'] = 'ทุกกลุ่มสาระการเรียนรู้';
+        if (!empty($data['Keylern']) && $data['Keylern'] != '0') {
+            foreach ($data['lern'] as $item) {
+                if ($item->lear_id == $data['Keylern']) {
+                    $data['selectedLernName'] = $item->lear_namethai;
+                    break;
+                }
+            }
+        }
+
+        // Calculate summary statistics
+        $totalSumStu = 0;
+        $totalG4_0 = 0; $totalG3_5 = 0; $totalG3_0 = 0; $totalG2_5 = 0;
+        $totalG2_0 = 0; $totalG1_5 = 0; $totalG1_0 = 0; $totalG0 = 0;
+        $totalG_W = 0;  $totalG_MS = 0;
+        $totalNumeric = 0;
+        $totalWeightedGradeSum = 0;
+        $uniqueTeachers = [];
+        $uniqueSubjects = [];
+
+        foreach ($data['Showdata'] as $row) {
+            $totalSumStu += (int)$row->SumStu;
+            $totalG4_0 += (int)$row->G4_0;
+            $totalG3_5 += (int)$row->G3_5;
+            $totalG3_0 += (int)$row->G3_0;
+            $totalG2_5 += (int)$row->G2_5;
+            $totalG2_0 += (int)$row->G2_0;
+            $totalG1_5 += (int)$row->G1_5;
+            $totalG1_0 += (int)$row->G1_0;
+            $totalG0 += (int)$row->G0;
+            $totalG_W += (int)$row->G_W;
+            $totalG_MS += (int)$row->G_MS;
+            $totalNumeric += (int)$row->TotalNumeric;
+
+            $gradePoints = ((float)$row->G4_0 * 4.0) + ((float)$row->G3_5 * 3.5) + ((float)$row->G3_0 * 3.0) +
+                           ((float)$row->G2_5 * 2.5) + ((float)$row->G2_0 * 2.0) + ((float)$row->G1_5 * 1.5) +
+                           ((float)$row->G1_0 * 1.0);
+            $totalWeightedGradeSum += $gradePoints;
+
+            if (!empty($row->TeacherID)) {
+                $uniqueTeachers[$row->TeacherID] = true;
+            }
+            if (!empty($row->SubjectCode)) {
+                $uniqueSubjects[$row->SubjectCode] = true;
+            }
+        }
+
+        $totalGood = $totalG4_0 + $totalG3_5 + $totalG3_0;
+        $totalGoodPercent = $totalNumeric > 0 ? ($totalGood / $totalNumeric) * 100 : 0;
+        $overallMean = $totalNumeric > 0 ? ($totalWeightedGradeSum / $totalNumeric) : 0;
+        $totalAttention = $totalG0 + $totalG_W + $totalG_MS;
+        $totalAttentionPercent = $totalSumStu > 0 ? ($totalAttention / $totalSumStu) * 100 : 0;
+
+        // Count distinct students (Headcount)
+        $uniqueStuBuilder = $this->db->table('skjacth_academic.tb_register')
+            ->join('skjacth_academic.tb_students', 'skjacth_academic.tb_students.StudentID = skjacth_academic.tb_register.StudentID')
+            ->join('skjacth_personnel.tb_personnel', 'skjacth_personnel.tb_personnel.pers_id = skjacth_academic.tb_register.TeacherID')
+            ->join('skjacth_academic.tb_subjects', 'skjacth_academic.tb_subjects.SubjectID = skjacth_academic.tb_register.SubjectID')
+            ->where('tb_register.RegisterYear', $data['KeyYear'])
+            ->where('tb_subjects.SubjectYear', $data['KeyYear'])
+            ->where('skjacth_academic.tb_students.StudentBehavior', 'ปกติ');
+
+        if ($data['Keylern'] && $data['Keylern'] != '0') {
+            $uniqueStuBuilder->where('tb_personnel.pers_learning', $data['Keylern']);
+        }
+        $uniqueStudentCount = (int)($uniqueStuBuilder->select('COUNT(DISTINCT skjacth_academic.tb_register.StudentID) AS totalUnique')->get()->getRow()->totalUnique ?? 0);
+
+        $data['summaryStats'] = [
+            'uniqueStudents'        => $uniqueStudentCount,
+            'totalSumStu'           => $totalSumStu,
+            'totalG4_0'             => $totalG4_0,
+            'totalG3_5'             => $totalG3_5,
+            'totalG3_0'             => $totalG3_0,
+            'totalG2_5'             => $totalG2_5,
+            'totalG2_0'             => $totalG2_0,
+            'totalG1_5'             => $totalG1_5,
+            'totalG1_0'             => $totalG1_0,
+            'totalG0'               => $totalG0,
+            'totalG_W'              => $totalG_W,
+            'totalG_MS'             => $totalG_MS,
+            'totalNumeric'          => $totalNumeric,
+            'totalGood'             => $totalGood,
+            'totalGoodPercent'      => $totalGoodPercent,
+            'overallMean'           => $overallMean,
+            'totalAttention'        => $totalAttention,
+            'totalAttentionPercent' => $totalAttentionPercent,
+            'countTeachers'         => count($uniqueTeachers),
+            'countSubjects'         => count($uniqueSubjects),
+            'countSections'         => count($data['Showdata']),
+        ];
 
         echo view('admin/Academic/AdminReportResults/AdminReportAcademicSummary', $data);
     }
