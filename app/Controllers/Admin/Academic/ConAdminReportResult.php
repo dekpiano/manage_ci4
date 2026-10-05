@@ -793,259 +793,152 @@ class ConAdminReportResult extends BaseController
         $data['parent_data'] = $parent_data;
         $data['stu'] = $stu;
 
-        // ใช้ TCPDF + FPDI (เสถียรกว่า mPDF ในการเทหน้า PDF 1.4)
-        require_once SHARED_LIB_PATH . '/tcpdf/vendor/autoload.php';
-
-        $pdf = new \setasign\Fpdi\Tcpdf\Fpdi('P', 'mm', 'A4', true, 'UTF-8', false);
-        $pdf->SetCreator('SKJ System');
-        $pdf->SetAuthor('SKJ');
-        $pdf->SetTitle('ปพ.1 - ' . $data['stu']->StudentFirstName);
-        $pdf->setPrintHeader(false);
-        $pdf->setPrintFooter(false);
-        $pdf->SetMargins(0, 0, 0);
-        $pdf->SetAutoPageBreak(false, 0);
-
-        // --- ตั้งค่าฟอนต์ TH Sarabun New (แปลงเสร็จแล้ว) ---
-        $fontname = 'thsarabunnew';
-
-        // พาธไฟล์ PDF template (เลือกตาม Level)
-        $tpl_prefix = ($Level == 'senior') ? 'papor1_senior' : 'papor1_junior';
-        
-        $tpl_front = FCPATH . 'public/assets/img/transcript_templates/' . $tpl_prefix . '_front.pdf';
-        $tpl_back  = FCPATH . 'public/assets/img/transcript_templates/' . $tpl_prefix . '_back.pdf';
-
-        if (!file_exists($tpl_front)) {
-            $tpl_front = FCPATH . 'assets/img/transcript_templates/' . $tpl_prefix . '_front.pdf';
-            $tpl_back  = FCPATH . 'assets/img/transcript_templates/' . $tpl_prefix . '_back.pdf';
+        // กำหนดระดับชั้น (junior หรือ senior)
+        if ($Level == 'all') {
+            $hasSenior = false;
+            foreach ($data['scoreStudent'] as $sc) {
+                if (preg_match('/[4-6]/', (string)$sc->RegisterClass)) {
+                    $hasSenior = true;
+                    break;
+                }
+            }
+            $Level = $hasSenior ? 'senior' : 'junior';
         }
+        $data['Level'] = $Level;
+        $data['IdStudent'] = $IdStudent;
+        $data['school'] = $school;
 
-        // หน้าที่ 1 (Front)
-        $pdf->AddPage();
-        $pdf->setSourceFile($tpl_front);
-        $tplId = $pdf->importPage(1);
-        $pdf->useTemplate($tplId, 0, 0, 210, 297);
-
-        $stu = $data['stu'];
-        $pdf->SetFont($fontname, '', 14);
-
-        // หยอดข้อมูลหน้า 1
-        $pdf->Text(23, 26, $school->SchoolName ?? 'สวนกุหลาบวิทยาลัย (จิรประวัติ) นครสวรรค์'); 
-        $pdf->SetFontSize(14);
-        $pdf->Text(23, 31.5, $school->WorkPlace ?? 'สำนักงานเขตพื้นที่การศึกษามัธยมศึกษานครสวรรค์');
-        $pdf->Text(23, 37, $school->District ?? '');
-        $pdf->Text(23, 42.5, $school->Prefecture ?? '');
-        $pdf->Text(23, 48, $school->Province ?? '');
-        $pdf->Text(42, 54, $school->Division ?? '');
-
-        $pdf->SetFontSize(14);
-        $pdf->Text(110, 37, $stu->StudentPrefix.$stu->StudentFirstName);
-        $pdf->Text(110, 42.5, $stu->StudentLastName);
-        $pdf->Text(130, 48, $stu->StudentCode);
-        $pdf->SetFont($fontname, '', 14);
-        $pdf->Text(130, 54, $stu->StudentIDNumber ?? '-');
-
-        $months = ['', 'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
+        // เดือนไทย
+        $thai_months = ['', 'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
 
         // วันที่เข้าเรียน (แปลงเป็นไทย)
-        if(!empty($stu->StudentDateEntrance)){
-            $parts = explode('/', $stu->StudentDateEntrance);
-            if(count($parts) == 3){
-                $d_entrance = (int)$parts[0]."  ".$months[(int)$parts[1]]."  ".$parts[2];
-                $pdf->Text(50.0, 72.5, $d_entrance);
+        $d_entrance = '-';
+        if (!empty($stu->StudentDateEntrance)) {
+            $parts = explode('/', str_replace('-', '/', $stu->StudentDateEntrance));
+            if (count($parts) == 3) {
+                $ey = (int)$parts[2];
+                if ($ey < 2400) $ey += 543;
+                $d_entrance = (int)$parts[0] . "  " . ($thai_months[(int)$parts[1]] ?? $parts[1]) . "  " . $ey;
             }
         }
-        
-        // โรงเรียนเดิม และชั้นเรียนสุดท้าย
-        $pdf->SetFontSize(14);
-       
-        $pdf->Text(23, 65, $stu->stu_schoolfrom ?? '-');
-        $pdf->Text(23, 70.3, $stu->stu_schoolProvince ?? '-');
-        // ชั้นเรียนสุดท้าย
-         $last_class = ($Level == 'senior') ? 'มัธยมศึกษาปีที่ 3' : 'ประถมศึกษาปีที่ 6';
-        $pdf->Text(28, 76.5, $last_class);
+        $data['d_entrance'] = $d_entrance;
 
-        // วันเกิด (แปลงเป็นไทย แยกส่วน วัน เดือน ปี)
-        if(!empty($stu->StudentDateBirth)){
-            $time = strtotime($stu->StudentDateBirth);
-            $b_day   = date('j', $time);
-            $b_month = $months[date('n', $time)];
-            $b_year  = date('Y', $time) + 543;
-
-            $pdf->Text(108, 59.5, $b_day);   // วัน
-            $pdf->Text(138, 59.5, $b_month); // เดือน
-            $pdf->Text(175, 59.5, $b_year);  // ปี
+        // วันเกิด (แยกส่วน วัน เดือน ปี พ.ศ.)
+        $b_day = '-'; $b_month = '-'; $b_year = '-';
+        $raw_birth = !empty($stu->StudentDateBirth) ? $stu->StudentDateBirth : (!empty($stu->stu_birthDay) ? $stu->stu_birthDay : null);
+        if (!empty($raw_birth)) {
+            $parts = explode('/', str_replace('-', '/', $raw_birth));
+            if (count($parts) == 3) {
+                $b_day = (int)$parts[0];
+                $b_month = $thai_months[(int)$parts[1]] ?? $parts[1];
+                $by = (int)$parts[2];
+                if ($by < 2400) $by += 543;
+                $b_year = $by;
+            }
         }
+        $data['b_day'] = $b_day;
+        $data['b_month'] = $b_month;
+        $data['b_year'] = $b_year;
 
-        // หยอดข้อมูลเพิ่มเติม: เพศ (เช็คจากคำนำหน้า), เชื้อชาติ, สัญชาติ, ศาสนา
-        $pdf->SetFontSize(14);
-        // เพศ (เช็คจากคำนำหน้า)
+        // เพศ
         $malePrefixes = ['นาย', 'ด.ช.', 'เด็กชาย'];
-        if(in_array($stu->StudentPrefix, $malePrefixes)){
-            $pdf->Text(103, 65, 'ชาย'); // ชาย
-        } else {
-            $pdf->Text(103, 65, 'หญิง'); // หญิง
-        }
-        
-        // สัญชาติ ศาสนา (แยกพิกัดให้ตรงช่อง)
-        $pdf->Text(135, 65, $stu->stu_nationality ?? '-'); // สัญชาติ
-        $pdf->Text(180, 65, $stu->stu_religion ?? '-');    // ศาสนา
+        $data['gender'] = in_array($stu->StudentPrefix, $malePrefixes) ? 'ชาย' : 'หญิง';
 
-        // ชื่อ-นามสกุล บิดา มารดา ผู้ปกครอง
-        if($parent_data['father']){
-            $father_name = $parent_data['father']->par_prefix.$parent_data['father']->par_firstName.' '.$parent_data['father']->par_lastName;
-            $pdf->Text(120, 70.3, $father_name);
-        }
-        if($parent_data['mother']){
-            $mother_name = $parent_data['mother']->par_prefix.$parent_data['mother']->par_firstName.' '.$parent_data['mother']->par_lastName;
-            $pdf->Text(120, 76, $mother_name);
-        }
+        // ชื่อบิดา - มารดา
+        $data['father_name'] = !empty($parent_data['father']) 
+            ? trim($parent_data['father']->par_prefix . $parent_data['father']->par_firstName . ' ' . $parent_data['father']->par_lastName)
+            : (!empty($stu->FNameFather) ? trim($stu->PrefixFather . $stu->FNameFather . ' ' . $stu->LNameFather) : '-');
 
-        
+        $data['mother_name'] = !empty($parent_data['mother'])
+            ? trim($parent_data['mother']->par_prefix . $parent_data['mother']->par_firstName . ' ' . $parent_data['mother']->par_lastName)
+            : (!empty($stu->FNameMother) ? trim($stu->PrefixMother . $stu->FNameMother . ' ' . $stu->LNameMother) : '-');
 
-        // 5. ตารางเกรด (หยอดข้อมูล 3 คอลัมน์ละ 1 ปีการศึกษา)
-        $columns_results = []; // เก็บข้อมูลแยกตามคอลัมน์
-        
-        $classes = [];
+        // วันที่พิมพ์เอกสาร (พ.ศ.)
+        $data['print_date'] = date('j') . ' ' . $thai_months[date('n')] . ' ' . (date('Y') + 543);
+
+        // แม่แบบภาพความละเอียดสูงที่ตัดแต่งพร้อมพิมพ์
+        $tpl_prefix = ($Level == 'senior') ? 'papor1_senior' : 'papor1_junior';
+        $data['tpl_front_url'] = base_url('public/assets/img/transcript_templates/' . $tpl_prefix . '_front_clean.jpg');
+        $data['tpl_back_url']  = base_url('public/assets/img/transcript_templates/' . $tpl_prefix . '_back_clean.jpg');
+
+        // จัดกลุ่มรายวิชาแยกตามระดับชั้น (ม.1, 2, 3 หรือ ม.4, 5, 6)
+        $target_levels = ($Level == 'senior') ? [4, 5, 6] : [1, 2, 3];
+
+        // รวบรวมรายวิชาตามระดับชั้น
+        $classes_data = [];
         foreach ($data['scoreStudent'] as $s) {
-            // ดึงเฉพาะตัวเลขระดับชั้นออกมา เพื่อจัดกลุ่ม (เช่น ม.1/1 -> 1, ม.2/5 -> 2)
-            // ใช้ (int) เพื่อให้ 01 และ 1 จัดอยู่ในกลุ่มเดียวกัน
             preg_match('/\d+/', $s->RegisterClass, $matches);
-            $level = isset($matches[0]) ? (int)$matches[0] : trim($s->RegisterClass);
-            
-            if ($level !== '') {
-                $classes[$level][] = $s;
+            $lv = isset($matches[0]) ? (int)$matches[0] : 0;
+            if ($lv > 0) {
+                $classes_data[$lv][] = $s;
             }
         }
-        ksort($classes);
-        
-        foreach ($classes as $class_lv => $subs) {
+
+        $columns_results = [];
+        foreach ($target_levels as $c_idx => $yr_lv) {
+            $subs_for_lv = $classes_data[$yr_lv] ?? [];
             $column_items = [];
             
             // หาปีการศึกษา (BE)
-            $years_in_class = [];
-            foreach ($subs as $s) {
+            $years_in_lv = [];
+            foreach ($subs_for_lv as $s) {
                 $parts = explode('/', $s->RegisterYear);
-                $year = end($parts);
-                $years_in_class[$year] = $year;
+                $y = end($parts);
+                if (!empty($y)) $years_in_lv[$y] = $y;
             }
-            ksort($years_in_class);
-            $main_year = implode('-', $years_in_class);
+            ksort($years_in_lv);
+            $main_year = !empty($years_in_lv) ? implode('-', $years_in_lv) : '';
 
-            // แยกเทอม 1 และ เทอม 2
             for ($term = 1; $term <= 2; $term++) {
-                // กรองรายวิชาในเทอมนี้
-                $term_subs = array_filter($subs, function($s) use ($term) {
-                    return strpos(trim($s->RegisterYear), $term.'/') === 0;
+                $term_subs = array_filter($subs_for_lv, function($s) use ($term) {
+                    return strpos(trim($s->RegisterYear), $term . '/') === 0;
                 });
 
-                if (empty($term_subs)) continue; // ถ้าไม่มีวิชาในเทอมนี้ ไม่ต้องเพิ่ม Header
+                if (empty($term_subs)) continue;
 
-                // Header ภาคเรียน (Simplified format: ภาคเรียนที่ X/YYYY)
-                $column_items[] = ['t' => 'h', 'val' => "ภาคเรียนที่ $term/$main_year"];
+                // Header ภาคเรียน (เช่น ภาคเรียนที่ 1/2568)
+                $column_items[] = ['t' => 'h', 'val' => "ภาคเรียนที่ $term" . ($main_year ? "/$main_year" : "")];
 
-                // เรียง: พื้นฐานก่อน แล้วค่อยเพิ่มเติม
+                // จัดเรียง: วิชาพื้นฐานก่อน แล้วตามด้วยวิชาเพิ่มเติม
                 usort($term_subs, function($a, $b) {
                     $a_is_base = strpos($a->SubjectType, 'พื้นฐาน') !== false;
                     $b_is_base = strpos($b->SubjectType, 'พื้นฐาน') !== false;
-                    if ($a_is_base === $b_is_base) return 0;
+                    if ($a_is_base === $b_is_base) {
+                        return strcmp($a->SubjectCode, $b->SubjectCode);
+                    }
                     return $a_is_base ? -1 : 1;
                 });
 
                 foreach ($term_subs as $s) {
                     $column_items[] = ['t' => 's', 'd' => $s];
                 }
-
-                // สรุปเทอม (ถ้ามีข้อมูล)
-                if (count($term_subs) > 0) {
-                     // $column_items[] = ['t' => 'sum', 'val' => '--- term summary if needed ---'];
-                }
             }
 
-            // --- คำนวณ Scale อัตโนมัติ ---
+            // คำนวณ Scale อัตโนมัติหากเกิน 36 บรรทัด
             $total_lines = count($column_items);
-            $max_lines = 36; // ขยายจาก 35 เป็น 36 เพื่อความยืดหยุ่น
-            $standard_lh = 4.85; 
-            $standard_fs = 11.0; 
+            $max_lines = 36;
+            $standard_lh = 4.85; // มม.
+            $standard_fs = 11.0; // pt
 
             $current_lh = $standard_lh;
             $current_fs = $standard_fs;
 
-            if ($total_lines > $max_lines) {
+            if ($total_lines > $max_lines && $total_lines > 0) {
                 $scale = $max_lines / $total_lines;
                 $current_lh = $standard_lh * $scale;
-                $current_fs = max($standard_fs * $scale, 8.5); // เล็กสุดไม่เกิน 8.5pt
+                $current_fs = max($standard_fs * $scale, 8.5);
             }
 
-            $columns_results[] = [
-                'items'   => $column_items,
-                'line_h'  => $current_lh,
-                'font_sz' => $current_fs
+            $columns_results[$c_idx] = [
+                'level'    => $yr_lv,
+                'items'    => $column_items,
+                'line_h'   => $current_lh,
+                'font_sz'  => $current_fs
             ];
         }
+        $data['columns_results'] = $columns_results;
 
-        $y_box_start = 114.2; // ปรับพิกัด Y เริ่มต้นให้ตรงบรรทัดแรกของเทมเพลต
-        $col_x = [7.2, 73.2, 139.3]; // พิกัด X เริ่มต้นของ 3 ปีการศึกษา
-        
-        // --- ส่วนการตั้งค่าตำแหน่งคงที่แยกคอลัมน์ (Individually Tuned Offsets) ---
-        // คุณครูสามารถปรับตัวเลขในอาเรย์ [ปี1, ปี2, ปี3] เพื่อขยับทีละคอลัมน์ได้เลยครับ
-        $off_unit  = [43, 45, 45]; // ระยะเริ่มช่องหน่วยกิต (วัดจากขอบซ้ายของแต่ละคอลัมน์)
-        $off_grade = [51, 54, 54]; // ระยะเริ่มช่องเกรด (วัดจากขอบซ้ายของแต่ละคอลัมน์)
-        
-        $w_name  = 41.5; // ความกว้างช่องชื่อวิชา
-        $w_unit  = 10.5; // ความกว้างช่องหน่วยกิต
-        $w_grade = 13.5; // ความกว้างช่องเกรด
-
-        foreach ($columns_results as $c_idx => $col_cfg) {
-            if ($c_idx > 2) break;
-            
-            $start_x = $col_x[$c_idx];
-            $lh = $col_cfg['line_h'];
-            $fs = $col_cfg['font_sz'];
-            
-            // ดึงค่า Offset เฉพาะของคอลัมน์นี้มาใช้
-            $u_x = $start_x + $off_unit[$c_idx];
-            $g_x = $start_x + $off_grade[$c_idx];
-            
-            foreach ($col_cfg['items'] as $i_idx => $item) {
-                $curr_y = $y_box_start + ($i_idx * $lh);
-                
-                if ($item['t'] == 's') { // รายวิชา
-                    // 1. ชื่อวิชา
-                    $pdf->SetFont($fontname, '', $fs);
-                    $pdf->SetXY($start_x, $curr_y - 0.4);
-                    $pdf->Cell($w_name, $lh, $item['d']->SubjectCode.' '.$item['d']->SubjectName, 0, 0, 'L', 0, '', 1);
-                    
-                    // 2. หน่วยกิต (ใช้ X ที่คำนวณแยกคอลัมน์)
-                    $pdf->SetFont($fontname, '', $fs);
-                    $pdf->SetXY($u_x, $curr_y - 0.4);
-                    $pdf->Cell($w_unit, $lh, number_format(floatval($item['d']->SubjectUnit), 1), 0, 0, 'C');
-                    
-                    // 3. ผลการเรียน (ใช้ X ที่คำนวณแยกคอลัมน์)
-                    $pdf->SetXY($g_x, $curr_y - 0.4);
-                    $pdf->Cell($w_grade, $lh, $item['d']->Grade, 0, 0, 'C');
-                } elseif ($item['t'] == 'h') { // Header ภาคเรียน
-                    $pdf->SetFont($fontname, 'B', $fs + 0.5);
-                    $pdf->SetXY($start_x, $curr_y);
-                    $pdf->Cell($w_name, $lh, $item['val'], 0, 0, 'L');
-                }
-            }
-        }
-
-         // นายทะเบียน
-        $pdf->SetFontSize(13);
-        $pdf->SetXY(133, 278.5);
-        $regis_name = ($school->RegisName ?? '-');
-        $pdf->MultiCell(80, 5,$regis_name , 0, 'C');
-
-
-
-        // --- หน้าที่ 2 (Back) ---
-        $pdf->AddPage();
-        $pdf->setSourceFile($tpl_back);
-        $tplId2 = $pdf->importPage(1);
-        $pdf->useTemplate($tplId2, 0, 0, 210, 297);
-
-        // เตรียมตัวแปรสำหรับสรุปผลการเรียนแยกสาระ (หน้า 2)
+        // คำนวณสรุปกลุ่มสาระการเรียนรู้ (8 กลุ่มสาระ + IS) และหน่วยกิต
         $learning_areas = [
             'ภาษาไทย' => ['c' => 0, 'gp' => 0],
             'คณิตศาสตร์' => ['c' => 0, 'gp' => 0],
@@ -1058,28 +951,41 @@ class ConAdminReportResult extends BaseController
             'การศึกษาค้นคว้าด้วยตนเอง (IS)' => ['c' => 0, 'gp' => 0]
         ];
 
-        // คำนวณสรุปหน่วยกิตและ GPAX (รวมและแยกสาระ)
         $sum_credits = 0;
         $sum_grade_points = 0;
-        foreach($data['scoreStudent'] as $s){
-            if($s->Grade !== 'ร' && $s->Grade !== 'มส' && $s->Grade !== 'มผ' && is_numeric($s->Grade)){
-                $u = floatval($s->SubjectUnit);
+        $sum_basic_credits_reg = 0;
+        $sum_basic_credits_pass = 0;
+        $sum_add_credits_reg = 0;
+        $sum_add_credits_pass = 0;
+
+        foreach ($data['scoreStudent'] as $s) {
+            $u = floatval($s->SubjectUnit);
+            $is_base = strpos($s->SubjectType, 'พื้นฐาน') !== false;
+            $is_numeric = is_numeric($s->Grade);
+            $is_pass = ($is_numeric && floatval($s->Grade) > 0) || ($s->Grade === 'ผ');
+
+            if ($is_base) {
+                $sum_basic_credits_reg += $u;
+                if ($is_pass) $sum_basic_credits_pass += $u;
+            } else {
+                $sum_add_credits_reg += $u;
+                if ($is_pass) $sum_add_credits_pass += $u;
+            }
+
+            if ($is_numeric && $s->Grade !== 'ร' && $s->Grade !== 'มส' && $s->Grade !== 'มผ') {
                 $g = floatval($s->Grade);
                 $gp = $u * $g;
-                
                 $sum_credits += $u;
                 $sum_grade_points += $gp;
 
-                // แยกเข้ากลุ่มสาระ
-                if(strpos($s->SubjectName, 'การศึกษาค้นคว้าด้วยตนเอง') !== false || strpos($s->SubjectCode, 'IS') === 0){
+                if (strpos($s->SubjectName, 'การศึกษาค้นคว้าด้วยตนเอง') !== false || strpos($s->SubjectCode, 'IS') === 0) {
                     $learning_areas['การศึกษาค้นคว้าด้วยตนเอง (IS)']['c'] += $u;
                     $learning_areas['การศึกษาค้นคว้าด้วยตนเอง (IS)']['gp'] += $gp;
                 } else {
-                    foreach($learning_areas as $key => $val){
-                        if($key == 'การศึกษาค้นคว้าด้วยตนเอง (IS)') continue;
-                        // จับคู่กลุ่มสาระ (ใช้คำค้นหาแบบยืดหยุ่น)
+                    foreach ($learning_areas as $key => $val) {
+                        if ($key == 'การศึกษาค้นคว้าด้วยตนเอง (IS)') continue;
                         $match_key = str_replace(['และเทคโนโลยี', ' ศาสนาและวัฒนธรรม', 'และพลศึกษา'], '', $key);
-                        if(strpos($s->FirstGroup, $match_key) !== false){
+                        if (strpos($s->FirstGroup, $match_key) !== false) {
                             $learning_areas[$key]['c'] += $u;
                             $learning_areas[$key]['gp'] += $gp;
                             break;
@@ -1088,61 +994,16 @@ class ConAdminReportResult extends BaseController
                 }
             }
         }
-        $gpax = $sum_credits > 0 ? number_format(floor(($sum_grade_points / $sum_credits) * 100) / 100, 2, '.', '') : '0.00';
 
-        // วางคะแนนแยกกลุ่มสาระ (หน้า 2)
-        $pdf->SetFont($fontname, '', 12);
-        $area_y = 128.5; // พิกัด Y เริ่มต้นของกลุ่มสาระ
-        foreach($learning_areas as $area_name => $area_val){
-            if ($area_name == 'การศึกษาค้นคว้าด้วยตนเอง (IS)' && $area_val['c'] == 0) {
-                $credits_display = '-';
-                $area_avg = '-';
-            } else {
-                $credits_display = number_format($area_val['c'], 1);
-                $area_avg = $area_val['c'] > 0 ? number_format(floor(($area_val['gp'] / $area_val['c']) * 100) / 100, 2, '.', '') : '0.00';
-            }
-            
-            $pdf->Text(187, $area_y, $credits_display); // หน่วยกิตสะสม
-            $pdf->Text(197, $area_y, $area_avg);        // ผลการเรียนเฉลี่ย
-            $area_y += 4.7; 
-        }
+        $data['learning_areas'] = $learning_areas;
+        $data['sum_credits'] = $sum_credits;
+        $data['gpax'] = $sum_credits > 0 ? number_format(floor(($sum_grade_points / $sum_credits) * 100) / 100, 2, '.', '') : '0.00';
+        $data['sum_basic_credits_reg'] = $sum_basic_credits_reg;
+        $data['sum_basic_credits_pass'] = $sum_basic_credits_pass;
+        $data['sum_add_credits_reg'] = $sum_add_credits_reg;
+        $data['sum_add_credits_pass'] = $sum_add_credits_pass;
 
-        // วางสรุปรวม (รวมทุกรายวิชา)
-        $pdf->SetFont($fontname, 'B', 12);
-        $pdf->Text(187, 174, number_format($sum_credits, 1)); 
-        $pdf->Text(197, 174, $gpax);
-
-        $pdf->SetFont($fontname, '', 14);
-        
-        // นายทะเบียน
-        $pdf->SetXY(133, 195);
-        $regis_name = ($school->RegisName ?? '-');
-        $pdf->MultiCell(80, 5,$regis_name , 0, 'C');
-
-        // ผู้อำนวยการ
-        $director_name = ($school->DirectorName ?? '-');
-        $school_name   = ($school->SchoolName ?? 'โรงเรียนสวนกุหลาบวิทยาลัย (จิรประวัติ) นครสวรรค์');
-        
-        $pdf->SetFont($fontname, '', 14);
-        $pdf->SetXY(130, 222);
-        $pdf->Cell(80, 5, "(" . $director_name . ")", 0, 1, 'C');
-        $pdf->SetX(130);
-        $pdf->Cell(80, 5, "ผู้อำนวยการสถานศึกษา", 0, 1, 'C');
-        
-        $pdf->SetFontSize(11.5); // ปรับขนาดชื่อโรงเรียนให้เล็กลง
-        $pdf->SetX(130);
-        $pdf->Cell(80, 5, $school_name, 0, 1, 'C');
-
-        // บรรทัดที่ 4 วันที่พิมพ์
-        $pdf->SetFontSize(13);
-        $pdf->SetX(130);
-        $print_date = date('j') . ' ' . $months[date('n')] . ' ' . (date('Y') + 543);
-        $pdf->Cell(80, 5, $print_date, 0, 1, 'C');
-
-        $fileName = "ปพ1_" . $stu->StudentCode . ".pdf";
-        $this->response->setHeader('Content-Type', 'application/pdf');
-        $pdf->Output($fileName, 'I'); 
-        exit;
+        return view('admin/Academic/AdminReportResults/AdminReportPrintTranscript', $data);
     }
 
     public function AdminReportSummaryTeacher(){

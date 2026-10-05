@@ -384,8 +384,11 @@ $routes->get('Admin/Acade/Evaluate/ReportPerson', [ConAdminReportResult::class, 
 $routes->get('Admin/Acade/Evaluate/ReportPerson/(:segment)/(:segment)', [ConAdminReportResult::class, 'AdminReportPersonMain/$1/$2']);
 $routes->post('Admin/Acade/Evaluate/ReportPerson/(:segment)/(:segment)', [ConAdminReportResult::class, 'AdminReportPersonMain/$1/$2']);
 $routes->get('Admin/Acade/Evaluate/ReportPerson/(:segment)', [ConAdminReportResult::class, 'AdminStudentsScore']);
-$routes->get('Admin/Acade/Evaluate/PrintTranscript/(:segment)', [ConAdminReportResult::class, 'PrintTranscript/$1']);
-$routes->get('Admin/Acade/Evaluate/PrintTranscript/(:segment)/(:segment)', [ConAdminReportResult::class, 'PrintTranscript/$1/$2']);
+$routes->get('Admin/Acade/Evaluate/PrintTranscript/(:segment)', [ConAdminReportResult::class, 'PrintTranscript']);
+$routes->get('Admin/Acade/Evaluate/PrintTranscript/(:segment)/(:segment)', [ConAdminReportResult::class, 'PrintTranscript']);
+$routes->get('admin/acade/evaluate/printtranscript/(:segment)', [ConAdminReportResult::class, 'PrintTranscript']);
+$routes->get('admin/acade/evaluate/printtranscript/(:segment)/(:segment)', [ConAdminReportResult::class, 'PrintTranscript']);
+$routes->get('TestImage', [ConAdminReportResult::class, 'TestImage']);
 $routes->get('Admin/Acade/Evaluate/ReportRoom', [ConAdminReportResult::class, 'AdminReportRoomMain']);
 $routes->post('Admin/Acade/Evaluate/ReportRoom', [ConAdminReportResult::class, 'AdminReportRoomMain']);
 $routes->post('Admin/Acade/Evaluate/exportRoomReportToExcel', [ConAdminReportResult::class, 'exportRoomReportToExcel']);

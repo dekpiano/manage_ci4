@@ -95,6 +95,8 @@ class Filters extends BaseConfig
                 'admin/academic/competition/*',
                 'Admin/academic/competition',
                 'Admin/academic/competition/*',
+                'Admin/Acade/Evaluate/PrintTranscript/*',
+                'admin/acade/evaluate/printtranscript/*',
             ]
         ],
     ];

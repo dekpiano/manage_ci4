@@ -38,6 +38,10 @@
     3. **Logic:** ต้องมีระบบแนะนำครูผู้สอนอัตโนมัติ (Suggested Teachers) เมื่อเลือกวิชา
     4. **Logic:** ต้องมีระบบคำนวณรูปแบบการแบ่งคาบ (Period Split) อัตโนมัติเมื่อกรอกจำนวนคาบต่อสัปดาห์
     5. ปุ่มบันทึกต้องเป็นสีเขียว `#15a362` และมีปุ่มยกเลิกเป็นสีเทา (Label Secondary)
+- **Rule (File Naming Conventions):** ก่อนสร้างไฟล์ใหม่ทุกครั้ง **ต้องตรวจสอบแบบแผนการตั้งชื่อไฟล์ (Naming Pattern/Convention) ในโฟลเดอร์ปลายทางนั้นๆ ก่อนเสมอ** เพื่อให้สอดคล้องกับโครงสร้างเดิมของโปรเจกต์ เช่น:
+    - Controllers: มักมี Prefix `Con...` (เช่น `ConAdminReportResult.php`, `ConAdminCheckPlan.php`)
+    - Models: มักมี Prefix `Mod...` (เช่น `ModAdminReportResult.php`, `ModAdminCheckPlan.php`)
+    - Views: ตรวจสอบโครงสร้างโฟลเดอร์ย่อยและ Pattern ของโฟลเดอร์นั้น (เช่น ใน `AdminReportResults/` ใช้ Prefix `AdminReport...` เช่น `AdminReportResult.php`, `AdminReportEnrollDetailStudent.php` เป็นต้น)
 - **Rule (Git Workflow):** เมื่อจะเริ่มพัฒนาฟีเจอร์ใหม่ (Feature), แก้ไขข้อผิดพลาดเฉพาะจุด (Bugfix), หรือปรับปรุงโครงสร้างใหญ่ (Major Refactor) ให้พิจารณาและแตก Git Branch ใหม่เสมอ (เช่น `feature/...`, `fix/...`) ก่อนเริ่ม เพื่อความปลอดภัยของโค้ดหลัก
 - **Rule (Skills Available):** ระบบมี Skill พิเศษใน `.agents/skills/`:
     1. [ci4-fullstack-mastery](file:///d:/SkjSystem/academic2025/.agents/skills/ci4-fullstack-mastery/SKILL.md) — มาตรฐานการเขียน CI4 backend, multi-db joins, null safety, และ data aggregation
