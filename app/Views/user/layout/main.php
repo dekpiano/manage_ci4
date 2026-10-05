@@ -25,7 +25,9 @@
     <!-- Core CSS -->
     <link rel="stylesheet" href="<?= base_url('assets/vendor/css/core.css') ?>" />
     <link rel="stylesheet" href="<?= base_url('assets/css/demo.css') ?>" />
-    <link rel="stylesheet" href="<?= base_url()?>/assets/vendor/fonts/iconify-icons.css" />
+    <link rel="stylesheet" href="<?= base_url('assets/vendor/fonts/iconify-icons.css') ?>" />
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     <!-- Vendors CSS -->
     <link rel="stylesheet" href="<?= base_url()?>/assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.css" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/slim-select/2.12.1/slimselect.min.css" rel="stylesheet">
@@ -249,6 +251,8 @@
     </div>
     <!-- / Layout wrapper -->
 
+    <?= $this->renderSection('modals') ?>
+
     <!-- Core JS -->
 
     <script src="<?=base_url();?>assets/vendor/libs/popper/popper.js"></script>
@@ -266,11 +270,7 @@
     <script src="<?=base_url();?>assets/vendor/libs/apex-charts/apexcharts.js"></script>
 
     <!-- Main JS -->
-
     <script src="<?=base_url();?>assets/js/main.js"></script>
-
-    <!-- Page JS -->
-    <script src="<?=base_url();?>assets/js/dashboards-analytics.js"></script>
 
     <!-- Place this tag before closing body tag for github widget button. -->
     <script async defer src="https://buttons.github.io/buttons.js"></script>

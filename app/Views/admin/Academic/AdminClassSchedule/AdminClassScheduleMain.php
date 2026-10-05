@@ -62,10 +62,139 @@
             </h4>
             <p class="text-muted mb-0">ปีการศึกษา: <strong id="headerYear"><?= isset($YearAll[0]->Year) ? esc($YearAll[0]->Year) : '-' ?></strong></p>
         </div>
-        <div class="col-auto">
-            <button type="button" class="btn btn-success btn-add-schedule" style="background-color: #15a362; border-color: #15a362;">
+        <div class="col-auto d-flex gap-2 align-items-center flex-wrap">
+            <a href="<?= base_url('ClassSchedule') ?>" target="_blank" class="btn btn-outline-primary rounded-pill">
+                <i class="bx bx-link-external me-1"></i> ดูหน้าเว็บตารางเรียน (Public)
+            </a>
+            <button type="button" class="btn btn-success btn-add-schedule rounded-pill" style="background-color: #15a362; border-color: #15a362;">
                 <i class="bx bx-plus-circle me-1"></i> เพิ่มตารางเรียนใหม่
             </button>
+        </div>
+    </div>
+
+    <!-- 🌟 Public Display Mode, Access Control & Year Scope Card -->
+    <div class="card border-0 shadow-sm mb-4" style="border-radius: 16px; background: linear-gradient(135deg, #ffffff 0%, #f8fdfa 100%); border-left: 5px solid #15a362 !important;">
+        <div class="card-body p-4">
+            <div class="row g-4">
+                <!-- Setting 1: Student Timetable Public Access (ON/OFF) -->
+                <div class="col-lg-6 col-xl-3 border-end-xl">
+                    <div class="d-flex flex-column h-100 justify-content-between">
+                        <div class="d-flex align-items-center gap-3 mb-3">
+                            <div class="avatar avatar-md rounded-circle d-flex align-items-center justify-content-center <?= ($class_schedule_onoff === 'open') ? 'bg-label-success text-success' : 'bg-label-danger text-danger' ?>" style="width: 44px; height: 44px; font-size: 1.4rem;">
+                                <i class="bx <?= ($class_schedule_onoff === 'open') ? 'bx-lock-open-alt' : 'bx-lock-alt' ?>"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-0 fw-bold text-dark">ตารางเรียน (นักเรียน)</h6>
+                                <span class="badge <?= ($class_schedule_onoff === 'open') ? 'bg-success' : 'bg-danger' ?> rounded-pill px-2 py-1 mt-1" style="font-size: 0.72rem;">
+                                    <?= ($class_schedule_onoff === 'open') ? '🟢 เปิดให้ดู' : '🔴 ปิดการดู' ?>
+                                </span>
+                            </div>
+                        </div>
+                        <p class="text-muted small mb-3">
+                            เปิด/ปิดการเข้าดูตารางเรียนห้องเรียนสำหรับนักเรียน
+                        </p>
+                        <div class="d-flex align-items-center gap-2 bg-white p-1 rounded-pill border shadow-2xs w-100 justify-content-center">
+                            <button type="button" class="btn btn-sm btn-toggle-class-onoff rounded-pill px-3 flex-grow-1 fw-bold <?= ($class_schedule_onoff === 'open') ? 'btn-success active shadow-xs' : 'btn-light text-muted' ?>" data-status="open" style="<?= ($class_schedule_onoff === 'open') ? 'background-color: #15a362; border-color: #15a362;' : '' ?>">
+                                <i class="bx bx-check-circle me-1"></i> เปิด
+                            </button>
+                            <button type="button" class="btn btn-sm btn-toggle-class-onoff rounded-pill px-3 flex-grow-1 fw-bold <?= ($class_schedule_onoff === 'closed') ? 'btn-danger active shadow-xs' : 'btn-light text-muted' ?>" data-status="closed">
+                                <i class="bx bx-x-circle me-1"></i> ปิด
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Setting 2: Teacher Timetable Public Access (ON/OFF) -->
+                <div class="col-lg-6 col-xl-3 border-end-xl">
+                    <div class="d-flex flex-column h-100 justify-content-between">
+                        <div class="d-flex align-items-center gap-3 mb-3">
+                            <div class="avatar avatar-md rounded-circle d-flex align-items-center justify-content-center <?= ($teacher_schedule_onoff === 'open') ? 'bg-label-success text-success' : 'bg-label-danger text-danger' ?>" style="width: 44px; height: 44px; font-size: 1.4rem;">
+                                <i class="bx <?= ($teacher_schedule_onoff === 'open') ? 'bx-lock-open-alt' : 'bx-lock-alt' ?>"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-0 fw-bold text-dark">ตารางสอน (ครู)</h6>
+                                <span class="badge <?= ($teacher_schedule_onoff === 'open') ? 'bg-success' : 'bg-danger' ?> rounded-pill px-2 py-1 mt-1" style="font-size: 0.72rem;">
+                                    <?= ($teacher_schedule_onoff === 'open') ? '🟢 เปิดให้ดู' : '🔴 ปิดการดู' ?>
+                                </span>
+                            </div>
+                        </div>
+                        <p class="text-muted small mb-3">
+                            เปิด/ปิดการเข้าดูตารางสอนรายครูสำหรับบุคคลภายนอก
+                        </p>
+                        <div class="d-flex align-items-center gap-2 bg-white p-1 rounded-pill border shadow-2xs w-100 justify-content-center">
+                            <button type="button" class="btn btn-sm btn-toggle-teacher-onoff rounded-pill px-3 flex-grow-1 fw-bold <?= ($teacher_schedule_onoff === 'open') ? 'btn-success active shadow-xs' : 'btn-light text-muted' ?>" data-status="open" style="<?= ($teacher_schedule_onoff === 'open') ? 'background-color: #15a362; border-color: #15a362;' : '' ?>">
+                                <i class="bx bx-check-circle me-1"></i> เปิด
+                            </button>
+                            <button type="button" class="btn btn-sm btn-toggle-teacher-onoff rounded-pill px-3 flex-grow-1 fw-bold <?= ($teacher_schedule_onoff === 'closed') ? 'btn-danger active shadow-xs' : 'btn-light text-muted' ?>" data-status="closed">
+                                <i class="bx bx-x-circle me-1"></i> ปิด
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Setting 3: Class Timetable Display Mode -->
+                <div class="col-lg-6 col-xl-3 border-end-xl">
+                    <div class="d-flex flex-column h-100 justify-content-between">
+                        <div class="d-flex align-items-center gap-3 mb-3">
+                            <div class="avatar avatar-md rounded-circle d-flex align-items-center justify-content-center" style="background-color: #e8f7f0; color: #15a362; width: 44px; height: 44px; font-size: 1.4rem;">
+                                <i class="bx bx-toggle-right"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-0 fw-bold text-dark">โหมดแสดงผล (นักเรียน)</h6>
+                                <span class="badge <?= ($display_mode === 'system') ? 'bg-success' : 'bg-info' ?> rounded-pill px-2 py-1 mt-1" style="font-size: 0.72rem;" id="badgeCurrentMode">
+                                    <?= ($display_mode === 'system') ? '🟢 ระบบจัดตาราง' : '📁 ไฟล์รูปภาพ' ?>
+                                </span>
+                            </div>
+                        </div>
+                        <p class="text-muted small mb-3">
+                            แหล่งข้อมูลตารางเรียนหน้า <code>/ClassSchedule</code>
+                        </p>
+                        <div class="d-flex align-items-center gap-2 bg-white p-1 rounded-pill border shadow-2xs w-100 justify-content-center">
+                            <button type="button" class="btn btn-sm btn-mode-toggle rounded-pill px-2 flex-grow-1 fw-bold <?= ($display_mode === 'system') ? 'btn-success active-mode shadow-xs' : 'btn-light text-muted' ?>" data-mode="system" style="<?= ($display_mode === 'system') ? 'background-color: #15a362; border-color: #15a362;' : '' ?>">
+                                <i class="bx bx-grid-alt me-1"></i> ระบบจัดตาราง
+                            </button>
+                            <button type="button" class="btn btn-sm btn-mode-toggle rounded-pill px-2 flex-grow-1 fw-bold <?= ($display_mode === 'upload') ? 'btn-primary active-mode shadow-xs' : 'btn-light text-muted' ?>" data-mode="upload">
+                                <i class="bx bx-image me-1"></i> ไฟล์รูปภาพ
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Setting 4: Year & Term Scope -->
+                <div class="col-lg-6 col-xl-3">
+                    <div class="d-flex flex-column h-100 justify-content-between">
+                        <div class="d-flex align-items-center gap-3 mb-3">
+                            <div class="avatar avatar-md rounded-circle d-flex align-items-center justify-content-center bg-label-primary text-primary" style="width: 44px; height: 44px; font-size: 1.4rem;">
+                                <i class="bx bx-calendar-check"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-0 fw-bold text-dark">ขอบเขตปีที่เปิดให้ดู</h6>
+                                <span class="badge bg-label-primary rounded-pill px-2 py-1 mt-1" style="font-size: 0.72rem;" id="badgeCurrentScope">
+                                    <?= ($schedule_open_year_from === 'all') ? '🌐 ทุกปีการศึกษา' : '📅 ตั้งแต่ ' . esc($schedule_open_year_from) . ' เป็นต้นไป' ?>
+                                </span>
+                            </div>
+                        </div>
+                        <p class="text-muted small mb-3">
+                            เปิดให้เลือกดูตั้งแต่ปี/เทอมที่เลือก <strong>ถึงปีล่าสุด</strong>
+                        </p>
+                        <div class="d-flex align-items-center gap-2">
+                            <select id="SelScheduleOpenYearFrom" class="form-select form-select-sm rounded-pill border-light-success">
+                                <option value="all" <?= ($schedule_open_year_from === 'all') ? 'selected' : '' ?>>🌐 เปิดทุกปีการศึกษา (ทั้งหมด)</option>
+                                <?php if (!empty($all_year_terms)): ?>
+                                    <?php foreach ($all_year_terms as $yt): ?>
+                                        <option value="<?= esc($yt['value']) ?>" <?= ($schedule_open_year_from === $yt['value']) ? 'selected' : '' ?>>
+                                            ตั้งแต่ <?= esc($yt['label']) ?> ถึงล่าสุด
+                                        </option>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+                            </select>
+                            <button type="button" class="btn btn-sm btn-success rounded-pill px-3" id="btnSaveYearScope" style="background-color: #15a362; border-color: #15a362; white-space: nowrap;" title="บันทึกขอบเขตปีการศึกษา">
+                                <i class="bx bx-save me-1"></i> บันทึก
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -1010,5 +1139,247 @@
             }
         });
     }
+
+    // 🌟 Display Mode Switcher Handler
+    $('.btn-mode-toggle').on('click', function() {
+        const mode = $(this).data('mode');
+        const modeTitle = (mode === 'system') ? 'ระบบจัดตารางสอน (Live Timetable)' : 'ไฟล์รูปภาพที่อัปโหลด (Uploaded Images)';
+
+        Swal.fire({
+            title: 'เปลี่ยนโหมดแสดงตารางเรียน?',
+            text: `ต้องการเปลี่ยนเป็น "${modeTitle}" สำหรับหน้าเว็บ /ClassSchedule ใช่หรือไม่?`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'ใช่, เปลี่ยนโหมด',
+            cancelButtonText: 'ยกเลิก',
+            confirmButtonColor: '#15a362',
+            cancelButtonColor: '#8592a3'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                Swal.fire({
+                    title: 'กำลังบันทึกการตั้งค่า...',
+                    allowOutsideClick: false,
+                    didOpen: () => { Swal.showLoading(); }
+                });
+
+                $.ajax({
+                    url: '<?= site_url('admin/academic/ConAdminClassSchedule/toggleDisplayMode') ?>',
+                    type: 'POST',
+                    data: { mode: mode },
+                    dataType: 'json',
+                    success: function(res) {
+                        if (res && res.status === 'success') {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'สำเร็จ!',
+                                text: res.message,
+                                confirmButtonColor: '#15a362'
+                            }).then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'เกิดข้อผิดพลาด!',
+                                text: res.message || 'ไม่สามารถเปลี่ยนโหมดได้',
+                                confirmButtonColor: '#dc3545'
+                            });
+                        }
+                    },
+                    error: function() {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'เกิดข้อผิดพลาด!',
+                            text: 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้',
+                            confirmButtonColor: '#dc3545'
+                        });
+                    }
+                });
+            }
+        });
+    });
+
+    // 🌟 Student Schedule Public Access Toggle Handler
+    $('.btn-toggle-class-onoff').on('click', function() {
+        const targetStatus = $(this).data('status');
+        const statusText = (targetStatus === 'open') ? 'เปิดให้นักเรียนดูตารางเรียน' : 'ปิดการดูตารางเรียนของนักเรียน';
+        const isOpening = (targetStatus === 'open');
+
+        Swal.fire({
+            title: `ยืนยัน${statusText}?`,
+            text: isOpening 
+                ? 'นักเรียนและผู้ปกครองจะสามารถค้นหาและดูตารางเรียนประจำห้องในหน้าเว็บ /ClassSchedule ได้ตามปกติ'
+                : 'นักเรียนและบุคคลทั่วไปจะไม่สามารถดูตารางเรียนได้ (ระบบจะแสดงการแจ้งเตือนปิดปรับปรุงชั่วคราว)',
+            icon: isOpening ? 'question' : 'warning',
+            showCancelButton: true,
+            confirmButtonText: `ใช่, ${statusText}`,
+            cancelButtonText: 'ยกเลิก',
+            confirmButtonColor: isOpening ? '#15a362' : '#dc3545',
+            cancelButtonColor: '#8592a3'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                Swal.fire({
+                    title: 'กำลังบันทึกการตั้งค่า...',
+                    allowOutsideClick: false,
+                    didOpen: () => { Swal.showLoading(); }
+                });
+
+                $.ajax({
+                    url: '<?= site_url('admin/academic/ConAdminClassSchedule/toggleClassScheduleOnOff') ?>',
+                    type: 'POST',
+                    data: { status: targetStatus },
+                    dataType: 'json',
+                    success: function(res) {
+                        if (res && res.status === 'success') {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'สำเร็จ!',
+                                text: res.message,
+                                confirmButtonColor: '#15a362'
+                            }).then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'เกิดข้อผิดพลาด!',
+                                text: res.message || 'ไม่สามารถบันทึกการตั้งค่าได้',
+                                confirmButtonColor: '#dc3545'
+                            });
+                        }
+                    },
+                    error: function() {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'เกิดข้อผิดพลาด!',
+                            text: 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้',
+                            confirmButtonColor: '#dc3545'
+                        });
+                    }
+                });
+            }
+        });
+    });
+
+    // 🌟 Teacher Schedule Public Access Toggle Handler
+    $('.btn-toggle-teacher-onoff').on('click', function() {
+        const targetStatus = $(this).data('status');
+        const statusText = (targetStatus === 'open') ? 'เปิดให้ดูตารางสอน' : 'ปิดการดูตารางสอน';
+        const isOpening = (targetStatus === 'open');
+
+        Swal.fire({
+            title: `ยืนยัน${statusText}?`,
+            text: isOpening 
+                ? 'ผู้ใช้งานทั่วไปจะสามารถค้นหาและดูตารางสอนรายครูในหน้าเว็บ /ClassSchedule ได้ตามปกติ'
+                : 'ผู้ใช้งานทั่วไปจะไม่สามารถดูตารางสอนรายครูได้ (ระบบจะแสดงการแจ้งเตือนปิดปรับปรุงชั่วคราว)',
+            icon: isOpening ? 'question' : 'warning',
+            showCancelButton: true,
+            confirmButtonText: `ใช่, ${statusText}`,
+            cancelButtonText: 'ยกเลิก',
+            confirmButtonColor: isOpening ? '#15a362' : '#dc3545',
+            cancelButtonColor: '#8592a3'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                Swal.fire({
+                    title: 'กำลังบันทึกการตั้งค่า...',
+                    allowOutsideClick: false,
+                    didOpen: () => { Swal.showLoading(); }
+                });
+
+                $.ajax({
+                    url: '<?= site_url('admin/academic/ConAdminClassSchedule/toggleTeacherScheduleOnOff') ?>',
+                    type: 'POST',
+                    data: { status: targetStatus },
+                    dataType: 'json',
+                    success: function(res) {
+                        if (res && res.status === 'success') {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'สำเร็จ!',
+                                text: res.message,
+                                confirmButtonColor: '#15a362'
+                            }).then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'เกิดข้อผิดพลาด!',
+                                text: res.message || 'ไม่สามารถบันทึกการตั้งค่าได้',
+                                confirmButtonColor: '#dc3545'
+                            });
+                        }
+                    },
+                    error: function() {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'เกิดข้อผิดพลาด!',
+                            text: 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้',
+                            confirmButtonColor: '#dc3545'
+                        });
+                    }
+                });
+            }
+        });
+    });
+
+    // 🌟 Year & Term Scope Save Handler
+    $('#btnSaveYearScope').on('click', function() {
+        const val = $('#SelScheduleOpenYearFrom').val();
+        const label = $('#SelScheduleOpenYearFrom option:selected').text().trim();
+
+        Swal.fire({
+            title: 'ยืนยันบันทึกขอบเขตปีการศึกษา?',
+            text: `ต้องการตั้งค่าขอบเขต: "${label}" ใช่หรือไม่?`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'ใช่, บันทึกการตั้งค่า',
+            cancelButtonText: 'ยกเลิก',
+            confirmButtonColor: '#15a362',
+            cancelButtonColor: '#8592a3'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                Swal.fire({
+                    title: 'กำลังบันทึกการตั้งค่า...',
+                    allowOutsideClick: false,
+                    didOpen: () => { Swal.showLoading(); }
+                });
+
+                $.ajax({
+                    url: '<?= site_url('admin/academic/ConAdminClassSchedule/saveScheduleYearScope') ?>',
+                    type: 'POST',
+                    data: { from_year_term: val },
+                    dataType: 'json',
+                    success: function(res) {
+                        if (res && res.status === 'success') {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'สำเร็จ!',
+                                text: res.message,
+                                confirmButtonColor: '#15a362'
+                            }).then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'เกิดข้อผิดพลาด!',
+                                text: res.message || 'ไม่สามารถบันทึกได้',
+                                confirmButtonColor: '#dc3545'
+                            });
+                        }
+                    },
+                    error: function() {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'เกิดข้อผิดพลาด!',
+                            text: 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้',
+                            confirmButtonColor: '#dc3545'
+                        });
+                    }
+                });
+            }
+        });
+    });
 </script>
 <?= $this->endSection() ?>

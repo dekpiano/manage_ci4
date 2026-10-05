@@ -202,10 +202,20 @@ class ConStudents extends BaseController
     }
 
     public function ClassSchedule(){
-        $data['title'] = "ตารางเรียน 1/2568";
-        $data['description'] = "ตารางเรียน 1/2568";  
-        $data['full_url'] = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
-        $data['banner'] = base_url("uploads/banner/class_schedule/banner.png");;
+        $modConfig = new \App\Models\Admin\Academic\ModTimetableConfig();
+        $displayMode          = $modConfig->getSetting('class_schedule_display_mode', 'system');
+        $classScheduleOnOff   = $modConfig->getSetting('class_schedule_onoff', 'open');
+        $teacherScheduleOnOff = $modConfig->getSetting('teacher_schedule_onoff', 'open');
+        $openYearFrom         = $modConfig->getSetting('schedule_open_year_from', 'all');
+
+        $data['title']                  = "ตารางเรียนและตารางสอน";
+        $data['description']            = "ตารางเรียนและตารางสอน โรงเรียนสวนกุหลาบวิทยาลัย (จิรประวัติ) นครสวรรค์";  
+        $data['full_url']               = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
+        $data['banner']                 = base_url("uploads/banner/class_schedule/banner.png");
+        $data['display_mode']           = $displayMode;
+        $data['class_schedule_onoff']   = $classScheduleOnOff;
+        $data['teacher_schedule_onoff'] = $teacherScheduleOnOff;
+        $data['schedule_open_year_from']= $openYearFrom;
         
         $data['schedule'] = $this->db->table('tb_class_schedule')->orderBy('schestu_id','DESC')->get()->getResult();
         return view('user/PageClassSchedule', $data);
@@ -231,14 +241,461 @@ class ConStudents extends BaseController
 
     public function getScheduleYears()
     {
-        $years = $this->db->table('tb_class_schedule')
-            ->select('schestu_year')
-            ->distinct()
-            ->orderBy('schestu_year', 'DESC')
+        $modConfig = new \App\Models\Admin\Academic\ModTimetableConfig();
+        $displayMode = $modConfig->getSetting('class_schedule_display_mode', 'system');
+        $openYearFrom = $modConfig->getSetting('schedule_open_year_from', 'all');
+        
+        $map = [];
+
+        if ($displayMode === 'system') {
+            try {
+                $dbTimetable = \Config\Database::connect('timetable');
+                
+                // 1. From tb_timetable_assignments
+                if ($dbTimetable->tableExists('tb_timetable_assignments')) {
+                    $rows1 = $dbTimetable->table('tb_timetable_assignments')
+                        ->select('year, term')
+                        ->groupBy('year, term')
+                        ->get()
+                        ->getResult();
+
+                    foreach ($rows1 as $r) {
+                        if (!empty($r->year) && !empty($r->term)) {
+                            $key = "{$r->term}/{$r->year}";
+                            $map[$key] = [
+                                'year' => (string)$r->year,
+                                'term' => (string)$r->term,
+                                'label' => "ภาคเรียนที่ {$r->term}/{$r->year}"
+                            ];
+                        }
+                    }
+                }
+
+                // 2. From tb_timetable_data
+                if ($dbTimetable->tableExists('tb_timetable_data')) {
+                    $rows2 = $dbTimetable->table('tb_timetable_data')
+                        ->select('year, term')
+                        ->groupBy('year, term')
+                        ->get()
+                        ->getResult();
+
+                    foreach ($rows2 as $r) {
+                        if (!empty($r->year) && !empty($r->term)) {
+                            $key = "{$r->term}/{$r->year}";
+                            $map[$key] = [
+                                'year' => (string)$r->year,
+                                'term' => (string)$r->term,
+                                'label' => "ภาคเรียนที่ {$r->term}/{$r->year}"
+                            ];
+                        }
+                    }
+                }
+            } catch (\Throwable $e) {
+                log_message('error', 'Error in getScheduleYears system mode: ' . $e->getMessage());
+            }
+        } else {
+            if ($this->db->tableExists('tb_class_schedule')) {
+                $rows = $this->db->table('tb_class_schedule')
+                    ->select('schestu_year as year, schestu_term as term')
+                    ->groupBy('schestu_year, schestu_term')
+                    ->get()
+                    ->getResult();
+
+                foreach ($rows as $r) {
+                    if (!empty($r->year) && !empty($r->term)) {
+                        $key = "{$r->term}/{$r->year}";
+                        $map[$key] = [
+                            'year' => (string)$r->year,
+                            'term' => (string)$r->term,
+                            'label' => "ภาคเรียนที่ {$r->term}/{$r->year}"
+                        ];
+                    }
+                }
+            }
+        }
+
+        // กรองขอบเขตปีการศึกษาที่เปิดให้ดู (ตั้งแต่ปี/เทอมที่ระบุ ถึงปีล่าสุด)
+        if (!empty($openYearFrom) && $openYearFrom !== 'all' && strpos($openYearFrom, '/') !== false) {
+            list($fromTerm, $fromYear) = explode('/', $openYearFrom);
+            $fromYear = (int)$fromYear;
+            $fromTerm = (int)$fromTerm;
+
+            foreach ($map as $k => $item) {
+                $y = (int)$item['year'];
+                $t = (int)$item['term'];
+                if ($y < $fromYear || ($y === $fromYear && $t < $fromTerm)) {
+                    unset($map[$k]);
+                }
+            }
+        }
+
+        // Sort descending numerically by year and then term
+        if (!empty($map)) {
+            uasort($map, function ($a, $b) {
+                if ((int)$a['year'] === (int)$b['year']) {
+                    return (int)$b['term'] <=> (int)$a['term'];
+                }
+                return (int)$b['year'] <=> (int)$a['year'];
+            });
+            $yearTerms = array_values($map);
+        } else {
+            $parsed = parse_selected_year();
+            $yearTerms = [
+                [
+                    'year' => (string)$parsed['year'],
+                    'term' => (string)$parsed['term'],
+                    'label' => "ภาคเรียนที่ {$parsed['term']}/{$parsed['year']}"
+                ]
+            ];
+        }
+
+        return $this->response->setJSON($yearTerms);
+    }
+
+    /**
+     * ดึงรายชื่อห้องเรียนทั้งหมดที่มีการจัดตารางสอนในระบบ (Live System Timetable)
+     */
+    public function getSystemTimetableClasses()
+    {
+        $year = $this->request->getGet('year');
+        $term = $this->request->getGet('term');
+
+        if (empty($year) || empty($term)) {
+            $parsed = parse_selected_year();
+            $year = $year ?: $parsed['year'];
+            $term = $term ?: $parsed['term'];
+        }
+
+        $dbTimetable = \Config\Database::connect('timetable');
+        $classes = $dbTimetable->table('tb_timetable_assignments')
+            ->select('class_name, COUNT(assign_id) as total_subjects, SUM(hours_per_week) as total_hours')
+            ->where('term', $term)
+            ->where('year', $year)
+            ->groupBy('class_name')
+            ->orderBy('class_name', 'ASC')
             ->get()
             ->getResult();
 
-        return $this->response->setJSON($years);
+        return $this->response->setJSON($classes);
+    }
+
+    /**
+     * ดึงข้อมูลตารางเรียนรายห้องแบบครบถ้วน สำหรับแสดงใน Modal ตารางเรียน
+     */
+    public function getPublicClassTimetableDetail()
+    {
+        $className = $this->request->getGet('class_name');
+        $year      = $this->request->getGet('year');
+        $term      = $this->request->getGet('term');
+
+        if (empty($className)) {
+            return $this->response->setJSON(['status' => 'error', 'message' => 'กรุณาระบุห้องเรียน']);
+        }
+
+        if (empty($year) || empty($term)) {
+            $parsed = parse_selected_year();
+            $year = $year ?: $parsed['year'];
+            $term = $term ?: $parsed['term'];
+        }
+
+        try {
+            $dbTimetable = \Config\Database::connect('timetable');
+            $dbPersonnel = \Config\Database::connect('personnel');
+
+            $isSenior = (preg_match('/ม\.[4-6]/', $className) || preg_match('/^[4-6]/', $className));
+            $levelGroup = $isSenior ? 'Senior' : 'Junior';
+            $lunchPeriod = $isSenior ? 5 : 4;
+
+            // Days
+            $days = $dbTimetable->table('tb_timetable_config_days')
+                ->where('is_active', 1)
+                ->orderBy('day_id', 'ASC')
+                ->get()
+                ->getResult();
+
+            // Periods for this level
+            $allPeriods = $dbTimetable->table('tb_timetable_config_periods')
+                ->orderBy('period_number', 'ASC')
+                ->get()
+                ->getResult();
+
+            $periods = [];
+            $tempGroup = [];
+            foreach($allPeriods as $p) {
+                $tempGroup[$p->period_number][$p->level_group] = $p;
+            }
+            foreach($tempGroup as $pNum => $levels) {
+                if (isset($levels[$levelGroup])) {
+                    $periods[] = $levels[$levelGroup];
+                } elseif (isset($levels['ALL'])) {
+                    $periods[] = $levels['ALL'];
+                } else {
+                    $periods[] = reset($levels);
+                }
+            }
+
+            // Master Slots
+            $masterSlots = $dbTimetable->table('tb_timetable_config_master_slots')
+                ->where(['term' => $term, 'year' => $year])
+                ->groupStart()->where('level_group', $levelGroup)->orWhere('level_group', 'ALL')->groupEnd()
+                ->get()
+                ->getResult();
+
+            // Timetable Data
+            $hasRoomName = $dbTimetable->fieldExists('room_name', 'tb_timetable_assignments');
+            $selectFields = 'tb_timetable_data.*, tb_timetable_subjects.tsub_code, tb_timetable_subjects.tsub_name, tb_timetable_assignments.teacher_id';
+            if ($hasRoomName) {
+                $selectFields .= ', tb_timetable_assignments.room_name as room';
+            }
+
+            $timetableData = $dbTimetable->table('tb_timetable_data')
+                ->select($selectFields)
+                ->join('tb_timetable_assignments', 'tb_timetable_assignments.assign_id = tb_timetable_data.assign_id')
+                ->join('tb_timetable_subjects', 'tb_timetable_subjects.tsub_id = tb_timetable_assignments.subject_id', 'left')
+                ->where('tb_timetable_assignments.class_name', $className)
+                ->where('tb_timetable_data.term', $term)
+                ->where('tb_timetable_data.year', $year)
+                ->get()
+                ->getResult();
+
+            // Teachers Name Map
+            $teachers = $dbPersonnel->table('tb_personnel')->select('pers_id, pers_prefix, pers_firstname, pers_lastname')->get()->getResult();
+            $teacherMap = [];
+            foreach($teachers as $t) {
+                $teacherMap[$t->pers_id] = $t->pers_prefix . $t->pers_firstname;
+            }
+
+            return $this->response->setJSON([
+                'status' => 'success',
+                'data' => [
+                    'class_name'    => $className,
+                    'term'          => $term,
+                    'year'          => $year,
+                    'level_group'   => $levelGroup,
+                    'lunch_period'  => $lunchPeriod,
+                    'days'          => $days,
+                    'periods'       => $periods,
+                    'master_slots'  => $masterSlots,
+                    'timetable_data'=> $timetableData,
+                    'teacher_map'   => $teacherMap
+                ]
+            ]);
+        } catch (\Throwable $e) {
+            log_message('error', 'Error in getPublicClassTimetableDetail: ' . $e->getMessage());
+            return $this->response->setJSON([
+                'status' => 'error',
+                'message' => 'เกิดข้อผิดพลาดในการประมวลผลตารางเรียน: ' . $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * ดึงปี/ภาคเรียนทั้งหมดที่มีข้อมูลตารางสอนครู
+     */
+    public function getTeacherScheduleYears()
+    {
+        $model = new \App\Models\Admin\Academic\ModAdminTeachingSchedule();
+        $yearTerms = $model->getDistinctYearTerms();
+
+        $modConfig = new \App\Models\Admin\Academic\ModTimetableConfig();
+        $openYearFrom = $modConfig->getSetting('schedule_open_year_from', 'all');
+
+        if (!empty($openYearFrom) && $openYearFrom !== 'all' && strpos($openYearFrom, '/') !== false) {
+            list($fromTerm, $fromYear) = explode('/', $openYearFrom);
+            $fromYear = (int)$fromYear;
+            $fromTerm = (int)$fromTerm;
+
+            $filtered = [];
+            foreach ($yearTerms as $yt) {
+                $y = (int)$yt['year'];
+                $t = (int)$yt['term'];
+                if (!($y < $fromYear || ($y === $fromYear && $t < $fromTerm))) {
+                    $filtered[] = $yt;
+                }
+            }
+            $yearTerms = $filtered;
+        }
+
+        return $this->response->setJSON($yearTerms);
+    }
+
+    /**
+     * ดึงกลุ่มสาระการเรียนรู้ทั้งหมด
+     */
+    public function getLearningGroups()
+    {
+        $groups = $this->DBSKJ->table('tb_learning')
+            ->select('lear_id, lear_namethai, lear_nameeng, lear_icon')
+            ->orderBy('lear_id', 'ASC')
+            ->get()
+            ->getResult();
+
+        return $this->response->setJSON($groups);
+    }
+
+    /**
+     * ค้นหารายชื่อครูและข้อมูลสรุปภาระงานสอนตามปี/ภาคเรียน และกลุ่มสาระฯ
+     */
+    public function searchTeachersSchedule()
+    {
+        $year    = $this->request->getGet('year');
+        $term    = $this->request->getGet('term');
+        $groupId = $this->request->getGet('group_id');
+
+        if (empty($year) || empty($term)) {
+            $parsed = parse_selected_year();
+            $year   = $year ?: $parsed['year'];
+            $term   = $term ?: $parsed['term'];
+        }
+
+        $model = new \App\Models\Admin\Academic\ModAdminTeachingSchedule();
+
+        if (!empty($groupId)) {
+            $teachers = $model->getTeachersByGroup((string)$groupId, (string)$year, (string)$term);
+        } else {
+            // ดึงครูทั้งหมดทุกกลุ่มสาระ
+            $allGroups = $model->getLearningGroupsWithStats((string)$year, (string)$term);
+            $teachers = [];
+            foreach ($allGroups['groups'] as $grp) {
+                $grpTeachers = $model->getTeachersByGroup((string)$grp->lear_id, (string)$year, (string)$term);
+                foreach ($grpTeachers as $t) {
+                    $t->group_name = $grp->lear_namethai;
+                    $teachers[] = $t;
+                }
+            }
+        }
+
+        return $this->response->setJSON($teachers);
+    }
+
+    /**
+     * ดึงรายละเอียดตารางสอนรายบุคคลของครู (สำหรับเปิดดูใน Modal)
+     */
+    public function getTeacherScheduleDetail()
+    {
+        $teacherId = $this->request->getGet('teacher_id') ?: $this->request->getPost('teacher_id');
+        $year      = $this->request->getGet('year') ?: $this->request->getPost('year');
+        $term      = $this->request->getGet('term') ?: $this->request->getPost('term');
+
+        if (empty($teacherId)) {
+            return $this->response->setJSON(['status' => 'error', 'message' => 'กรุณาระบุรหัสครู']);
+        }
+
+        if (empty($year) || empty($term)) {
+            $parsed = parse_selected_year();
+            $year   = $year ?: $parsed['year'];
+            $term   = $term ?: $parsed['term'];
+        }
+
+        $dbPersonnel = \Config\Database::connect('personnel');
+        $teacher = $dbPersonnel->table('tb_personnel')->where('pers_id', $teacherId)->get()->getRow();
+
+        $groupName = '';
+        if ($teacher && !empty($teacher->pers_learning)) {
+            $dbSkj = \Config\Database::connect('skj');
+            $grp = $dbSkj->table('tb_learning')->where('lear_id', $teacher->pers_learning)->get()->getRow();
+            if ($grp) $groupName = $grp->lear_namethai;
+        }
+
+        try {
+            $dbTimetable = \Config\Database::connect('timetable');
+
+            // 1. Days
+            $days = $dbTimetable->table('tb_timetable_config_days')
+                ->where('is_active', 1)
+                ->orderBy('day_id', 'ASC')
+                ->get()
+                ->getResult();
+
+            if (empty($days)) {
+                $days = [
+                    (object)['day_key' => 'MON', 'day_name' => 'วันจันทร์', 'is_active' => 1],
+                    (object)['day_key' => 'TUE', 'day_name' => 'วันอังคาร', 'is_active' => 1],
+                    (object)['day_key' => 'WED', 'day_name' => 'วันพุธ', 'is_active' => 1],
+                    (object)['day_key' => 'THU', 'day_name' => 'วันพฤหัสบดี', 'is_active' => 1],
+                    (object)['day_key' => 'FRI', 'day_name' => 'วันศุกร์', 'is_active' => 1],
+                ];
+            }
+
+            // 2. Periods (Deduplicate per period_number)
+            $allPeriods = $dbTimetable->table('tb_timetable_config_periods')
+                ->orderBy('period_number', 'ASC')
+                ->get()
+                ->getResult();
+
+            $periods = [];
+            $tempGroup = [];
+            foreach ($allPeriods as $p) {
+                $tempGroup[$p->period_number][$p->level_group] = $p;
+            }
+            foreach ($tempGroup as $pNum => $levels) {
+                if (isset($levels['ALL'])) {
+                    $periods[] = $levels['ALL'];
+                } elseif (isset($levels['Junior'])) {
+                    $periods[] = $levels['Junior'];
+                } elseif (isset($levels['Senior'])) {
+                    $periods[] = $levels['Senior'];
+                } else {
+                    $periods[] = reset($levels);
+                }
+            }
+
+            if (empty($periods)) {
+                for ($i = 1; $i <= 10; $i++) {
+                    $periods[] = (object)[
+                        'period_number' => $i,
+                        'start_time' => '',
+                        'end_time' => ''
+                    ];
+                }
+            }
+
+            // 3. Master Slots
+            $masterSlots = $dbTimetable->table('tb_timetable_config_master_slots')
+                ->where(['term' => $term, 'year' => $year])
+                ->get()
+                ->getResult();
+
+            // 4. Timetable Data for this Teacher
+            $hasRoomName = $dbTimetable->fieldExists('room_name', 'tb_timetable_assignments');
+            $selectFields = 'tb_timetable_data.*, tb_timetable_assignments.teacher_id, tb_timetable_assignments.class_name, tb_timetable_assignments.subject_id, tb_timetable_subjects.tsub_code, tb_timetable_subjects.tsub_name';
+            if ($hasRoomName) {
+                $selectFields .= ', tb_timetable_assignments.room_name as room';
+            }
+
+            $timetableData = $dbTimetable->table('tb_timetable_data')
+                ->select($selectFields)
+                ->join('tb_timetable_assignments', 'tb_timetable_assignments.assign_id = tb_timetable_data.assign_id')
+                ->join('tb_timetable_subjects', 'tb_timetable_subjects.tsub_id = tb_timetable_assignments.subject_id', 'left')
+                ->where("FIND_IN_SET('{$teacherId}', tb_timetable_assignments.teacher_id) >", 0)
+                ->where(['tb_timetable_data.term' => $term, 'tb_timetable_data.year' => $year])
+                ->get()->getResult();
+
+            $totalHours = count($timetableData);
+
+            $data = [
+                'teacher' => $teacher,
+                'group_name' => $groupName,
+                'total_hours' => $totalHours,
+                'days' => $days,
+                'periods' => $periods,
+                'master_slots' => $masterSlots,
+                'timetable_data' => $timetableData,
+                'lunch_period' => 4
+            ];
+
+            return $this->response->setJSON([
+                'status' => 'success',
+                'data'   => $data
+            ]);
+
+        } catch (\Throwable $e) {
+            log_message('error', 'Error in getTeacherScheduleDetail: ' . $e->getMessage());
+            return $this->response->setJSON([
+                'status' => 'error',
+                'message' => 'เกิดข้อผิดพลาดในการประมวลผลตารางสอน: ' . $e->getMessage()
+            ]);
+        }
     }
 
     //----- ห้องเรียนออนไลน์ ------

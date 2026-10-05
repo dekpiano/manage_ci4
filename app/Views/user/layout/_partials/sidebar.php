@@ -27,7 +27,7 @@
                     <li class="menu-item <?= ($uri->getSegment(1) == 'ClassSchedule' ? 'active' : null) ?>">
                         <a href="<?=base_url('ClassSchedule');?>" class="menu-link">
                             <i class="menu-icon tf-icons bx bx-calendar"></i>
-                            <div class="text-truncate" data-i18n="Basic">ตารางเรียน</div>
+                            <div class="text-truncate" data-i18n="Basic">ตารางเรียน / ตารางสอน</div>
                         </a>
                     </li>
                     <li class="menu-item <?= ($uri->getSegment(1) == 'ExamSchedule' ? 'active' : null) ?>">

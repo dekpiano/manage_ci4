@@ -26,6 +26,21 @@
         perspective: 1000px;
     }
 
+    /* Import Mode Option Cards */
+    .import-mode-option {
+        border: 1.5px solid #e2e8f0 !important;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .import-mode-option:hover {
+        border-color: #15a362 !important;
+        background-color: #f8fdfa !important;
+    }
+    .import-mode-option:has(input:checked) {
+        border-color: #15a362 !important;
+        background-color: #f0fdf4 !important;
+        box-shadow: 0 4px 12px rgba(21, 163, 98, 0.12) !important;
+    }
+
     /* Card-based Navigation - Step Pills / Cards */
     .nav-cards-wrapper {
         display: grid;
@@ -570,14 +585,22 @@
                                 <i class="bx bx-layer fs-5 me-1"></i>
                                 <span>จัดการกลุ่มเรียนพร้อมกัน</span>
                             </a>
-                            <div id="group-actions" class="d-none animate__animated animate__fadeIn">
-                                <button class="btn btn-success rounded-pill px-3 shadow-xs" onclick="saveTeachingGroup()" style="background: #15a362 !important; border: none;">
+                            <div id="group-actions" class="d-none animate__animated animate__fadeIn align-items-center gap-2">
+                                <span class="badge bg-label-primary rounded-pill px-3 py-2 small fw-bold" id="selectedCountBadge">เลือก 0 รายการ</span>
+                                <button type="button" class="btn btn-danger rounded-pill px-3 shadow-xs fw-bold" onclick="deleteSelectedAssignments()">
+                                    <i class="bx bx-trash me-1"></i> ลบทั้งหมดจากที่เลือก (<span id="deleteSelectedCount">0</span>)
+                                </button>
+                                <button type="button" class="btn btn-success rounded-pill px-3 shadow-xs fw-bold" onclick="saveTeachingGroup()" style="background: #15a362 !important; border: none;">
                                     <i class="bx bx-package me-1"></i> มัดรวมกลุ่มสอนควบ
                                 </button>
-                                <button class="btn btn-label-secondary rounded-pill px-3" onclick="clearSelection()">
+                                <button type="button" class="btn btn-label-secondary rounded-pill px-3" onclick="clearSelection()">
                                     ยกเลิก
                                 </button>
                             </div>
+                            <button type="button" class="btn btn-label-success rounded-pill px-3 shadow-xs hover-elevate fw-bold" onclick="openImportTeachingScheduleModal()">
+                                <i class="bx bx-import fs-5 me-1"></i>
+                                <span>ดึงข้อมูลจากตารางสอนกลุ่มสาระ</span>
+                            </button>
                             <button class="btn btn-success rounded-pill px-4 shadow-sm fw-bold" data-bs-toggle="modal" data-bs-target="#modalAddAssignment" style="background: #15a362 !important; border: none;">
                                 <i class="bx bx-plus-circle fs-5 me-1"></i> เพิ่มการมอบหมาย
                             </button>
@@ -934,6 +957,39 @@
                         <h2 class="fw-bold">ประมวลผลเสร็จสมบูรณ์ 100%</h2>
                         <p class="text-muted mb-4">ตารางสอนสำหรับภาคเรียน <span class="fw-bold text-success"><?= $term ?>/<?= $year ?></span> ถูกจัดเรียบร้อยและตรวจสอบความขัดแย้งแล้ว</p>
                         
+                        <!-- 🌟 Public Display Mode Switcher Card in Step 5 -->
+                        <div class="card border-0 shadow-sm mb-5 text-start mx-auto" style="max-width: 1000px; border-radius: 16px; background: linear-gradient(135deg, #ffffff 0%, #f8fdfa 100%); border-left: 5px solid #15a362 !important;">
+                            <div class="card-body p-4">
+                                <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="avatar avatar-md rounded-circle d-flex align-items-center justify-content-center" style="background-color: #e8f7f0; color: #15a362; width: 48px; height: 48px; font-size: 1.5rem;">
+                                            <i class="bx bx-broadcast"></i>
+                                        </div>
+                                        <div>
+                                            <div class="d-flex align-items-center gap-2">
+                                                <h5 class="mb-0 fw-bold text-dark">โหมดการเผยแพร่ตารางเรียน (Public Display Mode)</h5>
+                                                <span class="badge <?= ($display_mode === 'system') ? 'bg-success' : 'bg-info' ?> rounded-pill px-3 py-1" id="badgeCurrentModeStep5">
+                                                    <?= ($display_mode === 'system') ? '🟢 กำลังแสดงจากระบบจัดตารางสอน (Live)' : '📁 กำลังแสดงจากไฟล์รูปภาพ (Upload)' ?>
+                                                </span>
+                                            </div>
+                                            <p class="text-muted small mb-0 mt-1">
+                                                กำหนดว่าหน้าเว็บ <code>/ClassSchedule</code> สำหรับนักเรียนและบุคคลทั่วไป จะดึงข้อมูลจากตารางสอนในระบบ หรือไฟล์รูปภาพที่อัปโหลด
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div class="d-flex align-items-center gap-2 bg-white p-1 rounded-pill border shadow-2xs">
+                                        <button type="button" class="btn btn-sm btn-timetable-mode-toggle rounded-pill px-3 fw-bold <?= ($display_mode === 'system') ? 'btn-success active-mode shadow-xs' : 'btn-light text-muted' ?>" data-mode="system" style="<?= ($display_mode === 'system') ? 'background-color: #15a362; border-color: #15a362;' : '' ?>">
+                                            <i class="bx bx-grid-alt me-1"></i> ระบบจัดตารางสอน
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-timetable-mode-toggle rounded-pill px-3 fw-bold <?= ($display_mode === 'upload') ? 'btn-primary active-mode shadow-xs' : 'btn-light text-muted' ?>" data-mode="upload">
+                                            <i class="bx bx-image me-1"></i> ไฟล์รูปภาพ
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <hr class="my-4">
 
                         <!-- 📊 Live Preview Section -->
@@ -961,10 +1017,19 @@
                             </div>
                         </div>
 
-                        <div class="d-flex justify-content-center gap-3">
-                            <button class="btn btn-label-warning btn-lg px-5 rounded-pill shadow-sm" id="btnAuditSchedule">
+                        <div class="d-flex justify-content-center align-items-center flex-wrap gap-3 mt-4">
+                            <button class="btn btn-label-warning btn-lg px-4 rounded-pill shadow-sm" id="btnAuditSchedule">
                                 <i class='bx bx-shield-quarter me-2'></i> ตรวจสอบคุณภาพตาราง
                             </button>
+                            <a href="<?= base_url('admin/academic/timetable/full') ?>" target="_blank" class="btn btn-label-success btn-lg px-4 rounded-pill shadow-sm">
+                                <i class='bx bx-grid-alt me-2'></i> ตารางรวมทั้งโรงเรียน
+                            </a>
+                            <a href="<?= base_url('admin/academic/timetable/teacher-timetables') ?>" target="_blank" class="btn btn-label-info btn-lg px-4 rounded-pill shadow-sm">
+                                <i class='bx bx-user me-2'></i> ตารางสอนรายครู
+                            </a>
+                            <a href="<?= base_url('admin/academic/timetable/class-timetables') ?>" target="_blank" class="btn btn-label-secondary btn-lg px-4 rounded-pill shadow-sm">
+                                <i class='bx bx-group me-2'></i> ตารางเรียนรายห้อง
+                            </a>
                             <a href="<?= base_url('admin/academic/timetable/editor') ?>" class="btn btn-primary btn-lg px-5 rounded-pill shadow-lg">
                                 <i class='bx bx-edit-alt me-2'></i> ไปหน้าจัดการตาราง (Editor)
                             </a>
@@ -993,6 +1058,223 @@
                 </button>
             </div>
         </div>
+    </div>
+</div>
+<?= $this->endSection() ?>
+
+<?= $this->section('modals') ?>
+<!-- Modal: Import Teaching Schedule from Learning Groups -->
+<div class="modal fade" id="modalImportTeachingSchedule" tabindex="-1" aria-hidden="true" style="z-index: 1060;">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 840px;">
+        <form class="modal-content border-0 rounded-4 shadow-lg overflow-hidden" id="formImportTeachingSchedule">
+            <?= csrf_field() ?>
+            <!-- Header -->
+            <div class="modal-header border-bottom py-3 px-4" style="background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%);">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="avatar avatar-md rounded-3 d-flex align-items-center justify-content-center shadow-xs" style="background: #e8f7f0; color: #15a362; width: 44px; height: 44px;">
+                        <i class="bx bx-import fs-2" style="color: #15a362;"></i>
+                    </div>
+                    <div>
+                        <div class="d-flex align-items-center gap-2">
+                            <h5 class="modal-title fw-bold text-dark mb-0">ดึงข้อมูลจากตารางสอนกลุ่มสาระ</h5>
+                            <span class="badge rounded-pill px-2 py-0 small fw-bold" style="background: #15a362; color: #ffffff !important; font-size: 0.7rem;">นำเข้าอัตโนมัติ</span>
+                        </div>
+                        <p class="text-muted small mb-0 mt-1">คัดลอกภาระงานสอนที่ครูในกลุ่มสาระฯ ได้เพิ่มไว้ เข้าสู่ขั้นตอนการจัดตารางสอน</p>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <!-- Body -->
+            <div class="modal-body p-4 bg-white">
+                
+                <!-- 1. Source & Target Transfer Card -->
+                <div class="p-3 rounded-3 border mb-3" style="background: #f8fafc; border-color: #e2e8f0 !important;">
+                    <div class="row align-items-center g-3">
+                        <div class="col-md-5">
+                            <label class="form-label fw-bold text-dark small mb-1 d-flex align-items-center gap-1">
+                                <i class="bx bx-server text-success fs-6"></i>
+                                <span>ภาคเรียนต้นทาง (กลุ่มสาระ)</span>
+                            </label>
+                            <select class="form-select select2" id="import_source_year_term" name="source_year_term" required>
+                                <?php if(!empty($teaching_schedule_years)): ?>
+                                    <?php foreach($teaching_schedule_years as $tsy): ?>
+                                        <option value="<?= $tsy->term ?>/<?= $tsy->year ?>" data-term="<?= $tsy->term ?>" data-year="<?= $tsy->year ?>" data-count="<?= $tsy->count ?>" <?= ($tsy->term.'/'.$tsy->year == $selectedYear) ? 'selected' : '' ?>>
+                                            ภาคเรียนที่ <?= $tsy->term ?>/<?= $tsy->year ?> (<?= number_format($tsy->count) ?> รายการ)
+                                        </option>
+                                    <?php endforeach; ?>
+                                <?php else: ?>
+                                    <option value="<?= $selectedYear ?>" data-term="<?= $term ?>" data-year="<?= $year ?>" data-count="0">
+                                        ภาคเรียนที่ <?= $selectedYear ?>
+                                    </option>
+                                <?php endif; ?>
+                            </select>
+                            <div class="text-muted small mt-1" style="font-size: 0.72rem;">
+                                <i class="bx bx-info-circle me-1 text-muted"></i>ข้อมูลที่ครูในกลุ่มสาระบันทึกไว้
+                            </div>
+                        </div>
+
+                        <div class="col-md-2 text-center d-none d-md-flex flex-column align-items-center justify-content-center">
+                            <div class="avatar avatar-sm rounded-circle shadow-xs d-flex align-items-center justify-content-center border" style="background: #ffffff; color: #15a362; width: 36px; height: 36px;">
+                                <i class="bx bx-right-arrow-alt fs-4"></i>
+                            </div>
+                            <span class="text-muted fw-bold mt-1" style="font-size: 0.65rem; letter-spacing: 0.5px;">นำเข้าสู่</span>
+                        </div>
+
+                        <div class="col-md-5">
+                            <label class="form-label fw-bold text-dark small mb-1 d-flex align-items-center gap-1">
+                                <i class="bx bx-calendar-event text-primary fs-6"></i>
+                                <span>ตารางสอนปลายทาง (ปีที่จัด)</span>
+                            </label>
+                            <select class="form-select select2" id="import_target_year_term" name="target_year_term" required>
+                                <?php foreach($available_years as $ay): ?>
+                                    <option value="<?= $ay->year ?>" <?= ($ay->year == $selectedYear) ? 'selected' : '' ?>>
+                                        ภาคเรียนที่ <?= $ay->year ?> <?= ($ay->year == $selectedYear) ? '(ปีปัจจุบันที่เปิดอยู่)' : '' ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                            <div class="text-muted small mt-1" style="font-size: 0.72rem;">
+                                <i class="bx bx-check-shield me-1 text-success"></i>ตารางสอนที่จะบันทึกการมอบหมาย
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Live Preview Card -->
+                <div class="card border rounded-3 mb-3 shadow-none overflow-hidden" style="background: #ffffff; border-color: #e2e8f0 !important;" id="importPreviewCard">
+                    <div class="card-header py-2 px-3 border-bottom d-flex justify-content-between align-items-center" style="background: #f8fafc;">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="bx bx-bar-chart-alt-2 text-success fs-5"></i>
+                            <span class="fw-bold small text-dark">สรุปข้อมูลที่จะถูกนำเข้า</span>
+                            <span class="badge bg-label-info rounded-pill px-2 py-0 small" id="badgeSourceRecords">มีข้อมูล</span>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="small text-muted" style="font-size: 0.75rem;">ระดับชั้น: <strong id="prevGradeLevelsBadge" class="text-dark">-</strong></span>
+                            <span class="spinner-border spinner-border-sm text-success d-none" id="previewLoadingSpinner" role="status"></span>
+                        </div>
+                    </div>
+                    <div class="card-body p-3">
+                        <div class="row g-2 text-center" id="previewStatsContainer">
+                            <div class="col-3">
+                                <div class="p-2 rounded-2 border" style="background: #f0fdf4; border-color: #bbf7d0 !important;">
+                                    <div class="d-flex align-items-center justify-content-center gap-1">
+                                        <i class="bx bx-user-check text-success fs-5"></i>
+                                        <span class="fs-4 fw-bold text-success" id="prevTeacherCount">-</span>
+                                    </div>
+                                    <small class="text-muted fw-semibold d-block" style="font-size: 0.72rem;">ครูผู้สอน</small>
+                                </div>
+                            </div>
+                            <div class="col-3">
+                                <div class="p-2 rounded-2 border" style="background: #eff6ff; border-color: #bfdbfe !important;">
+                                    <div class="d-flex align-items-center justify-content-center gap-1">
+                                        <i class="bx bx-book text-primary fs-5"></i>
+                                        <span class="fs-4 fw-bold text-primary" id="prevSubjectCount">-</span>
+                                    </div>
+                                    <small class="text-muted fw-semibold d-block" style="font-size: 0.72rem;">รายวิชา</small>
+                                </div>
+                            </div>
+                            <div class="col-3">
+                                <div class="p-2 rounded-2 border" style="background: #fffbeb; border-color: #fde68a !important;">
+                                    <div class="d-flex align-items-center justify-content-center gap-1">
+                                        <i class="bx bx-building-house text-warning fs-5"></i>
+                                        <span class="fs-4 fw-bold text-warning" id="prevClassroomCount">-</span>
+                                    </div>
+                                    <small class="text-muted fw-semibold d-block" style="font-size: 0.72rem;">ห้องเรียน</small>
+                                </div>
+                            </div>
+                            <div class="col-3">
+                                <div class="p-2 rounded-2 border" style="background: #f5f3ff; border-color: #ddd6fe !important;">
+                                    <div class="d-flex align-items-center justify-content-center gap-1">
+                                        <i class="bx bx-time text-info fs-5" style="color: #7c3aed !important;"></i>
+                                        <span class="fs-4 fw-bold text-info" id="prevHoursCount" style="color: #7c3aed !important;">-</span>
+                                    </div>
+                                    <small class="text-muted fw-semibold d-block" style="font-size: 0.72rem;">คาบ/สัปดาห์</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Sample items list with max-height and custom scroll -->
+                        <div class="mt-2 pt-2 border-top" id="previewDetailsArea">
+                            <div class="d-flex align-items-center justify-content-between mb-1">
+                                <small class="text-muted fw-semibold" style="font-size: 0.75rem;">
+                                    <i class="bx bx-list-check me-1"></i>ตัวอย่างวิชาที่จะถูกนำเข้า:
+                                </small>
+                            </div>
+                            <div class="d-flex flex-wrap gap-1 p-2 rounded-2 bg-light-subtle" id="prevSampleBadges" style="max-height: 72px; overflow-y: auto;">
+                                <span class="text-muted small">กำลังโหลดข้อมูล...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. Import Mode Selection -->
+                <div class="mb-3">
+                    <label class="form-label fw-bold text-dark small mb-2 d-flex align-items-center gap-1">
+                        <i class="bx bx-cog text-secondary fs-6"></i>
+                        <span>รูปแบบการนำเข้าข้อมูล (Import Mode)</span>
+                    </label>
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <label class="border rounded-3 p-3 h-100 d-flex align-items-start gap-2 cursor-pointer bg-white shadow-xs position-relative w-100 mb-0 import-mode-option" for="importModeReplace">
+                                <input name="import_mode" class="form-check-input mt-1 flex-shrink-0" type="radio" value="replace" id="importModeReplace" checked style="cursor: pointer; margin: 0; float: none;">
+                                <div class="ms-1">
+                                    <span class="fw-bold text-dark d-block">แทนที่ข้อมูลเดิม <span class="badge bg-label-success ms-1 small py-0">แนะนำ</span></span>
+                                    <small class="text-muted d-block mt-1" style="font-size: 0.75rem; line-height: 1.3;">ล้างข้อมูลเดิม แล้วนำเข้าใหม่ล่าสุด</small>
+                                </div>
+                            </label>
+                        </div>
+                        <div class="col-6">
+                            <label class="border rounded-3 p-3 h-100 d-flex align-items-start gap-2 cursor-pointer bg-white shadow-xs position-relative w-100 mb-0 import-mode-option" for="importModeAppend">
+                                <input name="import_mode" class="form-check-input mt-1 flex-shrink-0" type="radio" value="append" id="importModeAppend" style="cursor: pointer; margin: 0; float: none;">
+                                <div class="ms-1">
+                                    <span class="fw-bold text-dark d-block">เพิ่มเฉพาะรายการใหม่</span>
+                                    <small class="text-muted d-block mt-1" style="font-size: 0.75rem; line-height: 1.3;">คงของเดิมไว้ นำเข้าเฉพาะที่ยังไม่มี</small>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. Advanced Options (Compact Switch Strip) -->
+                <div class="p-2 px-3 rounded-3 border bg-light-subtle d-flex flex-wrap align-items-center justify-content-between gap-2">
+                    <div class="form-check form-switch mb-0">
+                        <input class="form-check-input" type="checkbox" id="chkAutoSyncSubjects" name="auto_sync_subjects" value="1" checked>
+                        <label class="form-check-label fw-semibold text-dark small" for="chkAutoSyncSubjects">
+                            ซิงค์ทะเบียนวิชาอัตโนมัติ
+                        </label>
+                    </div>
+                    <div class="form-check form-switch mb-0">
+                        <input class="form-check-input" type="checkbox" id="chkMergeCoTeachers" name="merge_co_teachers" value="1" checked>
+                        <label class="form-check-label fw-semibold text-dark small" for="chkMergeCoTeachers">
+                            รวมครูคู่สอน (Co-teachers)
+                        </label>
+                    </div>
+                    <div class="form-check form-switch mb-0">
+                        <input class="form-check-input" type="checkbox" id="chkSwitchToTargetYear" name="switch_to_target_year" value="1" checked>
+                        <label class="form-check-label fw-semibold text-dark small" for="chkSwitchToTargetYear">
+                            สลับไปยังปีปลายทางทันที
+                        </label>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Footer -->
+            <div class="modal-footer border-top py-3 px-4 bg-light-subtle d-flex justify-content-between align-items-center">
+                <div class="small text-muted d-flex align-items-center gap-1">
+                    <i class="bx bx-shield-quarter text-success fs-5"></i>
+                    <span>ระบบจะตรวจสอบความซ้ำซ้อนและคำนวณคาบให้อัตโนมัติ</span>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <button type="button" class="btn btn-label-secondary rounded-pill px-4" data-bs-dismiss="modal">
+                        ยกเลิก
+                    </button>
+                    <button type="submit" class="btn btn-success rounded-pill px-4 shadow-sm fw-bold hover-elevate" id="btnConfirmImport" style="background: #15a362 !important; border: none;">
+                        <i class="bx bx-check-double me-1"></i> เริ่มดึงข้อมูลเข้าสู่ตารางสอน
+                    </button>
+                </div>
+            </div>
+        </form>
     </div>
 </div>
 
@@ -1531,8 +1813,6 @@
         </div>
     </div>
 </div>
-</div>
-
 <?= $this->endSection() ?>
 
 <?= $this->section('script') ?>
@@ -2219,6 +2499,169 @@ $(document).ready(function() {
         });
     });
 
+    // --- 🚀 Import Teaching Schedule from Learning Groups ---
+    window.openImportTeachingScheduleModal = function() {
+        $('#modalImportTeachingSchedule').modal('show');
+        // Trigger initial preview load
+        triggerTeachingSchedulePreview();
+    };
+
+    function triggerTeachingSchedulePreview() {
+        const val = $('#import_source_year_term').val();
+        if (!val) return;
+        const parts = val.split('/');
+        const term = parts[0];
+        const year = parts[1];
+
+        $('#previewLoadingSpinner').removeClass('d-none');
+        $('#prevSampleBadges').html('<span class="text-muted small">กำลังโหลดข้อมูลตัวอย่าง...</span>');
+
+        $.ajax({
+            url: '<?= base_url('admin/academic/timetable/get-teaching-schedule-preview') ?>',
+            type: 'GET',
+            data: { source_term: term, source_year: year },
+            dataType: 'json',
+            success: function(res) {
+                $('#previewLoadingSpinner').addClass('d-none');
+                if (res.status === 'success') {
+                    $('#prevTeacherCount').text(res.teacher_count || 0);
+                    $('#prevSubjectCount').text(res.subject_count || 0);
+                    $('#prevClassroomCount').text(res.classroom_count || 0);
+                    $('#prevHoursCount').text(res.total_weekly_hours || 0);
+
+                    $('#badgeSourceRecords').text(res.total_rows + ' รายการ').removeClass('bg-label-warning bg-label-danger').addClass('bg-label-success');
+
+                    if (res.grade_levels && res.grade_levels.length > 0) {
+                        $('#prevGradeLevelsBadge').text(res.grade_levels.join(', '));
+                    } else {
+                        $('#prevGradeLevelsBadge').text('-');
+                    }
+
+                    let badgesHtml = '';
+                    if (res.sample_subjects && Object.keys(res.sample_subjects).length > 0) {
+                        $.each(res.sample_subjects, function(code, name) {
+                            badgesHtml += '<span class="badge bg-label-primary rounded-pill mb-1 me-1" style="font-size: 0.72rem;">[' + code + '] ' + name + '</span>';
+                        });
+                    }
+                    if (res.co_teachers_count > 0) {
+                        badgesHtml += '<span class="badge bg-label-warning rounded-pill mb-1 me-1" style="font-size: 0.72rem;"><i class="bx bx-group me-1"></i>มีครูคู่สอน ' + res.co_teachers_count + ' รายการ</span>';
+                    }
+                    $('#prevSampleBadges').html(badgesHtml || '<span class="text-muted small">-</span>');
+                    $('#btnConfirmImport').prop('disabled', false);
+                } else {
+                    $('#prevTeacherCount').text('0');
+                    $('#prevSubjectCount').text('0');
+                    $('#prevClassroomCount').text('0');
+                    $('#prevHoursCount').text('0');
+                    $('#badgeSourceRecords').text('ไม่พบข้อมูล').removeClass('bg-label-success').addClass('bg-label-warning');
+                    $('#prevGradeLevelsBadge').text('-');
+                    $('#prevSampleBadges').html('<span class="text-danger small">' + (res.message || 'ไม่มีข้อมูลในเทอมนี้') + '</span>');
+                    $('#btnConfirmImport').prop('disabled', true);
+                }
+            },
+            error: function() {
+                $('#previewLoadingSpinner').addClass('d-none');
+                $('#prevSampleBadges').html('<span class="text-danger small">ไม่สามารถดึงข้อมูลพรีวิวได้</span>');
+            }
+        });
+    }
+
+    $('#import_source_year_term').on('change', function() {
+        const selectedVal = $(this).val();
+        // Also sync target year if option exists
+        if ($('#import_target_year_term option[value="' + selectedVal + '"]').length > 0) {
+            $('#import_target_year_term').val(selectedVal).trigger('change');
+        }
+        triggerTeachingSchedulePreview();
+    });
+
+    $('#formImportTeachingSchedule').on('submit', function(e) {
+        e.preventDefault();
+        
+        const sourceVal = $('#import_source_year_term').val();
+        const targetVal = $('#import_target_year_term').val();
+        if (!sourceVal || !targetVal) {
+            Swal.fire({ icon: 'warning', title: 'กรุณาเลือกปีการศึกษา', text: 'ต้องระบุทั้งปีการศึกษาต้นทางและปลายทางครับ' });
+            return;
+        }
+
+        const sourceParts = sourceVal.split('/');
+        const targetParts = targetVal.split('/');
+        const mode = $('input[name="import_mode"]:checked').val();
+        const modeText = (mode === 'replace') ? 'ล้างข้อมูลเดิมและแทนที่ใหม่ทั้งหมด' : 'เพิ่มเฉพาะรายการใหม่';
+
+        Swal.fire({
+            title: 'ยืนยันการดึงข้อมูลงานสอน?',
+            html: '<div class="text-start small p-2">' +
+                '<p class="mb-1"><strong>ปีการศึกษาต้นทาง (กลุ่มสาระ):</strong> ภาคเรียนที่ ' + sourceVal + '</p>' +
+                '<p class="mb-1"><strong>ปีการศึกษาปลายทาง (ตารางสอน):</strong> ภาคเรียนที่ ' + targetVal + '</p>' +
+                '<p class="mb-0 text-success"><strong>รูปแบบ:</strong> ' + modeText + '</p>' +
+                (mode === 'replace' ? '<div class="alert alert-warning p-2 mt-2 mb-0" style="font-size: 0.75rem;"><i class="bx bx-error me-1"></i>ระบบจะล้างข้อมูลการมอบหมายเดิมของภาคเรียนที่ ' + targetVal + ' และนำเข้าข้อมูลใหม่แทนที่ครับ</div>' : '') +
+                '</div>',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#15a362',
+            cancelButtonColor: '#8592a3',
+            confirmButtonText: '<i class="bx bx-check me-1"></i> ยืนยันการดึงข้อมูล',
+            cancelButtonText: 'ยกเลิก'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                Swal.fire({
+                    title: 'กำลังดึงข้อมูลงานสอน...',
+                    html: 'ระบบกำลังนำเข้ารายวิชา ครูผู้สอน และห้องเรียน กรุณารอสักครู่',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
+                $.ajax({
+                    url: '<?= base_url('admin/academic/timetable/import-teaching-schedule') ?>',
+                    type: 'POST',
+                    data: {
+                        source_term: sourceParts[0],
+                        source_year: sourceParts[1],
+                        target_term: targetParts[0],
+                        target_year: targetParts[1],
+                        mode: mode,
+                        merge_co_teachers: $('#chkMergeCoTeachers').is(':checked') ? 1 : 0,
+                        auto_sync_subjects: $('#chkAutoSyncSubjects').is(':checked') ? 1 : 0,
+                        switch_to_target_year: $('#chkSwitchToTargetYear').is(':checked') ? 1 : 0,
+                        <?= csrf_token() ?>: $('input[name="<?= csrf_token() ?>"]').val()
+                    },
+                    dataType: 'json',
+                    success: function(res) {
+                        if (res.status === 'success') {
+                            $('#modalImportTeachingSchedule').modal('hide');
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'ดึงข้อมูลสำเร็จ!',
+                                text: res.message,
+                                confirmButtonColor: '#15a362'
+                            }).then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'ไม่สามารถนำเข้าข้อมูลได้',
+                                text: res.message || 'เกิดข้อผิดพลาดในการนำเข้า',
+                                confirmButtonColor: '#15a362'
+                            });
+                        }
+                    },
+                    error: function(xhr) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'เกิดข้อผิดพลาด',
+                            text: 'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้: ' + (xhr.responseJSON?.message || xhr.statusText),
+                            confirmButtonColor: '#15a362'
+                        });
+                    }
+                });
+            }
+        });
+    });
 
     $(document).on('click', '.btn-delete-assignment', function() {
         const ids = $(this).data('ids');
@@ -2619,10 +3062,11 @@ $(document).ready(function() {
 
                             if (res.fail_count === 0) {
                                 // 🟢 สำเร็จ 100% -> แสดงแจ้งเตือนและรีโหลดเพื่อปลดล็อค Step 5 (PHP)
+                                const attemptText = res.winning_attempt ? ` (ลงตัวในรอบที่ ${res.winning_attempt})` : '';
                                 Swal.fire({
                                     icon: 'success',
-                                    title: 'จัดตารางสำเร็จ 100%',
-                                    text: 'ระบบได้ทำการจัดตารางสอนเสร็จสมบูรณ์แล้วครับ',
+                                    title: 'จัดตารางสำเร็จ 100%!',
+                                    text: `ระบบได้ทำการจัดตารางสอนเสร็จสมบูรณ์เรียบร้อยแล้วครับ${attemptText}`,
                                     timer: 2000,
                                     showConfirmButton: false
                                 }).then(() => {
@@ -2740,6 +3184,66 @@ $(document).ready(function() {
             }
         });
     });
+
+    // --- 🌟 Step 5: Public Display Mode Switcher ---
+    $(document).on('click', '.btn-timetable-mode-toggle', function() {
+        const mode = $(this).data('mode');
+        const modeTitle = (mode === 'system') ? 'ระบบจัดตารางสอน (Live Timetable)' : 'ไฟล์รูปภาพที่อัปโหลด (Uploaded Images)';
+
+        Swal.fire({
+            title: 'เปลี่ยนโหมดแสดงตารางเรียน?',
+            text: `ต้องการเปลี่ยนเป็น "${modeTitle}" สำหรับหน้าเว็บ /ClassSchedule ใช่หรือไม่?`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'ใช่, เปลี่ยนโหมด',
+            cancelButtonText: 'ยกเลิก',
+            confirmButtonColor: '#15a362',
+            cancelButtonColor: '#8592a3'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                Swal.fire({
+                    title: 'กำลังบันทึกการตั้งค่า...',
+                    allowOutsideClick: false,
+                    didOpen: () => { Swal.showLoading(); }
+                });
+
+                $.ajax({
+                    url: '<?= base_url('admin/academic/timetable/toggle-display-mode') ?>',
+                    type: 'POST',
+                    data: { mode: mode },
+                    dataType: 'json',
+                    success: function(res) {
+                        if (res && res.status === 'success') {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'สำเร็จ!',
+                                text: res.message,
+                                confirmButtonColor: '#15a362'
+                            }).then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'เกิดข้อผิดพลาด!',
+                                text: res.message || 'ไม่สามารถเปลี่ยนโหมดได้',
+                                confirmButtonColor: '#dc3545'
+                            });
+                        }
+                    },
+                    error: function() {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'เกิดข้อผิดพลาด!',
+                            text: 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้',
+                            confirmButtonColor: '#dc3545'
+                        });
+                    }
+                });
+            }
+        });
+    });
+
     // --- 🧭 Wizard Navigation Buttons (Next / Prev) ---
     $(document).on('click', '.next-step, #btnNext', function(e) {
         e.preventDefault();
@@ -2828,28 +3332,109 @@ $(document).ready(function() {
         });
     });
 
-    // --- 📦 Grouping Logic (Combined Classes) ---
+    // --- 📦 Grouping & Bulk Actions Logic ---
     $(document).on('change', '#check-all-assignments', function() {
-        $('.assign-checkbox').prop('checked', $(this).is(':checked'));
+        const isChecked = $(this).is(':checked');
+        $('.assignment-row:visible .assign-checkbox').prop('checked', isChecked);
         toggleGroupActions();
     });
 
     $(document).on('change', '.assign-checkbox', function() {
+        const totalVisible = $('.assignment-row:visible .assign-checkbox').length;
+        const checkedVisible = $('.assignment-row:visible .assign-checkbox:checked').length;
+        $('#check-all-assignments').prop('checked', totalVisible > 0 && totalVisible === checkedVisible);
         toggleGroupActions();
     });
 
     function toggleGroupActions() {
         const count = $('.assign-checkbox:checked').length;
         if (count >= 1) {
-            $('#group-actions').removeClass('d-none');
+            $('#group-actions').removeClass('d-none').addClass('d-flex');
+            $('#selectedCountBadge').text('เลือก ' + count + ' รายการ');
+            $('#deleteSelectedCount').text(count);
         } else {
-            $('#group-actions').addClass('d-none');
+            $('#group-actions').addClass('d-none').removeClass('d-flex');
         }
     }
 
     window.clearSelection = function() {
         $('.assign-checkbox, #check-all-assignments').prop('checked', false);
         toggleGroupActions();
+    };
+
+    window.deleteSelectedAssignments = function() {
+        const idGroups = [];
+        $('.assign-checkbox:checked').each(function() {
+            const val = $(this).val();
+            if (val) {
+                idGroups.push(val);
+            }
+        });
+
+        if (idGroups.length === 0) {
+            Swal.fire({ icon: 'warning', title: 'กรุณาเลือกรายการที่ต้องการลบ', confirmButtonColor: '#15a362' });
+            return;
+        }
+
+        const allIds = idGroups.join(',');
+        const totalSelectedItems = idGroups.length;
+
+        Swal.fire({
+            title: 'ยืนยันการลบทั้งหมดจากที่เลือก?',
+            text: 'ต้องการลบข้อมูลการมอบหมายที่เลือกไว้ทั้งหมดจำนวน ' + totalSelectedItems + ' รายการใช่หรือไม่? (การลบนี้จะส่งผลต่อตารางสอนที่จัดไว้)',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ff3e1d',
+            cancelButtonColor: '#8592a3',
+            confirmButtonText: '<i class="bx bx-trash me-1"></i> ใช่, ลบทั้งหมดจากที่เลือก',
+            cancelButtonText: 'ยกเลิก',
+            customClass: {
+                container: 'swal2-container'
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                Swal.fire({
+                    title: 'กำลังลบข้อมูล...',
+                    allowOutsideClick: false,
+                    didOpen: () => { Swal.showLoading(); }
+                });
+
+                const csrfToken = $('input[name="<?= csrf_token() ?>"]').val() || '<?= csrf_hash() ?>';
+
+                $.ajax({
+                    url: '<?= base_url('admin/academic/timetable/delete-assignment') ?>',
+                    type: 'POST',
+                    data: {
+                        ids: allIds,
+                        "<?= csrf_token() ?>": csrfToken
+                    },
+                    dataType: 'json',
+                    success: function(res) {
+                        if (res.status === 'success') {
+                            clearSelection();
+                            refreshAssignmentList();
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'ลบข้อมูลสำเร็จ',
+                                text: 'ลบรายการที่เลือกเรียบร้อยแล้วครับ',
+                                timer: 1500,
+                                showConfirmButton: false
+                            });
+                        } else {
+                            Swal.fire({ icon: 'error', title: 'ผิดพลาด', text: res.message || 'ไม่สามารถลบข้อมูลได้', confirmButtonColor: '#15a362' });
+                        }
+                    },
+                    error: function(xhr) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'เกิดข้อผิดพลาด',
+                            text: 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้: ' + (xhr.responseJSON?.message || xhr.statusText),
+                            confirmButtonColor: '#15a362'
+                        });
+                    }
+                });
+            }
+        });
     };
 
     window.saveTeachingGroup = function() {

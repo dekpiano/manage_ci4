@@ -11,6 +11,7 @@ class ConAdminClassSchedule extends BaseController
     protected $modAdminClassSchedule;
     protected $upload;
     protected $image_lib;
+    protected $db;
 
     public function __construct()
     {
@@ -76,6 +77,52 @@ class ConAdminClassSchedule extends BaseController
             $newYear->Year = $currentActiveYear;
             array_unshift($data['YearAll'], $newYear);
         }
+
+        $modConfig = new \App\Models\Admin\Academic\ModTimetableConfig();
+        $data['display_mode']            = $modConfig->getSetting('class_schedule_display_mode', 'system');
+        $data['class_schedule_onoff']    = $modConfig->getSetting('class_schedule_onoff', 'open');
+        $data['teacher_schedule_onoff']  = $modConfig->getSetting('teacher_schedule_onoff', 'open');
+        $data['schedule_open_year_from'] = $modConfig->getSetting('schedule_open_year_from', 'all');
+
+        // รวบรวมปีการศึกษา/ภาคเรียนทั้งหมดที่มีในระบบ
+        $distinctYearTerms = [];
+        if ($this->db->tableExists('tb_class_schedule')) {
+            $rows = $this->db->table('tb_class_schedule')
+                ->select('schestu_year as year, schestu_term as term')
+                ->groupBy('schestu_year, schestu_term')
+                ->get()->getResult();
+            foreach ($rows as $r) {
+                if (!empty($r->year) && !empty($r->term)) {
+                    $k = "{$r->term}/{$r->year}";
+                    $distinctYearTerms[$k] = ['year' => (string)$r->year, 'term' => (string)$r->term, 'label' => "ภาคเรียนที่ {$r->term}/{$r->year}", 'value' => $k];
+                }
+            }
+        }
+        try {
+            $dbTimetable = \Config\Database::connect('timetable');
+            if ($dbTimetable->tableExists('tb_timetable_assignments')) {
+                $rows = $dbTimetable->table('tb_timetable_assignments')
+                    ->select('year, term')
+                    ->groupBy('year, term')
+                    ->get()->getResult();
+                foreach ($rows as $r) {
+                    if (!empty($r->year) && !empty($r->term)) {
+                        $k = "{$r->term}/{$r->year}";
+                        $distinctYearTerms[$k] = ['year' => (string)$r->year, 'term' => (string)$r->term, 'label' => "ภาคเรียนที่ {$r->term}/{$r->year}", 'value' => $k];
+                    }
+                }
+            }
+        } catch (\Throwable $e) {}
+
+        if (!empty($distinctYearTerms)) {
+            uasort($distinctYearTerms, function ($a, $b) {
+                if ((int)$a['year'] === (int)$b['year']) {
+                    return (int)$b['term'] <=> (int)$a['term'];
+                }
+                return (int)$b['year'] <=> (int)$a['year'];
+            });
+        }
+        $data['all_year_terms'] = array_values($distinctYearTerms);
 
         session()->set('SchoolYear', $currentActiveYear);
         
@@ -421,5 +468,89 @@ class ConAdminClassSchedule extends BaseController
             log_message('error', 'Error in getDataByYear: ' . $e->getMessage());
             return $this->response->setStatusCode(500)->setJSON(['error' => 'Database error']);
         }
+    }
+
+    public function toggleDisplayMode()
+    {
+        $mode = $this->request->getVar('mode');
+        if (!in_array($mode, ['system', 'upload'])) {
+            return $this->response->setJSON([
+                'status' => 'error',
+                'message' => 'โหมดไม่ถูกต้อง'
+            ]);
+        }
+
+        $modConfig = new \App\Models\Admin\Academic\ModTimetableConfig();
+        $modConfig->saveSetting('class_schedule_display_mode', $mode);
+
+        $modeLabel = ($mode === 'system') ? 'ระบบจัดตารางสอน (Live Timetable)' : 'ไฟล์รูปภาพที่อัปโหลด (Uploaded Images)';
+
+        return $this->response->setJSON([
+            'status' => 'success',
+            'message' => "เปลี่ยนโหมดแสดงตารางเรียนเป็น \"{$modeLabel}\" เรียบร้อยแล้ว",
+            'current_mode' => $mode,
+            'mode_label' => $modeLabel
+        ]);
+    }
+
+    public function toggleClassScheduleOnOff()
+    {
+        $status = $this->request->getVar('status');
+        if (!in_array($status, ['open', 'closed', 'on', 'off'])) {
+            return $this->response->setJSON(['status' => 'error', 'message' => 'สถานะไม่ถูกต้อง']);
+        }
+        $normStatus = in_array($status, ['open', 'on']) ? 'open' : 'closed';
+        $modConfig = new \App\Models\Admin\Academic\ModTimetableConfig();
+        $modConfig->saveSetting('class_schedule_onoff', $normStatus);
+
+        $statusText = ($normStatus === 'open') ? 'เปิดให้นักเรียนดูตารางเรียน' : 'ปิดการดูตารางเรียนของนักเรียน';
+
+        return $this->response->setJSON([
+            'status'         => 'success',
+            'message'        => "เปลี่ยนสถานะเป็น \"{$statusText}\" เรียบร้อยแล้ว",
+            'current_status' => $normStatus,
+            'status_text'    => $statusText
+        ]);
+    }
+
+    public function toggleTeacherScheduleOnOff()
+    {
+        $status = $this->request->getVar('status');
+        if (!in_array($status, ['open', 'closed', 'on', 'off'])) {
+            return $this->response->setJSON(['status' => 'error', 'message' => 'สถานะไม่ถูกต้อง']);
+        }
+        $normStatus = in_array($status, ['open', 'on']) ? 'open' : 'closed';
+        $modConfig = new \App\Models\Admin\Academic\ModTimetableConfig();
+        $modConfig->saveSetting('teacher_schedule_onoff', $normStatus);
+
+        $statusText = ($normStatus === 'open') ? 'เปิดให้ดูตารางสอน' : 'ปิดการดูตารางสอน';
+
+        return $this->response->setJSON([
+            'status'         => 'success',
+            'message'        => "เปลี่ยนสถานะเป็น \"{$statusText}\" เรียบร้อยแล้ว",
+            'current_status' => $normStatus,
+            'status_text'    => $statusText
+        ]);
+    }
+
+    public function saveScheduleYearScope()
+    {
+        $fromYearTerm = $this->request->getVar('from_year_term');
+        if (empty($fromYearTerm)) {
+            $fromYearTerm = 'all';
+        }
+
+        $modConfig = new \App\Models\Admin\Academic\ModTimetableConfig();
+        $modConfig->saveSetting('schedule_open_year_from', $fromYearTerm);
+
+        $msg = ($fromYearTerm === 'all') 
+            ? 'เปิดให้ดูตารางเรียนและตารางสอนทุกปีการศึกษาในระบบ' 
+            : "เปิดให้ดูตารางเรียนและตารางสอนตั้งแต่ภาคเรียนที่ {$fromYearTerm} ถึงปีล่าสุด";
+
+        return $this->response->setJSON([
+            'status'         => 'success',
+            'message'        => $msg,
+            'from_year_term' => $fromYearTerm
+        ]);
     }
 }

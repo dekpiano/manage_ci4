@@ -17,14 +17,14 @@
 
     <!-- Minimal System Grid -->
     <div class="row g-4">
-        <!-- System 1: ตารางเรียน -->
+        <!-- System 1: ตารางเรียน / ตารางสอน -->
         <div class="col-6 col-md-4 col-lg-3">
             <a href="<?= base_url('ClassSchedule') ?>" class="sys-card p-4 transition-all">
                 <div class="sys-icon bg-label-primary mb-3">
                     <i class='bx bx-calendar-event fs-2'></i>
                 </div>
-                <h6 class="fw-bold mb-1 mt-2">ตารางเรียน</h6>
-                <p class="small text-muted mb-0">ค้นหาตารางเรียนรายห้อง/รายบุคคล</p>
+                <h6 class="fw-bold mb-1 mt-2">ตารางเรียน / ตารางสอน</h6>
+                <p class="small text-muted mb-0">ค้นหาตารางเรียนรายห้อง & ตารางสอนรายครู</p>
             </a>
         </div>
 

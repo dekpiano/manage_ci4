@@ -180,6 +180,10 @@ $routes->get('admin/academic/ConAdminClassSchedule/insert_class_schedule', funct
 $routes->post('admin/academic/ConAdminClassSchedule/delete_class_schedule/(:any)/(:any)/(:any)/(:any)', [ConAdminClassSchedule::class, 'delete_class_schedule/$1/$2/$3/$4']);
 $routes->post('admin/academic/ConAdminClassSchedule/upload_proxy', [ConAdminClassSchedule::class, 'upload_proxy']);
 $routes->get('admin/academic/ConAdminClassSchedule/upload_proxy', function() { return redirect()->to(base_url('Admin/Acade/Course/ClassSchedule')); });
+$routes->match(['get', 'post'], 'admin/academic/ConAdminClassSchedule/toggleDisplayMode', [ConAdminClassSchedule::class, 'toggleDisplayMode']);
+$routes->match(['get', 'post'], 'admin/academic/ConAdminClassSchedule/toggleClassScheduleOnOff', [ConAdminClassSchedule::class, 'toggleClassScheduleOnOff']);
+$routes->match(['get', 'post'], 'admin/academic/ConAdminClassSchedule/toggleTeacherScheduleOnOff', [ConAdminClassSchedule::class, 'toggleTeacherScheduleOnOff']);
+$routes->match(['get', 'post'], 'admin/academic/ConAdminClassSchedule/saveScheduleYearScope', [ConAdminClassSchedule::class, 'saveScheduleYearScope']);
 // Master Subjects (คลังรายวิชาหลักสูตรกลาง)
 $routes->get('Admin/Acade/Course/MasterSubject', [ConAdminSubjectMaster::class, 'index']);
 $routes->post('admin/academic/subject-master/select', [ConAdminSubjectMaster::class, 'getMasterSubjectsSelect']);
@@ -198,6 +202,7 @@ $routes->get('Admin/Acade/Course/TeachingSchedule/print-all/(:segment)', [ConAdm
 $routes->get('Admin/Acade/Course/TeachingSchedule/print/(:segment)/(:num)/(:num)', [ConAdminTeachingSchedule::class, 'printTeacherWorkload']);
 $routes->get('Admin/Acade/Course/TeachingSchedule/print/(:segment)', [ConAdminTeachingSchedule::class, 'printTeacherWorkload']);
 $routes->match(['get', 'post'], 'admin/academic/teaching-schedule/teacher-detail', [ConAdminTeachingSchedule::class, 'getTeacherDetailAjax']);
+$routes->match(['get', 'post'], 'admin/academic/teaching-schedule/toggle-onoff', [ConAdminTeachingSchedule::class, 'toggleOnOff']);
 $routes->match(['get', 'post'], 'admin/academic/teaching-schedule/get-raw-data', [ConAdminTeachingSchedule::class, 'getTeacherRawDataAjax']);
 $routes->post('admin/academic/teaching-schedule/save-item', [ConAdminTeachingSchedule::class, 'saveScheduleItemAjax']);
 $routes->post('admin/academic/teaching-schedule/delete-item', [ConAdminTeachingSchedule::class, 'deleteScheduleItemAjax']);
@@ -292,6 +297,8 @@ $routes->group('admin/academic/timetable', ['namespace' => 'App\Controllers'], f
     $routes->post('delete-joint-group/(:num)', 'Admin\Academic\ConAdminTimetable::deleteSubjectGroup/$1');
     $routes->get('get-suggested-teachers', 'Admin\Academic\ConAdminTimetable::getSuggestedTeachers');
     $routes->get('get-subject-info', 'Admin\Academic\ConAdminTimetable::getSubjectInfo');
+    $routes->match(['get', 'post'], 'get-teaching-schedule-preview', 'Admin\Academic\ConAdminTimetable::getTeachingSchedulePreview');
+    $routes->post('import-teaching-schedule', 'Admin\Academic\ConAdminTimetable::importTeachingSchedule');
 
     // Subjects for Timetable
     $routes->get('subjects', 'Admin\Academic\ConAdminTimetable::subjects');
@@ -321,6 +328,8 @@ $routes->group('admin/academic/timetable', ['namespace' => 'App\Controllers'], f
     $routes->post('delete-period', 'Admin\Academic\ConAdminTimetable::deletePeriod');
     $routes->post('toggle-lock', 'Admin\Academic\ConAdminTimetable::toggleLock');
     $routes->get('master-settings', 'Admin\Academic\ConAdminTimetable::masterSettings');
+    $routes->match(['get', 'post'], 'toggle-display-mode', 'Admin\Academic\ConAdminTimetable::toggleDisplayMode');
+    $routes->get('get-display-mode', 'Admin\Academic\ConAdminTimetable::getDisplayMode');
     $routes->post('save-master-slot', 'Admin\Academic\ConAdminTimetable::saveMasterSlot');
     $routes->post('reset-all-data', 'Admin\Academic\ConAdminTimetable::resetAllData');
 
@@ -505,6 +514,14 @@ $routes->get('LearningOnline/(:segment)', [ConStudents::class, 'LearningOnlineDe
 $routes->get('ReportLearnOnline', [ConStudents::class, 'PageReportLearnOnline']);
 $routes->get('user/searchclassschedule', [ConStudents::class, 'SearchClassSchedule']);
 $routes->get('user/getscheduleyears', [ConStudents::class, 'getScheduleYears']);
+$routes->get('user/getsystemtimetableclasses', [ConStudents::class, 'getSystemTimetableClasses']);
+$routes->get('user/getpublicclasstimetabledetail', [ConStudents::class, 'getPublicClassTimetableDetail']);
+$routes->get('user/getteacherscheduleyears', [ConStudents::class, 'getTeacherScheduleYears']);
+$routes->get('user/getlearninggroups', [ConStudents::class, 'getLearningGroups']);
+$routes->get('user/searchteacherschedule', [ConStudents::class, 'searchTeachersSchedule']);
+$routes->match(['get', 'post'], 'user/getteacherscheduledetail', [ConStudents::class, 'getTeacherScheduleDetail']);
+$routes->get('TeacherSchedule/print/(:segment)/(:num)/(:num)', [ConAdminTeachingSchedule::class, 'printTeacherWorkload']);
+$routes->get('TeacherSchedule/print/(:segment)', [ConAdminTeachingSchedule::class, 'printTeacherWorkload']);
 
 /**
  * API V1 Routes

@@ -49,40 +49,73 @@ class ModAdminTeachingSchedule extends Model
         $years = [];
 
         // 1. จาก tb_teaching_schedule
-        $res1 = $this->dbAcademic->table('tb_teaching_schedule')
-            ->select('year, term')
-            ->groupBy('year, term')
-            ->get()
-            ->getResult();
+        if ($this->dbAcademic->tableExists('tb_teaching_schedule')) {
+            $res1 = $this->dbAcademic->table('tb_teaching_schedule')
+                ->select('year, term')
+                ->groupBy('year, term')
+                ->get()
+                ->getResult();
 
-        foreach ($res1 as $r) {
-            if (!empty($r->year) && !empty($r->term)) {
-                $key = "{$r->term}/{$r->year}";
-                $years[$key] = ['year' => $r->year, 'term' => $r->term, 'label' => $key];
+            foreach ($res1 as $r) {
+                if (!empty($r->year) && !empty($r->term)) {
+                    $key = "{$r->term}/{$r->year}";
+                    $years[$key] = ['year' => (string)$r->year, 'term' => (string)$r->term, 'label' => $key];
+                }
             }
         }
 
         // 2. จาก tb_teaching_schedule_activity
-        $res2 = $this->dbAcademic->table('tb_teaching_schedule_activity')
-            ->select('year, term')
-            ->groupBy('year, term')
-            ->get()
-            ->getResult();
+        if ($this->dbAcademic->tableExists('tb_teaching_schedule_activity')) {
+            $res2 = $this->dbAcademic->table('tb_teaching_schedule_activity')
+                ->select('year, term')
+                ->groupBy('year, term')
+                ->get()
+                ->getResult();
 
-        foreach ($res2 as $r) {
-            if (!empty($r->year) && !empty($r->term)) {
-                $key = "{$r->term}/{$r->year}";
-                $years[$key] = ['year' => $r->year, 'term' => $r->term, 'label' => $key];
+            foreach ($res2 as $r) {
+                if (!empty($r->year) && !empty($r->term)) {
+                    $key = "{$r->term}/{$r->year}";
+                    $years[$key] = ['year' => (string)$r->year, 'term' => (string)$r->term, 'label' => $key];
+                }
             }
         }
 
-        // เรียงตามปีและเทอมล่าสุด
-        uasort($years, function ($a, $b) {
-            if ($a['year'] == $b['year']) {
-                return $b['term'] <=> $a['term'];
+        // 3. จาก timetable.tb_timetable_assignments (ระบบจัดตารางสอน)
+        try {
+            $dbTimetable = \Config\Database::connect('timetable');
+            if ($dbTimetable->tableExists('tb_timetable_assignments')) {
+                $res3 = $dbTimetable->table('tb_timetable_assignments')
+                    ->select('year, term')
+                    ->where('teacher_id IS NOT NULL', null, false)
+                    ->where('teacher_id !=', '')
+                    ->groupBy('year, term')
+                    ->get()
+                    ->getResult();
+
+                foreach ($res3 as $r) {
+                    if (!empty($r->year) && !empty($r->term)) {
+                        $key = "{$r->term}/{$r->year}";
+                        $years[$key] = ['year' => (string)$r->year, 'term' => (string)$r->term, 'label' => $key];
+                    }
+                }
             }
-            return $b['year'] <=> $a['year'];
-        });
+        } catch (\Throwable $e) {
+            log_message('error', 'Error in getDistinctYearTerms timetable lookup: ' . $e->getMessage());
+        }
+
+        // เรียงตามปีและเทอมล่าสุด (Numeric DESC)
+        if (!empty($years)) {
+            uasort($years, function ($a, $b) {
+                if ((int)$a['year'] === (int)$b['year']) {
+                    return (int)$b['term'] <=> (int)$a['term'];
+                }
+                return (int)$b['year'] <=> (int)$a['year'];
+            });
+        } else {
+            $parsed = parse_selected_year();
+            $key = "{$parsed['term']}/{$parsed['year']}";
+            $years[$key] = ['year' => (string)$parsed['year'], 'term' => (string)$parsed['term'], 'label' => $key];
+        }
 
         return array_values($years);
     }

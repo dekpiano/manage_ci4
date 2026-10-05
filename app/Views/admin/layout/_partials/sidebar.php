@@ -376,7 +376,7 @@
                 <div data-i18n="ตรวจสอบตารางสอนกลุ่มสาระ">ตรวจสอบตารางสอนกลุ่มสาระ</div>
             </a>
         </li>
-        <li class="menu-item <?= ($s3 == 'timetable' ? 'active open' : '') ?>">
+        <li class="menu-item <?= ($s3 == 'timetable' || $s4 == 'ClassSchedule' ? 'active open' : '') ?>">
             <a href="javascript:void(0);" class="menu-link menu-toggle">
                 <i class="menu-icon tf-icons bx bx-calendar-star" style="color: #15a362 !important;"></i>
                 <div data-i18n="จัดตารางสอน (Auto)" style="font-weight: 700;">จัดตารางสอน (Auto)</div>
@@ -390,36 +390,41 @@
                 </li>
                 <li class="menu-item <?= ($s3 == 'timetable' && $s4 == 'full' ? 'active' : '') ?>">
                     <a href="<?=base_url('admin/academic/timetable/full');?>" class="menu-link">
+                        <i class="menu-icon tf-icons bx bx-calendar"></i>
                         <div data-i18n="ตารางสอนรวม">ตารางสอนรวม</div>
                     </a>
                 </li>
                 <li class="menu-item <?= ($s3 == 'timetable' && ($s4 == 'teacher-timetables' || $s4 == 'view-teacher') ? 'active' : '') ?>">
                     <a href="<?=base_url('admin/academic/timetable/teacher-timetables');?>" class="menu-link">
+                        <i class="menu-icon tf-icons bx bx-user-check"></i>
                         <div data-i18n="ตารางสอนรายครู">ตารางสอนรายครู</div>
                     </a>
                 </li>
                 <li class="menu-item <?= ($s3 == 'timetable' && ($s4 == 'class-timetables' || $s4 == 'view-class') ? 'active' : '') ?>">
                     <a href="<?=base_url('admin/academic/timetable/class-timetables');?>" class="menu-link">
+                        <i class="menu-icon tf-icons bx bx-book-reader"></i>
                         <div data-i18n="ตารางเรียนรายห้อง">ตารางเรียนรายห้อง</div>
                     </a>
                 </li>
                 <li class="menu-item <?= ($s3 == 'timetable' && $s4 == 'teacher-constraints' ? 'active' : '') ?>">
                     <a href="<?=base_url('admin/academic/timetable/teacher-constraints');?>" class="menu-link">
+                        <i class="menu-icon tf-icons bx bx-time-five"></i>
                         <div data-i18n="เงื่อนไขเวลาครู">เงื่อนไขเวลาครู</div>
                     </a>
                 </li>
                 <li class="menu-item <?= ($s3 == 'timetable' && $s4 == 'subject-groups' ? 'active' : '') ?>">
                     <a href="<?=base_url('admin/academic/timetable/subject-groups');?>" class="menu-link">
+                        <i class="menu-icon tf-icons bx bx-layer"></i>
                         <div data-i18n="กลุ่มวิชาเรียนพร้อมกัน">กลุ่มวิชาเรียนพร้อมกัน</div>
                     </a>
                 </li>
+                <li class="menu-item <?= ($s4 == 'ClassSchedule' ? 'active' : '') ?>">
+                    <a href="<?=base_url('Admin/Acade/Course/ClassSchedule');?>" class="menu-link">
+                        <i class="menu-icon tf-icons bx bx-cog"></i>
+                        <div data-i18n="ตั้งค่าตารางสอน">ตั้งค่าตารางสอน</div>
+                    </a>
+                </li>
             </ul>
-        </li>
-        <li class="menu-item <?= ($s4 == 'ClassSchedule' ? 'active' : '') ?>">
-            <a href="<?=base_url('Admin/Acade/Course/ClassSchedule');?>" class="menu-link">
-                <i class="menu-icon tf-icons bx bx-spreadsheet"></i>
-                <div data-i18n="จัดการตารางเรียน">จัดการตารางเรียน</div>
-            </a>
         </li>
         <li class="menu-item <?= ($s4 == 'RoomOnline' ? 'active' : '') ?>">
             <a href="<?=base_url('Admin/Acade/Registration/RoomOnline');?>" class="menu-link">

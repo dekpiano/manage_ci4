@@ -202,6 +202,41 @@
         </div>
     </div>
 
+    <!-- ⚙️ System Settings & Public Access Status Bar -->
+    <div class="card border-0 shadow-sm mb-4" style="border-radius: 16px; background: #ffffff;">
+        <div class="card-body p-3 p-md-4">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="avatar avatar-md rounded-circle d-flex align-items-center justify-content-center <?= ($teacher_schedule_onoff === 'open') ? 'bg-label-success text-success' : 'bg-label-danger text-danger' ?>" style="width: 48px; height: 48px;">
+                        <i class="bx <?= ($teacher_schedule_onoff === 'open') ? 'bx-lock-open-alt' : 'bx-lock-alt' ?> fs-3"></i>
+                    </div>
+                    <div>
+                        <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+                            <h6 class="fw-bold mb-0 text-dark">ตั้งค่าการเปิด - ปิด ให้ดูตารางสอน (หน้าเว็บสาธารณะ)</h6>
+                            <span class="badge <?= ($teacher_schedule_onoff === 'open') ? 'bg-success' : 'bg-danger' ?> rounded-pill px-3 py-1 font-monospace" style="font-size: 0.75rem;" id="badge-onoff-status">
+                                <?= ($teacher_schedule_onoff === 'open') ? '🟢 กำลังเปิดให้ดู (PUBLIC ACTIVE)' : '🔴 ปิดการดูตารางสอน (DISABLED)' ?>
+                            </span>
+                        </div>
+                        <p class="text-muted small mb-0">
+                            ควบคุมการแสดงผลแท็บ "ตารางสอน (รายครู)" บนหน้าเว็บไซต์ <a href="<?= base_url('ClassSchedule') ?>" target="_blank" class="text-emerald fw-semibold" style="color: #15a362;">/ClassSchedule <i class="bx bx-link-external small"></i></a>
+                        </p>
+                    </div>
+                </div>
+
+                <div class="d-flex align-items-center gap-2">
+                    <div class="btn-group p-1 bg-light rounded-pill border" role="group">
+                        <button type="button" class="btn btn-sm btn-toggle-onoff rounded-pill px-3 fw-bold <?= ($teacher_schedule_onoff === 'open') ? 'btn-success active shadow-xs' : 'btn-light text-muted' ?>" data-status="open" style="<?= ($teacher_schedule_onoff === 'open') ? 'background-color: #15a362; border-color: #15a362;' : '' ?>">
+                            <i class="bx bx-check-circle me-1"></i> เปิดดูตารางสอน
+                        </button>
+                        <button type="button" class="btn btn-sm btn-toggle-onoff rounded-pill px-3 fw-bold <?= ($teacher_schedule_onoff === 'closed') ? 'btn-danger active shadow-xs' : 'btn-light text-muted' ?>" data-status="closed">
+                            <i class="bx bx-x-circle me-1"></i> ปิดดูตารางสอน
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Summary Stats Row -->
     <div class="row g-4 mb-4">
         <div class="col-sm-6 col-lg-3">
@@ -349,5 +384,73 @@
         <?php endforeach; ?>
     </div>
 </div>
+
+<script>
+$(document).ready(function() {
+    $('.btn-toggle-onoff').on('click', function() {
+        const targetStatus = $(this).data('status');
+        const statusText = (targetStatus === 'open') ? 'เปิดให้ดูตารางสอน' : 'ปิดการดูตารางสอน';
+        const isOpening = (targetStatus === 'open');
+
+        Swal.fire({
+            title: `ยืนยัน${statusText}?`,
+            text: isOpening 
+                ? 'ผู้ใช้งานทั่วไปจะสามารถค้นหาและดูตารางสอนรายครูในหน้าเว็บ /ClassSchedule ได้ตามปกติ'
+                : 'ผู้ใช้งานทั่วไปจะไม่สามารถดูตารางสอนรายครูได้ (ระบบจะแสดงการแจ้งเตือนปิดปรับปรุงชั่วคราว)',
+            icon: isOpening ? 'question' : 'warning',
+            showCancelButton: true,
+            confirmButtonText: `ใช่, ${statusText}`,
+            cancelButtonText: 'ยกเลิก',
+            confirmButtonColor: isOpening ? '#15a362' : '#dc3545',
+            cancelButtonColor: '#8592a3',
+            customClass: {
+                container: 'swal2-high-priority'
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                Swal.fire({
+                    title: 'กำลังบันทึกการตั้งค่า...',
+                    allowOutsideClick: false,
+                    didOpen: () => { Swal.showLoading(); }
+                });
+
+                $.ajax({
+                    url: '<?= base_url('admin/academic/teaching-schedule/toggle-onoff') ?>',
+                    type: 'POST',
+                    data: { status: targetStatus },
+                    dataType: 'json',
+                    success: function(res) {
+                        if (res && res.status === 'success') {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'สำเร็จ!',
+                                text: res.message,
+                                confirmButtonColor: '#15a362'
+                            }).then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'เกิดข้อผิดพลาด!',
+                                text: res.message || 'ไม่สามารถบันทึกการตั้งค่าได้',
+                                confirmButtonColor: '#dc3545'
+                            });
+                        }
+                    },
+                    error: function() {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'เกิดข้อผิดพลาด!',
+                            text: 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้',
+                            confirmButtonColor: '#dc3545'
+                        });
+                    }
+                });
+            }
+        });
+    });
+});
+</script>
 
 <?= $this->endSection() ?>

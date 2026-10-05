@@ -68,4 +68,39 @@ class ModTimetableConfig extends Model
             return $this->db->table('tb_timetable_config_master_slots')->insert($data);
         }
     }
+
+    public function ensureSettingsTable()
+    {
+        $this->db->query("CREATE TABLE IF NOT EXISTS tb_timetable_settings (
+            setting_id INT AUTO_INCREMENT PRIMARY KEY,
+            setting_key VARCHAR(100) UNIQUE NOT NULL,
+            setting_value TEXT NULL,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+    }
+
+    public function getSetting($key, $default = null)
+    {
+        $this->ensureSettingsTable();
+        $row = $this->db->table('tb_timetable_settings')->where('setting_key', $key)->get()->getRow();
+        return $row ? $row->setting_value : $default;
+    }
+
+    public function saveSetting($key, $value)
+    {
+        $this->ensureSettingsTable();
+        $exists = $this->db->table('tb_timetable_settings')->where('setting_key', $key)->get()->getRow();
+        if ($exists) {
+            return $this->db->table('tb_timetable_settings')->where('setting_key', $key)->update([
+                'setting_value' => $value,
+                'updated_at' => date('Y-m-d H:i:s')
+            ]);
+        } else {
+            return $this->db->table('tb_timetable_settings')->insert([
+                'setting_key' => $key,
+                'setting_value' => $value,
+                'updated_at' => date('Y-m-d H:i:s')
+            ]);
+        }
+    }
 }

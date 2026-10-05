@@ -74,6 +74,20 @@
         }
         .swal2-container { z-index: 9999 !important; }
 
+        /* ป้องกันปัญหาฉากหลังโมดอลค้าง (modal-backdrop fade show) เมื่อไม่มีโมดอลเปิดอยู่ */
+        body:not(.modal-open) .modal-backdrop {
+            display: none !important;
+            pointer-events: none !important;
+        }
+
+        /* บังคับให้ Modal ลอยอยู่เหนือฉากหลังเสมอ (ไม่ให้ถูก Backdrop ทับหรือจม) */
+        .modal {
+            z-index: 1060 !important;
+        }
+        .modal-backdrop {
+            z-index: 1050 !important;
+        }
+
         /* ==========================================================================
            GLOBAL SYSTEM PRELOADER / LOADING SCREEN (CONTENT AREA ONLY - EXCLUDING SIDEBAR)
            ========================================================================== */
@@ -747,6 +761,58 @@ function openFileInNewTab(fileUrl) {
         $(document).on('submit', 'form:not(.no-loader):not([target="_blank"])', function(e) {
             if (e.isDefaultPrevented()) return;
             window.showGlobalLoading('กำลังประมวลผลข้อมูล...', 'ระบบกำลังบันทึกและประมวลผลข้อมูล กรุณารอสักครู่');
+        });
+
+        /* ==========================================================================
+           GLOBAL MODAL BACKDROP CLEANER & SAFEGUARD
+           ป้องกันปัญหา modal-backdrop fade show ค้างในระบบอย่างถาวร
+           ========================================================================== */
+        window.cleanModalBackdrops = function() {
+            if ($('.modal.show').length === 0) {
+                $('.modal-backdrop').remove();
+                $('body').removeClass('modal-open modal-switching').css({ overflow: '', paddingRight: '' });
+            }
+        };
+
+        // เมื่อโมดอลใดๆ ในระบบปิดลง
+        $(document).on('hidden.bs.modal', function() {
+            setTimeout(window.cleanModalBackdrops, 100);
+        });
+
+        // เมื่อผู้ใช้คลิกโดนฉากหลังที่ค้างโดยไม่มีโมดอลเปิดอยู่
+        $(document).on('click', '.modal-backdrop', function() {
+            if ($('.modal.show').length === 0) {
+                window.cleanModalBackdrops();
+            }
+        });
+
+        // เมื่อ SweetAlert ปิดตัวลง
+        $(document).on('click', '.swal2-confirm, .swal2-cancel, .swal2-close', function() {
+            setTimeout(window.cleanModalBackdrops, 200);
+        });
+
+        // ตรวจสอบและกวาดล้าง Backdrop ที่ตกค้างอัตโนมัติทุกๆ 500ms
+        setInterval(function() {
+            if ($('.modal.show').length === 0 && $('.modal-backdrop').length > 0) {
+                window.cleanModalBackdrops();
+            }
+        }, 500);
+
+        // ย้ายโมดอลทั้งหมดที่ไม่ได้อยู่ระดับ <body> ให้มาอยู่ใต้ <body> เสมอ เพื่อป้องกันปัญหา Stacking Context ทับฉากหลัง
+        $('.modal').each(function() {
+            if (!$(this).parent().is('body')) {
+                $(this).appendTo('body');
+            }
+        });
+
+        $(document).on('show.bs.modal', '.modal', function () {
+            if (!$(this).parent().is('body')) {
+                $(this).appendTo('body');
+            }
+            const openModals = $('.modal.show').length;
+            if (openModals > 0) {
+                $(this).css('z-index', 1060 + (openModals * 10));
+            }
         });
     });
     </script>

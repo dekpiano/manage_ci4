@@ -44,7 +44,21 @@
     <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.bootstrap5.min.css">
     <!-- Boxicons CSS -->
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
-
+    <style>
+        .swal2-container { z-index: 9999 !important; }
+        /* ป้องกันปัญหาฉากหลังโมดอลค้าง (modal-backdrop fade show) เมื่อไม่มีโมดอลเปิดอยู่ */
+        body:not(.modal-open) .modal-backdrop {
+            display: none !important;
+            pointer-events: none !important;
+        }
+        /* บังคับให้ Modal ลอยอยู่เหนือฉากหลังเสมอ (ไม่ให้ถูก Backdrop ทับหรือจม) */
+        .modal {
+            z-index: 1060 !important;
+        }
+        .modal-backdrop {
+            z-index: 1050 !important;
+        }
+    </style>
     <?= $this->renderSection('extra_css') ?>
 </head>
 
@@ -272,6 +286,54 @@
                 window.open(fileUrl, '_blank');
             }
         }
+
+        /* ==========================================================================
+           GLOBAL MODAL BACKDROP CLEANER & SAFEGUARD
+           ป้องกันปัญหา modal-backdrop fade show ค้างในระบบอย่างถาวร
+           ========================================================================== */
+        window.cleanModalBackdrops = function() {
+            if ($('.modal.show').length === 0) {
+                $('.modal-backdrop').remove();
+                $('body').removeClass('modal-open modal-switching').css({ overflow: '', paddingRight: '' });
+            }
+        };
+
+        $(document).on('hidden.bs.modal', function() {
+            setTimeout(window.cleanModalBackdrops, 100);
+        });
+
+        $(document).on('click', '.modal-backdrop', function() {
+            if ($('.modal.show').length === 0) {
+                window.cleanModalBackdrops();
+            }
+        });
+
+        $(document).on('click', '.swal2-confirm, .swal2-cancel, .swal2-close', function() {
+            setTimeout(window.cleanModalBackdrops, 200);
+        });
+
+        setInterval(function() {
+            if ($('.modal.show').length === 0 && $('.modal-backdrop').length > 0) {
+                window.cleanModalBackdrops();
+            }
+        }, 500);
+
+        // ย้ายโมดอลทั้งหมดที่ไม่ได้อยู่ระดับ <body> ให้มาอยู่ใต้ <body> เสมอ เพื่อป้องกันปัญหา Stacking Context ทับฉากหลัง
+        $('.modal').each(function() {
+            if (!$(this).parent().is('body')) {
+                $(this).appendTo('body');
+            }
+        });
+
+        $(document).on('show.bs.modal', '.modal', function () {
+            if (!$(this).parent().is('body')) {
+                $(this).appendTo('body');
+            }
+            const openModals = $('.modal.show').length;
+            if (openModals > 0) {
+                $(this).css('z-index', 1060 + (openModals * 10));
+            }
+        });
     </script>
 
     <?= $this->renderSection('script') ?>

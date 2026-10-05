@@ -60,18 +60,46 @@ class ConAdminTeachingSchedule extends BaseController
         // ดึงข้อมูลกลุ่มสาระและสถิติ
         $statsData = $this->model->getLearningGroupsWithStats($year, $term);
 
+        $modConfig = new \App\Models\Admin\Academic\ModTimetableConfig();
+        $teacherScheduleOnOff = $modConfig->getSetting('teacher_schedule_onoff', 'open');
+
         $data = [
-            'title'            => 'ตรวจสอบการจัดตารางสอนกลุ่มสาระ',
-            'groups'           => $statsData['groups'],
-            'summary'          => $statsData['summary'],
-            'yearTerms'        => $yearTerms,
-            'selectedYear'     => $year,
-            'selectedTerm'     => $term,
-            'selectedYearTerm' => $selectedYearTerm,
-            'SchoolYear'       => $this->db->table('tb_schoolyear')->get()->getRow()
+            'title'                  => 'ตรวจสอบการจัดตารางสอนกลุ่มสาระ',
+            'groups'                 => $statsData['groups'],
+            'summary'                => $statsData['summary'],
+            'yearTerms'              => $yearTerms,
+            'selectedYear'           => $year,
+            'selectedTerm'           => $term,
+            'selectedYearTerm'       => $selectedYearTerm,
+            'teacher_schedule_onoff' => $teacherScheduleOnOff,
+            'SchoolYear'             => $this->db->table('tb_schoolyear')->get()->getRow()
         ];
 
         return view('admin/Academic/AdminTeachingSchedule/AdminTeachingScheduleMain', $data);
+    }
+
+    /**
+     * สลับสถานะเปิด-ปิด การเข้าดูตารางสอนของครูในหน้าเว็บสาธารณะ
+     */
+    public function toggleOnOff()
+    {
+        $status = $this->request->getVar('status');
+        if (!in_array($status, ['open', 'closed', 'on', 'off'])) {
+            return $this->response->setJSON(['status' => 'error', 'message' => 'สถานะไม่ถูกต้อง']);
+        }
+
+        $normStatus = in_array($status, ['open', 'on']) ? 'open' : 'closed';
+        $modConfig = new \App\Models\Admin\Academic\ModTimetableConfig();
+        $modConfig->saveSetting('teacher_schedule_onoff', $normStatus);
+
+        $statusText = ($normStatus === 'open') ? 'เปิดให้ดูตารางสอน' : 'ปิดการดูตารางสอน';
+
+        return $this->response->setJSON([
+            'status'         => 'success',
+            'message'        => "เปลี่ยนสถานะเป็น \"{$statusText}\" เรียบร้อยแล้ว",
+            'current_status' => $normStatus,
+            'status_text'    => $statusText
+        ]);
     }
 
     /**

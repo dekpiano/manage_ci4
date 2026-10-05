@@ -32,6 +32,13 @@
 - **Rule (Design Theme):** ใช้โทนสีเขียว **`#15a362`** เป็นสีหลัก (Primary/Success) ของเว็บเสมอครับ 🟢✨
 - **Rule (UX/UI Contrast & Readability):** การแสดงผลข้อความบนพื้นหลังสีเขียว/สีเข้ม ต้องใช้สีขาวทึบชัดเจน **`#ffffff !important`** พร้อม `opacity: 1 !important` เสมอ **ห้ามใช้ `text-white-50` หรือสีโปร่งใสที่ทำให้ข้อความจม/กลืนกับพื้นหลังเด็ดขาด** และส่วน Badge บนพื้นหลังเขียวต้องใช้พื้นขาวทึบตัวหนังสือเขียวเข้มเพื่อให้อ่านง่าย ชัดเจนสำหรับผู้ใช้งานทุกวัย 👁️✨
 - **Rule (UX/UI):** การแสดงผล **SweetAlert2 (swal2)** ต้องอยู่เลเยอร์บนสุดเสมอ (**`z-index: 9999 !important`**) เพื่อไม่ให้ถูก Modal ทับครับ 🔔🔝
+- **Rule (Modal Backdrop Prevention):** ห้ามไม่ให้เกิดปัญหาฉากหลังสีดำค้างหรือฉากหลังลอยทับโมดอล (**`class="modal-backdrop fade show"`**) ในระบบโดยเด็ดขาด 🛑🧹:
+    1. ทุกครั้งที่มีการใช้ Modal (เปิด/ปิดโมดอล, สลับระหว่างโมดอล, ปิดด้วย AJAX หรือแสดง SweetAlert2 ซ้อน) ต้องมั่นใจว่า Backdrop ถูกทำลายทิ้งเสมอ
+    2. หากไม่มีโมดอลเปิดแสดงอยู่ (`$('.modal.show').length === 0`) ต้องสั่งล้าง Backdrop ทันทีด้วย:
+       `$('.modal-backdrop').remove();` และ `$('body').removeClass('modal-open').css({ overflow: '', paddingRight: '' });`
+    3. ป้องกันปัญหาด้วย CSS Safeguard: `body:not(.modal-open) .modal-backdrop { display: none !important; pointer-events: none !important; }` และกำหนด `.modal { z-index: 1060 !important; } .modal-backdrop { z-index: 1050 !important; }`
+    4. **การวางโครงสร้าง View:** Modals ทั้งหมดต้องถูกวางไว้ใน `<?= $this->section('modals') ?>` เสมอ **ห้ามวางไว้ใน `section('content')` เด็ดขาด** เพราะ `section('content')` อยู่ภายใน `.layout-wrapper` / `.content-wrapper` ซึ่งมี CSS Stacking Context ทำให้ `.modal-backdrop` (ที่อยู่ใต้ `<body>`) ลอยขึ้นมาทับตัว Modal กลายเป็นจอมืดและคลิกอะไรไม่ได้
+    5. ห้ามปล่อยให้เกิดอาการหน้าจอมืดค้างหรือเลื่อนไม่ได้ (Locked Scroll / Dark Screen Freeze) จากโมดอลเด็ดขาด
 - **Rule (Timetable Assignment Form):** ในหน้ามอบหมายงานสอน (Step 2) ให้ใช้ **Classic Modal Form** เสมอ โดยมีลักษณะดังนี้:
     1. แบ่งเป็น Step (1-5) พร้อม Step Badge สีเขียวขนาดเล็ก
     2. มีปุ่ม "เพิ่มวิชาด่วน" (Quick Add) ในส่วนการเลือกวิชา
