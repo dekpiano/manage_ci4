@@ -155,7 +155,7 @@ foreach ($fields as $field) {
                     <select class="form-select" id="StudentStudyLine" name="StudentStudyLine">
                         <option value="">เลือกสายการเรียน</option>
                         <?php 
-                        $lines = !empty($study_line_list) ? $study_line_list : ['GENERAL', 'CEP', 'CP', 'PAP1', 'PAP2', 'PAP3', 'PAP4', 'SMT(S)', 'SMT(T)', 'SP1', 'SP2', 'SP3', 'SP4'];
+                        $lines = !empty($study_line_list) ? $study_line_list : ['GENERAL', 'CEP', 'CP', 'CP1', 'CP2', 'PAP1', 'PAP2', 'PAP3', 'PAP4', 'SMT(S)', 'SMT(T)', 'SP1', 'SP2', 'SP3', 'SP4'];
                         $uniqueLines = array_unique(array_filter($lines, function($item) {
                             return !empty($item) && $item !== 'เลือกสายการเรียน' && $item !== 'ทั่วไป' && $item !== 'GENERAL (ทั่วไป)';
                         }));

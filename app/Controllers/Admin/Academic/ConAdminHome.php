@@ -39,73 +39,32 @@ class ConAdminHome extends BaseController
 
         if (empty($check_status_data) || (! in_array($check_status_data->admin_rloes_status, ["admin", "manager", "superadmin"]))) {
             session()->setFlashdata(['msg' => 'OK', 'messge' => 'คุณไม่มีสิทธ์ในระบบจัดข้อมูลนี้ ติดต่อเจ้าหน้าที่คอม', 'alert' => 'error']);
-            return redirect()->to(base_url('welcome'));
+            header('Location: ' . base_url('welcome'));
+            exit();
         }
     }
 
     public function AdminHome(){      
-        $data['title'] = "หน้าแรก";
-        $data['admin'] = $this->DBpersonnel->table('tb_personnel')->select('pers_id,pers_img')->where('pers_id',session()->get('login_id'))->get()->getRow();
+        $data['title'] = "หน้าแรก - ระบบบริหารจัดการงานวิชาการ";
+        $data['admin'] = $this->DBpersonnel->table('tb_personnel')->select('pers_id,pers_img,pers_prefix,pers_firstname,pers_lastname,pers_position')->where('pers_id',session()->get('login_id'))->get()->getRow();
         $data['SchoolYear'] = $this->db->table('tb_schoolyear')->get()->getRow();
         $data['selectedYear'] = get_selected_year(); // Format: "1/2568"
         
         // Roles for Permission check
         $CheckrloesAcademic = session()->get('CheckrloesAcademic') ?? '';
-        $data['Exp_Checkrloes'] = explode('|', $CheckrloesAcademic);
+        $data['Exp_Checkrloes'] = array_filter(array_map('trim', explode('|', $CheckrloesAcademic)));
+
+        $data['admin_role_info'] = $this->db->table('tb_admin_rloes')
+                                      ->where('admin_rloes_userid', session()->get('login_id'))
+                                      ->get()
+                                      ->getRow();
+        $data['is_superadmin'] = (@$data['admin_role_info']->admin_rloes_status === 'superadmin');
+        $data['is_manager'] = (session()->get('status') === "manager" || session()->get('login_id') == "pers_021" || $data['is_superadmin']);
 
         // Split year and term for tables that keep them separate
         $yearParts = explode('/', $data['selectedYear']);
         $term = $yearParts[0] ?? '';
         $year = $yearParts[1] ?? '';
-
-        // --- 1. Basic Stats ---
-        $data['total_students'] = $this->db->table('tb_students')->where('StudentStatus', '1/ปกติ')->countAllResults();
-        $data['total_teachers'] = $this->DBpersonnel->table('tb_personnel')->whereIn('pers_position', ['posi_003', 'posi_004', 'posi_005','posi_006'])->countAllResults();
-        $data['total_subjects'] = $this->db->table('tb_subjects')->where('SubjectYear', $data['selectedYear'])->countAllResults();
-        // Optimizing distinct counts
-        $roomQuery = $this->db->query("SELECT COUNT(DISTINCT StudentClass) as count FROM tb_students WHERE StudentStatus = '1/ปกติ'")->getRow();
-        $data['total_classrooms'] = $roomQuery ? $roomQuery->count : 0;
-
-        // --- 2. Lesson Plan Stats ---
-        $data['plan_stats'] = $this->db->table('tb_send_plan')
-            ->select('seplan_status2, COUNT(*) as count')
-            ->where('seplan_year', $year)
-            ->where('seplan_term', $term)
-            ->groupBy('seplan_status2')
-            ->get()->getResultArray();
-        
-        // Calculate percentages/counts for plans
-        $data['plan_total'] = array_sum(array_column($data['plan_stats'], 'count'));
-        $data['plan_approved'] = 0;
-        $data['plan_pending'] = 0;
-        foreach($data['plan_stats'] as $ps) {
-            if($ps['seplan_status2'] == 'ผ่านการตรวจสอบ') $data['plan_approved'] = $ps['count'];
-            if($ps['seplan_status2'] == 'รอการตรวจสอบ') $data['plan_pending'] = $ps['count'];
-        }
-
-        // --- 3. Club Stats ---
-        $data['total_clubs'] = $this->db->table('tb_clubs')
-            ->where('club_year', $year)
-            ->where('club_trem', $term)
-            ->countAllResults();
-        $data['club_registrations'] = $this->db->table('tb_club_members')
-            ->join('tb_clubs', 'tb_club_members.member_club_id = tb_clubs.club_id')
-            ->where('tb_club_members.member_status', 'active')
-            ->where('tb_clubs.club_year', $year) // Table tb_clubs uses year and trem separately
-            ->where('tb_clubs.club_trem', $term)
-            ->countAllResults();
-        
-        // --- 4. Enrollment Stats (Normal) ---
-        // Optimizing the query to avoid freezing the DB. Using explicit COUNT(DISTINCT)
-        $enrollQuery = $this->db->query("SELECT COUNT(DISTINCT StudentID) as count FROM tb_register WHERE RegisterYear = ?", [$data['selectedYear']])->getRow();
-        $data['enrolled_students'] = $enrollQuery ? $enrollQuery->count : 0;
-
-        // --- 5. Research Stats ---
-        $data['research_total'] = $this->db->table('tb_send_research')
-            ->select('seres_id')
-            ->where('seres_year', $year) 
-            ->where('seres_term', $term)
-            ->countAllResults();
 
         echo view('admin/Academic/AdminHome/AdminHome', $data);
     }

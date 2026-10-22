@@ -2593,7 +2593,7 @@ class ConAdminStudents extends BaseController
         }
         $studyLine = trim($studyLine);
         
-        $englishCodes = ["SMT(S)", "SMT(T)", "CEP", "CP", "PAP1", "PAP2", "PAP3", "PAP4", "SP1", "SP2", "SP3","SP4"];
+        $englishCodes = ["SMT(S)", "SMT(T)", "CEP", "CP1", "CP2", "CP", "PAP1", "PAP2", "PAP3", "PAP4", "SP1", "SP2", "SP3", "SP4"];
         foreach ($englishCodes as $code) {
             if (mb_stripos($studyLine, $code) !== false) {
                 return $code;

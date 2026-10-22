@@ -50,9 +50,13 @@
     - Models: มักมี Prefix `Mod...` (เช่น `ModAdminReportResult.php`, `ModAdminCheckPlan.php`)
     - Views: ตรวจสอบโครงสร้างโฟลเดอร์ย่อยและ Pattern ของโฟลเดอร์นั้น (เช่น ใน `AdminReportResults/` ใช้ Prefix `AdminReport...` เช่น `AdminReportResult.php`, `AdminReportEnrollDetailStudent.php` เป็นต้น)
 - **Rule (Git Workflow):** เมื่อจะเริ่มพัฒนาฟีเจอร์ใหม่ (Feature), แก้ไขข้อผิดพลาดเฉพาะจุด (Bugfix), หรือปรับปรุงโครงสร้างใหญ่ (Major Refactor) ให้พิจารณาและแตก Git Branch ใหม่เสมอ (เช่น `feature/...`, `fix/...`) ก่อนเริ่ม เพื่อความปลอดภัยของโค้ดหลัก
-- **Rule (Skills Available):** ระบบมี Skill พิเศษใน `.agents/skills/`:
-    1. [ci4-fullstack-mastery](file:///d:/SkjSystem/academic2025/.agents/skills/ci4-fullstack-mastery/SKILL.md) — มาตรฐานการเขียน CI4 backend, multi-db joins, null safety, และ data aggregation
-    2. [sneat-ui-ux-crafting](file:///d:/SkjSystem/academic2025/.agents/skills/sneat-ui-ux-crafting/SKILL.md) — มาตรฐานการออกแบบ UI/UX สไตล์ Sneat Bootstrap 5, High Contrast, 2D Sticky Tables, และ KPI Cards
+- **Rule (Automatic Superpowers & Skills Workflow):** ทุกครั้งที่ได้รับคำสั่งจากผู้ใช้ ให้เรียกใช้และปฏิบัติตามกระบวนการของ Skill ที่เกี่ยวข้องโดยอัตโนมัติ (Always Invoke Skills Automatically) ทันที:
+    1. **สร้างฟีเจอร์ใหม่ / เพิ่มระบบ / ออกแบบ UI หรือการทำงานใหม่:** ให้เรียกใช้ `brainstorming` ก่อนเสมอเพื่อวิเคราะห์ความต้องการและแนวทาง -> จากนั้นใช้ `writing-plans` เพื่อวางแผนทีละขั้นตอนอย่างละเอียด -> และใช้ `executing-plans` หรือ `subagent-driven-development` ในการปฏิบัติตามแผน
+    2. **พบข้อผิดพลาด / บั๊ก / แจ้ง Error:** ให้เรียกใช้ `systematic-debugging` เพื่อสืบสวนหา Root Cause อย่างเป็นระบบเสมอ ห้ามเดาวิธีแก้โดยไม่มีหลักฐาน
+    3. **ก่อนสรุปงานว่าเสร็จสมบูรณ์:** ให้เรียกใช้ `verification-before-completion` ตรวจสอบหลักฐานจริงและผลลัพธ์การรันก่อนเสมอ
+    4. **การพัฒนาฟังก์ชัน CI4 Backend & Multi-DB:** ปฏิบัติตาม `ci4-fullstack-mastery`
+    5. **การออกแบบหน้าจอ Sneat UI/UX & ตาราง:** ปฏิบัติตาม `sneat-ui-ux-crafting`
+    6. **การจัดวางฟอร์มเอกสารหรือใบประกาศ (mm):** ปฏิบัติตาม `pixel-perfect-layout`
 ---
 
 # 🌟 GEMINI.MD: PROJECT CONTEXT & DESIGN STANDARD

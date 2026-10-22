@@ -53,7 +53,7 @@ class ModAdminStudents extends Model
     /**
      * Sanitize StudentStudyLine before insert/update.
      * Ensures only valid study line values are saved to the database.
-     * Valid values: GENERAL, CEP, CP, PAP1, PAP2, PAP3, PAP4, SMT(S), SMT(T), SP1, SP2, SP3, SP4
+     * Valid values: GENERAL, CEP, CP, CP1, CP2, PAP1, PAP2, PAP3, PAP4, SMT(S), SMT(T), SP1, SP2, SP3, SP4
      */
     protected function sanitizeStudyLine(array $data): array
     {

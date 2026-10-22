@@ -1209,7 +1209,7 @@ $(document).ready(function() {
                     $('#admPreviewCount').text(res.students.length);
 
                     const studyLineOptions = [
-                        "GENERAL", "SMT(S)", "SMT(T)", "CEP", "CP", "PAP1", "PAP2", "PAP3", "PAP4", "SP1", "SP2", "SP3", "SP4"
+                        "GENERAL", "SMT(S)", "SMT(T)", "CEP", "CP", "CP1", "CP2", "PAP1", "PAP2", "PAP3", "PAP4", "SP1", "SP2", "SP3", "SP4"
                     ];
 
                     const classRoomOptions = [

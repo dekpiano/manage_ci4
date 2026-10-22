@@ -103,7 +103,7 @@
         border-radius: 50%;
         object-fit: cover;
         border: 2px solid white;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
     }
 
     .btn-emerald {
@@ -134,32 +134,39 @@
     .text-emerald {
         color: var(--dark-emerald) !important;
     }
+
     .text-primary-emerald {
         color: var(--primary-emerald) !important;
     }
+
     .text-warning-dark {
         color: #b45309 !important;
     }
+
     .text-info-dark {
         color: #0369a1 !important;
     }
+
     .text-success-dark {
         color: #15803d !important;
     }
+
     .badge-group-id {
         background-color: #ffffff !important;
         color: var(--dark-emerald) !important;
         border: 1.5px solid #86efac !important;
         font-weight: 800 !important;
         font-family: monospace;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
     }
+
     .badge-status-done {
         background-color: #d1fae5 !important;
         color: #065f46 !important;
         border: 1px solid #a7f3d0 !important;
         font-weight: 700 !important;
     }
+
     .badge-status-pending {
         background-color: #fef3c7 !important;
         color: #92400e !important;
@@ -175,7 +182,8 @@
             <div class="col-md-7">
                 <nav aria-label="breadcrumb">
                     <ol class="breadcrumb mb-2">
-                        <li class="breadcrumb-item"><a href="<?= base_url('Admin/Home') ?>" class="text-white opacity-75">หน้าหลัก</a></li>
+                        <li class="breadcrumb-item"><a href="<?= base_url('Admin/Home') ?>"
+                                class="text-white opacity-75">หน้าหลัก</a></li>
                         <li class="breadcrumb-item text-white opacity-75">งานหลักสูตรและนิเทศ</li>
                         <li class="breadcrumb-item active text-white" aria-current="page">ตรวจสอบตารางสอนกลุ่มสาระ</li>
                     </ol>
@@ -188,13 +196,16 @@
                 </p>
             </div>
             <div class="col-md-5 text-md-end mt-3 mt-md-0" style="position: relative; z-index: 5;">
-                <form method="GET" action="<?= base_url('Admin/Acade/Course/TeachingSchedule') ?>" class="d-inline-flex align-items-center gap-2 bg-white bg-opacity-20 p-2 rounded-pill shadow-sm">
-                    <span class="text-white fw-bold ps-3 small"><i class="bx bx-calendar me-1"></i> ภาคเรียน/ปี:</span>
-                    <select name="year_term" class="form-select form-select-sm fw-bold shadow-sm rounded-pill" style="min-width: 140px; background-color: #ffffff !important; color: #0d6d41 !important; border: 1.5px solid #ffffff !important;" onchange="this.form.submit()">
+                <form method="GET" action="<?= base_url('Admin/Acade/Course/TeachingSchedule') ?>"
+                    class="d-inline-flex align-items-center gap-2 bg-white bg-opacity-20 p-2 rounded-pill shadow-sm">
+                    <span class="text-dark fw-bold ps-3 small"><i class="bx bx-calendar me-1"></i> ภาคเรียน/ปี:</span>
+                    <select name="year_term" class="form-select form-select-sm fw-bold shadow-sm rounded-pill"
+                        style="min-width: 140px; background-color: #ffffff !important; color: #0d6d41 !important; border: 1.5px solid #ffffff !important;"
+                        onchange="this.form.submit()">
                         <?php foreach ($yearTerms as $yt): ?>
-                        <option value="<?= esc($yt['label']) ?>" <?= ($selectedYearTerm == $yt['label']) ? 'selected' : '' ?>>
-                            <?= esc($yt['label']) ?>
-                        </option>
+                            <option value="<?= esc($yt['label']) ?>" <?= ($selectedYearTerm == $yt['label']) ? 'selected' : '' ?>>
+                                <?= esc($yt['label']) ?>
+                            </option>
                         <?php endforeach; ?>
                     </select>
                 </form>
@@ -202,40 +213,7 @@
         </div>
     </div>
 
-    <!-- ⚙️ System Settings & Public Access Status Bar -->
-    <div class="card border-0 shadow-sm mb-4" style="border-radius: 16px; background: #ffffff;">
-        <div class="card-body p-3 p-md-4">
-            <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
-                <div class="d-flex align-items-center gap-3">
-                    <div class="avatar avatar-md rounded-circle d-flex align-items-center justify-content-center <?= ($teacher_schedule_onoff === 'open') ? 'bg-label-success text-success' : 'bg-label-danger text-danger' ?>" style="width: 48px; height: 48px;">
-                        <i class="bx <?= ($teacher_schedule_onoff === 'open') ? 'bx-lock-open-alt' : 'bx-lock-alt' ?> fs-3"></i>
-                    </div>
-                    <div>
-                        <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
-                            <h6 class="fw-bold mb-0 text-dark">ตั้งค่าการเปิด - ปิด ให้ดูตารางสอน (หน้าเว็บสาธารณะ)</h6>
-                            <span class="badge <?= ($teacher_schedule_onoff === 'open') ? 'bg-success' : 'bg-danger' ?> rounded-pill px-3 py-1 font-monospace" style="font-size: 0.75rem;" id="badge-onoff-status">
-                                <?= ($teacher_schedule_onoff === 'open') ? '🟢 กำลังเปิดให้ดู (PUBLIC ACTIVE)' : '🔴 ปิดการดูตารางสอน (DISABLED)' ?>
-                            </span>
-                        </div>
-                        <p class="text-muted small mb-0">
-                            ควบคุมการแสดงผลแท็บ "ตารางสอน (รายครู)" บนหน้าเว็บไซต์ <a href="<?= base_url('ClassSchedule') ?>" target="_blank" class="text-emerald fw-semibold" style="color: #15a362;">/ClassSchedule <i class="bx bx-link-external small"></i></a>
-                        </p>
-                    </div>
-                </div>
 
-                <div class="d-flex align-items-center gap-2">
-                    <div class="btn-group p-1 bg-light rounded-pill border" role="group">
-                        <button type="button" class="btn btn-sm btn-toggle-onoff rounded-pill px-3 fw-bold <?= ($teacher_schedule_onoff === 'open') ? 'btn-success active shadow-xs' : 'btn-light text-muted' ?>" data-status="open" style="<?= ($teacher_schedule_onoff === 'open') ? 'background-color: #15a362; border-color: #15a362;' : '' ?>">
-                            <i class="bx bx-check-circle me-1"></i> เปิดดูตารางสอน
-                        </button>
-                        <button type="button" class="btn btn-sm btn-toggle-onoff rounded-pill px-3 fw-bold <?= ($teacher_schedule_onoff === 'closed') ? 'btn-danger active shadow-xs' : 'btn-light text-muted' ?>" data-status="closed">
-                            <i class="bx bx-x-circle me-1"></i> ปิดดูตารางสอน
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <!-- Summary Stats Row -->
     <div class="row g-4 mb-4">
@@ -256,8 +234,10 @@
             <div class="card stat-card-workload p-4">
                 <div class="d-flex align-items-center justify-content-between">
                     <div>
-                        <h3 class="mb-1 fw-bold text-success-dark"><?= number_format($summary['completed_teachers'] ?? 0) ?></h3>
-                        <p class="text-muted mb-0 small">บันทึกภาระงานแล้ว (<?= $summary['progress_percent'] ?? 0 ?>%)</p>
+                        <h3 class="mb-1 fw-bold text-success-dark">
+                            <?= number_format($summary['completed_teachers'] ?? 0) ?></h3>
+                        <p class="text-muted mb-0 small">บันทึกภาระงานแล้ว (<?= $summary['progress_percent'] ?? 0 ?>%)
+                        </p>
                     </div>
                     <div class="stat-icon-wrapper" style="background: #e8f5e9; color: #2e7d32;">
                         <i class="bx bx-check-double"></i>
@@ -269,7 +249,8 @@
             <div class="card stat-card-workload p-4">
                 <div class="d-flex align-items-center justify-content-between">
                     <div>
-                        <h3 class="mb-1 fw-bold text-warning-dark"><?= number_format($summary['pending_teachers'] ?? 0) ?></h3>
+                        <h3 class="mb-1 fw-bold text-warning-dark">
+                            <?= number_format($summary['pending_teachers'] ?? 0) ?></h3>
                         <p class="text-muted mb-0 small">ยังไม่มีข้อมูลภาระงาน</p>
                     </div>
                     <div class="stat-icon-wrapper" style="background: #fff8e1; color: #b45309;">
@@ -309,29 +290,30 @@
     <!-- Group Cards Grid -->
     <div class="row g-4 mb-4">
         <?php foreach ($groups as $grp): ?>
-        <div class="col-md-6 col-lg-4">
-            <div class="card group-card-custom p-4">
-                <!-- Group Top Info -->
-                <div class="d-flex align-items-start justify-content-between mb-3">
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="group-icon-circle">
-                            <?php if (!empty($grp->lear_icon) && strpos($grp->lear_icon, '<img') !== false): ?>
-                                <span style="transform: scale(0.7);"><?= $grp->lear_icon ?></span>
-                            <?php else: ?>
-                                <i class="bx bx-book-bookmark"></i>
-                            <?php endif; ?>
+            <div class="col-md-6 col-lg-4">
+                <div class="card group-card-custom p-4">
+                    <!-- Group Top Info -->
+                    <div class="d-flex align-items-start justify-content-between mb-3">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="group-icon-circle">
+                                <?php if (!empty($grp->lear_icon) && strpos($grp->lear_icon, '<img') !== false): ?>
+                                    <span style="transform: scale(0.7);"><?= $grp->lear_icon ?></span>
+                                <?php else: ?>
+                                    <i class="bx bx-book-bookmark"></i>
+                                <?php endif; ?>
+                            </div>
+                            <div>
+                                <h5 class="fw-bold mb-0 text-dark"><?= esc($grp->lear_namethai) ?></h5>
+                                <small class="text-muted"><?= esc($grp->lear_nameeng) ?></small>
+                            </div>
                         </div>
-                        <div>
-                            <h5 class="fw-bold mb-0 text-dark"><?= esc($grp->lear_namethai) ?></h5>
-                            <small class="text-muted"><?= esc($grp->lear_nameeng) ?></small>
-                        </div>
+                        <span class="badge badge-group-id rounded-pill px-3"><?= esc($grp->lear_id) ?></span>
                     </div>
-                    <span class="badge badge-group-id rounded-pill px-3"><?= esc($grp->lear_id) ?></span>
-                </div>
 
-                <!-- Group Leader Info -->
-                <div class="p-3 rounded-3 mb-3 d-flex align-items-center gap-3" style="background-color: #f8fafc; border: 1px solid #e2e8f0;">
-                    <?php 
+                    <!-- Group Leader Info -->
+                    <div class="p-3 rounded-3 mb-3 d-flex align-items-center gap-3"
+                        style="background-color: #f8fafc; border: 1px solid #e2e8f0;">
+                        <?php
                         if (!empty($grp->leader->pers_img)) {
                             $leaderImg = (strpos($grp->leader->pers_img, 'http://') === 0 || strpos($grp->leader->pers_img, 'https://') === 0)
                                 ? $grp->leader->pers_img
@@ -339,118 +321,58 @@
                         } else {
                             $leaderImg = 'https://skj.ac.th/uploads/logo/LogoSKJ_4.png';
                         }
-                        $leaderName = !empty($grp->leader) 
-                            ? "{$grp->leader->pers_prefix}{$grp->leader->pers_firstname} {$grp->leader->pers_lastname}" 
+                        $leaderName = !empty($grp->leader)
+                            ? "{$grp->leader->pers_prefix}{$grp->leader->pers_firstname} {$grp->leader->pers_lastname}"
                             : 'ยังไม่ได้ระบุหัวหน้ากลุ่มสาระ';
-                    ?>
-                    <img src="<?= esc($leaderImg) ?>" alt="<?= esc($leaderName) ?>" class="leader-avatar" onerror="this.src='https://skj.ac.th/uploads/logo/LogoSKJ_4.png';">
-                    <div class="overflow-hidden">
-                        <small class="d-block fw-bold" style="font-size: 0.72rem; color: #b45309;"><i class="bx bx-crown me-1"></i>หัวหน้ากลุ่มสาระฯ</small>
-                        <span class="fw-bold text-dark text-truncate d-block small"><?= esc($leaderName) ?></span>
+                        ?>
+                        <img src="<?= esc($leaderImg) ?>" alt="<?= esc($leaderName) ?>" class="leader-avatar"
+                            onerror="this.src='https://skj.ac.th/uploads/logo/LogoSKJ_4.png';">
+                        <div class="overflow-hidden">
+                            <small class="d-block fw-bold" style="font-size: 0.72rem; color: #b45309;"><i
+                                    class="bx bx-crown me-1"></i>หัวหน้ากลุ่มสาระฯ</small>
+                            <span class="fw-bold text-dark text-truncate d-block small"><?= esc($leaderName) ?></span>
+                        </div>
                     </div>
-                </div>
 
-                <!-- Progress & Stats -->
-                <div class="mb-3">
-                    <div class="d-flex justify-content-between align-items-center mb-1 small">
-                        <span class="text-muted">ความคืบหน้าการจัด</span>
-                        <span class="fw-bold <?= $grp->progress_percent == 100 ? 'text-success-dark' : 'text-emerald' ?>">
-                            <?= $grp->completed_teachers ?>/<?= $grp->total_teachers ?> คน (<?= $grp->progress_percent ?>%)
-                        </span>
+                    <!-- Progress & Stats -->
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1 small">
+                            <span class="text-muted">ความคืบหน้าการจัด</span>
+                            <span
+                                class="fw-bold <?= $grp->progress_percent == 100 ? 'text-success-dark' : 'text-emerald' ?>">
+                                <?= $grp->completed_teachers ?>/<?= $grp->total_teachers ?> คน
+                                (<?= $grp->progress_percent ?>%)
+                            </span>
+                        </div>
+                        <div class="progress progress-emerald">
+                            <div class="progress-bar" role="progressbar" style="width: <?= $grp->progress_percent ?>%;"
+                                aria-valuenow="<?= $grp->progress_percent ?>" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
                     </div>
-                    <div class="progress progress-emerald">
-                        <div class="progress-bar" role="progressbar" style="width: <?= $grp->progress_percent ?>%;" aria-valuenow="<?= $grp->progress_percent ?>" aria-valuemin="0" aria-valuemax="100"></div>
+
+                    <div class="d-flex justify-content-between align-items-center small text-muted pt-2 border-top mb-4">
+                        <span><i class="bx bx-time-five me-1"></i>รวมคาบสอน: <strong
+                                class="text-dark"><?= number_format($grp->total_hours) ?></strong> คาบ/สัปดาห์</span>
+                        <?php if ($grp->pending_teachers > 0): ?>
+                            <span class="badge badge-status-pending">รออีก <?= $grp->pending_teachers ?> คน</span>
+                        <?php else: ?>
+                            <span class="badge badge-status-done"><i class="bx bx-check me-1"></i>ครบทุกคน</span>
+                        <?php endif; ?>
                     </div>
-                </div>
 
-                <div class="d-flex justify-content-between align-items-center small text-muted pt-2 border-top mb-4">
-                    <span><i class="bx bx-time-five me-1"></i>รวมคาบสอน: <strong class="text-dark"><?= number_format($grp->total_hours) ?></strong> คาบ/สัปดาห์</span>
-                    <?php if ($grp->pending_teachers > 0): ?>
-                        <span class="badge badge-status-pending">รออีก <?= $grp->pending_teachers ?> คน</span>
-                    <?php else: ?>
-                        <span class="badge badge-status-done"><i class="bx bx-check me-1"></i>ครบทุกคน</span>
-                    <?php endif; ?>
-                </div>
-
-                <!-- Action Button -->
-                <div class="mt-auto">
-                    <a href="<?= base_url('Admin/Acade/Course/TeachingSchedule/group/' . esc($grp->lear_id) . '?year_term=' . urlencode($selectedYearTerm)) ?>" 
-                       class="btn btn-emerald w-100 rounded-pill fw-bold py-2 shadow-xs d-flex align-items-center justify-content-center gap-2">
-                        <i class="bx bx-list-check fs-5"></i> ดูตารางสอนกลุ่มสาระ
-                    </a>
+                    <!-- Action Button -->
+                    <div class="mt-auto">
+                        <a href="<?= base_url('Admin/Acade/Course/TeachingSchedule/group/' . esc($grp->lear_id) . '?year_term=' . urlencode($selectedYearTerm)) ?>"
+                            class="btn btn-emerald w-100 rounded-pill fw-bold py-2 shadow-xs d-flex align-items-center justify-content-center gap-2">
+                            <i class="bx bx-list-check fs-5"></i> ดูตารางสอนกลุ่มสาระ
+                        </a>
+                    </div>
                 </div>
             </div>
-        </div>
         <?php endforeach; ?>
     </div>
 </div>
 
-<script>
-$(document).ready(function() {
-    $('.btn-toggle-onoff').on('click', function() {
-        const targetStatus = $(this).data('status');
-        const statusText = (targetStatus === 'open') ? 'เปิดให้ดูตารางสอน' : 'ปิดการดูตารางสอน';
-        const isOpening = (targetStatus === 'open');
 
-        Swal.fire({
-            title: `ยืนยัน${statusText}?`,
-            text: isOpening 
-                ? 'ผู้ใช้งานทั่วไปจะสามารถค้นหาและดูตารางสอนรายครูในหน้าเว็บ /ClassSchedule ได้ตามปกติ'
-                : 'ผู้ใช้งานทั่วไปจะไม่สามารถดูตารางสอนรายครูได้ (ระบบจะแสดงการแจ้งเตือนปิดปรับปรุงชั่วคราว)',
-            icon: isOpening ? 'question' : 'warning',
-            showCancelButton: true,
-            confirmButtonText: `ใช่, ${statusText}`,
-            cancelButtonText: 'ยกเลิก',
-            confirmButtonColor: isOpening ? '#15a362' : '#dc3545',
-            cancelButtonColor: '#8592a3',
-            customClass: {
-                container: 'swal2-high-priority'
-            }
-        }).then((result) => {
-            if (result.isConfirmed) {
-                Swal.fire({
-                    title: 'กำลังบันทึกการตั้งค่า...',
-                    allowOutsideClick: false,
-                    didOpen: () => { Swal.showLoading(); }
-                });
-
-                $.ajax({
-                    url: '<?= base_url('admin/academic/teaching-schedule/toggle-onoff') ?>',
-                    type: 'POST',
-                    data: { status: targetStatus },
-                    dataType: 'json',
-                    success: function(res) {
-                        if (res && res.status === 'success') {
-                            Swal.fire({
-                                icon: 'success',
-                                title: 'สำเร็จ!',
-                                text: res.message,
-                                confirmButtonColor: '#15a362'
-                            }).then(() => {
-                                location.reload();
-                            });
-                        } else {
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'เกิดข้อผิดพลาด!',
-                                text: res.message || 'ไม่สามารถบันทึกการตั้งค่าได้',
-                                confirmButtonColor: '#dc3545'
-                            });
-                        }
-                    },
-                    error: function() {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'เกิดข้อผิดพลาด!',
-                            text: 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้',
-                            confirmButtonColor: '#dc3545'
-                        });
-                    }
-                });
-            }
-        });
-    });
-});
-</script>
 
 <?= $this->endSection() ?>
