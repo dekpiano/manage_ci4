@@ -159,6 +159,7 @@ if (!empty($provinces)) {
                                 <option value="3/ขาดประจำ">3/ขาดประจำ</option>
                                 <option value="4/พักการเรียน">4/พักการเรียน</option>
                                 <option value="5/จบการศึกษา">5/จบการศึกษา</option>
+                                <option value="6/เสียชีวิต">6/เสียชีวิต</option>
                             </select>
                         </div>
 
@@ -171,6 +172,7 @@ if (!empty($provinces)) {
                                 <option value="ขาดเรียนนาน">ขาดเรียนนาน</option>
                                 <option value="พฤติกรรมเสี่ยง">พฤติกรรมเสี่ยง</option>
                                 <option value="จำหน่าย">จำหน่าย</option>
+                                <option value="เสียชีวิต">เสียชีวิต</option>
                             </select>
                         </div>
 
@@ -521,6 +523,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         if (data === '1/ปกติ') color = 'success';
                         else if (data === '2/ย้ายสถานศึกษา') color = 'warning';
                         else if (data === '5/จบการศึกษา') color = 'primary';
+                        else if (data === '6/เสียชีวิต') color = 'dark';
                         return `<span class="badge bg-label-${color}">${data}</span>`;
                     }
                 },
@@ -531,7 +534,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         let color = 'secondary';
                         if (data === 'ปกติ') color = 'success';
                         else if (data === 'ขาดเรียนนาน') color = 'danger';
-                        else if (data === 'จำหน่าย') color = 'dark';
+                        else if (data === 'จำหน่าย' || data === 'เสียชีวิต') color = 'dark';
                         return `<span class="badge bg-${color}">${data}</span>`;
                     }
                 }
@@ -1368,6 +1371,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                     <option value="3/ขาดประจำ">3/ขาดประจำ</option>
                                     <option value="4/พักการเรียน">4/พักการเรียน</option>
                                     <option value="5/จบการศึกษา">5/จบการศึกษา</option>
+                                <option value="6/เสียชีวิต">6/เสียชีวิต</option>
                                 </select>
                             </div>
                             <!-- Behavior Filter -->
@@ -1379,6 +1383,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                     <option value="ขาดเรียนนาน">ขาดเรียนนาน</option>
                                     <option value="พฤติกรรมเสี่ยง">พฤติกรรมเสี่ยง</option>
                                     <option value="จำหน่าย">จำหน่าย</option>
+                                <option value="เสียชีวิต">เสียชีวิต</option>
                                 </select>
                             </div>
                             <!-- Gender Filter -->

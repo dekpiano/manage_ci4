@@ -289,6 +289,7 @@
                                 <option value="2/พักการเรียน">2/พักการเรียน</option>
                                 <option value="3/จำหน่าย">3/จำหน่าย</option>
                                 <option value="5/จบการศึกษา">5/จบการศึกษา</option>
+                                <option value="6/เสียชีวิต">6/เสียชีวิต</option>
                             </select>
                         </div>
                     </div>
@@ -371,6 +372,7 @@
                                     <select class="form-select select2-modern" id="target_status">
                                         <option value="">-- ไม่เปลี่ยนแปลง --</option>
                                         <option value="5/จบการศึกษา">5/จบการศึกษา</option>
+                                <option value="6/เสียชีวิต">6/เสียชีวิต</option>
                                         <option value="3/จำหน่าย">3/จำหน่าย</option>
                                     </select>
                                 </div>
@@ -431,6 +433,7 @@
                                         <option value="2/ย้ายสถานศึกษา">2/ย้ายสถานศึกษา</option>
                                         <option value="3/จำหน่าย">3/จำหน่าย</option>
                                         <option value="5/จบการศึกษา">5/จบการศึกษา</option>
+                                <option value="6/เสียชีวิต">6/เสียชีวิต</option>
                                     </select>
                                 </div>
                                 <div class="col-lg-6" id="bulk_details_area">
@@ -669,7 +672,7 @@ $(document).ready(function() {
         const val = $(this).val();
         $('#finish_inputs, #leave_inputs').hide();
         if(val === '5/จบการศึกษา') $('#finish_inputs').show();
-        else if(val === '3/จำหน่าย' || val === '2/พักการเรียน' || val === '2/ย้ายสถานศึกษา') $('#leave_inputs').show();
+        else if(val === '3/จำหน่าย' || val === '2/พักการเรียน' || val === '2/ย้ายสถานศึกษา' || val === '6/เสียชีวิต') $('#leave_inputs').show();
     });
 
     $('#btn-submit-workspace').on('click', function() {

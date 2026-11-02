@@ -291,7 +291,7 @@ class ConAdminStudents extends BaseController
 
                     // Only set YearFinish if the student is finishing their education here (Graduate/Transfer/Exit)
                     // If they are just moving back to 'Normal' or 'Suspended', YearFinish should be cleared/null
-                    if (in_array($newStatus, ['5/จบการศึกษา', '2/ย้ายสถานศึกษา', '3/จำหน่าย'])) {
+                    if (in_array($newStatus, ['5/จบการศึกษา', '2/ย้ายสถานศึกษา', '3/จำหน่าย', '6/เสียชีวิต', 'เสียชีวิต'])) {
                         $data['YearFinish'] = $yearOnly;
                     } else {
                         $data['YearFinish'] = null; 
@@ -346,7 +346,7 @@ class ConAdminStudents extends BaseController
 
             // Only set YearFinish if we are specifically setting a "Finish" status (Graduate/Exit)
             // If it's a normal promotion, nextStatus will be empty or 1/ปกติ
-            if (!empty($nextStatus) && in_array($nextStatus, ['5/จบการศึกษา', '2/ย้ายสถานศึกษา', '3/จำหน่าย'])) {
+            if (!empty($nextStatus) && in_array($nextStatus, ['5/จบการศึกษา', '2/ย้ายสถานศึกษา', '3/จำหน่าย', '6/เสียชีวิต', 'เสียชีวิต'])) {
                 $updateData['YearFinish'] = $yearOnly;
             } else {
                 // Ensure YearFinish is null for normal promotions
@@ -2162,9 +2162,10 @@ class ConAdminStudents extends BaseController
         $this->db->transBegin();
         try {
             foreach ($numbers as $studentID => $newNumber) {
+                $val = ($newNumber === '' || $newNumber === null) ? null : trim((string)$newNumber);
                 $this->db->table('tb_students')
                     ->where('StudentID', $studentID)
-                    ->update(['StudentNumber' => $newNumber]);
+                    ->update(['StudentNumber' => $val]);
             }
             
             if ($this->db->transStatus() === false) {

@@ -277,6 +277,11 @@
     color: #dc3545;
 }
 
+.status-badge.status-deceased {
+    background: #343a40;
+    color: #ffffff;
+}
+
 .status-badge.status-dismissed {
     background: #fff3cd;
     color: #856404;
@@ -300,6 +305,16 @@
 .behavior-badge.behavior-absent {
     background: #f8d7da;
     color: #721c24;
+}
+
+.behavior-badge.behavior-risk {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.behavior-badge.behavior-deceased {
+    background: #343a40;
+    color: #ffffff;
 }
 
 .behavior-badge.behavior-dismissed {
@@ -436,23 +451,6 @@
     padding: 1rem 1.5rem;
 }
 
-#studentDetailModal .form-floating label {
-    color: #495057 !important;
-}
-
-#studentDetailModal .form-control,
-#studentDetailModal .form-select {
-    color: #212529 !important;
-    border-radius: 10px;
-    border: 2px solid #e9ecef;
-}
-
-#studentDetailModal .form-control:focus,
-#studentDetailModal .form-select:focus {
-    border-color: var(--primary-green);
-    box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.15);
-}
-
 /* ===== Truncate Text ===== */
 .truncate-text {
     max-width: 180px;
@@ -497,25 +495,6 @@
     color: #fff;
     background: var(--primary-green);
     cursor: pointer;
-}
-
-/* Fix for floating labels with jquery.thailand.js */
-.form-floating.label-floated>label {
-    opacity: 0.65;
-    transform: scale(.90) translateY(-.5rem) translateX(.15rem);
-}
-
-.form-floating:focus label {
-    opacity: 0.65;
-    transform: scale(.90) translateY(-.5rem) translateX(.15rem);
-}
-
-.floating-new {
-    padding: 23px 14px 11px;
-}
-
-.form-control:focus {
-    padding: 23px 14px 11px;
 }
 
 /* ===== Back Button ===== */
@@ -598,7 +577,7 @@
             <div class="filter-section">
                 <div class="filter-group">
                     <label for="classFilter"><i class="bx bx-filter-alt me-1"></i>ระดับชั้น</label>
-                    <select class="form-select" id="classFilter" name="classFilter">
+                    <select class="form-select select2" id="classFilter" name="classFilter">
                         <option value="">ทั้งหมด</option>
                         <?php foreach ($class_list as $v_class) : ?>
                         <option value="ม.<?= esc($v_class) ?>">ม.<?= esc($v_class) ?></option>
@@ -693,6 +672,8 @@ function updateFloatingLabels() {
 function getStatusBadge(status) {
     if (status && status.includes('ปกติ')) {
         return `<span class="status-badge status-normal"><i class="bx bx-check-circle me-1"></i>${status}</span>`;
+    } else if (status && status.includes('เสียชีวิต')) {
+        return `<span class="status-badge status-deceased"><i class="bx bx-sad me-1"></i>${status}</span>`;
     } else if (status && (status.includes('ขาด') || status.includes('พัก'))) {
         return `<span class="status-badge status-absent"><i class="bx bx-time-five me-1"></i>${status}</span>`;
     } else {
@@ -705,6 +686,10 @@ function getBehaviorBadge(behavior) {
         return `<span class="behavior-badge behavior-normal">${behavior}</span>`;
     } else if (behavior === 'ขาดเรียนนาน') {
         return `<span class="behavior-badge behavior-absent"><i class="bx bx-error me-1"></i>${behavior}</span>`;
+    } else if (behavior === 'พฤติกรรมเสี่ยง') {
+        return `<span class="behavior-badge behavior-risk"><i class="bx bx-error-circle me-1"></i>${behavior}</span>`;
+    } else if (behavior === 'เสียชีวิต') {
+        return `<span class="behavior-badge behavior-deceased"><i class="bx bx-sad me-1"></i>${behavior}</span>`;
     } else if (behavior === 'จำหน่าย') {
         return `<span class="behavior-badge behavior-dismissed"><i class="bx bx-x-circle me-1"></i>${behavior}</span>`;
     } else {
@@ -818,7 +803,11 @@ $(document).ready(function() {
         ]
     });
 
-    // Filter by class
+    // Filter by class (Select2)
+    $('#classFilter').select2({
+        theme: 'bootstrap-5',
+        width: '180px'
+    });
     $('#classFilter').on('change', function() {
         tbStudent.ajax.reload();
     });
@@ -865,8 +854,13 @@ $(document).ready(function() {
             success: function(responseHtml) {
                 $('#studentDetailContent').html(responseHtml);
 
+                // Initialize Select2 and Buddhist Era Flatpickr
+                if (typeof initStudentFormComponents === 'function') {
+                    initStudentFormComponents($('#studentDetailContent'));
+                }
+
                 // Initialize Thailand Address Autocomplete
-                $.Thailand({
+                if ($('#stu_hTambon').length > 0) $.Thailand({
                     database: '<?= base_url('assets/database/db.json') ?>',
                     $district: $('#stu_hTambon'),
                     $amphoe: $('#stu_hDistrict'),
@@ -875,7 +869,7 @@ $(document).ready(function() {
                 });
 
                 // Current Address
-                $.Thailand({
+                if ($('#stu_cTumbao').length > 0) $.Thailand({
                     database: '<?= base_url('assets/database/db.json') ?>',
                     $district: $('#stu_cTumbao'),
                     $amphoe: $('#stu_cDistrict'),
@@ -884,7 +878,7 @@ $(document).ready(function() {
                 });
 
                 // School Address
-                $.Thailand({
+                if ($('#stu_schoolTambao').length > 0) $.Thailand({
                     database: '<?= base_url('assets/database/db.json') ?>',
                     $district: $('#stu_schoolTambao'),
                     $amphoe: $('#stu_schoolDistrict'),

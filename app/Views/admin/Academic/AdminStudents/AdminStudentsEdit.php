@@ -74,6 +74,10 @@
 <?= $this->section('script') ?>
 <script>
 $(document).ready(function() {
+    // Initialize Select2 and Buddhist Era Flatpickr
+    if (typeof initStudentFormComponents === 'function') {
+        initStudentFormComponents($('#editStudentFormIndividual'));
+    }
     // Function to fix floating labels for inputs wrapped by typeahead.js
     function updateFloatingLabels() {
         setTimeout(function() {
@@ -90,30 +94,36 @@ $(document).ready(function() {
     }
 
     // Initialize Thailand Address Autocomplete for Home Address
-    $.Thailand({
-        database: '<?= base_url('assets/database/db.json') ?>',
-        $district: $('#stu_hTambon'),
-        $amphoe: $('#stu_hDistrict'),
-        $province: $('#stu_hProvince'),
-        $zipcode: $('#stu_hPostCode'),
-    });
+    if ($('#stu_hTambon').length > 0) {
+        $.Thailand({
+            database: '<?= base_url('assets/database/db.json') ?>',
+            $district: $('#stu_hTambon'),
+            $amphoe: $('#stu_hDistrict'),
+            $province: $('#stu_hProvince'),
+            $zipcode: $('#stu_hPostCode'),
+        });
+    }
 
     // Initialize Thailand Address Autocomplete for Current Address
-    $.Thailand({
-        database: '<?= base_url('assets/database/db.json') ?>',
-        $district: $('#stu_cTumbao'),
-        $amphoe: $('#stu_cDistrict'),
-        $province: $('#stu_cProvince'),
-        $zipcode: $('#stu_cPostcode'),
-    });
+    if ($('#stu_cTumbao').length > 0) {
+        $.Thailand({
+            database: '<?= base_url('assets/database/db.json') ?>',
+            $district: $('#stu_cTumbao'),
+            $amphoe: $('#stu_cDistrict'),
+            $province: $('#stu_cProvince'),
+            $zipcode: $('#stu_cPostcode'),
+        });
+    }
 
     // Initialize Thailand Address Autocomplete for School Address
-    $.Thailand({
-        database: '<?= base_url('assets/database/db.json') ?>',
-        $district: $('#stu_schoolTambao'),
-        $amphoe: $('#stu_schoolDistrict'),
-        $province: $('#stu_schoolProvince'),
-    });
+    if ($('#stu_schoolTambao').length > 0) {
+        $.Thailand({
+            database: '<?= base_url('assets/database/db.json') ?>',
+            $district: $('#stu_schoolTambao'),
+            $amphoe: $('#stu_schoolDistrict'),
+            $province: $('#stu_schoolProvince'),
+        });
+    }
 
     // Handle floating labels for typeahead inputs
     updateFloatingLabels();

@@ -98,7 +98,16 @@
                     <i class="bx bx-chevron-left fs-4"></i>
                 </a>
                 <div>
-                    <h4 class="fw-bold mb-0">จัดตารางห้อง <?= $class_name ?></h4>
+                    <div class="d-flex align-items-center gap-2">
+                        <h4 class="fw-bold mb-0">จัดตารางห้อง <?= esc($class_name) ?></h4>
+                        <?php if (!empty($all_classes) && count($all_classes) > 1): ?>
+                            <select class="form-select form-select-sm w-auto rounded-pill fw-semibold shadow-xs" style="border-color: #15a362; color: #15a362;" onchange="window.location.href='<?= base_url('admin/academic/timetable/editor') ?>?class=' + encodeURIComponent(this.value)">
+                                <?php foreach ($all_classes as $cls): ?>
+                                    <option value="<?= esc($cls) ?>" <?= $cls === $class_name ? 'selected' : '' ?>>ห้อง <?= esc($cls) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        <?php endif; ?>
+                    </div>
                     <small class="text-muted">ภาคเรียนที่ <?= $term ?>/<?= $year ?></small>
                 </div>
             </div>
@@ -211,7 +220,15 @@
                                 // 🔍 Determine level (Junior: ม.1-3 / Senior: ม.4-6)
                                 $isSenior = (preg_match('/ม\.[4-6]/', $class_name) || preg_match('/^[4-6]/', $class_name));
                                 $current_level_group = $isSenior ? 'Senior' : 'Junior';
-                                $lunchPeriod = $isSenior ? 5 : 4;
+                                
+                                // หาคาบพักกลางวันตามการตั้งค่าจริงในฐานข้อมูล
+                                $lunchPeriod = null;
+                                foreach ($periods as $p_chk) {
+                                    if ($p_chk->is_break && ($p_chk->level_group == 'ALL' || $p_chk->level_group == $current_level_group)) {
+                                        $lunchPeriod = (int)$p_chk->period_number;
+                                        break;
+                                    }
+                                }
                             ?>
                             <tr>
                                 <td class="fw-bold text-center" style="background: <?= $colors[0] ?>; color: <?= $colors[1] ?>; border-radius: 8px; font-size: 0.8rem;">
@@ -219,8 +236,8 @@
                                 </td>
                                 <?php foreach($periods as $p): 
                                     // Check if this period is a break for THIS class
-                                    $isLunch = ((int)$p->period_number == (int)$lunchPeriod);
-                                    $is_this_break = ($p->is_break && ($p->level_group == 'ALL' || $p->level_group == $current_level_group));
+                                    $isLunch = ($lunchPeriod !== null && (int)$p->period_number == (int)$lunchPeriod);
+                                    $is_this_break = ($p->is_break && ($p->level_group == 'ALL' || $p->level_group == $current_level_group) && !$isLunch);
                                     
                                     // Check for Master Slot
                                     $master_subject = null;

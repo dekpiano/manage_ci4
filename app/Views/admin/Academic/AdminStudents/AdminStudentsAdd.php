@@ -245,7 +245,7 @@
                             <!-- Target Grade -->
                             <div class="col-md-6">
                                 <label class="form-label fw-bold"><i class='bx bx-filter-alt me-1'></i>เลือกระดับชั้นที่ต้องการซิงค์</label>
-                                <select name="target_class" class="form-select rounded-3 p-2">
+                                <select name="target_class" class="form-select select2 rounded-3 p-2">
                                     <option value="all">-- ทุกระดับชั้น (ที่มีใน Sheet) --</option>
                                     <?php for($i=1;$i<=6;$i++): ?>
                                         <option value="ม.<?= $i ?>">ชั้นมัธยมศึกษาปีที่ <?= $i ?></option>
@@ -336,14 +336,14 @@
                             <!-- Filters -->
                             <div class="row g-2">
                                     <?php $activeSysYear = get_selected_year_only(); ?>
-                                    <select id="admissionFilterYear" class="form-select form-select-sm rounded-3" style="border-color: rgba(32, 201, 151, 0.4) !important;">
+                                    <select id="admissionFilterYear" class="form-select select2 form-select-sm rounded-3" style="border-color: rgba(32, 201, 151, 0.4) !important;">
                                         <option value="all">ทุกปีการศึกษา</option>
                                         <?php if(!empty($admission_years)): foreach($admission_years as $ay): ?>
                                             <option value="<?= $ay->recruit_year ?>" <?= $ay->recruit_year == $activeSysYear ? 'selected' : '' ?>><?= $ay->recruit_year ?></option>
                                         <?php endforeach; endif; ?>
                                     </select>
                                 <div class="col-md-4">
-                                    <select id="admissionFilterClass" class="form-select form-select-sm rounded-3" style="border-color: rgba(32, 201, 151, 0.4) !important;">
+                                    <select id="admissionFilterClass" class="form-select select2 form-select-sm rounded-3" style="border-color: rgba(32, 201, 151, 0.4) !important;">
                                         <option value="all">ทุกระดับชั้น</option>
                                         <?php if(!empty($admission_levels)): foreach($admission_levels as $al): ?>
                                             <option value="<?= $al->recruit_regLevel ?>"><?= $al->recruit_regLevel ?></option>
@@ -545,6 +545,19 @@ function switchMode(mode) {
 }
 
 $(document).ready(function() {
+    // Initialize Select2 and Buddhist Era Flatpickr for manual add form
+    if (typeof initStudentFormComponents === 'function') {
+        initStudentFormComponents($('#section-manual'));
+    }
+    $('select.select2').each(function() {
+        const $sel = $(this);
+        const $modal = $sel.closest('.modal');
+        $sel.select2({
+            theme: 'bootstrap-5',
+            width: '100%',
+            dropdownParent: $modal.length ? $modal : $(document.body)
+        });
+    });
     function updateFloatingLabels() {
         $('input, select, textarea').each(function() {
             if ($(this).val() !== '') {

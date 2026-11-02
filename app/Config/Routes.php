@@ -292,6 +292,9 @@ $routes->group('admin/academic/timetable', ['namespace' => 'App\Controllers'], f
     $routes->post('delete-assignment', 'Admin\Academic\ConAdminTimetable::deleteAssignment');
     $routes->match(['get', 'post'], 'save-teaching-group', 'Admin\Academic\ConAdminTimetable::saveTeachingGroup');
     $routes->match(['get', 'post'], 'delete-teaching-group', 'Admin\Academic\ConAdminTimetable::deleteTeachingGroup');
+    $routes->match(['get', 'post'], 'detect-suggested-groups', 'Admin\Academic\ConAdminTimetable::detectSuggestedGroups');
+    $routes->match(['get', 'post'], 'apply-suggested-group', 'Admin\Academic\ConAdminTimetable::applySuggestedGroup');
+    $routes->match(['get', 'post'], 'apply-all-suggested-groups', 'Admin\Academic\ConAdminTimetable::applyAllSuggestedGroups');
     $routes->get('subject-groups', 'Admin\Academic\ConAdminTimetable::subjectGroups');
     $routes->post('save-joint-group', 'Admin\Academic\ConAdminTimetable::saveSubjectGroup');
     $routes->post('delete-joint-group/(:num)', 'Admin\Academic\ConAdminTimetable::deleteSubjectGroup/$1');
@@ -308,6 +311,7 @@ $routes->group('admin/academic/timetable', ['namespace' => 'App\Controllers'], f
 
     // Timetable Processing
     $routes->get('process', 'Admin\Academic\ConAdminTimetable::process');
+    $routes->get('preflight-check', 'Admin\Academic\ConAdminTimetable::preflightCheck');
     $routes->match(['get', 'post'], 'auto-generate', 'Admin\Academic\ConAdminTimetable::autoGenerate');
     $routes->get('get-class-timetable', 'Admin\Academic\ConAdminTimetable::getClassTimetable');
     $routes->get('view-class-timetable', 'Admin\Academic\ConAdminTimetable::viewClassTimetable');

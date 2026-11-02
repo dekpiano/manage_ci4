@@ -103,27 +103,20 @@
                     $locked_sub = null;
                     foreach($locks as $l) { if($l->day == $day->day_key && $l->period == $p->period_number) { $locked_sub = $l; break; } }
                     
-                    // 🍱 LUNCH BREAK LOGIC (แยก ม.ต้น คาบ 4 / ม.ปลาย คาบ 5)
+                    // 🍱 LUNCH BREAK LOGIC (ดึงจากระบบตั้งค่าคาบเรียนจริง)
                     $isLunch = false;
-                    if ($class_level >= 1 && $class_level <= 3 && (int)$p->period_number == 4) $isLunch = true; 
-                    if ($class_level >= 4 && $class_level <= 6 && (int)$p->period_number == 5) $isLunch = true; 
-                    
-                    // 🛑 GLOBAL BREAK CONFIG (จากระบบตั้งค่าคาบเรียน)
                     $isBreakConfig = false;
+                    $levelGroup = ($class_level >= 1 && $class_level <= 3) ? 'Junior' : 'Senior';
                     foreach($all_period_configs as $apc) { 
                         if((int)$apc->period_number == (int)$p->period_number && $apc->is_break == 1) { 
-                            $isBreakConfig = true; 
-                            break; 
+                            if ($apc->level_group == 'ALL' || $apc->level_group == $levelGroup) {
+                                $isLunch = true;
+                                $isBreakConfig = true;
+                                break;
+                            }
                         } 
                     }
-                    
-                    // 🧠 SMART OVERRIDE: แยกเงื่อนไขตามชั้น
-                    // ถ้าเป็นคาบ 4 หรือ 5 แต่ไม่ใช่เวลาพักของระดับชั้นนั้น ให้ "ปลดล็อค" ให้ลงวิชาได้
-                    if (((int)$p->period_number == 4 || (int)$p->period_number == 5) && !$isLunch) {
-                        $isForbidden = false; 
-                    } else {
-                        $isForbidden = ($isLunch || $isBreakConfig);
-                    }
+                    $isForbidden = $isBreakConfig;
                     
                     $masterSlot = null;
                     foreach($master_slots as $ms) { if($ms->day == $day->day_key && $ms->period == $p->period_number) { $masterSlot = $ms; break; } }

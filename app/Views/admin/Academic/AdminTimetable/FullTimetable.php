@@ -278,7 +278,13 @@
                                 // 🔍 Determine level (Junior: ม.1-3 / Senior: ม.4-6)
                                 $isSenior = (preg_match('/ม\.[4-6]/', $className) || preg_match('/^[4-6]/', $className));
                                 $currentLevel = $isSenior ? 'Senior' : 'Junior';
-                                $lunchPeriod = $isSenior ? 5 : 4;
+                                $lunchPeriod = null;
+                                foreach ($periods as $p_chk) {
+                                    if ($p_chk->is_break && ($p_chk->level_group == 'ALL' || $p_chk->level_group == $currentLevel)) {
+                                        $lunchPeriod = (int)$p_chk->period_number;
+                                        break;
+                                    }
+                                }
                             ?>
                             <tr>
                                 <th>

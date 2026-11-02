@@ -455,16 +455,16 @@
                 </div>
             </div>
         </div>
-        <div class="card nav-card-item shadow-sm <?= $overall_progress < 100 ? 'locked-menu' : '' ?>" onclick="<?= $overall_progress < 100 ? "Swal.fire({icon:'warning', title:'กรุณาประมวลผล AI ก่อน', text:'ข้อมูลมีการเปลี่ยนแปลง จำเป็นต้องประมวลผลในขั้นตอนที่ 4 ให้สำเร็จ 100% ก่อนจึงจะดูตารางได้ครับ'})" : 'goToStep(5)' ?>" id="nav-step-5">
+        <div class="card nav-card-item shadow-sm" onclick="goToStep(5)" id="nav-step-5">
             <div class="card-body p-3">
                 <div class="d-flex align-items-center">
                     <div class="nav-card-icon me-3">
-                        <i class='bx <?= $overall_progress < 100 ? "bx-lock-alt text-danger" : "bx-check-double" ?>'></i>
+                        <i class='bx <?= $overall_progress < 100 ? "bx-time-five text-warning" : "bx-check-double text-success" ?>'></i>
                     </div>
                     <div class="overflow-hidden">
-                        <span class="step-number-tag">STEP 5</span>
+                        <span class="step-number-tag <?= $overall_progress < 100 ? 'bg-warning text-dark' : '' ?>">STEP 5</span>
                         <p class="nav-card-title text-truncate">ตรวจสอบ</p>
-                        <p class="nav-card-subtitle text-truncate mb-0"><?= $overall_progress < 100 ? 'รอผลขั้นตอนที่ 4' : 'พิมพ์/ตรวจสอบ' ?></p>
+                        <p class="nav-card-subtitle text-truncate mb-0"><?= $overall_progress < 100 ? "คืบหน้า {$overall_progress}%" : 'พิมพ์/ตรวจสอบ' ?></p>
                     </div>
                 </div>
             </div>
@@ -597,16 +597,53 @@
                                     ยกเลิก
                                 </button>
                             </div>
+                            <button type="button" class="btn btn-label-warning rounded-pill px-3 shadow-xs hover-elevate fw-bold" id="btnScanElectives" onclick="scanSmartElectives(true)">
+                                <i class="bx bx-magic-wand fs-5 me-1"></i>
+                                <span>สแกนวิชาเลือกคู่ขนาน</span>
+                            </button>
                             <button type="button" class="btn btn-label-success rounded-pill px-3 shadow-xs hover-elevate fw-bold" onclick="openImportTeachingScheduleModal()">
                                 <i class="bx bx-import fs-5 me-1"></i>
                                 <span>ดึงข้อมูลจากตารางสอนกลุ่มสาระ</span>
                             </button>
-                            <button class="btn btn-success rounded-pill px-4 shadow-sm fw-bold" data-bs-toggle="modal" data-bs-target="#modalAddAssignment" style="background: #15a362 !important; border: none;">
+                            <button class="btn btn-success rounded-pill px-4 shadow-sm fw-bold" data-bs-toggle="modal" data-bs-target="#modalAddAssignment" style="background: #15a362 !important; border: none; color: #ffffff !important;">
                                 <i class="bx bx-plus-circle fs-5 me-1"></i> เพิ่มการมอบหมาย
                             </button>
                         </div>
                     </div>
                 </div>
+
+                <!-- Smart Electives Assistant Banner -->
+                <div id="smartElectivesBanner" class="p-3 mx-4 my-3 rounded-3 border d-none" style="background: linear-gradient(135deg, #f0fdf4 0%, #e8f7f0 100%); border-color: #b8e8ce !important;">
+                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="avatar avatar-md bg-white rounded-circle shadow-xs d-flex align-items-center justify-content-center text-success flex-shrink-0">
+                                <i class="bx bx-bulb fs-3" style="color: #15a362 !important;"></i>
+                            </div>
+                            <div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <h6 class="mb-0 fw-bold" style="color: #0c7a46;">ตรวจพบวิชาเลือกคู่ขนาน/แผนการเรียนเฉพาะทาง (5 คาบขึ้นไป) ที่สอนพร้อมกันในห้องเดียวกัน!</h6>
+                                    <span class="badge rounded-pill bg-success fw-bold text-white" id="smartGroupCountBadge" style="background: #15a362 !important; color: #ffffff !important;">0 กลุ่ม</span>
+                                </div>
+                                <small class="text-muted">ระบบตรวจพบวิชาในห้องเดียวกันที่มี 5 คาบขึ้นไปและมีจำนวนคาบเท่ากัน (เช่น แผนกีฬา 9 คาบ, ศิลปกรรม 5-10 คาบ, การงานอาชีพ 5 คาบ) หากยังไม่มัดรวมกลุ่ม ชั่วโมงเรียนห้องจะถูกบวกซ้ำจนเกินสัปดาห์</small>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                            <button type="button" class="btn btn-sm btn-outline-success fw-bold rounded-pill px-3" id="btnToggleSmartGroupDetails" onclick="toggleSmartGroupDetails()">
+                                <i class="bx bx-list-ul me-1"></i> ดูรายละเอียด (<span id="smartGroupTotalAssignments">0</span> รายการ)
+                            </button>
+                            <button type="button" class="btn btn-sm btn-success fw-bold rounded-pill px-3 shadow-xs" id="btnApplyAllSmartGroups" onclick="applyAllSmartGroups()" style="background: #15a362 !important; border-color: #15a362 !important; color: #ffffff !important;">
+                                <i class="bx bx-check-double me-1"></i> มัดรวมทั้งหมดทันที (1-Click)
+                            </button>
+                        </div>
+                    </div>
+                    <!-- Detailed candidate cards container -->
+                    <div id="smartGroupCardsWrapper" class="mt-3 pt-3 border-top d-none" style="border-color: rgba(21, 163, 98, 0.2) !important;">
+                        <div class="row g-3" id="smartGroupCardsRow">
+                            <!-- Dynamically populated candidate cards -->
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Search and summary bar -->
                 <div class="px-4 py-3 step-search-surface d-flex align-items-center justify-content-between flex-wrap gap-3">
                     <div class="input-group input-group-merge" style="max-width: 450px;">
@@ -614,7 +651,10 @@
                         <input type="text" class="form-control" id="searchAssignmentInput" placeholder="ค้นหา วิชา, รหัสวิชา, หรือชื่อครูผู้สอน...">
                         <button class="btn btn-outline-secondary" type="button" id="btnClearSearch" style="display: none; border-color: #d9dee3;"><i class="bx bx-x fs-4"></i></button>
                     </div>
-                    <div class="d-flex align-items-center gap-3">
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                        <button type="button" class="btn btn-sm btn-outline-success rounded-pill px-3 fw-bold shadow-xs" id="btnFilterGroupedOnly" onclick="toggleFilterGroupedOnly()">
+                            <i class="bx bx-package me-1"></i>ดูเฉพาะกลุ่มที่มัดรวมแล้ว
+                        </button>
                         <div class="badge p-2 px-3 rounded-pill border fs-6 shadow-xs" style="color: #15a362 !important; background-color: #e8f7f0 !important; border-color: #c3ebd6 !important;">
                             <i class="bx bx-book-open me-2" style="color: #15a362 !important;"></i>วิชาที่พบ: <span id="filteredSubjectCount" class="fw-bold">0</span> วิชา
                         </div>
@@ -886,9 +926,47 @@
                             </div>
                         </div>
                         <h3 class="fw-bold text-dark mb-2">พร้อมสำหรับการจัดตารางด้วย AI หรือยัง?</h3>
-                        <p class="text-muted mx-auto mb-4 fs-6" style="max-width: 540px;">
+                        <p class="text-muted mx-auto mb-4 fs-6" style="max-width: 600px;">
                             ระบบ AI จะดึงเงื่อนไขที่คุณกำหนดไว้ทั้งหมดมาประมวลผลและเติมเต็มคาบเรียนที่ยังว่างอยู่ให้สมบูรณ์ โดยไม่เกิดข้อขัดแย้งของครู ห้อง และคาบเรียน
                         </p>
+
+                        <!-- 🎛️ AI Settings & Search Depth -->
+                        <div class="card bg-white border shadow-xs rounded-4 p-3 mb-4 mx-auto text-start" style="max-width: 650px;">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <label class="form-label fw-bold text-dark mb-0 small"><i class="bx bx-cog me-1 text-success"></i> เลือกระดับความละเอียดการค้นหา (Search Depth)</label>
+                                <span class="badge bg-label-success rounded-pill px-2 py-1 small" id="modeDescription">ค้นหารวดเร็ว (1-2 วิ)</span>
+                            </div>
+                            <div class="btn-group w-100" role="group" aria-label="AI Search Depth">
+                                <input type="radio" class="btn-check" name="ai_depth_option" id="depth_10" value="10" checked>
+                                <label class="btn btn-outline-success rounded-start-pill py-2" for="depth_10">
+                                    <i class="bx bx-zap me-1"></i> ปกติ (10 รอบ)
+                                </label>
+
+                                <input type="radio" class="btn-check" name="ai_depth_option" id="depth_30" value="30">
+                                <label class="btn btn-outline-success py-2" for="depth_30">
+                                    <i class="bx bx-brain me-1"></i> เชิงลึก (30 รอบ)
+                                </label>
+
+                                <input type="radio" class="btn-check" name="ai_depth_option" id="depth_50" value="50">
+                                <label class="btn btn-outline-success rounded-end-pill py-2" for="depth_50">
+                                    <i class="bx bx-search-alt me-1"></i> ขั้นสูง (50 รอบ)
+                                </label>
+                            </div>
+                            <div class="form-text small text-muted mt-2">
+                                <i class="bx bx-info-circle me-1"></i> หากมีวิชาที่ครู 1 คนสอนหลายห้อง หรือล็อคเวลาไว้แน่น แนะนำให้เลือก <b>โหมดเชิงลึก 30 รอบ</b>
+                            </div>
+                        </div>
+
+                        <!-- 🔍 Pre-flight Capacity Check Section -->
+                        <div class="mb-4">
+                            <button type="button" class="btn btn-outline-secondary rounded-pill px-4 py-2 shadow-2xs" id="btnPreflightCheck">
+                                <i class="bx bx-shield-quarter me-1 text-primary"></i> ตรวจสอบความจุและความพร้อมก่อนรัน (Pre-flight Check)
+                            </button>
+                        </div>
+                        <div id="preflightResultContainer" class="mx-auto mb-4 text-start d-none" style="max-width: 650px;">
+                            <!-- Rendered by JS -->
+                        </div>
+
                         <div>
                             <button class="btn btn-success btn-lg px-5 py-3 rounded-pill shadow-lg fw-bold" id="btnAIGenerate" style="background: #15a362 !important; border: none; font-size: 1.05rem;">
                                 <i class='bx bxs-magic-wand me-2 fs-4'></i> เริ่มประมวลผลจัดตาราง (AI Run)
@@ -930,21 +1008,23 @@
 
                 <div class="p-4 p-lg-5">
                     <?php if($overall_progress < 100): ?>
-                    <div class="text-center py-5">
-                        <div class="mb-4">
-                            <i class='bx bx-shield-quarter text-warning pulse-animation' style="font-size: 6rem;"></i>
+                    <div class="text-center py-4">
+                        <div class="mb-3">
+                            <i class='bx bx-time-five text-warning pulse-animation' style="font-size: 5rem;"></i>
                         </div>
-                        <h2 class="fw-bold">ต้องประมวลผล AI ใหม่</h2>
-                        <p class="text-muted mb-4 mx-auto" style="max-width: 600px;">
-                            เนื่องจากมีการเปลี่ยนแปลงข้อมูลพื้นฐาน งานสอน หรือเงื่อนไขเวลา 
-                            ระบบจึงทำการล้างตารางส่วนที่ไม่ได้ล็อคไว้เพื่อความถูกต้อง 
-                            คุณครูจำเป็นต้องไปที่เมนู <b>"4. ประมวลผล AI"</b> เพื่อจัดตารางให้เสร็จสมบูรณ์ 100% ก่อนจึงจะดูหน้านี้ได้ครับ
+                        <h3 class="fw-bold text-dark">ตารางสอนยังจัดไม่ครบ 100% (ความคืบหน้า <?= $overall_progress ?>%)</h3>
+                        <p class="text-muted mb-4 mx-auto" style="max-width: 620px;">
+                            ตารางสอนในภาคเรียนนี้ถูกจัดไปแล้วบางส่วน (<span class="fw-bold text-warning"><?= $overall_progress ?>%</span>) 
+                            คุณครูสามารถเลือกที่จะ <b>รัน AI ต่อในขั้นตอนที่ 4</b> หรือ <b>เปิดหน้า Editor เพื่อลากจัดวิชาที่เหลือด้วยตนเอง</b> ได้ทันทีครับ
                         </p>
-                        <div class="d-flex justify-content-center gap-3">
-                            <button class="btn btn-primary btn-lg rounded-pill px-5 shadow" onclick="goToStep(4)">
+                        <div class="d-flex justify-content-center flex-wrap gap-3 mb-4">
+                            <a href="<?= base_url('admin/academic/timetable/editor') ?>" class="btn btn-warning btn-lg rounded-pill px-4 shadow">
+                                <i class="bx bx-edit-alt me-2"></i> เข้าจัดการด้วยตนเองใน Editor
+                            </a>
+                            <button class="btn btn-primary btn-lg rounded-pill px-4 shadow" onclick="goToStep(4)">
                                 <i class="bx bx-bot me-2"></i> ไปหน้าประมวลผล AI
                             </button>
-                            <button class="btn btn-label-secondary btn-lg rounded-pill px-4" onclick="location.reload()">
+                            <button class="btn btn-label-secondary btn-lg rounded-pill px-3" onclick="location.reload()">
                                 <i class="bx bx-refresh me-1"></i> ตรวจสอบสถานะใหม่
                             </button>
                         </div>
@@ -1870,6 +1950,11 @@ window.updateWizard = function() {
     $('.wizard-step').addClass('d-none');
     $('#step-' + currentStep).removeClass('d-none');
     
+    // Auto trigger smart electives scan when entering Step 2
+    if (currentStep === 2 && typeof window.scanSmartElectives === 'function') {
+        window.scanSmartElectives(false);
+    }
+    
     // Update Navigation Card Visuals
     $('.nav-card-item').removeClass('active d-none');
     $('#nav-step-' + currentStep).addClass('active');
@@ -1901,19 +1986,18 @@ window.refreshOverallProgress = function() {
             $('#overallProgress').css('width', res.overall_progress + '%');
             $('#overallProgressText').text(res.overall_progress + '%');
             
-            // Update Step 5 navigation card lock status
+            // Update Step 5 navigation card status
             const $nav5 = $('#nav-step-5');
             const $nav5Icon = $nav5.find('.nav-card-icon i');
             const $nav5Subtitle = $nav5.find('.nav-card-subtitle');
 
+            $nav5.removeClass('locked-menu').attr('onclick', "goToStep(5)");
             if (res.overall_progress < 100) {
-                $nav5.addClass('locked-menu').attr('onclick', "Swal.fire({icon:'warning', title:'กรุณาประมวลผล AI ก่อน', text:'ข้อมูลมีการเปลี่ยนแปลง จำเป็นต้องประมวลผลในขั้นตอนที่ 4 ให้สำเร็จ 100% ก่อนจึงจะดูตารางได้ครับ'})");
-                $nav5Icon.removeClass('bx-check-double').addClass('bx-lock-alt text-danger');
-                $nav5Subtitle.text('รอกระบวนการขั้นตอนที่ 4');
+                $nav5Icon.removeClass('bx-check-double text-success').addClass('bx-time-five text-warning');
+                $nav5Subtitle.text('ยังไม่สมบูรณ์ (' + res.overall_progress + '%)');
             } else {
-                $nav5.removeClass('locked-menu').attr('onclick', "goToStep(5)");
-                $nav5Icon.removeClass('bx-lock-alt text-danger').addClass('bx-check-double');
-                $nav5Subtitle.text('พิมพ์/ตรวจสอบ');
+                $nav5Icon.removeClass('bx-time-five text-warning').addClass('bx-check-double text-success');
+                $nav5Subtitle.text('พิมพ์/ตรวจสอบ (100%)');
             }
         }
     });
@@ -1926,6 +2010,9 @@ window.refreshAssignmentList = function() {
         refreshOverallProgress();
         if (typeof window.filterAssignments === 'function') {
             window.filterAssignments();
+        }
+        if (typeof window.scanSmartElectives === 'function') {
+            window.scanSmartElectives(false);
         }
     });
 };
@@ -2749,12 +2836,8 @@ $(document).ready(function() {
             const d = $target.data('day');
             const p = $target.data('period');
             
-            // 🍱 Intelligent Mixed-Level Lunch Check
+            // 🍱 Dynamic Lunch / Break Check from Cell
             let isForbidden = $target.hasClass('slot-forbidden') || $target.data('is-forbidden') == 1;
-            if (!isForbidden) {
-                if (window._dragHasJunior && p == 4) isForbidden = true;
-                if (window._dragHasSenior && p == 5) isForbidden = true;
-            }
 
             const isEmpty = $target.hasClass('slot-empty');
 
@@ -2799,12 +2882,8 @@ $(document).ready(function() {
             const d = $cell.data('day');
             const p = $cell.data('period');
 
-            // 🍱 Intelligent Mixed-Level Lunch Check
+            // 🍱 Dynamic Lunch / Break Check from Cell
             let isForbidden = $cell.hasClass('slot-forbidden') || $cell.data('is-forbidden') == 1;
-            if (!isForbidden) {
-                if (window._dragHasJunior && p == 4) isForbidden = true;
-                if (window._dragHasSenior && p == 5) isForbidden = true;
-            }
 
             const isEmpty = $cell.hasClass('slot-empty');
 
@@ -3026,11 +3105,173 @@ $(document).ready(function() {
         });
     };
 
-    // --- 🧠 Step 4: AI Engine ---
+    // --- 🧠 Step 4: AI Engine Settings & Actions ---
+    $('input[name="ai_depth_option"]').on('change', function() {
+        const val = $(this).val();
+        if (val === '10') {
+            $('#modeDescription').text('ค้นหารวดเร็ว (1-2 วิ)').removeClass('bg-label-warning bg-label-info').addClass('bg-label-success');
+        } else if (val === '30') {
+            $('#modeDescription').text('ค้นหาเชิงลึก (3-5 วิ - แนะนำ)').removeClass('bg-label-success bg-label-warning').addClass('bg-label-info');
+        } else if (val === '50') {
+            $('#modeDescription').text('ค้นหาละเอียดสูงสุด (5-10 วิ)').removeClass('bg-label-success bg-label-info').addClass('bg-label-warning');
+        }
+    });
+
+    // 🔍 Pre-flight Capacity Check
+    $('#btnPreflightCheck').on('click', function() {
+        const $btn = $(this);
+        const origHtml = $btn.html();
+        $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span> กำลังวิเคราะห์ความจุและความพร้อม...');
+
+        $.ajax({
+            url: '<?= base_url('admin/academic/timetable/preflight-check') ?>',
+            type: 'GET',
+            dataType: 'json',
+            success: function(res) {
+                $btn.prop('disabled', false).html(origHtml);
+                const $container = $('#preflightResultContainer');
+                $container.empty().removeClass('d-none');
+
+                if (res.status === 'success') {
+                    let html = `
+                        <div class="card border-0 shadow-sm rounded-4 p-3 mb-2" style="background: #eafaf1; border-left: 4px solid #15a362 !important;">
+                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="bx bx-check-circle fs-3 text-success"></i>
+                                    <div>
+                                        <h6 class="mb-0 fw-bold text-success">ความจุภาพรวมสมบูรณ์ (100% Ready)</h6>
+                                        <small class="text-muted">ตรวจสอบ ${res.total_classes} ห้องเรียน และครู ${res.total_teachers} ท่าน ไม่พบห้องหรือครูที่มีภาระงานเกินความจุ</small>
+                                    </div>
+                                </div>
+                                <span class="badge bg-success rounded-pill px-3 py-2">พร้อมประมวลผล</span>
+                            </div>
+                        </div>
+                    `;
+                    $container.html(html);
+                } else {
+                    let badgeColor = (res.status === 'error') ? 'bg-danger' : 'bg-warning';
+                    let badgeText = (res.status === 'error') ? 'พบปัญหาความจุเกิน' : 'มีจุดที่ควรระวัง';
+                    let headerTitle = (res.status === 'error') ? 'พบเงื่อนไขที่อาจทำให้จัดไม่สำเร็จ' : 'พบข้อควรระวัง';
+
+                    let issuesList = '';
+                    if (res.issues && res.issues.length > 0) {
+                        issuesList += '<div class="list-group list-group-flush mt-2">';
+                        res.issues.forEach(iss => {
+                            let icon = (iss.type === 'danger') ? 'bx-error-circle text-danger' : 'bx-info-circle text-warning';
+                            issuesList += `
+                                <div class="list-group-item px-2 py-2 bg-transparent border-bottom">
+                                    <div class="d-flex align-items-start gap-2">
+                                        <i class="bx ${icon} fs-5 mt-1"></i>
+                                        <div class="small">
+                                            <div class="fw-bold text-dark">${iss.title}</div>
+                                            <div class="text-muted">${iss.message}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        issuesList += '</div>';
+                    }
+
+                    let html = `
+                        <div class="card border-0 shadow-sm rounded-4 p-3 mb-2" style="background: #fff8f0; border-left: 4px solid ${(res.status === 'error' ? '#ff3e1d' : '#ffab00')} !important;">
+                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="bx ${(res.status === 'error' ? 'bx-error-alt text-danger' : 'bx-bell text-warning')} fs-3"></i>
+                                    <div>
+                                        <h6 class="mb-0 fw-bold text-dark">${headerTitle}</h6>
+                                        <small class="text-muted">ตรวจพบประเด็นใน ${res.class_capacity_issues || 0} ห้องเรียน (จาก ${res.total_classes} ห้อง) และครู ${res.teacher_capacity_issues || 0} ท่าน (จาก ${res.total_teachers} ท่าน)</small>
+                                    </div>
+                                </div>
+                                <span class="badge ${badgeColor} rounded-pill px-3 py-1">${badgeText}</span>
+                            </div>
+                            ${issuesList}
+                            ${res.status === 'error' ? '<div class="alert alert-danger border-0 p-2 mt-2 mb-0 small"><i class="bx bx-bulb me-1"></i> แนะนำ: เข้าไปแก้ไขชั่วโมงใน Step 2 หรือปลดล็อคเวลาครูใน Step 3 ก่อนรัน เพื่อให้ AI จัดได้ 100% ครับ</div>' : ''}
+                        </div>
+                    `;
+                    $container.html(html);
+                }
+            },
+            error: function() {
+                $btn.prop('disabled', false).html(origHtml);
+                Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถเชื่อมต่อการตรวจสอบ Pre-flight ได้', 'error');
+            }
+        });
+    });
+
+    function renderFailureReport(res) {
+        if (!res.failed_list || res.failed_list.length === 0) return;
+        const failCount = res.best_fail_count || res.fail_count || res.failed_list.length;
+        let persistentHtml = `
+            <div class="alert alert-danger border-0 shadow-sm mb-4 text-start">
+                <div class="d-flex">
+                    <i class="bx bx-error-circle fs-3 me-2 mt-1"></i>
+                    <div>
+                        <h6 class="alert-heading fw-bold mb-1">ประมวลผลไม่สำเร็จ (จัดไม่ได้ ${failCount} รายการ)</h6>
+                        <p class="mb-2 small">ระบบได้ <b>ยกเลิกการเปลี่ยนแปลง</b> เพื่อรักษาข้อมูลเดิมไว้ กรุณาแก้ไขข้อขัดแย้งตามคำแนะนำด้านล่าง:</p>
+                        <div class="table-responsive bg-white rounded-3 shadow-sm border border-danger-subtle">
+                            <table class="table table-sm table-hover mb-0">
+                                <thead class="bg-danger text-white">
+                                    <tr><th>ห้อง</th><th>วิชา</th><th>ครูผู้สอน</th><th class="text-center">คาบ</th><th>สาเหตุขัดแย้ง</th></tr>
+                                </thead>
+                                <tbody>`;
+
+        res.failed_list.forEach(item => {
+            let reasonHtml = '';
+            if (item.reasons && item.reasons.length > 0) {
+                reasonHtml = `<ul class="mb-0 ps-3 small text-danger">`;
+                item.reasons.forEach(r => { reasonHtml += `<li>${r}</li>`; });
+                reasonHtml += `</ul>`;
+            } else {
+                reasonHtml = `<span class="text-muted small">ไม่พบช่องว่างที่เหมาะสม</span>`;
+            }
+
+            persistentHtml += `<tr>
+                <td class="fw-bold text-primary">${item.class_name}</td>
+                <td><span class="badge bg-label-secondary me-1">${item.subject_code}</span> ${item.subject_name}</td>
+                <td class="small">${item.teacher_name}</td>
+                <td class="text-center"><span class="badge bg-danger rounded-pill">${item.block_size}</span></td>
+                <td>${reasonHtml}</td>
+            </tr>`;
+        });
+        persistentHtml += `</tbody></table></div>`;
+
+        persistentHtml += `
+            <div class="bg-label-info p-3 rounded-3 border border-info-subtle mt-3">
+                <h6 class="fw-bold mb-2 text-info"><i class="bx bx-bulb me-1"></i> กลยุทธ์แก้ไขให้สำเร็จ:</h6>
+                <ul class="small mb-0 ps-3 text-dark">
+                    <li><b>เลือกโหมดค้นหาเชิงลึก (30 หรือ 50 รอบ):</b> ช่วยให้ AI ลองสลับลำดับการวางวิชาได้หลากหลายรูปแบบมากขึ้น</li>
+                    <li><b>วิชาที่คาบคู่/คาบยาว:</b> หากวิชามี 3-4 คาบ ลองหั่นคาบ (ใน Step 2) ให้เล็กลง เช่น 2+1 หรือ 2+2</li>
+                    <li><b>ภาระงานครู:</b> ตรวจสอบว่าครูท่านนี้ถูก "ล็อคเวลาไม่ว่าง" (ใน Step 3) มากเกินไปหรือไม่</li>
+                    <li><b>จัดต่อใน Editor:</b> สามารถเลือก "บันทึกรอบที่ดีที่สุด" แล้วเปิดโหมด Editor เพื่อลากวางด้วยมือได้ทันที</li>
+                </ul>
+            </div>
+        `;
+        persistentHtml += `</div></div></div></div>`;
+
+        if (res.processing_log && res.processing_log.length > 0) {
+            persistentHtml += `
+                <div class="mt-4">
+                    <h6 class="fw-bold mb-2"><i class="bx bx-list-check me-1"></i> บันทึกการประมวลผล (Processing Log):</h6>
+                    <div class="p-3 bg-dark text-success rounded-3 small shadow-inner" style="max-height: 200px; overflow-y: auto; font-family: 'Courier New', Courier, monospace; border: 1px solid #15a362;">`;
+            res.processing_log.forEach(log => {
+                persistentHtml += `<div class="mb-1">> ${log}</div>`;
+            });
+            persistentHtml += `</div></div>`;
+        }
+
+        sessionStorage.setItem('ai_failure_report', persistentHtml);
+        localStorage.setItem('timetable_wizard_step', 4);
+        location.reload();
+    }
+
+    // 🤖 AI Generate Trigger
     $('#btnAIGenerate').on('click', function() {
+        const selectedDepth = $('input[name="ai_depth_option"]:checked').val() || 10;
+
         Swal.fire({ 
             title: 'ยืนยันการประมวลผล?', 
-            text: "ระบบจะใช้เวลาครู่หนึ่งในการคำนวณคาบเรียนที่เหลือทั้งหมด",
+            text: `ระบบจะทำการค้นหาและคำนวณคาบเรียนที่เหลือทั้งหมด (${selectedDepth} รอบ)`,
             icon: 'question', 
             showCancelButton: true,
             confirmButtonText: 'เริ่มจัดตาราง',
@@ -3046,6 +3287,10 @@ $(document).ready(function() {
                 $.ajax({
                     url: '<?= base_url('admin/academic/timetable/auto-generate') ?>', 
                     type: 'POST', 
+                    data: {
+                        max_attempts: selectedDepth,
+                        '<?= csrf_token() ?>': '<?= csrf_hash() ?>'
+                    },
                     headers: { 'X-CSRF-TOKEN': '<?= csrf_hash() ?>' },
                     success: function(res) { 
                         $('#modalAIProcessing').modal('hide'); 
@@ -3061,7 +3306,6 @@ $(document).ready(function() {
                             }
 
                             if (res.fail_count === 0) {
-                                // 🟢 สำเร็จ 100% -> แสดงแจ้งเตือนและรีโหลดเพื่อปลดล็อค Step 5 (PHP)
                                 const attemptText = res.winning_attempt ? ` (ลงตัวในรอบที่ ${res.winning_attempt})` : '';
                                 Swal.fire({
                                     icon: 'success',
@@ -3073,80 +3317,87 @@ $(document).ready(function() {
                                     localStorage.setItem('timetable_wizard_step', 5);
                                     location.reload();
                                 });
-                            } else {
-                                // 🟡 สำเร็จบางส่วน (ในทางทฤษฎีไม่ควรถึงจุดนี้เพราะ controller จะ return error ถ้า fail_count > 0)
-                                sessionStorage.setItem('ai_failure_report', res.message || 'พบข้อผิดพลาดบางส่วน');
-                                localStorage.setItem('timetable_wizard_step', 4);
-                                location.reload();
                             }
+                        } else if (res.status === 'partial_success') {
+                            Swal.fire({
+                                icon: 'info',
+                                title: 'บันทึกคาบเรียนที่ดีที่สุดสำเร็จ!',
+                                html: `ระบบได้บันทึกคาบเรียนจากรอบที่ดีที่สุด (รอบที่ ${res.winning_attempt}) เรียบร้อยแล้ว<br><span class="text-danger fw-semibold">เหลืออีก ${res.failed_count} รายการที่ยังไม่ได้จัด</span><br>ระบบจะพาท่านไปยังหน้า Editor เพื่อจัดคาบที่เหลือต่อด้วยตนเองครับ`,
+                                confirmButtonText: 'เปิดหน้า Editor',
+                                confirmButtonColor: '#15a362'
+                            }).then(() => {
+                                window.location.href = '<?= base_url('admin/academic/timetable/editor') ?>';
+                            });
                         } else {
-                            // 🔴 กรณี Error (Rollback) หรือ ประมวลผลไม่สมบูรณ์ (Fail Count > 0)
-                            if (res.failed_list && res.failed_list.length > 0) {
-                                // เก็บรายงานลง sessionStorage เพื่อแสดงแบบ persistent หลัง reload
-                                let persistentHtml = `
-                                    <div class="alert alert-danger border-0 shadow-sm mb-4 text-start">
-                                        <div class="d-flex">
-                                            <i class="bx bx-error-circle fs-3 me-2 mt-1"></i>
-                                            <div>
-                                                <h6 class="alert-heading fw-bold mb-1">ประมวลผลไม่สำเร็จ (จัดไม่ได้ ${res.fail_count} รายการ)</h6>
-                                                <p class="mb-2 small">ระบบได้ <b>ยกเลิกการเปลี่ยนแปลง</b> เพื่อรักษาข้อมูลเดิมไว้ กรุณาแก้ไขข้อขัดแย้งตามคำแนะนำด้านล่าง:</p>
-                                                <div class="table-responsive bg-white rounded-3 shadow-sm border border-danger-subtle">
-                                                    <table class="table table-sm table-hover mb-0">
-                                                        <thead class="bg-danger text-white">
-                                                            <tr><th>ห้อง</th><th>วิชา</th><th>ครูผู้สอน</th><th class="text-center">คาบ</th><th>สาเหตุขัดแย้ง</th></tr>
-                                                        </thead>
-                                                         <tbody>`;
-                                
-                                res.failed_list.forEach(item => {
-                                    let reasonHtml = '';
-                                    if (item.reasons && item.reasons.length > 0) {
-                                        reasonHtml = `<ul class="mb-0 ps-3 small text-danger">`;
-                                        item.reasons.forEach(r => { reasonHtml += `<li>${r}</li>`; });
-                                        reasonHtml += `</ul>`;
-                                    } else {
-                                        reasonHtml = `<span class="text-muted small">ไม่พบช่องว่างที่เหมาะสม</span>`;
+                            // 🔴 กรณีมีข้อขัดแย้ง
+                            if (res.can_save_best) {
+                                Swal.fire({
+                                    icon: 'warning',
+                                    title: `ประมวลผล ${selectedDepth} รอบแล้ว`,
+                                    html: `
+                                        <p class="mb-2">มีคาบเรียนที่ติดขัดข้อจำกัดหนาแน่น <b>${res.best_fail_count} รายการ</b> (จัดลงตัวได้มากที่สุดในรอบที่ ${res.best_attempt_num})</p>
+                                        <div class="alert alert-warning text-start small border-0 mb-2">
+                                            <b>ท่านต้องการดำเนินการอย่างไรต่อ?</b>
+                                            <ul class="mb-0 ps-3 mt-1">
+                                                <li><b>บันทึกรอบที่ดีที่สุด:</b> นำคาบที่จัดได้ลงตาราง แล้วไปจัดส่วนที่เหลือต่อใน Editor</li>
+                                                <li><b>ค้นหาเชิงลึก 50 รอบ:</b> ให้ AI ลองค้นหาเพิ่มอีก 50 รอบ</li>
+                                            </ul>
+                                        </div>
+                                    `,
+                                    showCancelButton: true,
+                                    showDenyButton: true,
+                                    confirmButtonText: '<i class="bx bx-save me-1"></i> บันทึกรอบนี้ แล้วไป Editor',
+                                    denyButtonText: '<i class="bx bx-brain me-1"></i> ค้นหาเชิงลึก 50 รอบ',
+                                    cancelButtonText: 'ดูรายงานข้อขัดแย้ง',
+                                    confirmButtonColor: '#15a362',
+                                    denyButtonColor: '#696cff',
+                                    cancelButtonColor: '#8592a3',
+                                    customClass: {
+                                        popup: 'swal2-wide'
                                     }
-
-                                    persistentHtml += `<tr>
-                                        <td class="fw-bold text-primary">${item.class_name}</td>
-                                        <td><span class="badge bg-label-secondary me-1">${item.subject_code}</span> ${item.subject_name}</td>
-                                        <td class="small">${item.teacher_name}</td>
-                                        <td class="text-center"><span class="badge bg-danger rounded-pill">${item.block_size}</span></td>
-                                        <td>${reasonHtml}</td>
-                                    </tr>`;
+                                }).then((choice) => {
+                                    if (choice.isConfirmed) {
+                                        $('#modalAIProcessing').modal('show');
+                                        $.ajax({
+                                            url: '<?= base_url('admin/academic/timetable/auto-generate') ?>',
+                                            type: 'POST',
+                                            data: {
+                                                save_best: true,
+                                                max_attempts: selectedDepth,
+                                                '<?= csrf_token() ?>': '<?= csrf_hash() ?>'
+                                            },
+                                            headers: { 'X-CSRF-TOKEN': '<?= csrf_hash() ?>' },
+                                            success: function(resp) {
+                                                $('#modalAIProcessing').modal('hide');
+                                                if (resp.status === 'partial_success' || resp.status === 'success') {
+                                                    Swal.fire({
+                                                        icon: 'success',
+                                                        title: 'บันทึกสำเร็จ!',
+                                                        text: 'กำลังเปิดหน้า Editor เพื่อให้ท่านจัดคาบที่เหลือต่อ...',
+                                                        timer: 1500,
+                                                        showConfirmButton: false
+                                                    }).then(() => {
+                                                        window.location.href = '<?= base_url('admin/academic/timetable/editor') ?>';
+                                                    });
+                                                } else {
+                                                    Swal.fire('เกิดข้อผิดพลาด', resp.message || 'ไม่สามารถบันทึกได้', 'error');
+                                                }
+                                            },
+                                            error: function() {
+                                                $('#modalAIProcessing').modal('hide');
+                                                Swal.fire('ข้อผิดพลาด', 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้', 'error');
+                                            }
+                                        });
+                                    } else if (choice.isDenied) {
+                                        $('#depth_50').prop('checked', true).trigger('change');
+                                        $('#btnAIGenerate').trigger('click');
+                                    } else {
+                                        renderFailureReport(res);
+                                    }
                                 });
-                                persistentHtml += `</tbody></table></div>`;
-                                
-                                // 💡 Add Actionable Suggestions
-                                persistentHtml += `
-                                    <div class="bg-label-info p-3 rounded-3 border border-info-subtle mt-3">
-                                        <h6 class="fw-bold mb-2 text-info"><i class="bx bx-bulb me-1"></i> กลยุทธ์แก้ไขให้สำเร็จ:</h6>
-                                        <ul class="small mb-0 ps-3 text-dark">
-                                            <li><b>วิชาที่คาบคู่/คาบยาว:</b> หากวิชามี 3-4 คาบ ลองหั่นคาบ (ใน Step 2) ให้เล็กลง เช่น 2+1 หรือ 2+2</li>
-                                            <li><b>ภาระงานครู:</b> ตรวจสอบว่าครูท่านนี้ถูก "ล็อคเวลาไม่ว่าง" (ใน Step 3) มากเกินไปหรือไม่</li>
-                                            <li><b>ล็อควิชาด้วยมือ:</b> ลองนำวิชาที่จัดไม่ได้ไปวางในตาราง (Step 3) ในช่องที่ว่างอยู่แล้วกด "ล็อค" ไว้ ระบบ AI จะขยับวิชาอื่นหลบให้เองครับ</li>
-                                        </ul>
-                                    </div>
-                                `;
-                                persistentHtml += `</div></div></div></div>`;
-                                
-                                // 📜 Add Detailed Processing Log
-                                if (res.processing_log && res.processing_log.length > 0) {
-                                    persistentHtml += `
-                                        <div class="mt-4">
-                                            <h6 class="fw-bold mb-2"><i class="bx bx-list-check me-1"></i> บันทึกการประมวลผล (Processing Log):</h6>
-                                            <div class="p-3 bg-dark text-success rounded-3 small shadow-inner" style="max-height: 200px; overflow-y: auto; font-family: 'Courier New', Courier, monospace; border: 1px solid #15a362;">`;
-                                    res.processing_log.forEach(log => {
-                                        persistentHtml += `<div class="mb-1">> ${log}</div>`;
-                                    });
-                                    persistentHtml += `</div></div>`;
-                                }
-
-                                sessionStorage.setItem('ai_failure_report', persistentHtml);
-                                localStorage.setItem('timetable_wizard_step', 4);
-                                location.reload();
+                            } else if (res.failed_list && res.failed_list.length > 0) {
+                                renderFailureReport(res);
                             } else {
-                                // 🚨 Detailed Error Reporting for Technical Issues
                                 let errorDetail = res.message || 'เกิดข้อผิดพลาดในการประมวลผล';
                                 if (res.line) errorDetail += ` (บรรทัดที่: ${res.line})`;
                                 if (res.file) errorDetail += ` ในไฟล์: ${res.file.split(/[\\/]/).pop()}`;
@@ -3557,11 +3808,293 @@ $(document).ready(function() {
 
     $(document).on('click', '#btnClearSearch', function() {
         $('#searchAssignmentInput').val('');
+        $('#btnFilterGroupedOnly').removeClass('active btn-success text-white').addClass('btn-outline-success');
         window.filterAssignments();
     });
 
+    window.toggleFilterGroupedOnly = function() {
+        const $btn = $('#btnFilterGroupedOnly');
+        if ($btn.hasClass('active')) {
+            $btn.removeClass('active btn-success text-white').addClass('btn-outline-success');
+            $('#searchAssignmentInput').val('');
+        } else {
+            $btn.addClass('active btn-success text-white').removeClass('btn-outline-success');
+            $('#searchAssignmentInput').val('กลุ่มเรียนพร้อมกัน');
+        }
+        window.filterAssignments();
+    };
+
     // Run initial filter calculation
     window.filterAssignments();
+
+    // --- 🪄 Smart Electives Auto-Detection & 1-Click Grouping ---
+    let cachedCandidates = [];
+
+    window.scanSmartElectives = function(userInitiated = false) {
+        if (userInitiated) {
+            $('#btnScanElectives').prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span>กำลังสแกน...');
+        }
+
+        $.ajax({
+            url: '<?= base_url('admin/academic/timetable/detect-suggested-groups') ?>',
+            method: 'GET',
+            dataType: 'json',
+            success: function(res) {
+                if (userInitiated) {
+                    $('#btnScanElectives').prop('disabled', false).html('<i class="bx bx-magic-wand fs-5 me-1"></i><span>สแกนวิชาเลือกคู่ขนาน</span>');
+                }
+
+                if (res.status === 'success' && res.count > 0) {
+                    cachedCandidates = res.candidates || [];
+                    $('#smartElectivesBanner').removeClass('d-none');
+                    $('#smartGroupCountBadge').text(res.count + ' กลุ่ม');
+                    $('#smartGroupTotalAssignments').text(res.total_assignments);
+                    
+                    renderSmartGroupCards(cachedCandidates);
+
+                    if (userInitiated) {
+                        Swal.fire({
+                            icon: 'info',
+                            title: 'ตรวจพบ ' + res.count + ' กลุ่มวิชาเลือกคู่ขนาน',
+                            text: 'พบ ' + res.total_assignments + ' รายการที่สอนพร้อมกันในห้องเดียวกัน สามารถกดยืนยันมัดรวมได้ทันที',
+                            confirmButtonColor: '#15a362',
+                            customClass: { container: 'swal2-container' }
+                        });
+                        $('#smartGroupCardsWrapper').removeClass('d-none');
+                    }
+                } else {
+                    cachedCandidates = [];
+                    $('#smartElectivesBanner').addClass('d-none');
+                    $('#smartGroupCardsRow').empty();
+
+                    if (userInitiated) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'ไม่พบวิชาเลือกคู่ขนานที่ตกค้าง',
+                            text: 'ข้อมูลการมอบหมายทั้งหมดจัดกลุ่มถูกต้องเรียบร้อยแล้ว หรือไม่มีวิชาเลือกที่สอนพร้อมกัน',
+                            confirmButtonColor: '#15a362',
+                            customClass: { container: 'swal2-container' }
+                        });
+                    }
+                }
+            },
+            error: function(xhr) {
+                if (userInitiated) {
+                    $('#btnScanElectives').prop('disabled', false).html('<i class="bx bx-magic-wand fs-5 me-1"></i><span>สแกนวิชาเลือกคู่ขนาน</span>');
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'เกิดข้อผิดพลาดในการสแกน',
+                        text: xhr.responseJSON?.message || 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้',
+                        confirmButtonColor: '#15a362',
+                        customClass: { container: 'swal2-container' }
+                    });
+                }
+            }
+        });
+    };
+
+    function renderSmartGroupCards(candidates) {
+        const $row = $('#smartGroupCardsRow');
+        $row.empty();
+
+        candidates.forEach((c) => {
+            const className = c.class_name || c.class || '';
+            const categoryTitle = c.category_title || c.category || 'วิชาเลือกคู่ขนาน';
+            const hoursPerWeek = c.hours_per_week || c.hours || 0;
+            const subjectCount = c.subject_count || c.total_subjects || (c.items?.length) || 0;
+            const subjectsList = c.items || c.subjects || [];
+            const assignIds = c.assign_ids || [];
+
+            let subjectsHtml = '';
+            subjectsList.forEach(s => {
+                const code = s.subject_code || s.code || '';
+                const name = s.subject_name || s.name || '';
+                const teachersStr = s.teacher_names || (Array.isArray(s.teachers) ? s.teachers.join(', ') : (s.teachers || 'ยังไม่ระบุครู'));
+                subjectsHtml += `
+                    <li class="d-flex justify-content-between align-items-center py-1 border-bottom">
+                        <div class="text-truncate me-2" style="max-width: 65%;">
+                            <span class="badge bg-light text-dark fw-bold me-1">${code}</span>
+                            <span class="text-dark small" title="${name}">${name}</span>
+                        </div>
+                        <span class="badge bg-label-secondary small text-truncate" style="max-width: 35%;">${teachersStr}</span>
+                    </li>
+                `;
+            });
+
+            const cardHtml = `
+                <div class="col-md-6 col-xl-4">
+                    <div class="card h-100 border shadow-xs" style="border-color: #b8e8ce !important; background: #ffffff;">
+                        <div class="card-body p-3 d-flex flex-column justify-content-between">
+                            <div>
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <div class="d-flex align-items-center gap-1">
+                                        <span class="badge bg-label-success fw-bold px-2 py-1">${className}</span>
+                                        <span class="badge bg-label-primary fw-bold px-2 py-1 text-truncate" style="max-width: 140px;" title="${categoryTitle}">${categoryTitle}</span>
+                                    </div>
+                                    <span class="badge rounded-pill border text-muted px-2 py-1">${hoursPerWeek} คาบ/สัปดาห์</span>
+                                </div>
+                                <div class="small text-muted mb-2 fw-semibold">
+                                    <i class="bx bx-layer me-1"></i>วิชาที่เรียนพร้อมกัน (${subjectCount} วิชา):
+                                </div>
+                                <ul class="list-unstyled mb-3" style="max-height: 140px; overflow-y: auto;">
+                                    ${subjectsHtml}
+                                </ul>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-success w-100 rounded-pill fw-bold" onclick="applySingleCandidateGroup([${assignIds.join(',')}], '${className} - ${categoryTitle}')">
+                                <i class="bx bx-package me-1"></i> มัดรวมเฉพาะกลุ่มนี้
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            $row.append(cardHtml);
+        });
+    }
+
+    window.toggleSmartGroupDetails = function() {
+        $('#smartGroupCardsWrapper').toggleClass('d-none');
+    };
+
+    window.applyAllSmartGroups = function() {
+        if (!cachedCandidates || cachedCandidates.length === 0) {
+            Swal.fire({
+                title: 'คำแนะนำ',
+                text: 'ไม่พบกลุ่มวิชาเลือกที่ต้องมัดรวม',
+                icon: 'info',
+                confirmButtonColor: '#15a362',
+                customClass: { container: 'swal2-container' }
+            });
+            return;
+        }
+
+        const totalGroups = cachedCandidates.length;
+        const totalAssignments = cachedCandidates.reduce((acc, c) => acc + (c.assign_ids?.length || 0), 0);
+
+        Swal.fire({
+            title: 'ยืนยันมัดรวมวิชาเลือกอัตโนมัติ?',
+            html: `ระบบจะสร้างกลุ่มเรียนพร้อมกัน (Teaching Group) จำนวน <b>${totalGroups} กลุ่ม</b> (ครอบคลุม <b>${totalAssignments} รายการ</b>)<br><small class="text-muted">วิชาในกลุ่มเดียวกันจะถูกจัดตารางเวลาเดียวกัน และห้องเรียนจะไม่ถูกคิดชั่วโมงซ้ำซ้อน</small>`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#15a362',
+            confirmButtonText: '<i class="bx bx-check-double me-1"></i> ใช่, มัดรวมทั้งหมดทันที',
+            cancelButtonText: 'ยกเลิก',
+            customClass: { container: 'swal2-container' }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                Swal.fire({
+                    title: 'กำลังมัดรวมกลุ่มวิชา...',
+                    text: 'กรุณารอสักครู่',
+                    allowOutsideClick: false,
+                    didOpen: () => { Swal.showLoading(); }
+                });
+
+                const csrfToken = $('input[name="<?= csrf_token() ?>"]').val() || '<?= csrf_hash() ?>';
+
+                $.ajax({
+                    url: '<?= base_url('admin/academic/timetable/apply-all-suggested-groups') ?>',
+                    method: 'POST',
+                    data: {
+                        "<?= csrf_token() ?>": csrfToken
+                    },
+                    dataType: 'json',
+                    success: function(res) {
+                        if (res.csrf_hash) {
+                            $('input[name="<?= csrf_token() ?>"]').val(res.csrf_hash);
+                        }
+
+                        if (res.status === 'success') {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'มัดรวมกลุ่มสำเร็จ!',
+                                text: res.message,
+                                confirmButtonColor: '#15a362',
+                                customClass: { container: 'swal2-container' }
+                            });
+                            refreshAssignmentList();
+                            scanSmartElectives(false);
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'เกิดข้อผิดพลาด',
+                                text: res.message,
+                                confirmButtonColor: '#15a362',
+                                customClass: { container: 'swal2-container' }
+                            });
+                        }
+                    },
+                    error: function(xhr) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'เกิดข้อผิดพลาด',
+                            text: xhr.responseJSON?.message || 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้',
+                            confirmButtonColor: '#15a362',
+                            customClass: { container: 'swal2-container' }
+                        });
+                    }
+                });
+            }
+        });
+    };
+
+    window.applySingleCandidateGroup = function(assignIds, groupName) {
+        if (!assignIds || assignIds.length < 2) {
+            Swal.fire({
+                title: 'คำแนะนำ',
+                text: 'กลุ่มต้องมีอย่างน้อย 2 วิชา',
+                icon: 'warning',
+                confirmButtonColor: '#15a362',
+                customClass: { container: 'swal2-container' }
+            });
+            return;
+        }
+
+        Swal.fire({
+            title: 'มัดรวมกลุ่ม ' + groupName + '?',
+            text: 'วิชาในกลุ่มนี้ (' + assignIds.length + ' วิชา) จะถูกจัดตารางในเวลาเดียวกันเสมอ',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#15a362',
+            confirmButtonText: 'ตกลง, มัดรวมเลย',
+            cancelButtonText: 'ยกเลิก',
+            customClass: { container: 'swal2-container' }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const csrfToken = $('input[name="<?= csrf_token() ?>"]').val() || '<?= csrf_hash() ?>';
+
+                $.post('<?= base_url('admin/academic/timetable/save-teaching-group') ?>', {
+                    "<?= csrf_token() ?>": csrfToken,
+                    ids: assignIds.join(',')
+                }, function(res) {
+                    if (res.csrf_hash) {
+                        $('input[name="<?= csrf_token() ?>"]').val(res.csrf_hash);
+                    }
+                    if (res.status === 'success') {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'มัดรวมสำเร็จ',
+                            text: res.message,
+                            timer: 1500,
+                            showConfirmButton: false,
+                            customClass: { container: 'swal2-container' }
+                        });
+                        refreshAssignmentList();
+                        scanSmartElectives(false);
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'ผิดพลาด',
+                            text: res.message,
+                            confirmButtonColor: '#15a362',
+                            customClass: { container: 'swal2-container' }
+                        });
+                    }
+                });
+            }
+        });
+    };
+
+    // Auto scan smart electives on load
+    scanSmartElectives(false);
 });
 function resetAllData() {
     Swal.fire({

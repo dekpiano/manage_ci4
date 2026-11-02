@@ -49,6 +49,8 @@ class Filters extends BaseConfig
                 'Admin/academic/subject-master/*',
                 'admin/academic/teaching-schedule/*',
                 'Admin/academic/teaching-schedule/*',
+                'admin/academic/timetable/*',
+                'Admin/academic/timetable/*',
             ]],
             // 'invalidchars',
         ],
