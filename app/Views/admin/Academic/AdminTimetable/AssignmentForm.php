@@ -107,8 +107,10 @@
                             </div>
                             <select class="form-select select2" name="subject_id" id="subject_id" required data-placeholder="ค้นหาด้วยรหัสวิชาหรือชื่อวิชา...">
                                 <option value=""></option>
-                                <?php foreach($subjects as $s): ?>
-                                <option value="<?= $s->tsub_id ?>" <?= (isset($assignment) && $assignment->subject_id == $s->tsub_id) ? 'selected' : '' ?>><?= ($s->tsub_code ? '['.$s->tsub_code.'] ' : '').$s->tsub_name ?></option>
+                                <?php foreach($subjects as $s): 
+                                    $typeBadge = !empty($s->subject_type) ? ' ['.$s->subject_type.']' : '';
+                                ?>
+                                <option value="<?= $s->tsub_id ?>" <?= (isset($assignment) && $assignment->subject_id == $s->tsub_id) ? 'selected' : '' ?>><?= ($s->tsub_code ? '['.$s->tsub_code.'] ' : '').$s->tsub_name . $typeBadge ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>

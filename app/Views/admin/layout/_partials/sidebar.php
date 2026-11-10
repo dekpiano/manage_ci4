@@ -418,6 +418,12 @@
                         <div data-i18n="กลุ่มวิชาเรียนพร้อมกัน">กลุ่มวิชาเรียนพร้อมกัน</div>
                     </a>
                 </li>
+                <li class="menu-item <?= ($s3 == 'timetable' && $s4 == 'excellence-blocks' ? 'active' : '') ?>">
+                    <a href="<?=base_url('admin/academic/timetable/excellence-blocks');?>" class="menu-link">
+                        <i class="menu-icon tf-icons bx bx-star" style="color: #15a362 !important;"></i>
+                        <div data-i18n="บล็อกความเป็นเลิศข้ามชั้น">บล็อกความเป็นเลิศข้ามชั้น</div>
+                    </a>
+                </li>
                 <li class="menu-item <?= ($s4 == 'ClassSchedule' ? 'active' : '') ?>">
                     <a href="<?=base_url('Admin/Acade/Course/ClassSchedule');?>" class="menu-link">
                         <i class="menu-icon tf-icons bx bx-cog"></i>

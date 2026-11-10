@@ -146,7 +146,6 @@ $routes->post('Admin/Academic/ConAdminStudents/getAdmissionImportPreview', [ConA
 $routes->post('Admin/Acade/Registration/Students/CheckDuplicate', [ConAdminStudents::class, 'checkDuplicate']);
 $routes->post('Admin/Acade/Registration/Students/Insert', [ConAdminStudents::class, 'processStudentAdd']);
 $routes->post('Admin/Acade/Registration/Students/ImportGoogle', [ConAdminStudents::class, 'processGoogleSheetImport']);
-    $routes->get('Admin/Acade/Registration/Students/ChangeYear/(:segment)', [ConAdminStudents::class, 'changeYear']);
     $routes->get('Admin/Acade/Registration/Students/DataFilters', [ConAdminStudents::class, 'getStudentsByFilters']);
 $routes->post('Admin/Acade/Registration/Students/StatusUpdateBulk', [ConAdminStudents::class, 'processStatusUpdateBulk']);
 $routes->post('Admin/Acade/Registration/Students/PromotionBulk', [ConAdminStudents::class, 'processPromotionBulk']);
@@ -298,10 +297,18 @@ $routes->group('admin/academic/timetable', ['namespace' => 'App\Controllers'], f
     $routes->get('subject-groups', 'Admin\Academic\ConAdminTimetable::subjectGroups');
     $routes->post('save-joint-group', 'Admin\Academic\ConAdminTimetable::saveSubjectGroup');
     $routes->post('delete-joint-group/(:num)', 'Admin\Academic\ConAdminTimetable::deleteSubjectGroup/$1');
+    $routes->post('update-assignment-group', 'Admin\Academic\ConAdminTimetable::updateAssignmentGroup');
+    $routes->post('quick-create-group', 'Admin\Academic\ConAdminTimetable::quickCreateGroup');
+    $routes->post('clear-all-subject-groups', 'Admin\Academic\ConAdminTimetable::clearAllSubjectGroups');
     $routes->get('get-suggested-teachers', 'Admin\Academic\ConAdminTimetable::getSuggestedTeachers');
     $routes->get('get-subject-info', 'Admin\Academic\ConAdminTimetable::getSubjectInfo');
     $routes->match(['get', 'post'], 'get-teaching-schedule-preview', 'Admin\Academic\ConAdminTimetable::getTeachingSchedulePreview');
     $routes->post('import-teaching-schedule', 'Admin\Academic\ConAdminTimetable::importTeachingSchedule');
+
+    // Excellence Blocks (Cross-Grade Synchronization)
+    $routes->get('excellence-blocks', 'Admin\Academic\ConAdminTimetable::excellenceBlocks');
+    $routes->post('save-excellence-block', 'Admin\Academic\ConAdminTimetable::saveExcellenceBlock');
+    $routes->post('delete-excellence-block/(:num)', 'Admin\Academic\ConAdminTimetable::deleteExcellenceBlock/$1');
 
     // Subjects for Timetable
     $routes->get('subjects', 'Admin\Academic\ConAdminTimetable::subjects');

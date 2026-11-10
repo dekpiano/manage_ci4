@@ -83,13 +83,14 @@
                             <tr class="bg-label-secondary">
                                 <th class="fw-bold">รหัสวิชา</th>
                                 <th class="fw-bold">ชื่อวิชา (สำหรับแสดงในตาราง)</th>
+                                <th class="fw-bold text-center">ประเภทวิชา</th>
                                 <th class="fw-bold text-center">จัดการ</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php if(empty($timetable_subjects)): ?>
                                 <tr>
-                                    <td colspan="3" class="text-center py-5">
+                                    <td colspan="4" class="text-center py-5">
                                         <div class="py-4">
                                             <i class="bx bx-book-open mb-3 text-light" style="font-size: 4rem;"></i>
                                             <p class="text-muted">ยังไม่มีรายวิชาในระบบตารางสอน</p>
@@ -102,6 +103,17 @@
                                 <tr>
                                     <td><span class="badge bg-label-dark fw-bold"><?= $s->tsub_code ?: '-' ?></span></td>
                                     <td><span class="fw-bold text-dark"><?= $s->tsub_name ?></span></td>
+                                    <td class="text-center">
+                                        <?php if (($s->subject_type ?? '') === 'พื้นฐาน'): ?>
+                                            <span class="badge bg-label-primary rounded-pill">พื้นฐาน</span>
+                                        <?php elseif (($s->subject_type ?? '') === 'เพิ่มเติม'): ?>
+                                            <span class="badge bg-label-warning rounded-pill">เพิ่มเติม</span>
+                                        <?php elseif (!empty($s->subject_type)): ?>
+                                            <span class="badge bg-label-secondary rounded-pill"><?= esc($s->subject_type) ?></span>
+                                        <?php else: ?>
+                                            <span class="text-muted small">-</span>
+                                        <?php endif; ?>
+                                    </td>
                                     <td class="text-center">
                                         <button class="btn btn-icon btn-label-danger btn-sm rounded-circle btn-delete" data-id="<?= $s->tsub_id ?>">
                                             <i class="bx bx-trash"></i>

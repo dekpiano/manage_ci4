@@ -383,22 +383,9 @@
                     <li class="breadcrumb-item active">จัดการนักเรียน</li>
                 </ol>
             </nav>
-            <div class="dropdown">
-                <button class="btn btn-white shadow-sm border-0 dropdown-toggle rounded-pill px-4" type="button" id="yearSelector" data-bs-toggle="dropdown" aria-expanded="false">
-                    <i class='bx bx-calendar-event me-2 text-primary'></i>ปีการศึกษา <?= get_selected_year() ?>
-                </button>
-                <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-3" aria-labelledby="yearSelector">
-                    <li class="dropdown-header">เลือกปีการศึกษา</li>
-                    <?php foreach($school_years as $year): ?>
-                        <li>
-                            <a class="dropdown-item <?= $year->schyear_year == get_selected_year() ? 'active bg-success text-white' : '' ?>" 
-                               href="<?= base_url('Admin/Acade/Registration/Students/ChangeYear/'.$year->schyear_year) ?>">
-                                ปีการศึกษา <?= $year->schyear_year ?>
-                            </a>
-                        </li>
-                    <?php endforeach; ?>
-                </ul>
-            </div>
+            <span class="btn btn-white shadow-sm border-0 rounded-pill px-4" aria-label="ปีการศึกษาที่ใช้งานจาก sidebar">
+                <i class='bx bx-calendar-event me-2 text-primary'></i>ปีการศึกษาที่ใช้งาน <?= esc(get_selected_year()) ?>
+            </span>
         </div>
     </div>
     <!-- Welcome Banner -->

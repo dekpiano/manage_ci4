@@ -953,7 +953,43 @@
                                 </label>
                             </div>
                             <div class="form-text small text-muted mt-2">
-                                <i class="bx bx-info-circle me-1"></i> หากมีวิชาที่ครู 1 คนสอนหลายห้อง หรือล็อคเวลาไว้แน่น แนะนำให้เลือก <b>โหมดเชิงลึก 30 รอบ</b>
+                                <i class="bx bx-info-circle me-1"></i> ระบบใช้ FET Recursive Swapping ในการสลับคาบแบบลูกโซ่ ป้องกันทางตัน
+                            </div>
+                        </div>
+
+                        <!-- 🎛️ FET Soft Constraint Toggles -->
+                        <div class="row g-2 justify-content-center mb-4">
+                            <div class="col-auto">
+                                <div class="form-check form-switch bg-light border rounded px-3 py-2 text-start">
+                                    <input class="form-check-input" type="checkbox" id="opt_min_days" checked>
+                                    <label class="form-check-label small fw-semibold" for="opt_min_days">
+                                        <i class="bx bx-calendar-week text-success me-1"></i>กระจายวันเรียน (Min Days)
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-auto">
+                                <div class="form-check form-switch bg-light border rounded px-3 py-2 text-start">
+                                    <input class="form-check-input" type="checkbox" id="opt_max_consec" checked>
+                                    <label class="form-check-label small fw-semibold" for="opt_max_consec">
+                                        <i class="bx bx-time text-success me-1"></i>สอนติดกันไม่เกิน 3 คาบ
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-auto">
+                                <div class="form-check form-switch bg-light border rounded px-3 py-2 text-start">
+                                    <input class="form-check-input" type="checkbox" id="opt_gap_control" checked>
+                                    <label class="form-check-label small fw-semibold" for="opt_gap_control">
+                                        <i class="bx bx-unite text-success me-1"></i>ลดคาบฟันหลอ (Gap Control)
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-auto">
+                                <div class="form-check form-switch bg-light border rounded px-3 py-2 text-start">
+                                    <input class="form-check-input" type="checkbox" id="opt_groups_afternoon_only" checked>
+                                    <label class="form-check-label small fw-semibold" for="opt_groups_afternoon_only">
+                                        <i class="bx bx-sun text-warning me-1"></i>วิชาจัดกลุ่ม/เพิ่มเติมลงช่วงบ่าย (หลังพักกลางวัน)
+                                    </label>
+                                </div>
                             </div>
                         </div>
 
@@ -3141,6 +3177,7 @@ $(document).ready(function() {
                                     <div>
                                         <h6 class="mb-0 fw-bold text-success">ความจุภาพรวมสมบูรณ์ (100% Ready)</h6>
                                         <small class="text-muted">ตรวจสอบ ${res.total_classes} ห้องเรียน และครู ${res.total_teachers} ท่าน ไม่พบห้องหรือครูที่มีภาระงานเกินความจุ</small>
+                                        ${res.excellence_blocks_count > 0 ? `<div class="mt-1 small text-success fw-semibold"><i class="bx bx-star me-1"></i>พบการล็อคบล็อกความเป็นเลิศข้ามระดับชั้น ${res.excellence_blocks_count} บล็อก (Synchronized)</div>` : ''}
                                     </div>
                                 </div>
                                 <span class="badge bg-success rounded-pill px-3 py-2">พร้อมประมวลผล</span>
@@ -3289,6 +3326,10 @@ $(document).ready(function() {
                     type: 'POST', 
                     data: {
                         max_attempts: selectedDepth,
+                        opt_min_days: $('#opt_min_days').is(':checked'),
+                        opt_max_consec: $('#opt_max_consec').is(':checked'),
+                        opt_gap_control: $('#opt_gap_control').is(':checked'),
+                        opt_groups_afternoon_only: $('#opt_groups_afternoon_only').is(':checked'),
                         '<?= csrf_token() ?>': '<?= csrf_hash() ?>'
                     },
                     headers: { 'X-CSRF-TOKEN': '<?= csrf_hash() ?>' },
@@ -3364,6 +3405,10 @@ $(document).ready(function() {
                                             data: {
                                                 save_best: true,
                                                 max_attempts: selectedDepth,
+                                                opt_min_days: $('#opt_min_days').is(':checked'),
+                                                opt_max_consec: $('#opt_max_consec').is(':checked'),
+                                                opt_gap_control: $('#opt_gap_control').is(':checked'),
+                                                opt_groups_afternoon_only: $('#opt_groups_afternoon_only').is(':checked'),
                                                 '<?= csrf_token() ?>': '<?= csrf_hash() ?>'
                                             },
                                             headers: { 'X-CSRF-TOKEN': '<?= csrf_hash() ?>' },

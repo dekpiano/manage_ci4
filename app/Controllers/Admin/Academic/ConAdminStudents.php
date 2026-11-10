@@ -110,12 +110,6 @@ class ConAdminStudents extends BaseController
         return $values;
     }
 
-    public function changeYear($year)
-    {
-        set_selected_year($year);
-        return redirect()->back();
-    }
-
     public function AdminStudentsMain($Key = null){ 
         $data['checkOnOff'] = $this->db->table('tb_register_onoff')->select('*')->get()->getResult();
         $data['CountAllStu'] = $this->db->table('tb_students')->select('COUNT(StudentID) AS stuall')

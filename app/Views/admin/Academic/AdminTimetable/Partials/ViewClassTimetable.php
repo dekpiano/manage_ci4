@@ -89,6 +89,24 @@ $getSubjectTheme = function($code) {
                         }
                     }
 
+                    // Check Excellence Blocks (Cross-Grade Synchronization)
+                    $isExcellence = false;
+                    $excellenceName = '';
+                    if (!empty($excellence_blocks)) {
+                        foreach ($excellence_blocks as $eb) {
+                            if ($eb->day == $day->day_key && (int)$p->period_number >= (int)$eb->start_period && (int)$p->period_number < ((int)$eb->start_period + (int)$eb->period_count)) {
+                                foreach (explode(',', $eb->target_grades) as $tg) {
+                                    $tg = trim($tg);
+                                    if ($tg !== '' && (strpos($class_name, $tg) === 0 || strpos($class_name, $tg . '/') === 0)) {
+                                        $isExcellence = true;
+                                        $excellenceName = $eb->block_name;
+                                        break 2;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
                     // Check Timetable Data
                     foreach($timetable_data as $td) {
                         if($td->day == $day->day_key && $td->period == $p->period_number) {
@@ -105,6 +123,12 @@ $getSubjectTheme = function($code) {
                     <?php elseif($isMaster): ?>
                         <div class="badge bg-label-info w-100 h-100 d-flex align-items-center justify-content-center text-wrap shadow-xs p-1" style="font-size: 0.7rem; border: 1px solid #bae6fd;">
                             <i class="bx bx-lock-alt me-1"></i><?= $masterName ?>
+                        </div>
+                    <?php elseif($isExcellence): ?>
+                        <div class="badge w-100 h-100 d-flex flex-column align-items-center justify-content-center text-wrap shadow-xs p-1" 
+                             style="background-color: #e8fadf !important; color: #0d683c !important; font-size: 0.72rem; border: 1.5px solid #15a362 !important;">
+                            <div class="fw-bold"><i class="bx bx-star me-1 text-success" style="color: #15a362 !important;"></i><?= esc($excellenceName) ?></div>
+                            <div class="small text-muted" style="font-size: 0.65rem;">(เรียนร่วมข้ามระดับชั้น)</div>
                         </div>
                     <?php elseif($slotData): 
                         $theme = $getSubjectTheme($slotData->tsub_code);

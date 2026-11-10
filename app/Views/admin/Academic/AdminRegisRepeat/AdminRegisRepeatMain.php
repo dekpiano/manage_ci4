@@ -266,6 +266,42 @@
 </style>
 
 <div class="container-xxl flex-grow-1 container-p-y">
+    <?php
+        $repeatSetting = $repeat_setting ?? null;
+        $repeatStatus = is_object($repeatSetting) ? ($repeatSetting->onoff_status ?? 'off') : 'off';
+        $repeatDetail = is_object($repeatSetting) ? ($repeatSetting->onoff_detail ?? '') : '';
+        $repeatYear = is_object($repeatSetting) ? ($repeatSetting->onoff_year ?? ($selectedYear ?? '')) : ($selectedYear ?? '');
+        $repeatYearParts = explode('/', (string) $repeatYear, 2);
+        $repeatTerm = count($repeatYearParts) === 2 ? $repeatYearParts[0] : '';
+        $repeatAcademicYear = count($repeatYearParts) === 2 ? $repeatYearParts[1] : $repeatYear;
+        $availableTerms = ['1' => '1', '2' => '2'];
+        $availableAcademicYears = [];
+        foreach (($CountYear ?? []) as $yearRecord) {
+            $yearParts = explode('/', (string) ($yearRecord->RegisterYear ?? ''), 2);
+            if (count($yearParts) === 2) {
+                $availableTerms[$yearParts[0]] = $yearParts[0];
+                $availableAcademicYears[$yearParts[1]] = $yearParts[1];
+            } elseif ($yearParts[0] !== '') {
+                $availableAcademicYears[$yearParts[0]] = $yearParts[0];
+            }
+        }
+        if ($repeatTerm !== '' && !isset($availableTerms[$repeatTerm])) {
+            $availableTerms[$repeatTerm] = $repeatTerm;
+        }
+        if ($repeatAcademicYear !== '' && !isset($availableAcademicYears[$repeatAcademicYear])) {
+            $availableAcademicYears[$repeatAcademicYear] = $repeatAcademicYear;
+        }
+        ksort($availableTerms);
+        krsort($availableAcademicYears, SORT_NUMERIC);
+        $repeatStart = (is_object($repeatSetting) && !empty($repeatSetting->onoff_StartDate)) ? date('Y-m-d H:i:s', strtotime($repeatSetting->onoff_StartDate)) : '';
+        $repeatEnd = (is_object($repeatSetting) && !empty($repeatSetting->onoff_EndDate)) ? date('Y-m-d H:i:s', strtotime($repeatSetting->onoff_EndDate)) : '';
+        $repeatStatusLabel = $repeatStatus === 'on' ? 'เปิดใช้งาน' : 'ปิดใช้งาน';
+        $repeatTermLabel = $repeatTerm !== '' ? 'ภาคเรียนที่ ' . $repeatTerm : '-';
+        $repeatYearLabel = $repeatAcademicYear !== '' ? $repeatAcademicYear : '-';
+        $repeatDetailLabel = $repeatDetail !== '' ? $repeatDetail : '-';
+        $repeatStartLabel = $repeatStart !== '' ? date('d/m/', strtotime($repeatStart)) . (date('Y', strtotime($repeatStart)) + 543) . date(' H:i', strtotime($repeatStart)) : 'ไม่กำหนด';
+        $repeatEndLabel = $repeatEnd !== '' ? date('d/m/', strtotime($repeatEnd)) . (date('Y', strtotime($repeatEnd)) + 543) . date(' H:i', strtotime($repeatEnd)) : 'ไม่กำหนด';
+    ?>
     <!-- Welcome Banner -->
     <div class="welcome-banner mb-4">
         <div class="content">
@@ -307,6 +343,21 @@
         </div>
         <div class="icon-wrapper d-none d-lg-block">
             <i class="bx bxs-book-reader"></i>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <h5 class="mb-0 fw-bold"><i class="bx bx-cog me-2 text-primary"></i>ค่าตั้งค่าการเรียนซ้ำปัจจุบัน</h5>
+            <span class="badge <?= $repeatStatus === 'on' ? 'bg-success' : 'bg-secondary' ?>"><?= esc($repeatStatusLabel) ?></span>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-6 col-lg-3"><small class="text-muted d-block">ภาคเรียน</small><strong><?= esc($repeatTermLabel) ?></strong></div>
+                <div class="col-6 col-lg-3"><small class="text-muted d-block">ปีการศึกษา</small><strong><?= esc($repeatYearLabel) ?></strong></div>
+                <div class="col-6 col-lg-3"><small class="text-muted d-block">ครั้งที่เรียนซ้ำ</small><strong><?= esc($repeatDetailLabel) ?></strong></div>
+                <div class="col-6 col-lg-3"><small class="text-muted d-block">ช่วงเวลาที่เปิด</small><strong><?= esc($repeatStartLabel) ?> – <?= esc($repeatEndLabel) ?></strong></div>
+            </div>
         </div>
     </div>
 
@@ -352,16 +403,6 @@
         </div>
     </div>
 
-    <?php
-        // Normalize repeat settings so the modal is safe even when no setting record exists.
-        $repeatSetting = $repeat_setting ?? null;
-        $repeatStatus = is_object($repeatSetting) ? ($repeatSetting->onoff_status ?? 'off') : 'off';
-        $repeatDetail = is_object($repeatSetting) ? ($repeatSetting->onoff_detail ?? '') : '';
-        $repeatYear = is_object($repeatSetting) ? ($repeatSetting->onoff_year ?? ($selectedYear ?? '')) : ($selectedYear ?? '');
-        $repeatStart = (is_object($repeatSetting) && !empty($repeatSetting->onoff_StartDate)) ? date('Y-m-d\\TH:i', strtotime($repeatSetting->onoff_StartDate)) : '';
-        $repeatEnd = (is_object($repeatSetting) && !empty($repeatSetting->onoff_EndDate)) ? date('Y-m-d\\TH:i', strtotime($repeatSetting->onoff_EndDate)) : '';
-    ?>
-
     <!-- Repeat Settings Modal -->
     <div class="modal fade" id="repeatSettingsModal" tabindex="-1" aria-labelledby="repeatSettingsModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered">
@@ -383,12 +424,21 @@
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label for="RepeatSettingYear" class="form-label fw-semibold">ปีการศึกษาที่ดำเนินการ</label>
-                            <select id="RepeatSettingYear" class="form-select">
-                                <?php foreach (($CountYear ?? []) as $vYear): ?>
-                                    <option value="<?= esc($vYear->RegisterYear) ?>" <?= $repeatYear === $vYear->RegisterYear ? 'selected' : '' ?>><?= esc($vYear->RegisterYear) ?></option>
+                            <label for="RepeatSettingTerm" class="form-label fw-semibold">ภาคเรียน</label>
+                            <select id="RepeatSettingTerm" class="form-select">
+                                <?php foreach ($availableTerms as $term): ?>
+                                    <option value="<?= esc($term) ?>" <?= (string) $repeatTerm === (string) $term ? 'selected' : '' ?>>ภาคเรียนที่ <?= esc($term) ?></option>
                                 <?php endforeach; ?>
-                                <?php if (empty($CountYear)): ?><option value="<?= esc($repeatYear) ?>" selected><?= esc($repeatYear) ?></option><?php endif; ?>
+                                <?php if (empty($availableTerms)): ?><option value="1" selected>ภาคเรียนที่ 1</option><?php endif; ?>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="RepeatSettingYear" class="form-label fw-semibold">ปีการศึกษา</label>
+                            <select id="RepeatSettingYear" class="form-select">
+                                <?php foreach ($availableAcademicYears as $year): ?>
+                                    <option value="<?= esc($year) ?>" <?= (string) $repeatAcademicYear === (string) $year ? 'selected' : '' ?>><?= esc($year) ?></option>
+                                <?php endforeach; ?>
+                                <?php if (empty($availableAcademicYears)): ?><option value="<?= esc($repeatAcademicYear) ?>" selected><?= esc($repeatAcademicYear) ?></option><?php endif; ?>
                             </select>
                         </div>
                         <div class="col-md-6">
@@ -400,12 +450,12 @@
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label for="RepeatSettingStart" class="form-label fw-semibold">วันที่เริ่มต้น</label>
-                            <input type="datetime-local" id="RepeatSettingStart" class="form-control" value="<?= esc($repeatStart) ?>">
+                            <label for="RepeatSettingStart" class="form-label fw-semibold">วันที่เริ่มต้น (พ.ศ.)</label>
+                            <input type="text" id="RepeatSettingStart" class="form-control repeat-setting-datetime" placeholder="วัน/เดือน/ปี พ.ศ. เวลา" value="<?= esc($repeatStart) ?>">
                         </div>
                         <div class="col-md-6">
-                            <label for="RepeatSettingEnd" class="form-label fw-semibold">วันที่สิ้นสุด</label>
-                            <input type="datetime-local" id="RepeatSettingEnd" class="form-control" value="<?= esc($repeatEnd) ?>">
+                            <label for="RepeatSettingEnd" class="form-label fw-semibold">วันที่สิ้นสุด (พ.ศ.)</label>
+                            <input type="text" id="RepeatSettingEnd" class="form-control repeat-setting-datetime" placeholder="วัน/เดือน/ปี พ.ศ. เวลา" value="<?= esc($repeatEnd) ?>">
                         </div>
                     </div>
                     <div class="alert alert-info mt-3 mb-0 py-2">
@@ -734,13 +784,57 @@
 
 <?= $this->section('script') ?>
 <script>
+function updateRepeatCalendarYearToBE(instance) {
+    setTimeout(function() {
+        var yearInput = instance.currentYearElement;
+        if (yearInput && instance.currentYear < 2400) {
+            yearInput.value = instance.currentYear + 543;
+        }
+    }, 0);
+}
+
+if (typeof flatpickr !== 'undefined') {
+    flatpickr('.repeat-setting-datetime', {
+        enableTime: true,
+        time_24hr: true,
+        disableMobile: true,
+        allowInput: true,
+        altInput: true,
+        altFormat: 'd/m/Y H:i',
+        dateFormat: 'Y-m-d H:i:s',
+        locale: 'th',
+        formatDate: function(date, format) {
+            if (format === 'd/m/Y H:i') {
+                var day = String(date.getDate()).padStart(2, '0');
+                var month = String(date.getMonth() + 1).padStart(2, '0');
+                return day + '/' + month + '/' + (date.getFullYear() + 543) + ' ' +
+                    String(date.getHours()).padStart(2, '0') + ':' + String(date.getMinutes()).padStart(2, '0');
+            }
+            return flatpickr.formatDate(date, format);
+        },
+        parseDate: function(value, format) {
+            if (format === 'd/m/Y H:i' && value && value.indexOf('/') !== -1) {
+                var match = value.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2})$/);
+                if (match) {
+                    return new Date(Number(match[3]) - 543, Number(match[2]) - 1, Number(match[1]), Number(match[4]), Number(match[5]));
+                }
+            }
+            return flatpickr.parseDate(value, format);
+        },
+        onReady: function(_, __, instance) { updateRepeatCalendarYearToBE(instance); },
+        onOpen: function(_, __, instance) { updateRepeatCalendarYearToBE(instance); },
+        onMonthChange: function(_, __, instance) { updateRepeatCalendarYearToBE(instance); },
+        onYearChange: function(_, __, instance) { updateRepeatCalendarYearToBE(instance); }
+    });
+}
+
 // Save repeat settings from this page
 $(document).on('click', '#btnSaveRepeatSettings', function() {
     var $btn = $(this);
     var start = $('#RepeatSettingStart').val();
     var end = $('#RepeatSettingEnd').val();
 
-    if (start && end && new Date(start) > new Date(end)) {
+    if (start && end && new Date(start.replace(' ', 'T')) > new Date(end.replace(' ', 'T'))) {
         Swal.fire({ icon: 'warning', title: 'ตรวจสอบช่วงเวลา', text: 'วันที่เริ่มต้นต้องไม่มากกว่าวันที่สิ้นสุด' });
         return;
     }
@@ -753,7 +847,7 @@ $(document).on('click', '#btnSaveRepeatSettings', function() {
         dataType: 'json',
         data: {
             setting_status: $('#RepeatSettingStatus').val(),
-            setting_year: $('#RepeatSettingYear').val(),
+            setting_year: $('#RepeatSettingTerm').val() + '/' + $('#RepeatSettingYear').val(),
             setting_time: $('#RepeatSettingAttempt').val(),
             setting_start: start,
             setting_end: end
@@ -785,10 +879,6 @@ updateRepeatDashboardStats($('#CheckYearRegisRepeat').val());
 // Year change handler
 $(document).on('change', '#CheckYearRegisRepeat', function() {
     var selectedYear = $(this).val();
-    $.post("<?= site_url('Admin/SetSelectedYear') ?>", { 
-        year: selectedYear,
-        "<?= csrf_token() ?>": "<?= csrf_hash() ?>"
-    });
     
     // Clear initialized flags so they reload when opened
     $('.accordion-collapse').each(function() {

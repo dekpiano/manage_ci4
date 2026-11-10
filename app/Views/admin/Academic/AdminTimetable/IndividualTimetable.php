@@ -127,6 +127,22 @@
                                     $isLunch = (isset($lunch_period) && (int)$p->period_number == (int)$lunch_period);
                                     $isBreak = ($p->is_break && ($p->level_group == 'ALL' || $p->level_group == ($currentLevel ?? '')));
 
+                                    // Check if this teacher is assigned to an Excellence Block in this slot
+                                    $isExcellence = false;
+                                    $excellenceTitle = '';
+                                    if (!empty($excellence_blocks) && isset($teacherId)) {
+                                        foreach ($excellence_blocks as $eb) {
+                                            if ($eb->day == $d->day_key && (int)$p->period_number >= (int)$eb->start_period && (int)$p->period_number < ((int)$eb->start_period + (int)$eb->period_count)) {
+                                                $tids = explode(',', $eb->teacher_ids ?? '');
+                                                if (in_array($teacherId, array_map('trim', $tids))) {
+                                                    $isExcellence = true;
+                                                    $excellenceTitle = $eb->block_name;
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                    }
+
                                     if($item): 
                                 ?>
                                     <div class="subject-box">
@@ -144,6 +160,11 @@
                                     <div class="subject-box bg-label-secondary border-0 rounded">
                                         <div class="subject-code"><i class="bx bx-lock-alt me-1"></i><?= $master->subject_name ?></div>
                                         <div class="subject-detail">กิจกรรมส่วนกลาง</div>
+                                    </div>
+                                <?php elseif($isExcellence): ?>
+                                    <div class="subject-box border-0 rounded p-1" style="background-color: #e8fadf; border: 1.5px solid #15a362 !important;">
+                                        <div class="subject-code" style="color: #0d683c;"><i class="bx bx-star me-1 text-success" style="color: #15a362 !important;"></i><?= esc($excellenceTitle) ?></div>
+                                        <div class="subject-detail text-success fw-bold">กิจกรรมสู่ความเป็นเลิศ (ข้ามชั้น)</div>
                                     </div>
                                 <?php elseif($isLunch || $isBreak): ?>
                                     <div class="bg-light h-100 d-flex align-items-center justify-content-center rounded border border-warning border-opacity-25">

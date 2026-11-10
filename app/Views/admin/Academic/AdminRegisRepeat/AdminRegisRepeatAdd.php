@@ -86,6 +86,13 @@
 }
 .controls-card .card-header h5 { font-weight: 600; color: #212529; margin: 0; }
 .controls-card .card-header h5 i { color: var(--primary-green); }
+.controls-card .card-header { padding: .8rem 1.1rem; }
+.controls-card .card-body { padding: 1rem 1.1rem; }
+.control-label { font-size: .8rem; margin-bottom: .35rem; color: #56616c; }
+.bulk-actions { padding-left: 1rem; border-left: 1px solid #e9ecef; }
+.bulk-actions .select2-container { width: 100% !important; max-width: 100%; }
+.bulk-action-buttons .btn { flex: 1 1 0; }
+@media (max-width: 991.98px) { .bulk-actions { padding-left: 0; border-left: 0; border-top: 1px solid #e9ecef; padding-top: .85rem; } }
 
 /* ===== Table Card ===== */
 .table-card {
@@ -278,11 +285,11 @@
                     </div>
                     <?php endif; ?>
                 </div>
-                <div class="col-md-4 text-end d-none d-md-block">
-                    <button class="btn-view-students me-2" onclick="showSubjectStudentDetailsModal()">
+                <div class="col-md-4 d-flex flex-wrap justify-content-md-end gap-2 mt-3 mt-md-0">
+                    <button class="btn btn-sm btn-warning fw-semibold" onclick="showSubjectStudentDetailsModal()">
                         <i class="bx bx-show me-1"></i>ดูรายชื่อนักเรียน
                     </button>
-                    <a class="btn-back" href="<?= site_url('Admin/Acade/Registration/Repeat') ?>">
+                    <a class="btn btn-sm btn-outline-light fw-semibold" href="<?= site_url('Admin/Acade/Registration/Repeat') ?>">
                         <i class="bx bx-arrow-back me-1"></i>ย้อนกลับ
                     </a>
                 </div>
@@ -296,16 +303,16 @@
     <?php if(isset($DataRepeat) && $DataRepeat) :?>
     
     <!-- Controls Card -->
-    <div class="card controls-card shadow-sm mb-4">
-        <div class="card-header">
-            <h5><i class="bx bx-slider-alt me-2"></i>ตัวเลือกและการจัดการ</h5>
+    <div class="card controls-card shadow-sm mb-3">
+        <div class="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <h5><i class="bx bx-slider-alt me-2"></i>ค้นหาและจัดการ</h5>
+            <small class="text-muted">กรองรายชื่อ แล้วเลือกนักเรียนเพื่อมอบหมายครูหรือยกเลิก</small>
         </div>
         <div class="card-body">
-            <div class="row g-3">
-                <!-- Filters -->
-                <div class="col-md-3">
-                    <label for="statusFilter" class="form-label fw-semibold"><i class="bx bx-filter me-1"></i>สถานะ:</label>
-                    <select id="statusFilter" class="form-select">
+            <div class="row g-3 align-items-end">
+                <div class="col-12 col-md-4 col-lg-3">
+                    <label for="statusFilter" class="form-label fw-semibold control-label">สถานะ</label>
+                    <select id="statusFilter" class="form-select form-select-sm">
                         <option value="ทั้งหมด">ทั้งหมด</option>
                         <option value="ต้องเรียนซ้ำ" selected>ต้องเรียนซ้ำ</option>
                         <option value="ลงทะเบียนเรียนซ้ำ">ลงทะเบียนเรียนซ้ำ</option>
@@ -313,9 +320,9 @@
                         <option value="เรียนปกติ">เรียนปกติ</option>
                     </select>
                 </div>
-                <div class="col-md-2">
-                    <label for="classFilter" class="form-label fw-semibold"><i class="bx bx-door-open me-1"></i>ห้องเรียน:</label>
-                    <select id="classFilter" class="form-select">
+                <div class="col-6 col-md-3 col-lg-2">
+                    <label for="classFilter" class="form-label fw-semibold control-label">ห้องเรียน</label>
+                    <select id="classFilter" class="form-select form-select-sm">
                         <option value="ทั้งหมด">ทั้งหมด</option>
                         <?php
                     $uniqueClasses = [];
@@ -332,22 +339,21 @@
                     </select>
                 </div>
                 <!-- Search Box -->
-                 <div class="col-md-2">
-                    <label for="nameSearch" class="form-label fw-semibold"><i class="bx bx-search me-1"></i>ค้นหาชื่อ/รหัส:</label>
-                    <input type="text" id="nameSearch" class="form-control" placeholder="ค้นหา...">
+                <div class="col-6 col-md-5 col-lg-3">
+                    <label for="nameSearch" class="form-label fw-semibold control-label">ค้นหาชื่อหรือรหัส</label>
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-white"><i class="bx bx-search text-muted"></i></span>
+                        <input type="text" id="nameSearch" class="form-control" placeholder="พิมพ์ชื่อหรือรหัสนักเรียน">
+                    </div>
                 </div>
-                
-                <!-- Vertical Divider -->
-                <div class="col-md-1 d-none d-md-flex justify-content-center align-items-center">
-                    <div class="vr h-100 text-muted"></div>
-                </div>
-
-                <!-- Bulk Actions -->
-                <div class="col-md-5">
-                   <label class="form-label fw-semibold text-success"><i class="bx bx-check-double me-1"></i>การจัดการแบบกลุ่ม:</label>
-                   <div class="d-flex gap-2 align-items-end">
-                        <div class="flex-grow-1">
-                            <select id="GlobalTeacherSelect" class="form-select">
+                <div class="col-12 col-lg-4 bulk-actions">
+                   <div class="d-flex align-items-center justify-content-between gap-2 mb-1">
+                       <label for="GlobalTeacherSelect" class="form-label fw-semibold control-label text-success mb-0">มอบหมายครูผู้ดูแล</label>
+                       <span class="selection-badge py-1 px-2" id="SelectionCount"><i class="bx bx-user-check"></i>เลือก 0 คน</span>
+                   </div>
+                   <div class="d-flex flex-column gap-2 align-items-stretch">
+                        <div class="w-100">
+                            <select id="GlobalTeacherSelect" class="form-select form-select-sm">
                             <option value="">เลือกครูเพื่อลงทะเบียน...</option>
                             <?php 
                             $regularTeacherID = isset($DataRepeat[0]->TeacherID) ? $DataRepeat[0]->TeacherID : null;
@@ -379,14 +385,15 @@
                             <?php endforeach;?>
                         </select>
                         </div>
-                        <button id="BtnBulkRegister" class="btn btn-register" disabled>
-                            <i class="bx bx-check-circle me-1"></i>ลงทะเบียน
+                        <div class="d-flex gap-2 bulk-action-buttons">
+                        <button id="BtnBulkRegister" class="btn btn-success btn-sm fw-semibold text-nowrap" disabled>
+                            <i class="bx bx-check-circle me-1"></i>มอบหมาย
                         </button>
-                        <button id="BtnBulkCancel" class="btn btn-outline-danger" disabled>
+                        <button id="BtnBulkCancel" class="btn btn-outline-danger btn-sm fw-semibold text-nowrap" disabled>
                             <i class="bx bx-trash me-1"></i>ยกเลิก
                         </button>
+                        </div>
                    </div>
-                   <small class="text-muted mt-1 d-block"><i class="bx bx-info-circle me-1"></i>เลือกนักเรียนในตารางด้านล่างเพื่อดำเนินการ</small>
                 </div>
             </div>
         </div>
@@ -396,7 +403,6 @@
     <div class="card table-card shadow-sm">
         <div class="card-header d-flex justify-content-between align-items-center">
             <h5><i class="bx bx-list-ul me-2"></i>รายชื่อนักเรียน</h5>
-            <span class="selection-badge" id="SelectionCount"><i class="bx bx-user-check"></i>เลือก 0 คน</span>
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
