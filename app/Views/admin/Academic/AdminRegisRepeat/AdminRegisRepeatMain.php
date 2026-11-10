@@ -67,54 +67,6 @@
 }
 
 /* ===== Simple Workflow ===== */
-.repeat-workflow {
-    border-radius: 14px;
-    border: 1px solid #e9ecef;
-    background: #fff;
-}
-.repeat-workflow .workflow-title {
-    font-weight: 700;
-    color: #212529;
-}
-.workflow-step {
-    display: flex;
-    align-items: center;
-    gap: .75rem;
-    padding: .8rem .9rem;
-    border-radius: 10px;
-    background: #f8f9fa;
-    height: 100%;
-}
-.workflow-step .step-icon {
-    width: 38px;
-    height: 38px;
-    min-width: 38px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 10px;
-    font-size: 1.1rem;
-}
-.workflow-step .step-title {
-    font-weight: 600;
-    font-size: .88rem;
-    color: #343a40;
-}
-.workflow-step .step-desc {
-    font-size: .75rem;
-    color: #6c757d;
-}
-.workflow-arrow {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #adb5bd;
-    font-size: 1.25rem;
-}
-@media (max-width: 767.98px) {
-    .workflow-arrow { display: none; }
-}
-
 /* ===== Stat Cards ===== */
 .stat-card {
     border-radius: 12px;
@@ -361,47 +313,6 @@
         </div>
     </div>
 
-    <!-- Simple Workflow -->
-    <div class="card repeat-workflow shadow-sm mb-4">
-        <div class="card-body p-3 p-lg-4">
-            <div class="d-flex align-items-center justify-content-between mb-3">
-                <div>
-                    <div class="workflow-title"><i class="bx bx-git-branch me-2 text-success"></i>ขั้นตอนการจัดการเรียนซ้ำ</div>
-                    <small class="text-muted">ทำตามลำดับจากซ้ายไปขวา ไม่ต้องค้นหาหลายหน้า</small>
-                </div>
-                <span class="badge bg-success bg-opacity-10 text-success px-3 py-2">4 ขั้นตอน</span>
-            </div>
-            <div class="row g-2 align-items-stretch">
-                <div class="col-md-3">
-                    <div class="workflow-step">
-                        <div class="step-icon bg-danger bg-opacity-10 text-danger"><i class="bx bx-error-circle"></i></div>
-                        <div><div class="step-title">1. ตรวจรายการ</div><div class="step-desc">นักเรียนที่ต้องเรียนซ้ำ</div></div>
-                    </div>
-                </div>
-                
-                <div class="col-md-3">
-                    <div class="workflow-step">
-                        <div class="step-icon bg-warning bg-opacity-10 text-warning"><i class="bx bx-user-plus"></i></div>
-                        <div><div class="step-title">2. มอบหมายครู</div><div class="step-desc">เลือกนักเรียนและครูผู้ดูแล</div></div>
-                    </div>
-                </div>
-                
-                <div class="col-md-3">
-                    <div class="workflow-step">
-                        <div class="step-icon bg-info bg-opacity-10 text-info"><i class="bx bx-refresh"></i></div>
-                        <div><div class="step-title">3. ติดตามผล</div><div class="step-desc">บันทึกผลการเรียนซ้ำ</div></div>
-                    </div>
-                </div>
-                
-                <div class="col-md-3">
-                    <div class="workflow-step">
-                        <div class="step-icon bg-success bg-opacity-10 text-success"><i class="bx bx-check-circle"></i></div>
-                        <div><div class="step-title">4. ยืนยันผล</div><div class="step-desc">ตรวจสอบและปิดรายการ</div></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <!-- Repeat Settings Modal -->
     <div class="modal fade" id="repeatSettingsModal" tabindex="-1" aria-labelledby="repeatSettingsModalLabel" aria-hidden="true">
@@ -846,6 +757,7 @@ $(document).on('click', '#btnSaveRepeatSettings', function() {
         type: 'POST',
         dataType: 'json',
         data: {
+            '<?= csrf_token() ?>': '<?= csrf_hash() ?>',
             setting_status: $('#RepeatSettingStatus').val(),
             setting_year: $('#RepeatSettingTerm').val() + '/' + $('#RepeatSettingYear').val(),
             setting_time: $('#RepeatSettingAttempt').val(),

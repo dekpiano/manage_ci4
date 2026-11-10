@@ -760,9 +760,28 @@ class ConAdminRegisRepeat extends BaseController
             'onoff_year' => $year
         ];
 
-        $result = $this->db->table('tb_register_onoff')
-            ->where('onoff_name', 'เรียนซ้ำ')
-            ->update($updateData);
+        $existing = $this->db->table('tb_register_onoff')->where('onoff_name', 'เรียนซ้ำ')->get()->getRow();
+
+        if ($existing) {
+            $result = $this->db->table('tb_register_onoff')
+                ->where('onoff_name', 'เรียนซ้ำ')
+                ->update($updateData);
+        } else {
+            $updateData['onoff_name'] = 'เรียนซ้ำ';
+            $updateData['onoff_status'] = 'on';
+            $updateData['onoff_Level'] = '';
+            $updateData['onoff_StartDate'] = date('Y-m-d 00:00:00');
+            $updateData['onoff_EndDate'] = date('Y-m-d 23:59:59', strtotime('+30 days'));
+            $result = $this->db->table('tb_register_onoff')->insert($updateData);
+        }
+
+        if (!empty($year)) {
+            helper('year');
+            if (function_exists('set_selected_year')) {
+                set_selected_year($year);
+            }
+            session()->set('admin_selected_year', $year);
+        }
 
         if ($result) {
             return $this->response->setJSON(['status' => 'success', 'message' => 'อัปเดตการตั้งค่าสำเร็จ']);

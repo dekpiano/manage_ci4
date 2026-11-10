@@ -404,30 +404,100 @@ class ConAdminAcademicRepeat extends BaseController
         echo $this->db->table('tb_register_onoff')->where('onoff_name', 'เรียนซ้ำ')->set(['onoff_year' => $value])->update();
     }
 
+    /**
+     * แปลงสตริงวันเวลาเป็นรูปแบบ Y-m-d H:i:s ที่ปลอดภัยสำหรับ MySQL (รองรับปี พ.ศ. และ ค.ศ.)
+     */
+    private function parseDateTimeForDb($dateStr)
+    {
+        if (empty($dateStr)) {
+            return null;
+        }
+        $dateStr = trim($dateStr);
+        // รูปแบบ dd/mm/yyyy hh:mm หรือ dd/mm/yyyy hh:mm:ss
+        if (preg_match('/^(\d{1,2})\/(\d{1,2})\/(\d{4})\s*(\d{1,2}:\d{2}(?::\d{2})?)$/', $dateStr, $m)) {
+            $day = str_pad($m[1], 2, '0', STR_PAD_LEFT);
+            $month = str_pad($m[2], 2, '0', STR_PAD_LEFT);
+            $year = (int)$m[3];
+            if ($year > 2400) {
+                $year -= 543;
+            }
+            $time = strlen($m[4]) === 5 ? $m[4] . ':00' : $m[4];
+            return "{$year}-{$month}-{$day} {$time}";
+        }
+        // รูปแบบ yyyy-mm-dd hh:mm:ss โดยปีเป็น พ.ศ. (>2400)
+        if (preg_match('/^(\d{4})-(\d{2})-(\d{2})\s*(\d{1,2}:\d{2}(?::\d{2})?)$/', $dateStr, $m)) {
+            $year = (int)$m[1];
+            if ($year > 2400) {
+                $year -= 543;
+            }
+            $time = strlen($m[4]) === 5 ? $m[4] . ':00' : $m[4];
+            return "{$year}-{$m[2]}-{$m[3]} {$time}";
+        }
+        $timestamp = strtotime($dateStr);
+        if ($timestamp !== false) {
+            $year = (int)date('Y', $timestamp);
+            if ($year > 2400) {
+                $year -= 543;
+                return "{$year}-" . date('m-d H:i:s', $timestamp);
+            }
+            return date('Y-m-d H:i:s', $timestamp);
+        }
+        return null;
+    }
+
     public function update_repeat_settings()
     {
         if ($this->request->isAJAX()) {
-            $status = $this->request->getPost('setting_status');
-            $year = $this->request->getPost('setting_year');
-            $time = $this->request->getPost('setting_time');
-            $start = $this->request->getPost('setting_start');
-            $end = $this->request->getPost('setting_end');
+            $status = $this->request->getPost('setting_status') ?? 'off';
+            $year = trim($this->request->getPost('setting_year') ?? '');
+            $time = trim($this->request->getPost('setting_time') ?? '');
+            $startRaw = $this->request->getPost('setting_start');
+            $endRaw = $this->request->getPost('setting_end');
+
+            $existing = $this->db->table('tb_register_onoff')->where('onoff_name', 'เรียนซ้ำ')->get()->getRow();
+
+            $startDate = $this->parseDateTimeForDb($startRaw);
+            $endDate = $this->parseDateTimeForDb($endRaw);
+
+            // ป้องกันปัญหาคอลัมน์ DATETIME NOT NULL ใน MySQL Strict Mode
+            if (!$startDate) {
+                $startDate = !empty($existing->onoff_StartDate) ? $existing->onoff_StartDate : date('Y-m-d 00:00:00');
+            }
+            if (!$endDate) {
+                $endDate = !empty($existing->onoff_EndDate) ? $existing->onoff_EndDate : date('Y-m-d 23:59:59', strtotime('+30 days'));
+            }
 
             $data = [
-                'onoff_status' => $status,
+                'onoff_status' => in_array($status, ['on', 'off']) ? $status : 'off',
                 'onoff_year' => $year,
                 'onoff_detail' => $time,
-                'onoff_StartDate' => $start ?: null,
-                'onoff_EndDate' => $end ?: null
+                'onoff_StartDate' => $startDate,
+                'onoff_EndDate' => $endDate
             ];
 
-            $updated = $this->db->table('tb_register_onoff')->where('onoff_name', 'เรียนซ้ำ')->set($data)->update();
-
-            if ($updated) {
-                return $this->response->setJSON(['status' => 'success', 'message' => 'Repeat settings updated successfully.']);
+            if ($existing) {
+                $this->db->table('tb_register_onoff')->where('onoff_name', 'เรียนซ้ำ')->update($data);
             } else {
-                return $this->response->setJSON(['status' => 'error', 'message' => 'Failed to update repeat settings.']);
+                $data['onoff_name'] = 'เรียนซ้ำ';
+                $data['onoff_Level'] = '';
+                $this->db->table('tb_register_onoff')->insert($data);
             }
+
+            // ซิงค์ปีการศึกษาที่เลือกเข้า Session และตาราง tb_schoolyear
+            if (!empty($year)) {
+                helper('year');
+                if (function_exists('set_selected_year')) {
+                    set_selected_year($year);
+                }
+                session()->set('admin_selected_year', $year);
+            }
+
+            return $this->response->setJSON([
+                'status' => 'success', 
+                'message' => 'บันทึกการตั้งค่าการเรียนซ้ำเรียบร้อยแล้ว',
+                'csrf_token' => csrf_token(),
+                'csrf_hash' => csrf_hash()
+            ]);
         }
         return $this->response->setJSON(['status' => 'error', 'message' => 'Invalid request.']);
     }
