@@ -105,7 +105,7 @@
                     <p>ตรวจสอบและติดตามสถานะนักเรียนที่ลงทะเบียนเรียนซ้ำรายบุคคล</p>
                 </div>
                 <div class="col text-end">
-                    <a href="<?= site_url('Admin/Acade/Registration/Repeat') ?>" class="btn btn-light">
+                    <a href="<?= site_url('Admin/Acade/Registration/Repeat' . (!empty($selectedYear) ? '?year=' . urlencode($selectedYear) : '')) ?>" class="btn btn-light">
                         <i class="bx bx-arrow-back me-1"></i>กลับหน้าหลัก
                     </a>
                 </div>
@@ -178,14 +178,14 @@
                 <table class="table table-hover w-100" id="tbRepeatReport">
                     <thead>
                         <tr>
-                            <th>นักเรียน</th>
-                            <th>ห้อง/เลขที่</th>
-                            <th>รหัสวิชา</th>
-                            <th>ชื่อวิชา</th>
-                            <th>ครั้งที่</th>
-                            <th>ปีที่เรียนซ้ำ</th>
-                            <th>ครูที่ดูแล</th>
-                            <th>สถานะ</th>
+                            <th class="text-nowrap"><i class="bx bx-user me-1 text-primary"></i>นักเรียน (ชื่อ - นามสกุล)</th>
+                            <th class="text-nowrap">ห้อง/เลขที่</th>
+                            <th class="text-nowrap">รหัสวิชา</th>
+                            <th class="text-nowrap">ชื่อวิชา</th>
+                            <th class="text-nowrap">ครั้งที่</th>
+                            <th class="text-nowrap">ปีที่เรียนซ้ำ</th>
+                            <th class="text-nowrap">ครูที่ดูแล</th>
+                            <th class="text-nowrap">สถานะ</th>
                         </tr>
                     </thead>
                     <tbody></tbody>
@@ -204,6 +204,13 @@
 
 <script>
 $(document).ready(function() {
+    if ($.fn.select2) {
+        $('#FilterYear, #FilterStatus, #FilterAttempt').select2({
+            theme: 'bootstrap-5',
+            width: '100%'
+        });
+    }
+
     let table = $('#tbRepeatReport').DataTable({
         processing: true,
         serverSide: false,
@@ -219,20 +226,22 @@ $(document).ready(function() {
         columns: [
             { 
                 data: null,
+                className: 'text-nowrap',
                 render: function(data, type, row) {
-                    return `<div>
-                                <div class="fw-bold">${row.StudentPrefix}${row.StudentFirstName} ${row.StudentLastName}</div>
-                                <small class="text-muted">รหัส: ${row.StudentCode}</small>
+                    return `<div class="text-nowrap">
+                                <div class="fw-bold text-dark text-nowrap"><i class="bx bx-user-circle me-1 text-success fs-6"></i>${row.StudentPrefix}${row.StudentFirstName}&nbsp;${row.StudentLastName}</div>
+                                <small class="text-muted text-nowrap">รหัส: <strong class="text-primary">${row.StudentCode}</strong></small>
                             </div>`;
                 }
             },
             { 
                 data: null,
+                className: 'text-nowrap text-center',
                 render: function(data, type, row) {
-                    return `<div>${row.StudentClass}</div><small class="text-muted">เลขที่ ${row.StudentNumber}</small>`;
+                    return `<div class="text-nowrap"><span class="badge bg-label-primary fw-bold">${row.StudentClass}</span></div><small class="text-muted">เลขที่ ${row.StudentNumber}</small>`;
                 }
             },
-            { data: 'SubjectCode' },
+            { data: 'SubjectCode', className: 'text-nowrap text-center' },
             { data: 'SubjectName' },
             { 
                 data: 'Grade_Type',

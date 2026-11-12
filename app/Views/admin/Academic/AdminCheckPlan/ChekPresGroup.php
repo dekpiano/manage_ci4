@@ -410,6 +410,19 @@
 <script>
 const UPLOAD_PLAN_BASE_URL = '<?= getenv('upload.server.baseurl.plan') ?>';
 
+function formatThaiDateTime(dateStr) {
+    if (!dateStr || dateStr.startsWith('0000-00-00')) return '-';
+    const parts = dateStr.split(' ');
+    const dParts = parts[0].split('-');
+    if (dParts.length === 3) {
+        let year = parseInt(dParts[0]);
+        if (year < 2400) year += 543;
+        const timeStr = parts[1] ? parts[1].substring(0, 5) + ' น.' : '';
+        return `${dParts[2]}/${dParts[1]}/${year} ${timeStr}`.trim();
+    }
+    return dateStr;
+}
+
 // Open file in new tab: Word files via Office Online Viewer, PDF direct
 function openFileInNewTab(fileUrl) {
     const ext = fileUrl.split('.').pop().toLowerCase();
@@ -489,6 +502,8 @@ $(document).ready(function() {
                 if (plans.length > 0) {
                     plans.forEach(plan => {
                         const pathInfo = { year: plan.seplan_year, term: plan.seplan_term, subj: plan.seplan_namesubject };
+                        const classDisplay = plan.seplan_class ? (plan.seplan_class.startsWith('ม.') ? plan.seplan_class : 'ม.' + plan.seplan_class) : '-';
+                        const typeDisplay = plan.seplan_subject_type ? plan.seplan_subject_type.replace(/^[0-9]\//, '') : '-';
                         const row = `
                         <tr>
                             <td class="align-middle text-center"><small class="badge bg-label-secondary">${plan.seplan_year}/${plan.seplan_term}</small></td>
@@ -497,8 +512,8 @@ $(document).ready(function() {
                                 <div class="text-muted small">${plan.seplan_coursecode}</div>
                             </td>
                             <td class="align-middle">
-                                <div><span class="badge bg-label-info mb-1">ม.${plan.seplan_class || '-'}</span></div>
-                                <div class="small opacity-75">${plan.seplan_subject_type || '-'}</div>
+                                <div><span class="badge bg-label-info mb-1">${classDisplay}</span></div>
+                                <div class="small opacity-75">${typeDisplay}</div>
                             </td>
                             
                             <td class="text-center align-middle">${renderActionButtons(plan.check_plan_file, plan.check_plan_file_id, plan.check_plan_file_status1, plan.check_plan_file_comment1, plan.check_plan_file_status2, plan.check_plan_file_comment2, pathInfo)}</td>
@@ -533,7 +548,7 @@ $(document).ready(function() {
                 let html = `
                     <li class="list-group-item d-flex justify-content-between align-items-center p-3">
                         <span class="text-muted small"><i class="bx bx-calendar me-2"></i>วันที่ส่งข้อมูล:</span>
-                        <span class="fw-bold text-dark">${data.seplan_createdate}</span>
+                        <span class="fw-bold text-dark">${formatThaiDateTime(data.seplan_createdate)}</span>
                     </li>
                     <li class="list-group-item d-flex justify-content-between align-items-center p-3">
                         <span class="text-muted small"><i class="bx bx-bookmark-alt me-2"></i>ประเภทไฟล์:</span>

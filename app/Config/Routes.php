@@ -422,6 +422,12 @@ $routes->post('Admin/Acade/Evaluate/update_repeat_settings', [ConAdminAcademicRe
 
 $routes->post('admin/academic/ConAdminRegisRepeat/AdminRegisRepeatAdd', [ConAdminRegisRepeat::class, 'AdminRegisRepeatAdd']);
 $routes->post('Admin/Academic/ConAdminRegisRepeat/getRepeatStudentDetails', [ConAdminRegisRepeat::class, 'getRepeatStudentDetails']);
+$routes->post('Admin/Academic/ConAdminRegisRepeat/setRepeatSessionYear', [ConAdminRegisRepeat::class, 'setRepeatSessionYear']);
+$routes->post('Admin/Academic/ConAdminRegisRepeat/getEligibleRepeatStudents', [ConAdminRegisRepeat::class, 'getEligibleRepeatStudents']);
+$routes->post('Admin/Academic/ConAdminRegisRepeat/searchStudentsForRepeat', [ConAdminRegisRepeat::class, 'searchStudentsForRepeat']);
+$routes->post('Admin/Academic/ConAdminRegisRepeat/getStudentFailingSubjects', [ConAdminRegisRepeat::class, 'getStudentFailingSubjects']);
+$routes->post('Admin/Academic/ConAdminRegisRepeat/saveRepeatAssignmentByStudent', [ConAdminRegisRepeat::class, 'saveRepeatAssignmentByStudent']);
+$routes->post('Admin/Academic/ConAdminRegisRepeat/getStudentRepeatRegistrations', [ConAdminRegisRepeat::class, 'getStudentRepeatRegistrations']);
 $routes->post('Admin/Academic/ConAdminRegisRepeat/getRepeatStudentDetailsBySubject', [ConAdminRegisRepeat::class, 'getRepeatStudentDetailsBySubject']); // New Route
 $routes->post('Admin/Academic/ConAdminRegisRepeat/updateRepeatGlobalSettings', [ConAdminRegisRepeat::class, 'updateRepeatGlobalSettings']);
 $routes->post('Admin/Academic/ConAdminRegisRepeat/getRepeatStudentsBySubjectGroup', [ConAdminRegisRepeat::class, 'getRepeatStudentsBySubjectGroup']);
